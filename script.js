@@ -39,7 +39,7 @@ document.getElementById("search-button").addEventListener("click", async () => {
   });
 
   try {
-    const res = await fetch(`${API_URL}/amadeus?${query}`);
+    const res = await fetch(`${API_URL}/kiwi?${query}`);
     const data = await res.json();
 
     const outboundFlights = [];
