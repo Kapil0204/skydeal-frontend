@@ -111,7 +111,7 @@ function displayFlights(type, flights) {
 }
 
 // Format time
-function formatTime(isoString) {
-  const date = new Date(isoString);
+function formatTime(timestampMs) {
+  const date = new Date(timestampMs);
   return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
