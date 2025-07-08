@@ -43,40 +43,40 @@ document.getElementById("search-button").addEventListener("click", async () => {
     const data = await res.json();
 
     const outboundFlights = [];
-    const returnFlights = [];
+const returnFlights = [];
 
-    if (Array.isArray(data.data)) {
-      data.data.forEach(flight => {
-        const price = parseFloat(flight.price.total);
-        const airline = flight.validatingAirlineCodes[0];
+if (Array.isArray(data.data)) {
+  data.data.forEach(flight => {
+    const price = flight.price;
+    const route = flight.route || [];
 
-        const itinerary0 = flight.itineraries[0];
-        if (itinerary0 && itinerary0.segments.length > 0) {
-          const seg = itinerary0.segments[0];
-          outboundFlights.push({
-            airline,
-            from: seg.departure.iataCode,
-            to: seg.arrival.iataCode,
-            departure: seg.departure.at,
-            arrival: seg.arrival.at,
-            price
-          });
-        }
+    const outbound = route.find(r => r.return === 0);
+    const inbound = route.find(r => r.return === 1);
 
-        const itinerary1 = flight.itineraries[1];
-        if (itinerary1 && itinerary1.segments.length > 0) {
-          const seg = itinerary1.segments[0];
-          returnFlights.push({
-            airline,
-            from: seg.departure.iataCode,
-            to: seg.arrival.iataCode,
-            departure: seg.departure.at,
-            arrival: seg.arrival.at,
-            price
-          });
-        }
+    if (outbound) {
+      outboundFlights.push({
+        airline: outbound.airline || "N/A",
+        from: outbound.cityFrom,
+        to: outbound.cityTo,
+        departure: outbound.dTimeUTC * 1000,
+        arrival: outbound.aTimeUTC * 1000,
+        price
       });
     }
+
+    if (inbound) {
+      returnFlights.push({
+        airline: inbound.airline || "N/A",
+        from: inbound.cityFrom,
+        to: inbound.cityTo,
+        departure: inbound.dTimeUTC * 1000,
+        arrival: inbound.aTimeUTC * 1000,
+        price
+      });
+    }
+  });
+}
+
 
     // Show and populate results
     document.getElementById("results-container").style.display = "flex";
