@@ -1,5 +1,4 @@
 const API_URL = "https://skydeal-backend-live.onrender.com";
- // Update if needed
 
 // Toggle payment dropdown
 document.getElementById("payment-toggle").addEventListener("click", (e) => {
@@ -29,11 +28,14 @@ document.getElementById("search-button").addEventListener("click", async () => {
     return;
   }
 
+  if (tripType === "Round Trip") {
+    alert("Round Trip support is not enabled yet. Showing one-way flights.");
+  }
+
   const query = new URLSearchParams({
     origin,
     destination,
     date: departureDate,
-    returnDate: tripType === "Round Trip" ? returnDate : "",
     adults: passengers,
     travelClass
   });
@@ -43,40 +45,39 @@ document.getElementById("search-button").addEventListener("click", async () => {
     const data = await res.json();
 
     const outboundFlights = [];
-const returnFlights = [];
+    const returnFlights = [];
 
-if (Array.isArray(data.data)) {
-  data.data.forEach(flight => {
-    const price = flight.price;
-    const route = flight.route || [];
+    if (Array.isArray(data.data)) {
+      data.data.forEach(flight => {
+        const price = flight.price;
+        const route = flight.route || [];
 
-    const outbound = route.find(r => r.return === 0);
-    const inbound = route.find(r => r.return === 1);
+        const outbound = route.find(r => r.return === 0);
+        const inbound = route.find(r => r.return === 1);
 
-    if (outbound) {
-      outboundFlights.push({
-        airline: outbound.airline || "N/A",
-        from: outbound.cityFrom,
-        to: outbound.cityTo,
-        departure: outbound.dTimeUTC * 1000,
-        arrival: outbound.aTimeUTC * 1000,
-        price
+        if (outbound) {
+          outboundFlights.push({
+            airline: outbound.airline || "N/A",
+            from: outbound.cityFrom,
+            to: outbound.cityTo,
+            departure: outbound.dTimeUTC * 1000,
+            arrival: outbound.aTimeUTC * 1000,
+            price
+          });
+        }
+
+        if (inbound) {
+          returnFlights.push({
+            airline: inbound.airline || "N/A",
+            from: inbound.cityFrom,
+            to: inbound.cityTo,
+            departure: inbound.dTimeUTC * 1000,
+            arrival: inbound.aTimeUTC * 1000,
+            price
+          });
+        }
       });
     }
-
-    if (inbound) {
-      returnFlights.push({
-        airline: inbound.airline || "N/A",
-        from: inbound.cityFrom,
-        to: inbound.cityTo,
-        departure: inbound.dTimeUTC * 1000,
-        arrival: inbound.aTimeUTC * 1000,
-        price
-      });
-    }
-  });
-}
-
 
     // Show and populate results
     document.getElementById("results-container").style.display = "flex";
@@ -115,3 +116,4 @@ function formatTime(timestampMs) {
   const date = new Date(timestampMs);
   return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
+
