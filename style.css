@@ -1,0 +1,92 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #f2f2f2;
+}
+
+h1 {
+  text-align: center;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+input,
+select,
+button {
+  margin: 5px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dropdown {
+  display: none;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  position: absolute;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.dropdown.show {
+  display: block;
+}
+
+.flight {
+  border: 1px solid #ddd;
+  margin: 10px 0;
+  padding: 10px;
+  background: #fff;
+  border-radius: 5px;
+}
+
+#results-container {
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.portal-link {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+
+.deal-note {
+  font-size: 0.9em;
+  color: #555;
+}
+
+.modal {
+  position: fixed;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  max-height: 80%;
+  overflow-y: auto;
+  background: white;
+  padding: 20px;
+  border: 2px solid #444;
+  border-radius: 10px;
+  z-index: 9999;
+}
+
+.go-link {
+  cursor: pointer;
+  margin-left: 10px;
+}
