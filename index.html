@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal ✈️ – Compare Flight Offers Smartly</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>SkyDeal ✈️ – Compare Flight Offers Smartly</h1>
+
+  <div class="form-section">
+    <input id="origin" placeholder="From (e.g. BOM)" />
+    <input id="destination" placeholder="To (e.g. DEL)" />
+    <input type="date" id="departure-date" />
+    <input type="date" id="return-date" />
+
+    <div class="row">
+      <input type="number" id="passengers" value="1" min="1" />
+      <select id="travel-class">
+        <option value="ECONOMY">Economy</option>
+        <option value="BUSINESS">Business</option>
+      </select>
+      <select id="trip-type">
+        <option value="Round Trip">Round Trip</option>
+        <option value="One Way">One Way</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button id="payment-toggle">Select Payment Methods</button>
+      <button id="search-button">Search</button>
+    </div>
+
+    <div id="payment-dropdown" class="dropdown">
+      <label><input type="checkbox" value="HDFC Credit Card" /> HDFC Credit Card</label><br />
+      <label><input type="checkbox" value="ICICI Credit Card" /> ICICI Credit Card</label><br />
+      <label><input type="checkbox" value="SBI Debit Card" /> SBI Debit Card</label>
+    </div>
+  </div>
+
+  <div id="results-container" style="display: flex;">
+    <div>
+      <h2>Outbound Flights</h2>
+      <div id="outbound-filters"></div>
+      <div id="outbound-flights"></div>
+    </div>
+    <div>
+      <h2>Return Flights</h2>
+      <div id="return-filters"></div>
+      <div id="return-flights"></div>
+    </div>
+  </div>
+
+  <div id="compare-modal" class="modal" style="display:none;">
+    <div id="comparison-content"></div>
+    <button onclick="closeModal()">Close</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
