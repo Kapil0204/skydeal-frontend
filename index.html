@@ -3,42 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal – Flight Offer Finder</title>
+  <title>SkyDeal</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-    <p class="subtitle">Find the best flight deals instantly</p>
-
-    <form id="searchForm">
-      <div class="form-group">
-        <label for="origin">From:</label>
-        <input type="text" id="origin" placeholder="e.g. DEL" required />
-      </div>
-
-      <div class="form-group">
-        <label for="destination">To:</label>
-        <input type="text" id="destination" placeholder="e.g. BOM" required />
-      </div>
-
-      <div class="form-group">
-        <label for="date">Departure Date:</label>
-        <input type="date" id="date" required />
-      </div>
-
-      <div class="form-group radio-group">
+    <p>Find the best flight deals instantly</p>
+    <form id="flight-form">
+      <label>From:</label>
+      <input type="text" id="origin" required placeholder="e.g., DEL" />
+      <label>To:</label>
+      <input type="text" id="destination" required placeholder="e.g., BOM" />
+      <label>Departure Date:</label>
+      <input type="date" id="departure-date" required />
+      <div class="trip-type">
         <label><input type="radio" name="tripType" value="oneway" checked /> One-way</label>
         <label><input type="radio" name="tripType" value="roundtrip" /> Round-trip</label>
       </div>
-
+      <div id="return-date-container" style="display:none;">
+        <label>Return Date:</label>
+        <input type="date" id="return-date" />
+      </div>
       <button type="submit">Search Flights</button>
     </form>
-
     <div id="results"></div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
+
 
