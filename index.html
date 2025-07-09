@@ -1,48 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal – Find Flight Offers</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>SkyDeal</title>
 </head>
 <body>
-  <div class="container">
-    <h1>SkyDeal – Find the Best Flight Offers</h1>
-    <form id="search-form">
-      <label for="flyFrom">From (IATA Code)</label>
-      <input type="text" id="flyFrom" required />
-
-      <label for="to">To (IATA Code)</label>
-      <input type="text" id="to" required />
-
-      <label for="date">Date</label>
-      <input type="date" id="date" required />
-
-      <label for="passengers">Passengers</label>
-      <input type="number" id="passengers" min="1" value="1" required />
-
-      <label for="travelClass">Travel Class</label>
-      <select id="travelClass">
-        <option value="economy">Economy</option>
-        <option value="business">Business</option>
-        <option value="first">First</option>
-      </select>
-
-      <label>Trip Type</label>
-      <div class="radio-group">
-        <input type="radio" id="oneWay" name="tripType" value="oneway" checked />
-        <label for="oneWay">One-way</label>
-
-        <input type="radio" id="roundTrip" name="tripType" value="round" />
-        <label for="roundTrip">Round Trip</label>
-      </div>
-
-      <button type="submit">Search Flights</button>
-    </form>
-
-    <div id="results"></div>
-  </div>
+  <h2>Flight Search</h2>
+  <form id="search-form">
+    From: <input id="flyFrom" value="DEL" required />
+    To: <input id="to" value="BOM" required />
+    Date: <input type="date" id="date" value="2025-07-12" required />
+    Passengers: <input id="passengers" type="number" value="1" min="1" required />
+    Class:
+    <select id="travelClass">
+      <option value="M">Economy</option>
+      <option value="C">Business</option>
+    </select>
+    <label><input type="checkbox" id="oneWay" checked /> One Way</label>
+    <button type="submit">Search</button>
+  </form>
+  <div id="results"></div>
 
   <script src="script.js"></script>
 </body>
