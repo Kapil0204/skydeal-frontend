@@ -1,46 +1,81 @@
-document.getElementById('flight-form').addEventListener('submit', async function (e) {
-  e.preventDefault();
-
-  const origin = document.getElementById('origin').value.trim();
-  const destination = document.getElementById('destination').value.trim();
-  const date = document.getElementById('date').value;
-  const returnDateInput = document.getElementById('return-date');
-  const returnDate = returnDateInput && returnDateInput.value ? returnDateInput.value : '';
-  const travelClass = document.querySelector('input[name="tripType"]:checked').value === 'round-trip' ? 'ECONOMY' : 'ECONOMY';
-
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('flight-form');
   const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = 'Loading...';
 
-  try {
-    const res = await fetch(`https://skydeal-backend.onrender.com/kiwi?origin=${origin}&destination=${destination}&date=${date}&returnDate=${returnDate}&travelClass=${travelClass}`);
-    const data = await res.json();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    if (!data?.itineraries?.length) {
-      resultsDiv.innerHTML = 'No flights found.';
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const departureDate = document.getElementById('departure-date').value;
+    const returnDate = document.getElementById('return-date').value;
+    const isRoundTrip = document.getElementById('roundtrip').checked;
+
+    let url = `https://skydeal-backend.onrender.com/kiwi?origin=${origin}&destination=${destination}&date=${departureDate}&adults=1&travelClass=ECONOMY`;
+
+    if (isRoundTrip && returnDate) {
+      url += `&returnDate=${returnDate}`;
+    }
+
+    try {
+      resultsDiv.innerHTML = '<p>Loading...</p>';
+      const response = await fetch(url);
+      const data = await response.json();
+
+      const flights = data.flights || data.data || [];
+      const carriers = data.carriers || [];
+
+      const carrierMap = {};
+      carriers.forEach(c => {
+        carrierMap[c.code] = c.name;
+      });
+
+      displayFlights(flights, carrierMap);
+    } catch (error) {
+      console.error('Error fetching flights:', error);
+      resultsDiv.innerHTML = '<p>Error fetching flights.</p>';
+    }
+  });
+
+  function displayFlights(flights, carrierMap) {
+    resultsDiv.innerHTML = '';
+
+    if (!flights.length) {
+      resultsDiv.innerHTML = '<p>No flights found.</p>';
       return;
     }
 
-    resultsDiv.innerHTML = '';
-    data.itineraries.slice(0, 5).forEach((flight) => {
-      const leg = flight.legs?.[0] || {};
-      const airline = leg.carrier || 'Unknown Airline';
-      const price = flight.price?.amount || 'N/A';
-      const depTime = leg.departureTime ? new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'N/A';
-      const arrTime = leg.arrivalTime ? new Date(leg.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'N/A';
+    flights.forEach(flight => {
+      const airlineCode = flight.airlines?.[0] || 'N/A';
+      const airlineName = carrierMap[airlineCode] || 'Unknown Airline';
 
-      const div = document.createElement('div');
-      div.className = 'flight-result';
-      div.innerHTML = `
-        <h3>✈️ ${airline}</h3>
-        <p><strong>Departure:</strong> ${depTime}</p>
-        <p><strong>Arrival:</strong> ${arrTime}</p>
+      const departureTime = flight.dTimeUTC
+        ? new Date(flight.dTimeUTC * 1000).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'N/A';
+
+      const arrivalTime = flight.aTimeUTC
+        ? new Date(flight.aTimeUTC * 1000).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'N/A';
+
+      const price = flight.price || 'N/A';
+
+      const flightCard = document.createElement('div');
+      flightCard.classList.add('flight-card');
+      flightCard.innerHTML = `
+        <h3>✈️ ${airlineName}</h3>
+        <p><strong>Departure:</strong> ${departureTime}</p>
+        <p><strong>Arrival:</strong> ${arrivalTime}</p>
         <p><strong>Price:</strong> ₹${price}</p>
       `;
-      resultsDiv.appendChild(div);
+      resultsDiv.appendChild(flightCard);
     });
-  } catch (error) {
-    resultsDiv.innerHTML = 'Error fetching flights.';
-    console.error(error);
   }
 });
+
 
