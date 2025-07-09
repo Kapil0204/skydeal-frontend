@@ -6,19 +6,16 @@ document.getElementById("payment-toggle").addEventListener("click", (e) => {
   document.getElementById("payment-dropdown").classList.toggle("show");
 });
 
-// Close dropdown if clicked outside
 document.addEventListener("click", (e) => {
   if (!e.target.closest("#payment-dropdown") && !e.target.closest("#payment-toggle")) {
     document.getElementById("payment-dropdown").classList.remove("show");
   }
 });
 
-// Handle search
 document.getElementById("search-button").addEventListener("click", async () => {
   const origin = document.getElementById("origin").value.trim();
   const destination = document.getElementById("destination").value.trim();
   const departureDate = document.getElementById("departure-date").value;
-  const returnDate = document.getElementById("return-date").value;
   const passengers = document.getElementById("passengers").value || 1;
   const travelClass = document.getElementById("travel-class").value;
   const tripType = document.getElementById("trip-type").value;
@@ -33,11 +30,9 @@ document.getElementById("search-button").addEventListener("click", async () => {
   }
 
   const query = new URLSearchParams({
-    from: origin,
-    to: destination,
-    dateFrom: departureDate,
-    dateTo: departureDate,
-    oneWay: "1",
+    origin,
+    destination,
+    date: departureDate,
     adults: passengers,
     travelClass
   });
@@ -47,51 +42,34 @@ document.getElementById("search-button").addEventListener("click", async () => {
     const data = await res.json();
 
     const outboundFlights = [];
-    const returnFlights = [];
 
     if (Array.isArray(data.data)) {
       data.data.forEach(flight => {
-        const price = flight.price;
         const route = flight.route || [];
+        const firstLeg = route[0];
 
-        const outbound = route.find(r => r.return === 0);
-        const inbound = route.find(r => r.return === 1);
-
-        if (outbound) {
+        if (firstLeg) {
           outboundFlights.push({
-            airline: outbound.airline || "N/A",
-            from: outbound.cityFrom,
-            to: outbound.cityTo,
-            departure: outbound.dTimeUTC * 1000,
-            arrival: outbound.aTimeUTC * 1000,
-            price
-          });
-        }
-
-        if (inbound) {
-          returnFlights.push({
-            airline: inbound.airline || "N/A",
-            from: inbound.cityFrom,
-            to: inbound.cityTo,
-            departure: inbound.dTimeUTC * 1000,
-            arrival: inbound.aTimeUTC * 1000,
-            price
+            airline: firstLeg.airline || "N/A",
+            from: firstLeg.cityFrom,
+            to: firstLeg.cityTo,
+            departure: firstLeg.dTimeUTC * 1000,
+            arrival: firstLeg.aTimeUTC * 1000,
+            price: flight.price
           });
         }
       });
     }
 
-    // Show and populate results
     document.getElementById("results-container").style.display = "flex";
     displayFlights("outbound", outboundFlights);
-    displayFlights("return", returnFlights);
+    displayFlights("return", []); // Return flights empty for now
   } catch (err) {
     console.error("Error fetching flights:", err);
     alert("Failed to fetch flight data.");
   }
 });
 
-// Utility: Display flights
 function displayFlights(type, flights) {
   const container = document.getElementById(`${type}-flights`);
   container.innerHTML = "";
@@ -113,8 +91,8 @@ function displayFlights(type, flights) {
   });
 }
 
-// Format time
 function formatTime(timestampMs) {
   const date = new Date(timestampMs);
   return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
+
