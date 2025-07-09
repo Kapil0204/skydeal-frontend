@@ -1,15 +1,25 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('flight-form');
   const resultsDiv = document.getElementById('results');
+
+  if (!form || !resultsDiv) {
+    console.error('Form or results container not found');
+    return;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const origin = document.getElementById('origin').value;
-    const destination = document.getElementById('destination').value;
-    const departureDate = document.getElementById('departure-date').value;
-    const returnDate = document.getElementById('return-date').value;
-    const isRoundTrip = document.getElementById('roundtrip').checked;
+    const origin = document.getElementById('origin')?.value;
+    const destination = document.getElementById('destination')?.value;
+    const departureDate = document.getElementById('departure-date')?.value;
+    const returnDate = document.getElementById('return-date')?.value;
+    const isRoundTrip = document.getElementById('roundtrip')?.checked;
+
+    if (!origin || !destination || !departureDate) {
+      resultsDiv.innerHTML = '<p>Please fill all required fields.</p>';
+      return;
+    }
 
     let url = `https://skydeal-backend.onrender.com/kiwi?origin=${origin}&destination=${destination}&date=${departureDate}&adults=1&travelClass=ECONOMY`;
 
@@ -77,5 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
