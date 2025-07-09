@@ -1,90 +1,71 @@
 body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f3fa;
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f6fa;
-  color: #333;
+  padding: 0;
 }
 
 .container {
   max-width: 600px;
   margin: 50px auto;
-  padding: 2rem;
-  background: white;
+  background-color: white;
+  padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   text-align: center;
-  color: #0057e7;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  text-align: center;
-  font-size: 0.95rem;
-  color: #666;
-  margin-bottom: 2rem;
+  color: #0056eb;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
+  gap: 10px;
 }
 
 input[type="text"],
 input[type="date"] {
-  padding: 0.6rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
+  padding: 10px;
   border-radius: 6px;
-}
-
-.radio-group {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+  border: 1px solid #ccc;
+  background-color: #edf3ff;
 }
 
 button {
-  padding: 0.75rem;
-  font-size: 1rem;
-  background-color: #0057e7;
+  padding: 12px;
+  background-color: #0056eb;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
 button:hover {
-  background-color: #003fba;
+  background-color: #0041b3;
 }
 
-#results {
-  margin-top: 2rem;
+.trip-type {
+  display: flex;
+  justify-content: space-around;
+  margin: 10px 0;
 }
 
 .flight-card {
-  background: #eef2f8;
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f3f7ff;
   border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .flight-card h3 {
-  margin-top: 0;
-  color: #0057e7;
+  margin: 0;
+  color: #0056eb;
 }
 
 .flight-card p {
-  margin: 0.3rem 0;
+  margin: 5px 0;
 }
+
 
