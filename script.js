@@ -1,6 +1,7 @@
-const API_URL = 'https://skydeal-backend.onrender.com/kiwi';
+const form = document.getElementById('flight-form');
+const resultsDiv = document.getElementById('results');
 
-document.getElementById('searchForm').addEventListener('submit', async function (e) {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const origin = document.getElementById('origin').value;
@@ -8,50 +9,45 @@ document.getElementById('searchForm').addEventListener('submit', async function 
   const date = document.getElementById('date').value;
   const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
+  const backendUrl = 'https://your-render-backend.onrender.com/kiwi';
+
   try {
-    const response = await fetch(`${API_URL}?origin=${origin}&destination=${destination}&date=${date}&tripType=${tripType}`);
+    const response = await fetch(`${backendUrl}?origin=${origin}&destination=${destination}&date=${date}&tripType=${tripType}`);
     const data = await response.json();
     displayFlights(data);
   } catch (error) {
-    console.error("Error fetching flight data:", error);
-    document.getElementById('results').innerHTML = `<p>Something went wrong. Please try again.</p>`;
+    resultsDiv.innerHTML = 'Failed to fetch flight data.';
   }
 });
 
 function displayFlights(data) {
-  const resultsContainer = document.getElementById('results');
-  resultsContainer.innerHTML = ''; // Clear previous results
+  resultsDiv.innerHTML = '';
+  const itineraries = data.itineraries || [];
 
-  if (!data || !data.itineraries || !data.itineraries.length) {
-    resultsContainer.innerHTML = `<p>No flights found.</p>`;
+  if (itineraries.length === 0) {
+    resultsDiv.innerHTML = 'No flights found.';
     return;
   }
 
-  const carriersMap = {};
-  if (data.metadata?.carriers) {
-    data.metadata.carriers.forEach(carrier => {
-      carriersMap[carrier.id] = carrier.name;
-    });
-  }
+  itineraries.forEach((flight) => {
+    const card = document.createElement('div');
+    card.className = 'flight-card';
 
-  data.itineraries.forEach((flight, index) => {
+    const airline = flight.carriers?.[0]?.name || 'Unknown Airline';
+    const departure = flight.itineraryOutbound?.departureTime || 'N/A';
+    const arrival = flight.itineraryOutbound?.arrivalTime || 'N/A';
     const price = flight.price?.amount || 'N/A';
-    const segments = flight.legs?.[0]?.segments || [];
-    const departure = segments[0]?.departure?.localTime || 'N/A';
-    const arrival = segments[segments.length - 1]?.arrival?.localTime || 'N/A';
-    const airlineId = segments[0]?.carrier?.id;
-    const airlineName = carriersMap[airlineId] || 'Unknown Airline';
 
-    const flightDiv = document.createElement('div');
-    flightDiv.className = 'flight-card';
-    flightDiv.innerHTML = `
-      <h3>✈️ ${airlineName}</h3>
-      <p><strong>Departure:</strong> ${departure}</p>
-      <p><strong>Arrival:</strong> ${arrival}</p>
-      <p><strong>Price:</strong> ₹${price}</p>
+    card.innerHTML = `
+      <strong>✈️ ${airline}</strong><br>
+      <b>Departure:</b> ${departure}<br>
+      <b>Arrival:</b> ${arrival}<br>
+      <b>Price:</b> ₹${price}
     `;
-    resultsContainer.appendChild(flightDiv);
+
+    resultsDiv.appendChild(card);
   });
 }
+
 
 
