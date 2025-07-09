@@ -1,6 +1,6 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #f2f4f8;
+  background: #f5f8fc;
   margin: 0;
   padding: 0;
 }
@@ -10,56 +10,58 @@ body {
   margin: 40px auto;
   background: white;
   padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   text-align: center;
-  color: #005eff;
+  margin-bottom: 20px;
+  color: #0056d2;
 }
 
 label {
-  display: block;
-  margin-top: 15px;
   font-weight: bold;
-}
-
-input[type="text"],
-input[type="date"] {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.radio-group {
   margin-top: 15px;
+  display: block;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 button {
+  margin-top: 20px;
   width: 100%;
-  padding: 12px;
-  background-color: #005eff;
+  background-color: #007bff;
   color: white;
   border: none;
-  margin-top: 20px;
-  border-radius: 6px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #0047c0;
+  background-color: #0056d2;
 }
 
-#results {
-  margin-top: 30px;
+.radio-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
 }
 
 .flight-result {
-  background: #f0f4ff;
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
+
