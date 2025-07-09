@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal – Flight Offers</title>
-  <link href="style.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyDeal – Find Flight Offers</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
@@ -27,12 +27,16 @@
         <option value="economy">Economy</option>
         <option value="business">Business</option>
         <option value="first">First</option>
-        <option value="premium">Premium</option>
       </select>
 
       <label>Trip Type</label>
-      <label><input type="radio" name="tripType" id="oneWay" checked /> One-way</label>
-      <label><input type="radio" name="tripType" /> Round Trip</label>
+      <div class="radio-group">
+        <input type="radio" id="oneWay" name="tripType" value="oneway" checked />
+        <label for="oneWay">One-way</label>
+
+        <input type="radio" id="roundTrip" name="tripType" value="round" />
+        <label for="roundTrip">Round Trip</label>
+      </div>
 
       <button type="submit">Search Flights</button>
     </form>
@@ -43,10 +47,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
