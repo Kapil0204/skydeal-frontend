@@ -7,7 +7,7 @@ document.getElementById('flight-form').addEventListener('submit', async function
   const returnDateInput = document.getElementById('return-date');
   const returnDate = returnDateInput && returnDateInput.value ? returnDateInput.value : '';
   const travelClass = document.querySelector('input[name="tripType"]:checked').value === 'round-trip' ? 'ECONOMY' : 'ECONOMY';
-  
+
   const resultsDiv = document.getElementById('results');
   resultsDiv.innerHTML = 'Loading...';
 
@@ -22,10 +22,11 @@ document.getElementById('flight-form').addEventListener('submit', async function
 
     resultsDiv.innerHTML = '';
     data.itineraries.slice(0, 5).forEach((flight) => {
-      const airline = flight.airline || 'Unknown Airline';
+      const leg = flight.legs?.[0] || {};
+      const airline = leg.carrier || 'Unknown Airline';
       const price = flight.price?.amount || 'N/A';
-      const depTime = flight.departureTime || 'N/A';
-      const arrTime = flight.arrivalTime || 'N/A';
+      const depTime = leg.departureTime ? new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'N/A';
+      const arrTime = leg.arrivalTime ? new Date(leg.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'N/A';
 
       const div = document.createElement('div');
       div.className = 'flight-result';
@@ -42,3 +43,4 @@ document.getElementById('flight-form').addEventListener('submit', async function
     console.error(error);
   }
 });
+
