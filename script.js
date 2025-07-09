@@ -8,20 +8,16 @@ document.getElementById("search-form").addEventListener("submit", async (e) => {
   const travelClass = document.getElementById("travelClass").value.toUpperCase();
   const oneWay = document.getElementById("oneWay").checked;
 
-  const dateParts = date.split("-");
-  const dateFormatted = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`; // dd/mm/yyyy format for backend
-
-  const url = `https://skydeal-backend.onrender.com/kiwi?flyFrom=${flyFrom}&to=${to}&dateFrom=${dateFormatted}&dateTo=${dateFormatted}&oneWay=${oneWay ? 1 : 0}&adults=${passengers}&travelClass=${travelClass}`;
+  const url = `https://YOUR_BACKEND.onrender.com/kiwi?flyFrom=${flyFrom}&to=${to}&dateFrom=${date}&dateTo=${date}&oneWay=${oneWay ? 1 : 0}&adults=${passengers}&travelClass=${travelClass}`;
 
   document.getElementById("results").innerHTML = "Searching...";
 
   try {
     const response = await fetch(url);
-    if (!response.ok) throw new Error("Network response was not ok");
     const data = await response.json();
 
     if (!data || !data.data || data.data.length === 0) {
-      document.getElementById("results").innerHTML = "No flights found. Please try different dates or cities.";
+      document.getElementById("results").innerHTML = "No flights found. Try different dates or cities.";
       return;
     }
 
@@ -44,9 +40,7 @@ document.getElementById("search-form").addEventListener("submit", async (e) => {
 
     document.getElementById("results").innerHTML = resultsHTML;
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching:", err);
     document.getElementById("results").innerHTML = "Failed to fetch flight data.";
   }
 });
-
-
