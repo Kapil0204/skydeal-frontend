@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyDeal - Flight Finder</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,32 +12,39 @@
     <p>Find the best flight deals instantly</p>
 
     <form id="flight-form">
-      <label>From:</label>
-      <input type="text" id="origin" placeholder="DEL" required />
+      <label for="origin"><strong>From:</strong></label>
+      <input type="text" id="origin" name="origin" required placeholder="e.g. DEL" />
 
-      <label>To:</label>
-      <input type="text" id="destination" placeholder="BOM" required />
+      <label for="destination"><strong>To:</strong></label>
+      <input type="text" id="destination" name="destination" required placeholder="e.g. BOM" />
 
-      <label>Departure Date:</label>
-      <input type="date" id="date" required />
+      <label for="departure-date"><strong>Departure Date:</strong></label>
+      <input type="date" id="departure-date" name="departure-date" required />
 
-      <label>Return Date (optional):</label>
-      <input type="date" id="return-date" />
+      <div id="return-date-group">
+        <label for="return-date"><strong>Return Date (optional):</strong></label>
+        <input type="date" id="return-date" name="return-date" />
+      </div>
 
-      <div class="radio-group">
-        <label><input type="radio" name="tripType" value="one-way" checked /> One-way</label>
-        <label><input type="radio" name="tripType" value="round-trip" /> Round-trip</label>
+      <div>
+        <input type="radio" id="one-way" name="tripType" value="one-way" checked />
+        <label for="one-way">One-way</label>
+
+        <input type="radio" id="round-trip" name="tripType" value="round-trip" />
+        <label for="round-trip">Round-trip</label>
       </div>
 
       <button type="submit">Search Flights</button>
     </form>
 
+    <div id="error" class="error"></div>
     <div id="results"></div>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
