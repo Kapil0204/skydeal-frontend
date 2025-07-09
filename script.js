@@ -77,3 +77,4 @@ function renderFlightResults(data) {
     resultsContainer.appendChild(div);
   });
 }
+
