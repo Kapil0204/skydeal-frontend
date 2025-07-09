@@ -11,20 +11,11 @@
     <h1>SkyDeal</h1>
     <p>Find the best flight deals instantly</p>
     <form id="flight-form">
-      <label>From:</label>
-      <input type="text" id="origin" required placeholder="e.g., DEL" />
-      <label>To:</label>
-      <input type="text" id="destination" required placeholder="e.g., BOM" />
-      <label>Departure Date:</label>
-      <input type="date" id="departure-date" required />
-      <div class="trip-type">
-        <label><input type="radio" name="tripType" value="oneway" checked /> One-way</label>
-        <label><input type="radio" name="tripType" value="roundtrip" /> Round-trip</label>
-      </div>
-      <div id="return-date-container" style="display:none;">
-        <label>Return Date:</label>
-        <input type="date" id="return-date" />
-      </div>
+      <input type="text" id="origin" placeholder="From (e.g. DEL)" required>
+      <input type="text" id="destination" placeholder="To (e.g. BOM)" required>
+      <input type="date" id="date" required>
+      <label><input type="radio" name="tripType" value="oneway" checked> One-way</label>
+      <label><input type="radio" name="tripType" value="round"> Round-trip</label>
       <button type="submit">Search Flights</button>
     </form>
     <div id="results"></div>
@@ -32,5 +23,6 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
