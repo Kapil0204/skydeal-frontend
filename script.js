@@ -33,9 +33,11 @@ document.getElementById("search-button").addEventListener("click", async () => {
   }
 
   const query = new URLSearchParams({
-    origin,
-    destination,
-    date: departureDate,
+    from: origin,
+    to: destination,
+    dateFrom: departureDate,
+    dateTo: departureDate,
+    oneWay: "1",
     adults: passengers,
     travelClass
   });
@@ -116,4 +118,3 @@ function formatTime(timestampMs) {
   const date = new Date(timestampMs);
   return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
-
