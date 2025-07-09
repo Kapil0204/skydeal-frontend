@@ -1,92 +1,90 @@
 body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  background-color: #f2f2f2;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f6fa;
+  color: #333;
+}
+
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
 h1 {
   text-align: center;
+  color: #0057e7;
+  margin-bottom: 0.5rem;
 }
 
-.form-section {
-  margin-bottom: 20px;
+.subtitle {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 2rem;
 }
 
-input,
-select,
-button {
-  margin: 5px;
-  padding: 8px;
-  font-size: 14px;
-}
-
-.row {
+form {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.dropdown {
-  display: none;
-  background: #fff;
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+input[type="text"],
+input[type="date"] {
+  padding: 0.6rem;
+  font-size: 1rem;
   border: 1px solid #ccc;
-  padding: 10px;
-  position: absolute;
-  z-index: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border-radius: 6px;
 }
 
-.dropdown.show {
-  display: block;
-}
-
-.flight {
-  border: 1px solid #ddd;
-  margin: 10px 0;
-  padding: 10px;
-  background: #fff;
-  border-radius: 5px;
-}
-
-#results-container {
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
-.price-row {
+.radio-group {
   display: flex;
+  gap: 1rem;
   align-items: center;
-  gap: 10px;
-  margin-top: 5px;
 }
 
-.portal-link {
-  text-decoration: underline;
+button {
+  padding: 0.75rem;
+  font-size: 1rem;
+  background-color: #0057e7;
+  color: white;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  color: blue;
+  transition: background 0.2s ease;
 }
 
-.deal-note {
-  font-size: 0.9em;
-  color: #555;
+button:hover {
+  background-color: #003fba;
 }
 
-.modal {
-  position: fixed;
-  top: 10%;
-  left: 10%;
-  width: 80%;
-  max-height: 80%;
-  overflow-y: auto;
-  background: white;
-  padding: 20px;
-  border: 2px solid #444;
+#results {
+  margin-top: 2rem;
+}
+
+.flight-card {
+  background: #eef2f8;
   border-radius: 10px;
-  z-index: 9999;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.go-link {
-  cursor: pointer;
-  margin-left: 10px;
+.flight-card h3 {
+  margin-top: 0;
+  color: #0057e7;
 }
+
+.flight-card p {
+  margin: 0.3rem 0;
+}
+
