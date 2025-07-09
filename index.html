@@ -2,48 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal - Flight Finder</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal – Flight Offer Finder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f6f9fc;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    form {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .trip-type {
+      margin-bottom: 15px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #loading {
+      text-align: center;
+      font-style: italic;
+      color: #999;
+      margin-top: 20px;
+      display: none;
+    }
+
+    #results {
+      max-width: 800px;
+      margin: 30px auto;
+    }
+
+    .flight-result {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>SkyDeal</h1>
-    <p>Find the best flight deals instantly</p>
 
-    <form id="flight-form">
-      <label for="origin"><strong>From:</strong></label>
-      <input type="text" id="origin" name="origin" required placeholder="e.g. DEL" />
+  <h1>SkyDeal – Find the Best Flight Offers</h1>
 
-      <label for="destination"><strong>To:</strong></label>
-      <input type="text" id="destination" name="destination" required placeholder="e.g. BOM" />
+  <form id="search-form">
+    <label for="origin">From (IATA Code)</label>
+    <input type="text" id="origin" name="origin" placeholder="e.g. DEL" required />
 
-      <label for="departure-date"><strong>Departure Date:</strong></label>
-      <input type="date" id="departure-date" name="departure-date" required />
+    <label for="destination">To (IATA Code)</label>
+    <input type="text" id="destination" name="destination" placeholder="e.g. BOM" required />
 
-      <div id="return-date-group">
-        <label for="return-date"><strong>Return Date (optional):</strong></label>
-        <input type="date" id="return-date" name="return-date" />
-      </div>
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" required />
 
-      <div>
-        <input type="radio" id="one-way" name="tripType" value="one-way" checked />
-        <label for="one-way">One-way</label>
+    <label for="passengers">Passengers</label>
+    <input type="number" id="passengers" name="passengers" value="1" min="1" required />
 
-        <input type="radio" id="round-trip" name="tripType" value="round-trip" />
-        <label for="round-trip">Round-trip</label>
-      </div>
+    <label for="travelClass">Travel Class</label>
+    <select id="travelClass" name="travelClass">
+      <option value="ECONOMY">Economy</option>
+      <option value="BUSINESS">Business</option>
+      <option value="FIRST">First</option>
+    </select>
 
-      <button type="submit">Search Flights</button>
-    </form>
+    <div class="trip-type">
+      <label>Trip Type</label>
+      <input type="radio" id="oneway" name="tripType" value="oneway" checked />
+      <label for="oneway">One-way</label>
+      <input type="radio" id="round" name="tripType" value="round" />
+      <label for="round">Round Trip</label>
+    </div>
 
-    <div id="error" class="error"></div>
-    <div id="results"></div>
-  </div>
+    <button type="submit">Search Flights</button>
+  </form>
+
+  <div id="loading">Loading flights...</div>
+  <div id="results"></div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
