@@ -3,121 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal – Flight Offer Finder</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f6f9fc;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-
-    form {
-      max-width: 600px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-    }
-
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    .trip-type {
-      margin-bottom: 15px;
-    }
-
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #loading {
-      text-align: center;
-      font-style: italic;
-      color: #999;
-      margin-top: 20px;
-      display: none;
-    }
-
-    #results {
-      max-width: 800px;
-      margin: 30px auto;
-    }
-
-    .flight-result {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-  </style>
+  <title>SkyDeal – Flight Offers</title>
+  <link href="style.css" rel="stylesheet" />
 </head>
 <body>
+  <div class="container">
+    <h1>SkyDeal – Find the Best Flight Offers</h1>
+    <form id="search-form">
+      <label for="flyFrom">From (IATA Code)</label>
+      <input type="text" id="flyFrom" required />
 
-  <h1>SkyDeal – Find the Best Flight Offers</h1>
+      <label for="to">To (IATA Code)</label>
+      <input type="text" id="to" required />
 
-  <form id="search-form">
-    <label for="origin">From (IATA Code)</label>
-    <input type="text" id="origin" name="origin" placeholder="e.g. DEL" required />
+      <label for="date">Date</label>
+      <input type="date" id="date" required />
 
-    <label for="destination">To (IATA Code)</label>
-    <input type="text" id="destination" name="destination" placeholder="e.g. BOM" required />
+      <label for="passengers">Passengers</label>
+      <input type="number" id="passengers" min="1" value="1" required />
 
-    <label for="date">Date</label>
-    <input type="date" id="date" name="date" required />
+      <label for="travelClass">Travel Class</label>
+      <select id="travelClass">
+        <option value="economy">Economy</option>
+        <option value="business">Business</option>
+        <option value="first">First</option>
+        <option value="premium">Premium</option>
+      </select>
 
-    <label for="passengers">Passengers</label>
-    <input type="number" id="passengers" name="passengers" value="1" min="1" required />
-
-    <label for="travelClass">Travel Class</label>
-    <select id="travelClass" name="travelClass">
-      <option value="ECONOMY">Economy</option>
-      <option value="BUSINESS">Business</option>
-      <option value="FIRST">First</option>
-    </select>
-
-    <div class="trip-type">
       <label>Trip Type</label>
-      <input type="radio" id="oneway" name="tripType" value="oneway" checked />
-      <label for="oneway">One-way</label>
-      <input type="radio" id="round" name="tripType" value="round" />
-      <label for="round">Round Trip</label>
-    </div>
+      <label><input type="radio" name="tripType" id="oneWay" checked /> One-way</label>
+      <label><input type="radio" name="tripType" /> Round Trip</label>
 
-    <button type="submit">Search Flights</button>
-  </form>
+      <button type="submit">Search Flights</button>
+    </form>
 
-  <div id="loading">Loading flights...</div>
-  <div id="results"></div>
+    <div id="results"></div>
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
