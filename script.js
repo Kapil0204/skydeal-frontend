@@ -1,4 +1,4 @@
-const API_URL = "https://skydeal-backend-live.onrender.com";
+const API_URL = "https://skydeal-backend.onrender.com";
 
 // Toggle payment dropdown
 document.getElementById("payment-toggle").addEventListener("click", (e) => {
