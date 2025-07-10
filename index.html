@@ -10,37 +10,37 @@
   <div class="container">
     <h1>SkyDeal</h1>
 
-    <form>
-      <div>
+    <form id="searchForm">
+      <div class="form-group">
         <label for="from">From</label>
         <input type="text" id="from" required />
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="to">To</label>
         <input type="text" id="to" required />
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="dateFrom">Departure Date</label>
         <input type="date" id="dateFrom" required />
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="dateTo">Return Date</label>
         <input type="date" id="dateTo" />
       </div>
 
-      <div>
+      <div class="form-group checkbox-group">
         <label><input type="checkbox" id="oneWay" /> One Way</label>
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="passengers">Passengers</label>
         <input type="number" id="passengers" value="1" min="1" />
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="travelClass">Travel Class</label>
         <select id="travelClass">
           <option>Economy</option>
@@ -49,7 +49,7 @@
         </select>
       </div>
 
-      <div>
+      <div class="form-group">
         <label for="paymentOptions">Preferred Payment Methods</label>
         <select id="paymentOptions" multiple>
           <option>ICICI Bank</option>
