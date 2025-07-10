@@ -56,6 +56,135 @@ select {
 
 .payment-method-dropdown {
   position: relative;
+}body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f6f6;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px 25px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+form label {
+  font-weight: bold;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="date"],
+form select,
+#paymentMethodInput {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+form input[type="radio"],
+form input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+#paymentMethodInput {
+  cursor: pointer;
+  background-color: #fff;
+}
+
+#paymentOptions {
+  display: none;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 2px;
+  z-index: 10;
+  width: 100%;
+}
+
+#paymentOptions label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+button[type="submit"] {
+  grid-column: span 2;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.results {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.results-section {
+  flex: 1;
+  min-width: 45%;
+}
+
+.results-section h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.flight-card {
+  background-color: #eef6ff;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.flight-card p {
+  margin: 5px 0;
+  color: #333;
+}
+
+.info-btn {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 14px;
+  color: #007bff;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.info-btn:hover {
+  text-decoration: underline;
 }
 
 .payment-method-dropdown input {
