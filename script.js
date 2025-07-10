@@ -1,108 +1,92 @@
-const form = document.getElementById("flightForm");
-const outboundContainer = document.getElementById("outboundFlights");
-const returnContainer = document.getElementById("returnFlights");
-const returnDateDiv = document.getElementById("returnDateDiv");
-const oneWayRadio = document.getElementById("oneWay");
-const roundTripRadio = document.getElementById("roundTrip");
-const returnDateInput = document.getElementById("returnDate");
-const paymentDropdown = document.getElementById("paymentDropdown");
-const paymentOptions = document.getElementById("paymentOptions");
-const paymentMethodInput = document.getElementById("paymentMethodInput");
+document.addEventListener("DOMContentLoaded", () => {
+  const paymentOptions = document.getElementById("paymentOptions");
+  const paymentInput = document.getElementById("paymentMethodInput");
 
-const paymentMethods = ["ICICI Bank", "HDFC Bank", "SBI", "Axis Bank", "Kotak Bank"];
+  const paymentMethods = ["ICICI Bank", "HDFC Bank", "SBI", "Axis Bank", "Kotak Bank"];
 
-let selectedMethods = [];
+  // Populate checkboxes
+  paymentOptions.innerHTML = paymentMethods.map(method => `
+    <label><input type="checkbox" value="${method}"> ${method}</label>
+  `).join("");
 
-paymentMethods.forEach(method => {
-  const label = document.createElement("label");
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.value = method;
-  checkbox.addEventListener("change", () => {
-    if (checkbox.checked) {
-      selectedMethods.push(method);
-    } else {
-      selectedMethods = selectedMethods.filter(m => m !== method);
-    }
-    paymentMethodInput.value = selectedMethods.join(", ");
+  // Toggle dropdown
+  paymentInput.addEventListener("click", (e) => {
+    e.stopPropagation();
+    paymentOptions.style.display = paymentOptions.style.display === "block" ? "none" : "block";
   });
-  label.appendChild(checkbox);
-  label.append(` ${method}`);
-  paymentOptions.appendChild(label);
-});
 
-paymentDropdown.addEventListener("click", (e) => {
-  e.stopPropagation();
-  paymentOptions.style.display = "block";
-});
+  // Update input value based on selected checkboxes
+  paymentOptions.addEventListener("change", () => {
+    const selected = Array.from(paymentOptions.querySelectorAll("input:checked"))
+                          .map(cb => cb.value);
+    paymentInput.value = selected.join(", ");
+  });
 
-document.addEventListener("click", () => {
-  paymentOptions.style.display = "none";
-});
+  // Close dropdown when clicking outside
+  document.addEventListener("click", () => {
+    paymentOptions.style.display = "none";
+  });
 
-oneWayRadio.addEventListener("change", () => {
-  returnDateDiv.style.display = "none";
-});
+  // Submit handler for Search
+  document.getElementById("flightForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const flyFrom = document.getElementById("flyFrom").value;
+    const to = document.getElementById("to").value;
+    const dateFrom = document.getElementById("dateFrom").value;
+    const returnDate = document.getElementById("returnDate").value;
+    const adults = document.getElementById("adults").value;
+    const travelClass = document.getElementById("travelClass").value;
+    const selectedPayments = paymentInput.value.split(",").map(p => p.trim());
+    const isRoundTrip = document.getElementById("roundTrip").checked;
 
-roundTripRadio.addEventListener("change", () => {
-  returnDateDiv.style.display = "flex";
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  outboundContainer.innerHTML = "";
-  returnContainer.innerHTML = "";
-
-  const flyFrom = document.getElementById("flyFrom").value;
-  const to = document.getElementById("to").value;
-  const dateFrom = document.getElementById("dateFrom").value;
-  const dateTo = document.getElementById("returnDate").value;
-  const adults = document.getElementById("adults").value;
-  const travelClass = document.getElementById("travelClass").value;
-  const isRoundTrip = roundTripRadio.checked;
-
-  const selected = selectedMethods;
-
-  // Simulate response
-  const flights = [
-    { name: "IndiGo", dep: "08:30", arr: "10:45", basePrice: 5000 },
-    { name: "Air India", dep: "09:00", arr: "11:20", basePrice: 4900 },
-    { name: "SpiceJet", dep: "13:15", arr: "15:30", basePrice: 5200 }
-  ];
-
-  const getBestDeal = (basePrice) => {
-    const bank = selected[0] || "ICICI Bank";
-    const code = bank.includes("ICICI") ? "SKYICICI10" : "SKYDEAL10";
-    const discount = bank.includes("ICICI") ? 10 : 5;
-    const discountedPrice = Math.round(basePrice * (1 - discount / 100));
-    return {
-      portal: "MakeMyTrip",
-      discount,
-      code,
-      finalPrice: `₹${discountedPrice}`
+    const requestBody = {
+      flyFrom,
+      to,
+      dateFrom,
+      returnDate,
+      adults,
+      travelClass,
+      paymentMethods: selectedPayments,
+      roundTrip: isRoundTrip
     };
-  };
 
-  const createFlightCard = (flight) => {
-    const deal = getBestDeal(flight.basePrice);
-    const card = document.createElement("div");
-    card.className = "flight-card";
-    card.innerHTML = `
-      <p><strong>Flight:</strong> ${flight.name}</p>
-      <p><strong>Departure:</strong> ${flight.dep}</p>
-      <p><strong>Arrival:</strong> ${flight.arr}</p>
-      <p><strong>Best Deal:</strong> ${deal.portal} – ${deal.discount}% off (Use: ${deal.code}) ${deal.finalPrice}
-        <button class="info-button" onclick="alert('View on ${deal.portal}')">i</button>
-      </p>
-    `;
-    return card;
-  };
+    const response = await fetch("https://skydeal-backend.onrender.com/flights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody)
+    });
 
-  flights.forEach(flight => {
-    outboundContainer.appendChild(createFlightCard(flight));
-    if (isRoundTrip) {
-      returnContainer.appendChild(createFlightCard(flight));
-    }
+    const data = await response.json();
+    renderFlights(data);
   });
+
+  function renderFlights(data) {
+    const outboundContainer = document.getElementById("outboundFlights");
+    const returnContainer = document.getElementById("returnFlights");
+    outboundContainer.innerHTML = "";
+    returnContainer.innerHTML = "";
+
+    data.outboundFlights.forEach(flight => {
+      outboundContainer.innerHTML += renderFlightCard(flight);
+    });
+
+    if (data.returnFlights) {
+      data.returnFlights.forEach(flight => {
+        returnContainer.innerHTML += renderFlightCard(flight);
+      });
+    }
+  }
+
+  function renderFlightCard(flight) {
+    return `
+      <div class="flight-card">
+        <p><strong>Flight:</strong> ${flight.flightName}</p>
+        <p><strong>Departure:</strong> ${flight.departureTime}</p>
+        <p><strong>Arrival:</strong> ${flight.arrivalTime}</p>
+        <p><strong>Best Deal:</strong> ${flight.bestPortal} – ${flight.discount} (Use: ${flight.code}) ₹${flight.price}
+          <span class="info-btn" onclick="alert('${flight.bestPortal} prices: ...')">ℹ️</span>
+        </p>
+      </div>
+    `;
+  }
 });
