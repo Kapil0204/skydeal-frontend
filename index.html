@@ -9,64 +9,70 @@
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-    <form id="flightForm">
-      <div class="form">
-        <div>
-          <label for="flyFrom">From</label>
-          <input type="text" id="flyFrom" required />
+    <form id="searchForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="from">From</label>
+          <input type="text" id="from" required />
         </div>
-        <div>
+        <div class="form-group">
           <label for="to">To</label>
           <input type="text" id="to" required />
         </div>
-        <div>
-          <label for="dateFrom">Departure Date</label>
-          <input type="date" id="dateFrom" required />
+        <div class="form-group">
+          <label for="departureDate">Departure Date</label>
+          <input type="date" id="departureDate" required />
         </div>
-        <div id="returnDateDiv">
+        <div class="form-group">
           <label for="returnDate">Return Date</label>
           <input type="date" id="returnDate" />
         </div>
-        <div>
+        <div class="form-group trip-type">
           <label>Trip Type</label>
-          <div class="trip-type">
-            <label><input type="radio" name="tripType" id="oneWay" checked /> One Way</label>
-            <label><input type="radio" name="tripType" id="roundTrip" /> Round Trip</label>
-          </div>
+          <label><input type="radio" name="tripType" value="oneway" checked /> One Way</label>
+          <label><input type="radio" name="tripType" value="roundtrip" /> Round Trip</label>
         </div>
-        <div>
-          <label for="adults">Passengers</label>
-          <input type="number" id="adults" min="1" value="1" />
+        <div class="form-group">
+          <label for="passengers">Passengers</label>
+          <input type="number" id="passengers" value="1" min="1" />
         </div>
-        <div>
+        <div class="form-group">
           <label for="travelClass">Travel Class</label>
           <select id="travelClass">
-            <option>Economy</option>
-            <option>Business</option>
-            <option>First</option>
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
           </select>
         </div>
-        <div class="payment-method-dropdown">
-          <label for="paymentMethodInput">Preferred Payment Methods</label>
-          <input type="text" id="paymentMethodInput" readonly placeholder="Select Methods" />
-          <div class="payment-options" id="paymentOptions"></div>
+        <div class="form-group">
+          <label for="paymentMethod">Preferred Payment Methods</label>
+          <div class="custom-multiselect" id="paymentDropdown">
+            <div class="select-box" id="selectBox">Select Methods</div>
+            <div class="checkboxes hidden" id="checkboxes">
+              <label><input type="checkbox" value="ICICI Bank" /> ICICI Bank</label>
+              <label><input type="checkbox" value="HDFC Bank" /> HDFC Bank</label>
+              <label><input type="checkbox" value="SBI" /> SBI</label>
+              <label><input type="checkbox" value="Axis Bank" /> Axis Bank</label>
+              <label><input type="checkbox" value="Kotak Bank" /> Kotak Bank</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <button type="submit" id="searchBtn">Search</button>
         </div>
       </div>
-      <button type="submit">Search</button>
     </form>
 
     <div class="results">
-      <div class="results-section">
-        <h3>Outbound Flights</h3>
-        <div id="outboundFlights"></div>
+      <div class="flight-section">
+        <h2>Outbound Flights</h2>
+        <div id="outboundResults"></div>
       </div>
-      <div class="results-section">
-        <h3>Return Flights</h3>
-        <div id="returnFlights"></div>
+      <div class="flight-section">
+        <h2>Return Flights</h2>
+        <div id="returnResults"></div>
       </div>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
