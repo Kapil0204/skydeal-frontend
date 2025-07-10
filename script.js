@@ -1,74 +1,80 @@
-const form = document.getElementById("searchForm");
-const outboundResults = document.getElementById("outboundResults");
-const returnResults = document.getElementById("returnResults");
+document.addEventListener("DOMContentLoaded", function () {
+  const tripTypeRadios = document.getElementsByName("tripType");
+  const returnDateInput = document.getElementById("returnDate");
+  const paymentSelect = document.getElementById("paymentMethods");
+  const dropdown = document.getElementById("paymentDropdown");
+  const checkboxes = dropdown.querySelectorAll("input[type=checkbox]");
+  const searchBtn = document.getElementById("searchBtn");
 
-const paymentDropdown = document.getElementById("paymentDropdown");
-const selectBox = document.getElementById("selectBox");
-const checkboxes = document.getElementById("checkboxes");
-
-selectBox.addEventListener("click", () => {
-  checkboxes.classList.toggle("hidden");
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const from = document.getElementById("from").value.trim();
-  const to = document.getElementById("to").value.trim();
-  const departureDate = document.getElementById("departureDate").value;
-  const returnDate = document.getElementById("returnDate").value;
-  const passengers = document.getElementById("passengers").value;
-  const travelClass = document.getElementById("travelClass").value;
-  const tripType = document.querySelector('input[name="tripType"]:checked').value;
-
-  const selectedMethods = Array.from(
-    checkboxes.querySelectorAll("input:checked")
-  ).map((input) => input.value);
-
-  const payload = {
-    from,
-    to,
-    departureDate,
-    returnDate,
-    passengers,
-    travelClass,
-    tripType,
-    paymentMethods: selectedMethods
-  };
-
-  const response = await fetch("https://skydeal-backend.onrender.com/simulated-flights", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+  // Toggle return date input visibility
+  tripTypeRadios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (document.getElementById("roundTrip").checked) {
+        returnDateInput.style.display = "block";
+      } else {
+        returnDateInput.style.display = "none";
+      }
+    });
   });
 
-  const data = await response.json();
-  renderResults(data);
-});
-
-function renderResults(data) {
-  outboundResults.innerHTML = "";
-  returnResults.innerHTML = "";
-
-  data.outbound.forEach((flight) => {
-    outboundResults.innerHTML += flightCard(flight);
+  // Toggle dropdown visibility
+  paymentSelect.addEventListener("click", function () {
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
   });
 
-  if (data.return && data.return.length > 0) {
-    data.return.forEach((flight) => {
-      returnResults.innerHTML += flightCard(flight);
+  // Update text input based on selected checkboxes
+  checkboxes.forEach(function (checkbox) {
+    checkbox.addEventListener("change", function () {
+      const selected = Array.from(checkboxes)
+        .filter(i => i.checked)
+        .map(i => i.value);
+      paymentSelect.value = selected.join(", ");
+    });
+  });
+
+  // Search handler
+  searchBtn.addEventListener("click", async function () {
+    const origin = document.getElementById("from").value;
+    const destination = document.getElementById("to").value;
+    const departureDate = document.getElementById("departureDate").value;
+    const returnDate = document.getElementById("returnDate").value;
+    const passengers = document.getElementById("passengers").value;
+    const travelClass = document.getElementById("travelClass").value;
+    const paymentMethods = Array.from(checkboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+
+    const isRoundTrip = document.getElementById("roundTrip").checked;
+
+    // Fetch outbound flights
+    try {
+      const response = await fetch("https://skydeal-backend.onrender.com/simulated-flights");
+      const data = await response.json();
+      displayFlights(data.outbound, "outboundResults", paymentMethods);
+      displayFlights(isRoundTrip ? data.return : [], "returnResults", paymentMethods);
+    } catch (error) {
+      console.error("Error fetching flight data:", error);
+    }
+  });
+
+  function displayFlights(flights, containerId, paymentMethods) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    flights.forEach(flight => {
+      const card = document.createElement("div");
+      card.className = "flight-card";
+      const bestOffer = flight.offers.find(o => paymentMethods.includes(o.method));
+      const offerText = bestOffer
+        ? `Best Deal: ${bestOffer.portal} – ${bestOffer.discount} (Use: ${bestOffer.code}) ₹${bestOffer.price}`
+        : "No matching deal for selected payment method.";
+
+      card.innerHTML = `
+        <p><strong>Flight:</strong> ${flight.name}</p>
+        <p><strong>Departure:</strong> ${flight.departure}</p>
+        <p><strong>Arrival:</strong> ${flight.arrival}</p>
+        <p><strong>${offerText}</strong></p>
+      `;
+      container.appendChild(card);
     });
   }
-}
-
-function flightCard(flight) {
-  return `
-    <div class="flight-card">
-      <p><strong>Flight:</strong> ${flight.name}</p>
-      <p><strong>Departure:</strong> ${flight.departureTime}</p>
-      <p><strong>Arrival:</strong> ${flight.arrivalTime}</p>
-      <p><strong>Best Deal:</strong> ${flight.bestDeal.portal} – ${flight.bestDeal.discount} (Use: ${flight.bestDeal.code}) ₹${flight.bestDeal.finalPrice}
-        <span class="info-icon" onclick="alert('Portal-wise price comparison popup (simulated)')">ℹ️</span>
-      </p>
-    </div>`;
-}
+});
