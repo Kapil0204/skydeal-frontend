@@ -1,24 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>SkyDeal</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal – Flight Offers</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>Flight Search</h2>
-  <form id="search-form">
-    From: <input id="flyFrom" value="DEL" required />
-    To: <input id="to" value="BOM" required />
-    Date: <input type="date" id="date" value="2025-07-12" required />
-    Passengers: <input id="passengers" type="number" value="1" min="1" required />
-    Class:
-    <select id="travelClass">
-      <option value="M">Economy</option>
-      <option value="C">Business</option>
-    </select>
-    <label><input type="checkbox" id="oneWay" checked /> One Way</label>
-    <button type="submit">Search</button>
-  </form>
-  <div id="results"></div>
+  <div class="container">
+    <h1>SkyDeal – Find the Best Flight Offers</h1>
+    <form>
+      <label>From (IATA Code)</label>
+      <input type="text" id="from" required placeholder="e.g. BOM" />
+
+      <label>To (IATA Code)</label>
+      <input type="text" id="to" required placeholder="e.g. DEL" />
+
+      <label>Departure Date</label>
+      <input type="date" id="departureDate" required />
+
+      <label>Return Date</label>
+      <input type="date" id="returnDate" />
+
+      <label>Passengers</label>
+      <input type="number" id="passengers" value="1" min="1" />
+
+      <label>Travel Class</label>
+      <select id="travelClass">
+        <option value="Economy">Economy</option>
+        <option value="Business">Business</option>
+      </select>
+
+      <label>Trip Type</label>
+      <div class="trip-type">
+        <label><input type="radio" name="tripType" value="oneway" checked /> One-way</label>
+        <label><input type="radio" name="tripType" value="roundtrip" /> Round Trip</label>
+      </div>
+
+      <label>Preferred Payment Method</label>
+      <input type="text" id="paymentMethod" placeholder="e.g. ICICI Credit Card" />
+
+      <button type="submit">Search Flights</button>
+    </form>
+
+    <div id="results"></div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Portal-wise Price Comparison</h3>
+      <div id="modal-body"></div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
