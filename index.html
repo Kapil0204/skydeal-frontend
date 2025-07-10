@@ -2,69 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-    <form id="searchForm">
-      <div class="form-grid">
+    <form>
+      <div class="form-row">
         <div>
           <label for="from">From</label>
-          <input type="text" id="from" name="from" required />
+          <input type="text" id="from" required />
         </div>
         <div>
           <label for="to">To</label>
-          <input type="text" id="to" name="to" required />
+          <input type="text" id="to" required />
         </div>
+      </div>
+      <div class="form-row">
         <div>
           <label for="date">Departure Date</label>
-          <input type="date" id="date" name="date" required />
+          <input type="date" id="date" required />
         </div>
         <div>
           <label for="returnDate">Return Date</label>
-          <input type="date" id="returnDate" name="returnDate" />
+          <input type="date" id="returnDate" />
         </div>
-        <div class="checkbox-group">
-          <label><input type="checkbox" id="roundTrip" /> One Way</label>
-        </div>
+      </div>
+      <div class="form-row trip-type">
+        <label><input type="radio" name="tripType" value="oneway" checked /> One Way</label>
+        <label><input type="radio" name="tripType" value="roundtrip" /> Round Trip</label>
+      </div>
+      <div class="form-row">
         <div>
           <label for="passengers">Passengers</label>
-          <input type="number" id="passengers" name="passengers" min="1" value="1" required />
+          <input type="number" id="passengers" value="1" min="1" required />
         </div>
         <div>
           <label for="travelClass">Travel Class</label>
           <select id="travelClass">
-            <option value="Economy">Economy</option>
-            <option value="Business">Business</option>
+            <option value="economy">Economy</option>
+            <option value="business">Business</option>
           </select>
         </div>
-        <div class="multiselect-wrapper">
+      </div>
+      <div class="form-row">
+        <div>
           <label for="paymentMethod">Preferred Payment Methods</label>
-          <div id="dropdownButton">Select Methods</div>
-          <div id="dropdownOptions" class="hidden">
-            <label><input type="checkbox" value="ICICI Bank" /> ICICI Bank</label>
-            <label><input type="checkbox" value="HDFC Bank" /> HDFC Bank</label>
-            <label><input type="checkbox" value="SBI" /> SBI</label>
-            <label><input type="checkbox" value="Axis Bank" /> Axis Bank</label>
-            <label><input type="checkbox" value="Kotak Bank" /> Kotak Bank</label>
-          </div>
+          <select id="paymentMethod" multiple>
+            <option value="ICICI Bank">ICICI Bank</option>
+            <option value="HDFC Bank">HDFC Bank</option>
+            <option value="SBI">SBI</option>
+            <option value="Axis Bank">Axis Bank</option>
+            <option value="Kotak Bank">Kotak Bank</option>
+          </select>
         </div>
       </div>
-      <button type="submit" id="searchBtn">Search</button>
+      <div class="form-row">
+        <button type="submit">Search</button>
+      </div>
     </form>
 
-    <div class="results">
-      <div>
-        <h2>Outbound Flights</h2>
-        <div id="outboundResults" class="flight-grid"></div>
-      </div>
-      <div>
-        <h2>Return Flights</h2>
-        <div id="returnResults" class="flight-grid"></div>
-      </div>
+    <div id="results">
+      <h2>Outbound Flights</h2>
+      <div id="outbound"></div>
+      <h2>Return Flights</h2>
+      <div id="return"></div>
     </div>
   </div>
 
