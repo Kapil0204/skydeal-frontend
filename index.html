@@ -2,60 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
     <form id="searchForm">
-      <div class="form-group">
-        <label for="from">From</label>
-        <input type="text" id="from" required />
-
-        <label for="to">To</label>
-        <input type="text" id="to" required />
-
-        <label for="date">Departure Date</label>
-        <input type="date" id="date" required />
-
-        <label for="returnDate">Return Date</label>
-        <input type="date" id="returnDate" />
-
-        <label for="oneWay">One Way</label>
-        <input type="checkbox" id="oneWay" />
+      <div class="form-grid">
+        <div>
+          <label for="from">From</label>
+          <input type="text" id="from" name="from" required />
+        </div>
+        <div>
+          <label for="to">To</label>
+          <input type="text" id="to" name="to" required />
+        </div>
+        <div>
+          <label for="date">Departure Date</label>
+          <input type="date" id="date" name="date" required />
+        </div>
+        <div>
+          <label for="returnDate">Return Date</label>
+          <input type="date" id="returnDate" name="returnDate" />
+        </div>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="roundTrip" /> One Way</label>
+        </div>
+        <div>
+          <label for="passengers">Passengers</label>
+          <input type="number" id="passengers" name="passengers" min="1" value="1" required />
+        </div>
+        <div>
+          <label for="travelClass">Travel Class</label>
+          <select id="travelClass">
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
+          </select>
+        </div>
+        <div class="multiselect-wrapper">
+          <label for="paymentMethod">Preferred Payment Methods</label>
+          <div id="dropdownButton">Select Methods</div>
+          <div id="dropdownOptions" class="hidden">
+            <label><input type="checkbox" value="ICICI Bank" /> ICICI Bank</label>
+            <label><input type="checkbox" value="HDFC Bank" /> HDFC Bank</label>
+            <label><input type="checkbox" value="SBI" /> SBI</label>
+            <label><input type="checkbox" value="Axis Bank" /> Axis Bank</label>
+            <label><input type="checkbox" value="Kotak Bank" /> Kotak Bank</label>
+          </div>
+        </div>
       </div>
-
-      <div class="form-group">
-        <label for="passengers">Passengers</label>
-        <input type="number" id="passengers" value="1" required />
-
-        <label for="travelClass">Travel Class</label>
-        <select id="travelClass">
-          <option value="Economy">Economy</option>
-          <option value="Business">Business</option>
-          <option value="First">First</option>
-        </select>
-
-        <label for="paymentOptions">Preferred Payment Methods</label>
-        <select id="paymentOptions" multiple>
-          <option value="ICICI Bank">ICICI Bank</option>
-          <option value="HDFC Bank">HDFC Bank</option>
-          <option value="SBI">SBI</option>
-          <option value="Axis Bank">Axis Bank</option>
-          <option value="Kotak Bank">Kotak Bank</option>
-        </select>
-
-        <button type="submit">Search</button>
-      </div>
+      <button type="submit" id="searchBtn">Search</button>
     </form>
 
-    <h2>Outbound Flights</h2>
-    <div class="flights" id="outbound"></div>
-
-    <h2>Return Flights</h2>
-    <div class="flights" id="return"></div>
+    <div class="results">
+      <div>
+        <h2>Outbound Flights</h2>
+        <div id="outboundResults" class="flight-grid"></div>
+      </div>
+      <div>
+        <h2>Return Flights</h2>
+        <div id="returnResults" class="flight-grid"></div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
