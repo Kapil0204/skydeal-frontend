@@ -1,115 +1,102 @@
-// script.js
-
-document.getElementById("flight-form").addEventListener("submit", async function (e) {
+document.getElementById('searchForm').addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const origin = document.getElementById("from").value;
-  const destination = document.getElementById("to").value;
-  const departDate = document.getElementById("departDate").value;
-  const returnDate = document.getElementById("returnDate").value;
-  const isOneWay = document.getElementById("oneWay").checked;
-  const passengers = document.getElementById("passengers").value;
-  const travelClass = document.getElementById("travelClass").value;
+  const flyFrom = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const date = document.getElementById('date').value;
+  const returnDate = document.getElementById('returnDate').value;
+  const passengers = document.getElementById('passengers').value;
+  const travelClass = document.getElementById('travelClass').value;
+  const oneWay = document.getElementById('oneWay').checked;
+  const paymentOptions = Array.from(document.getElementById('paymentMethod').selectedOptions).map(opt => opt.value);
 
-  const selectedPayments = Array.from(document.getElementById("paymentOptions").selectedOptions).map(
-    (opt) => opt.value
-  );
+  const resultsOutbound = document.getElementById('outboundFlights');
+  const resultsReturn = document.getElementById('returnFlights');
+  resultsOutbound.innerHTML = '';
+  resultsReturn.innerHTML = '';
 
-  const paymentMethod = selectedPayments.join(",");
+  const dummyFlights = [
+    { name: "IndiGo", dep: "08:30", arr: "10:45" },
+    { name: "Air India", dep: "09:00", arr: "11:20" },
+    { name: "SpiceJet", dep: "13:15", arr: "15:30" },
+    { name: "Vistara", dep: "18:00", arr: "20:15" }
+  ];
 
-  const outboundResults = document.getElementById("outbound-results");
-  const returnResults = document.getElementById("return-results");
-  outboundResults.innerHTML = "<p>Searching...</p>";
-  returnResults.innerHTML = "<p>Searching...</p>";
+  const portals = [
+    { name: "MakeMyTrip", offers: { ICICI: "10% off", HDFC: "8% off" } },
+    { name: "Goibibo", offers: { SBI: "₹500 off", Kotak: "7% off" } },
+    { name: "EaseMyTrip", offers: { HDFC: "₹300 off", Axis: "5% off" } }
+  ];
 
-  const fetchSimulatedFlights = async (direction) => {
-    const response = await fetch(
-      `https://skydeal-backend.onrender.com/simulated-flights?direction=${direction}`
-    );
-    return await response.json();
-  };
-
-  const simulatedOffers = await fetch("https://skydeal-backend.onrender.com/simulated-offers").then((res) =>
-    res.json()
-  );
-
-  const getBestOffer = (portalPrices) => {
-    let best = null;
-    portalPrices.forEach((p) => {
-      if (
-        selectedPayments.some((method) =>
-          p.offers?.some((offer) => offer.paymentMethod.toLowerCase() === method.toLowerCase())
-        )
-      ) {
-        if (!best || p.price < best.price) best = p;
+  function getBestDeal(paymentOptions) {
+    for (const portal of portals) {
+      for (const pay of paymentOptions) {
+        if (portal.offers[pay]) {
+          return {
+            portal: portal.name,
+            offer: portal.offers[pay],
+            code: "SKYDEAL10"
+          };
+        }
       }
-    });
-    return best;
-  };
+    }
+    return {
+      portal: "SkyDeal",
+      offer: "Standard Fare",
+      code: "N/A"
+    };
+  }
 
-  const displayFlights = (flights, containerId) => {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    flights.forEach((flight, idx) => {
-      const bestPortal = getBestOffer(flight.portalPrices);
-      const offerText = bestPortal
-        ? `${bestPortal.name}: ₹${bestPortal.price} \n${bestPortal.offers
-            .filter((o) =>
-              selectedPayments.includes(o.paymentMethod.toLowerCase())
-            )
-            .map((o) => `${o.paymentMethod.toUpperCase()}: ${o.discount}% off - Code: ${o.code}`)
-            .join("\n")}`
-        : "No offers";
+  function showFlights(sectionEl) {
+    dummyFlights.forEach((flight, idx) => {
+      const deal = getBestDeal(paymentOptions);
 
-      const el = document.createElement("div");
-      el.className = "flight-result";
-      el.innerHTML = `
-        <p><strong>${flight.name}</strong></p>
-        <p>${flight.from} → ${flight.to}</p>
-        <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
-        <p class="deal-highlight">Best Deal: ${offerText.split("\n")[0]}</p>
-        <button onclick="showPopup(${idx}, '${containerId}')">i</button>
-        <div id="popup-${containerId}-${idx}" class="popup" style="display:none">
-          <div class="popup-header">
-            <h3>${flight.name}</h3>
-            <span class="close-popup" onclick="closePopup('${containerId}-${idx}')">×</span>
-          </div>
-          <p>Compare Deals:</p>
-          <ul>
-            ${flight.portalPrices
-              .map(
-                (p) => `
-              <li>
-                <strong>${p.name}</strong>: ₹${p.price}<br/>
-                ${p.offers
-                  .map(
-                    (o) =>
-                      `${o.paymentMethod.toUpperCase()}: ${o.discount}% off - Code: ${o.code}`
-                  )
-                  .join("<br/>")}
-              </li>`
-              )
-              .join("")}
-          </ul>
-        </div>
+      const card = document.createElement('div');
+      card.className = 'flight-card';
+      card.innerHTML = `
+        <p><strong>Flight:</strong> ${flight.name}</p>
+        <p><strong>Departure:</strong> ${flight.dep}</p>
+        <p><strong>Arrival:</strong> ${flight.arr}</p>
+        <p><strong>Best Deal:</strong> ${deal.portal} - ${deal.offer} <span class="offer-code">(Use: ${deal.code})</span></p>
+        <button class="info-btn" data-index="${idx}">i</button>
       `;
-      container.appendChild(el);
+      sectionEl.appendChild(card);
     });
+  }
+
+  showFlights(resultsOutbound);
+  if (!oneWay) {
+    showFlights(resultsReturn);
+  }
+
+  // Modal logic
+  document.querySelectorAll('.info-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const modal = document.getElementById('portalModal');
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = '';
+
+      portals.forEach(portal => {
+        const li = document.createElement('li');
+        const offers = Object.entries(portal.offers)
+          .map(([bank, offer]) => `${bank}: ${offer}`)
+          .join(', ');
+        li.innerHTML = `<strong>${portal.name}</strong>: ${offers} <button onclick="alert('Go to ${portal.name}')">🔗</button>`;
+        modalContent.appendChild(li);
+      });
+
+      modal.style.display = 'block';
+    });
+  });
+
+  document.querySelector('.close').addEventListener('click', () => {
+    document.getElementById('portalModal').style.display = 'none';
+  });
+
+  window.onclick = function (event) {
+    const modal = document.getElementById('portalModal');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
   };
-
-  const [outboundFlights, returnFlights] = await Promise.all([
-    fetchSimulatedFlights("outbound"),
-    isOneWay ? Promise.resolve([]) : fetchSimulatedFlights("return"),
-  ]);
-
-  displayFlights(outboundFlights, "outbound-results");
-  if (!isOneWay) displayFlights(returnFlights, "return-results");
 });
-
-function showPopup(index, type) {
-  document.getElementById(`popup-${type}-${index}`).style.display = "block";
-}
-
-function closePopup(id) {
-  document.getElementById(`popup-${id}`).style.display = "none";
-}
