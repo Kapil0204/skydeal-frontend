@@ -1,144 +1,107 @@
 body {
   font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
   margin: 0;
   padding: 0;
-  background-color: #f7f7f7;
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 900px;
   margin: 40px auto;
   background: #fff;
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 25px;
   color: #333;
+  margin-bottom: 30px;
 }
 
 form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 20px;
+  align-items: center;
   margin-bottom: 30px;
 }
 
-input, select {
-  padding: 10px;
-  font-size: 14px;
+form label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input,
+select,
+button {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
   width: 100%;
   box-sizing: border-box;
 }
 
+input[type="checkbox"] {
+  width: auto;
+  transform: scale(1.2);
+}
+
 select[multiple] {
-  height: 120px;
+  height: 80px;
 }
 
-label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  display: block;
-}
-
-button {
-  grid-column: span 2;
-  padding: 12px;
+button[type="submit"] {
+  grid-column: span 4;
   background-color: #007bff;
   color: #fff;
-  border: none;
-  font-size: 16px;
-  border-radius: 5px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-button:hover {
+button[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-.flight-columns {
+.results-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 40px;
 }
 
-.flight-result {
-  background-color: #fafafa;
-  padding: 15px;
+.flight-card {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 0 4px rgba(0,0,0,0.08);
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.flight-card p {
+  margin: 5px 0;
+}
+
+h2 {
   margin-bottom: 15px;
 }
 
-.flight-result p {
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-strong {
-  color: #333;
-}
-
-.flight-section-title {
-  font-weight: bold;
-  font-size: 18px;
-  margin-top: 30px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  padding-top: 100px;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.4);
-}
-
-.modal-content {
-  background-color: #fff;
-  margin: auto;
-  padding: 25px;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 8px;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  color: #444;
-}
-
-.modal-content ul {
-  padding-left: 20px;
-}
-
-.modal-content li {
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
+.info-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
   cursor: pointer;
+  margin-left: 8px;
 }
 
+.info-button:hover {
+  background-color: #0056b3;
+}
