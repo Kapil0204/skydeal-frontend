@@ -1,56 +1,120 @@
-document.querySelector('form').addEventListener('submit', async function (e) {
+document.querySelector("form").addEventListener("submit", function (e) {
   e.preventDefault();
 
-  const flyFrom = document.querySelector('#from').value;
-  const to = document.querySelector('#to').value;
-  const date = document.querySelector('#date').value;
-  const passengers = document.querySelector('#passengers').value;
-  const travelClass = document.querySelector('#travelClass').value;
-  const isRoundTrip = document.querySelector('#roundTrip').checked;
-  const tripType = isRoundTrip ? 'false' : 'true';
+  const from = document.getElementById("from").value;
+  const to = document.getElementById("to").value;
+  const departureDate = document.getElementById("departureDate").value;
+  const returnDate = document.getElementById("returnDate").value;
+  const passengers = document.getElementById("passengers").value;
+  const travelClass = document.getElementById("travelClass").value;
+  const paymentMethod = document.getElementById("paymentMethod").value.toLowerCase();
+  const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
-  const query = `flyFrom=${flyFrom}&to=${to}&dateFrom=${date}&dateTo=${date}&adults=${passengers}&travelClass=${travelClass}&oneWay=${tripType}`;
+  const resultDiv = document.getElementById("results");
+  resultDiv.innerHTML = "";
 
-  try {
-    const response = await fetch(`https://skydeal-backend.onrender.com/kiwi?${query}`);
-    const data = await response.json();
+  fetch(`https://skydeal-backend.onrender.com/simulated-flights`)
+    .then(res => res.json())
+    .then(data => {
+      const outbound = data.outbound;
+      const returnFlights = data.return;
 
-    const resultDiv = document.querySelector('#results');
-    resultDiv.innerHTML = '';
-
-    if (!data || !data.Itineraries || !data.Itineraries.metadata || !data.Itineraries.metadata.carriers) {
-      resultDiv.textContent = 'No flights found. Please try different dates or cities.';
-      return;
-    }
-
-    // Build carrier ID to name map
-    const carrierMap = {};
-    for (const carrier of data.Itineraries.metadata.carriers) {
-      carrierMap[carrier.id] = carrier.name;
-    }
-
-    if (data.Itineraries.items.length === 0) {
-      resultDiv.textContent = 'No flights found.';
-      return;
-    }
-
-    // Display each flight result
-    data.Itineraries.items.forEach((item, index) => {
-      const carrierIds = item.legs[0].carriers;
-      const airlineNames = carrierIds.map(id => carrierMap[id] || id).join(', ');
-
-      const flightDiv = document.createElement('div');
-      flightDiv.className = 'flight-result';
-      flightDiv.innerHTML = `
-        <p><strong>Airline:</strong> ${airlineNames}</p>
-        <p><strong>Price:</strong> ₹${item.price.amount}</p>
-        <p><strong>Departure:</strong> ${item.legs[0].departure}</p>
-        <p><strong>Arrival:</strong> ${item.legs[0].arrival}</p>
-      `;
-      resultDiv.appendChild(flightDiv);
+      if (tripType === "oneway") {
+        renderFlights("Outbound Flights", outbound, paymentMethod, "outbound");
+      } else {
+        renderFlights("Outbound Flights", outbound, paymentMethod, "outbound");
+        renderFlights("Return Flights", returnFlights, paymentMethod, "return");
+      }
+    })
+    .catch(err => {
+      resultDiv.textContent = "Failed to fetch flight data.";
+      console.error(err);
     });
-  } catch (err) {
-    console.error('Error fetching:', err);
-    document.querySelector('#results').textContent = 'Failed to fetch flight data.';
+});
+
+function renderFlights(title, flights, paymentMethod, sectionId) {
+  const section = document.createElement("div");
+  section.className = "flight-section";
+
+  const heading = document.createElement("h2");
+  heading.textContent = title;
+  section.appendChild(heading);
+
+  const filter = document.createElement("div");
+  filter.className = "filters";
+  filter.innerHTML = `
+    <select onchange="filterFlights('${sectionId}', this.value, 'airline')">
+      <option value="">Filter by Airline</option>
+      ${[...new Set(flights.map(f => f.airline))].map(a => `<option value="${a}">${a}</option>`).join("")}
+    </select>
+    <select onchange="filterFlights('${sectionId}', this.value, 'time')">
+      <option value="">Filter by Time</option>
+      <option value="morning">Morning (00-12)</option>
+      <option value="afternoon">Afternoon (12-18)</option>
+      <option value="evening">Evening (18-24)</option>
+    </select>
+  `;
+  section.appendChild(filter);
+
+  flights.forEach((flight, index) => {
+    const bestPortal = Object.entries(flight.portals).find(([portal, offers]) =>
+      offers.payment.toLowerCase().includes(paymentMethod)
+    ) || Object.entries(flight.portals)[0];
+
+    const card = document.createElement("div");
+    card.className = "flight-card";
+    card.dataset.airline = flight.airline;
+    card.dataset.time = parseInt(flight.departure.split(":")[0]);
+
+    card.innerHTML = `
+      <p><strong>${flight.airline}</strong></p>
+      <p>${flight.departure} → ${flight.arrival}</p>
+      <p><strong>Best Deal:</strong> ${bestPortal[0]} - ₹${bestPortal[1].price}</p>
+      <button onclick="showModal(${JSON.stringify(flight.portals).replace(/"/g, '&quot;')})">i</button>
+    `;
+
+    section.appendChild(card);
+  });
+
+  document.getElementById("results").appendChild(section);
+}
+
+function filterFlights(sectionId, value, type) {
+  const section = document.querySelectorAll(`.flight-section`)[type === 'airline' ? 0 : 1] || document.querySelector('.flight-section');
+  const cards = section.querySelectorAll('.flight-card');
+
+  cards.forEach(card => {
+    let show = true;
+
+    if (type === 'airline' && value) {
+      show = card.dataset.airline === value;
+    }
+
+    if (type === 'time' && value) {
+      const hour = parseInt(card.dataset.time);
+      if (value === 'morning') show = hour < 12;
+      else if (value === 'afternoon') show = hour >= 12 && hour < 18;
+      else show = hour >= 18;
+    }
+
+    card.style.display = show ? "block" : "none";
+  });
+}
+
+function showModal(portalData) {
+  const modal = document.getElementById("modal");
+  const modalBody = document.getElementById("modal-body");
+  modalBody.innerHTML = "";
+
+  for (const [portal, offer] of Object.entries(portalData)) {
+    const p = document.createElement("p");
+    p.textContent = `${portal}: ₹${offer.price} (${offer.payment})`;
+    modalBody.appendChild(p);
   }
+
+  modal.classList.remove("hidden");
+}
+
+document.querySelector(".close").addEventListener("click", () => {
+  document.getElementById("modal").classList.add("hidden");
 });
