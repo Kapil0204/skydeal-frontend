@@ -2,55 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal – Flight Offers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyDeal - Flight Offer Finder</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>SkyDeal – Find the Best Flight Offers</h1>
-    <form>
-      <label>From (IATA Code)</label>
-      <input type="text" id="from" required placeholder="e.g. BOM" />
+    <h1>SkyDeal</h1>
+    <form id="flight-form">
+      <label for="from">From</label>
+      <input type="text" id="from" required />
 
-      <label>To (IATA Code)</label>
-      <input type="text" id="to" required placeholder="e.g. DEL" />
+      <label for="to">To</label>
+      <input type="text" id="to" required />
 
-      <label>Departure Date</label>
-      <input type="date" id="departureDate" required />
+      <label for="departure">Departure Date</label>
+      <input type="date" id="departure" required />
 
-      <label>Return Date</label>
-      <input type="date" id="returnDate" />
+      <label for="return">Return Date</label>
+      <input type="date" id="return" />
 
-      <label>Passengers</label>
-      <input type="number" id="passengers" value="1" min="1" />
+      <label>
+        <input type="checkbox" id="oneWay" /> One Way
+      </label>
 
-      <label>Travel Class</label>
+      <label for="passengers">Passengers</label>
+      <input type="number" id="passengers" min="1" value="1" required />
+
+      <label for="travelClass">Travel Class</label>
       <select id="travelClass">
-        <option value="Economy">Economy</option>
-        <option value="Business">Business</option>
+        <option value="M">Economy</option>
+        <option value="W">Premium Economy</option>
+        <option value="C">Business</option>
+        <option value="F">First</option>
       </select>
 
-      <label>Trip Type</label>
-      <div class="trip-type">
-        <label><input type="radio" name="tripType" value="oneway" checked /> One-way</label>
-        <label><input type="radio" name="tripType" value="roundtrip" /> Round Trip</label>
-      </div>
+      <label for="paymentMethod">Preferred Payment Methods</label>
+      <select id="paymentMethod" multiple>
+        <option value="ICICI">ICICI Bank</option>
+        <option value="HDFC">HDFC Bank</option>
+        <option value="SBI">SBI</option>
+        <option value="Axis">Axis Bank</option>
+        <option value="Kotak">Kotak Bank</option>
+      </select>
 
-      <label>Preferred Payment Method</label>
-      <input type="text" id="paymentMethod" placeholder="e.g. ICICI Credit Card" />
-
-      <button type="submit">Search Flights</button>
+      <button type="submit">Search</button>
     </form>
 
-    <div id="results"></div>
-  </div>
-
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h3>Portal-wise Price Comparison</h3>
-      <div id="modal-body"></div>
+    <div id="results" class="flight-columns">
+      <div class="outbound-column">
+        <h3>Outbound Flights</h3>
+      </div>
+      <div class="return-column">
+        <h3>Return Flights</h3>
+      </div>
     </div>
   </div>
 
