@@ -89,12 +89,36 @@ function renderResults(data) {
 }
 
 function createFlightCard(flight) {
+  const modalId = `modal-${Math.random().toString(36).substring(2, 9)}`;
   return `
     <div class="flight-card">
       <strong>Flight:</strong> ${flight.airline}<br />
       <strong>Departure:</strong> ${flight.departure}<br />
       <strong>Arrival:</strong> ${flight.arrival}<br />
       <strong>Best Deal:</strong> ${flight.bestDeal.portal} – ${flight.bestDeal.offer} (Use: ${flight.bestDeal.code}) ₹${flight.bestDeal.price}
+      <button class="info-btn" onclick="showModal('${modalId}')">i</button>
+
+      <div class="modal" id="${modalId}">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('${modalId}')">&times;</span>
+          <h4>Portal-wise Pricing</h4>
+          <ul>
+            <li>MakeMyTrip: ₹4900</li>
+            <li>Goibibo: ₹5100</li>
+            <li>Yatra: ₹5000</li>
+            <li>EaseMyTrip: ₹4800</li>
+            <li>Cleartrip: ₹4700</li>
+          </ul>
+        </div>
+      </div>
     </div>
   `;
 }
+function showModal(id) {
+  document.getElementById(id).style.display = "block";
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
