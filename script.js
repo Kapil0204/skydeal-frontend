@@ -1,52 +1,83 @@
-document.querySelector('#searchForm').addEventListener('submit', function (e) {
+const form = document.querySelector('form');
+const outboundResults = document.getElementById('outboundResults');
+const returnResults = document.getElementById('returnResults');
+
+form.addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const from = document.querySelector('#from').value;
-  const to = document.querySelector('#to').value;
-  const dateFrom = document.querySelector('#dateFrom').value;
-  const dateTo = document.querySelector('#dateTo').value;
-  const oneWay = document.querySelector('#oneWay').checked;
-  const passengers = document.querySelector('#passengers').value;
-  const travelClass = document.querySelector('#travelClass').value;
-  const paymentOptions = Array.from(document.querySelector('#paymentOptions').selectedOptions).map(opt => opt.value);
+  const from = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  const isOneWay = document.getElementById('oneWay').checked;
+  const passengers = document.getElementById('passengers').value;
+  const travelClass = document.getElementById('travelClass').value;
+  const paymentMethods = Array.from(document.getElementById('paymentMethods').selectedOptions).map(opt => opt.value);
 
-  // Simulated static data for now
+  // Simulated flight data
   const flights = [
     {
-      airline: 'IndiGo',
+      name: 'IndiGo',
       departure: '08:30',
       arrival: '10:45',
+      basePrice: 5000,
     },
     {
-      airline: 'Air India',
+      name: 'Air India',
       departure: '09:00',
       arrival: '11:20',
+      basePrice: 5500,
     },
     {
-      airline: 'SpiceJet',
+      name: 'SpiceJet',
       departure: '13:15',
       arrival: '15:30',
+      basePrice: 6000,
     }
   ];
 
-  const bestDeal = {
-    portal: 'EaseMyTrip',
-    discount: '5% off',
-    code: 'SKYDEAL10'
+  const offers = {
+    'ICICI Bank': { portal: 'EaseMyTrip', discount: 10, code: 'SKYICICI10' },
+    'HDFC Bank': { portal: 'Goibibo', discount: 8, code: 'SKYHDFC8' },
+    'SBI': { portal: 'MakeMyTrip', discount: 5, code: 'SKYSBI5' },
+    'Axis Bank': { portal: 'Cleartrip', discount: 6, code: 'SKYAXIS6' },
+    'Kotak Bank': { portal: 'EaseMyTrip', discount: 4, code: 'SKYKOTAK4' },
   };
 
-  const container = (flightsArray) => {
-    return flightsArray.map(flight => `
-      <div class="flight-result">
-        <p><strong>Flight:</strong> ${flight.airline}</p>
-        <p><strong>Departure:</strong> ${flight.departure}</p>
-        <p><strong>Arrival:</strong> ${flight.arrival}</p>
-        <p><strong>Best Deal:</strong> ${bestDeal.portal} – ${bestDeal.discount} (Use: ${bestDeal.code})
-          <button class="info-button" onclick="alert('Portal Comparison Coming Soon')">i</button>
-        </p>
-      </div>`).join('');
-  };
+  outboundResults.innerHTML = '';
+  returnResults.innerHTML = '';
 
-  document.querySelector('#outbound-flights').innerHTML = container(flights);
-  document.querySelector('#return-flights').innerHTML = oneWay ? '' : container(flights);
+  function createCard(flight) {
+    let bestOffer = null;
+    let lowestPrice = flight.basePrice;
+
+    for (const method of paymentMethods) {
+      if (offers[method]) {
+        const offer = offers[method];
+        const discounted = flight.basePrice * (1 - offer.discount / 100);
+        if (discounted < lowestPrice) {
+          lowestPrice = discounted;
+          bestOffer = offer;
+        }
+      }
+    }
+
+    const card = document.createElement('div');
+    card.className = 'flight-card';
+    card.innerHTML = `
+      <p><strong>Flight:</strong> ${flight.name}</p>
+      <p><strong>Departure:</strong> ${flight.departure}</p>
+      <p><strong>Arrival:</strong> ${flight.arrival}</p>
+      <p><strong>Best Deal:</strong> 
+        ${bestOffer ? `${bestOffer.portal} – ${bestOffer.discount}% off (Use: ${bestOffer.code}) – ₹${lowestPrice.toFixed(0)}` : 'No offer available'}
+        <button class="info-btn" title="Compare all portals">i</button>
+      </p>
+    `;
+    return card;
+  }
+
+  flights.forEach(flight => {
+    outboundResults.appendChild(createCard(flight));
+    if (!isOneWay) returnResults.appendChild(createCard(flight));
+  });
 });
