@@ -2,60 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal - Flight Offer Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal – Find the Best Flight Offers</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-    <form id="flight-form">
-      <label for="from">From</label>
-      <input type="text" id="from" required />
-
-      <label for="to">To</label>
-      <input type="text" id="to" required />
-
-      <label for="departure">Departure Date</label>
-      <input type="date" id="departure" required />
-
-      <label for="return">Return Date</label>
-      <input type="date" id="return" />
-
-      <label>
-        <input type="checkbox" id="oneWay" /> One Way
-      </label>
-
-      <label for="passengers">Passengers</label>
-      <input type="number" id="passengers" min="1" value="1" required />
-
-      <label for="travelClass">Travel Class</label>
-      <select id="travelClass">
-        <option value="M">Economy</option>
-        <option value="W">Premium Economy</option>
-        <option value="C">Business</option>
-        <option value="F">First</option>
-      </select>
-
-      <label for="paymentMethod">Preferred Payment Methods</label>
-      <select id="paymentMethod" multiple>
-        <option value="ICICI">ICICI Bank</option>
-        <option value="HDFC">HDFC Bank</option>
-        <option value="SBI">SBI</option>
-        <option value="Axis">Axis Bank</option>
-        <option value="Kotak">Kotak Bank</option>
-      </select>
-
+    <form id="searchForm">
+      <div>
+        <label for="from">From</label>
+        <input type="text" id="from" required />
+      </div>
+      <div>
+        <label for="to">To</label>
+        <input type="text" id="to" required />
+      </div>
+      <div>
+        <label for="date">Departure Date</label>
+        <input type="date" id="date" required />
+      </div>
+      <div>
+        <label for="returnDate">Return Date</label>
+        <input type="date" id="returnDate" />
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="oneWay" /> One Way
+        </label>
+      </div>
+      <div>
+        <label for="passengers">Passengers</label>
+        <input type="number" id="passengers" value="1" min="1" required />
+      </div>
+      <div>
+        <label for="travelClass">Travel Class</label>
+        <select id="travelClass">
+          <option value="Economy">Economy</option>
+          <option value="Business">Business</option>
+          <option value="First">First</option>
+        </select>
+      </div>
+      <div>
+        <label for="paymentMethod">Preferred Payment Methods</label>
+        <select id="paymentMethod" multiple>
+          <option value="ICICI">ICICI Bank</option>
+          <option value="HDFC">HDFC Bank</option>
+          <option value="SBI">SBI</option>
+          <option value="Axis">Axis Bank</option>
+          <option value="Kotak">Kotak Bank</option>
+        </select>
+      </div>
       <button type="submit">Search</button>
     </form>
 
-    <div id="results" class="flight-columns">
-      <div class="outbound-column">
-        <h3>Outbound Flights</h3>
-      </div>
-      <div class="return-column">
-        <h3>Return Flights</h3>
-      </div>
+    <div id="results">
+      <h2 class="flight-section-title">Outbound Flights</h2>
+      <div id="outboundFlights" class="flight-columns"></div>
+
+      <h2 class="flight-section-title">Return Flights</h2>
+      <div id="returnFlights" class="flight-columns"></div>
+    </div>
+  </div>
+
+  <!-- Portal price comparison modal -->
+  <div id="portalModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Price Comparison</h3>
+      <ul id="modalContent"></ul>
     </div>
   </div>
 
