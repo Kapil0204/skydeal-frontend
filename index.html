@@ -3,76 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal – Best Flight Offers</title>
+  <title>SkyDeal</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-
     <form id="searchForm">
       <div class="form-group">
         <label for="from">From</label>
         <input type="text" id="from" required />
-      </div>
 
-      <div class="form-group">
         <label for="to">To</label>
         <input type="text" id="to" required />
-      </div>
 
-      <div class="form-group">
-        <label for="dateFrom">Departure Date</label>
-        <input type="date" id="dateFrom" required />
-      </div>
+        <label for="date">Departure Date</label>
+        <input type="date" id="date" required />
 
-      <div class="form-group">
-        <label for="dateTo">Return Date</label>
-        <input type="date" id="dateTo" />
-      </div>
+        <label for="returnDate">Return Date</label>
+        <input type="date" id="returnDate" />
 
-      <div class="form-group checkbox-group">
-        <label><input type="checkbox" id="oneWay" /> One Way</label>
+        <label for="oneWay">One Way</label>
+        <input type="checkbox" id="oneWay" />
       </div>
 
       <div class="form-group">
         <label for="passengers">Passengers</label>
-        <input type="number" id="passengers" value="1" min="1" />
-      </div>
+        <input type="number" id="passengers" value="1" required />
 
-      <div class="form-group">
         <label for="travelClass">Travel Class</label>
         <select id="travelClass">
-          <option>Economy</option>
-          <option>Business</option>
-          <option>First</option>
+          <option value="Economy">Economy</option>
+          <option value="Business">Business</option>
+          <option value="First">First</option>
         </select>
-      </div>
 
-      <div class="form-group">
         <label for="paymentOptions">Preferred Payment Methods</label>
         <select id="paymentOptions" multiple>
-          <option>ICICI Bank</option>
-          <option>HDFC Bank</option>
-          <option>SBI</option>
-          <option>Axis Bank</option>
-          <option>Kotak Bank</option>
+          <option value="ICICI Bank">ICICI Bank</option>
+          <option value="HDFC Bank">HDFC Bank</option>
+          <option value="SBI">SBI</option>
+          <option value="Axis Bank">Axis Bank</option>
+          <option value="Kotak Bank">Kotak Bank</option>
         </select>
-      </div>
 
-      <button type="submit">Search</button>
+        <button type="submit">Search</button>
+      </div>
     </form>
 
-    <div class="results-section">
-      <div>
-        <h2>Outbound Flights</h2>
-        <div id="outbound-flights"></div>
-      </div>
-      <div>
-        <h2>Return Flights</h2>
-        <div id="return-flights"></div>
-      </div>
-    </div>
+    <h2>Outbound Flights</h2>
+    <div class="flights" id="outbound"></div>
+
+    <h2>Return Flights</h2>
+    <div class="flights" id="return"></div>
   </div>
 
   <script src="script.js"></script>
