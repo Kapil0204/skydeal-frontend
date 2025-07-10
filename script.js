@@ -1,102 +1,64 @@
-document.getElementById('searchForm').addEventListener('submit', function (e) {
+document.querySelector('form').addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const flyFrom = document.getElementById('from').value;
-  const to = document.getElementById('to').value;
-  const date = document.getElementById('date').value;
-  const returnDate = document.getElementById('returnDate').value;
-  const passengers = document.getElementById('passengers').value;
-  const travelClass = document.getElementById('travelClass').value;
-  const oneWay = document.getElementById('oneWay').checked;
-  const paymentOptions = Array.from(document.getElementById('paymentMethod').selectedOptions).map(opt => opt.value);
+  const from = document.querySelector('#from').value;
+  const to = document.querySelector('#to').value;
+  const departureDate = document.querySelector('#departure-date').value;
+  const returnDate = document.querySelector('#return-date').value;
+  const isOneWay = document.querySelector('#one-way').checked;
+  const passengers = document.querySelector('#passengers').value;
+  const travelClass = document.querySelector('#travel-class').value;
 
-  const resultsOutbound = document.getElementById('outboundFlights');
-  const resultsReturn = document.getElementById('returnFlights');
-  resultsOutbound.innerHTML = '';
-  resultsReturn.innerHTML = '';
+  const selectedOptions = Array.from(document.querySelector('#payment-methods').selectedOptions);
+  const selectedPayments = selectedOptions.map(option => option.value);
+
+  document.querySelector('#outbound-flights').innerHTML = '';
+  document.querySelector('#return-flights').innerHTML = '';
 
   const dummyFlights = [
-    { name: "IndiGo", dep: "08:30", arr: "10:45" },
-    { name: "Air India", dep: "09:00", arr: "11:20" },
-    { name: "SpiceJet", dep: "13:15", arr: "15:30" },
-    { name: "Vistara", dep: "18:00", arr: "20:15" }
+    { airline: 'IndiGo', departure: '08:30', arrival: '10:45' },
+    { airline: 'Air India', departure: '09:00', arrival: '11:20' },
+    { airline: 'SpiceJet', departure: '13:15', arrival: '15:30' },
+    { airline: 'Vistara', departure: '18:00', arrival: '20:15' },
   ];
 
   const portals = [
-    { name: "MakeMyTrip", offers: { ICICI: "10% off", HDFC: "8% off" } },
-    { name: "Goibibo", offers: { SBI: "₹500 off", Kotak: "7% off" } },
-    { name: "EaseMyTrip", offers: { HDFC: "₹300 off", Axis: "5% off" } }
+    { name: 'MakeMyTrip', discount: '10% off', code: 'SKYDEAL10', paymentMethod: 'ICICI Bank' },
+    { name: 'EaseMyTrip', discount: '5% off', code: 'SKYDEAL5', paymentMethod: 'HDFC Bank' },
+    { name: 'Goibibo', discount: '15% off', code: 'SKYGO15', paymentMethod: 'Axis Bank' },
+    { name: 'Cleartrip', discount: '7% off', code: 'SKYCLR7', paymentMethod: 'SBI' },
+    { name: 'Yatra', discount: '12% off', code: 'SKYYATRA12', paymentMethod: 'Kotak Bank' },
   ];
 
   function getBestDeal(paymentOptions) {
-    for (const portal of portals) {
-      for (const pay of paymentOptions) {
-        if (portal.offers[pay]) {
-          return {
-            portal: portal.name,
-            offer: portal.offers[pay],
-            code: "SKYDEAL10"
-          };
-        }
-      }
+    for (let method of paymentOptions) {
+      const deal = portals.find(p => p.paymentMethod === method);
+      if (deal) return deal;
     }
-    return {
-      portal: "SkyDeal",
-      offer: "Standard Fare",
-      code: "N/A"
-    };
+    return { name: 'EaseMyTrip', discount: '5% off', code: 'SKYDEAL10' };
   }
 
-  function showFlights(sectionEl) {
-    dummyFlights.forEach((flight, idx) => {
-      const deal = getBestDeal(paymentOptions);
-
-      const card = document.createElement('div');
-      card.className = 'flight-card';
-      card.innerHTML = `
-        <p><strong>Flight:</strong> ${flight.name}</p>
-        <p><strong>Departure:</strong> ${flight.dep}</p>
-        <p><strong>Arrival:</strong> ${flight.arr}</p>
-        <p><strong>Best Deal:</strong> ${deal.portal} - ${deal.offer} <span class="offer-code">(Use: ${deal.code})</span></p>
-        <button class="info-btn" data-index="${idx}">i</button>
-      `;
-      sectionEl.appendChild(card);
-    });
+  function createFlightCard(flight, bestDeal) {
+    const div = document.createElement('div');
+    div.className = 'flight-card';
+    div.innerHTML = `
+      <p><strong>Flight:</strong> ${flight.airline}</p>
+      <p><strong>Departure:</strong> ${flight.departure}</p>
+      <p><strong>Arrival:</strong> ${flight.arrival}</p>
+      <p><strong>Best Deal:</strong> ${bestDeal.name} - ${bestDeal.discount} (Use: ${bestDeal.code})
+        <button class="info-button" onclick="alert('Comparing prices on all portals...')">i</button></p>
+    `;
+    return div;
   }
 
-  showFlights(resultsOutbound);
-  if (!oneWay) {
-    showFlights(resultsReturn);
-  }
+  const outboundContainer = document.querySelector('#outbound-flights');
+  const returnContainer = document.querySelector('#return-flights');
 
-  // Modal logic
-  document.querySelectorAll('.info-btn').forEach(button => {
-    button.addEventListener('click', function () {
-      const modal = document.getElementById('portalModal');
-      const modalContent = document.getElementById('modalContent');
-      modalContent.innerHTML = '';
-
-      portals.forEach(portal => {
-        const li = document.createElement('li');
-        const offers = Object.entries(portal.offers)
-          .map(([bank, offer]) => `${bank}: ${offer}`)
-          .join(', ');
-        li.innerHTML = `<strong>${portal.name}</strong>: ${offers} <button onclick="alert('Go to ${portal.name}')">🔗</button>`;
-        modalContent.appendChild(li);
-      });
-
-      modal.style.display = 'block';
-    });
-  });
-
-  document.querySelector('.close').addEventListener('click', () => {
-    document.getElementById('portalModal').style.display = 'none';
-  });
-
-  window.onclick = function (event) {
-    const modal = document.getElementById('portalModal');
-    if (event.target === modal) {
-      modal.style.display = 'none';
+  dummyFlights.forEach(flight => {
+    const bestDeal = getBestDeal(selectedPayments);
+    outboundContainer.appendChild(createFlightCard(flight, bestDeal));
+    if (!isOneWay) {
+      returnContainer.appendChild(createFlightCard(flight, bestDeal));
     }
-  };
+  });
 });
