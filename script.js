@@ -1,4 +1,4 @@
-// Handle trip type radio toggle
+// Handle trip type toggle
 document.getElementById("oneWay").addEventListener("change", () => {
   document.getElementById("returnDate").disabled = true;
 });
@@ -6,7 +6,7 @@ document.getElementById("roundTrip").addEventListener("change", () => {
   document.getElementById("returnDate").disabled = false;
 });
 
-// Payment method dropdown logic
+// Payment method dropdown
 const paymentInput = document.getElementById("paymentMethods");
 const paymentDropdown = document.getElementById("paymentDropdown");
 
@@ -15,7 +15,6 @@ paymentInput.addEventListener("click", () => {
     paymentDropdown.style.display === "block" ? "none" : "block";
 });
 
-// Update input with selected methods
 paymentDropdown.addEventListener("change", () => {
   const selected = Array.from(
     paymentDropdown.querySelectorAll("input:checked")
@@ -23,14 +22,14 @@ paymentDropdown.addEventListener("change", () => {
   paymentInput.value = selected.join(", ");
 });
 
-// Hide dropdown if clicked outside
+// Hide dropdown on outside click
 document.addEventListener("click", (e) => {
   if (!paymentDropdown.contains(e.target) && e.target !== paymentInput) {
     paymentDropdown.style.display = "none";
   }
 });
 
-// Handle Search
+// Search button logic
 document.getElementById("searchBtn").addEventListener("click", () => {
   const from = document.getElementById("from").value;
   const to = document.getElementById("to").value;
@@ -95,7 +94,8 @@ function createFlightCard(flight) {
       <strong>Flight:</strong> ${flight.airline}<br />
       <strong>Departure:</strong> ${flight.departure}<br />
       <strong>Arrival:</strong> ${flight.arrival}<br />
-      <strong>Best Deal:</strong> ${flight.bestDeal.portal} – ${flight.bestDeal.offer} (Use: ${flight.bestDeal.code}) ₹${flight.bestDeal.price}
+      <strong>Best Deal:</strong> ${flight.bestDeal.portal} – ${flight.bestDeal.offer}
+      (Use: ${flight.bestDeal.code}) ₹${flight.bestDeal.price}
       <button class="info-btn" onclick="showModal('${modalId}')">i</button>
 
       <div class="modal" id="${modalId}">
@@ -114,6 +114,7 @@ function createFlightCard(flight) {
     </div>
   `;
 }
+
 function showModal(id) {
   document.getElementById(id).style.display = "block";
 }
@@ -121,4 +122,3 @@ function showModal(id) {
 function closeModal(id) {
   document.getElementById(id).style.display = "none";
 }
-
