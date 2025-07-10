@@ -1,135 +1,144 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f4f4f4;
   margin: 0;
   padding: 0;
+  background-color: #f7f7f7;
 }
 
 .container {
   max-width: 1100px;
-  margin: auto;
-  padding: 20px;
+  margin: 40px auto;
   background: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 h1 {
   text-align: center;
+  margin-bottom: 25px;
   color: #333;
 }
 
 form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
-form input,
-form select,
-form button {
+input, select {
   padding: 10px;
-  font-size: 16px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-form button {
+select[multiple] {
+  height: 120px;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+button {
+  grid-column: span 2;
+  padding: 12px;
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border: none;
+  font-size: 16px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-form button:hover {
+button:hover {
   background-color: #0056b3;
 }
 
-.results-container {
-  display: flex;
-  flex-wrap: wrap;
+.flight-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
 }
 
-.flight-column {
-  flex: 1;
-  min-width: 300px;
-}
-
-.flight-section-header {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #222;
-  border-bottom: 2px solid #ccc;
-  padding-bottom: 5px;
-}
-
-.filters {
+.flight-result {
+  background-color: #fafafa;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.08);
   margin-bottom: 15px;
 }
 
-.flight-result {
-  background: #f9f9f9;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-left: 4px solid #007bff;
-}
-
 .flight-result p {
-  margin: 5px 0;
-}
-
-.flight-result .info-btn {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 2px 6px;
-  background: #007bff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
+  margin: 8px 0;
   font-size: 14px;
 }
 
-.flight-result .info-btn:hover {
-  background: #0056b3;
+strong {
+  color: #333;
 }
 
-.popup {
+.flight-section-title {
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.modal {
   display: none;
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border: 1px solid #ccc;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 999;
+  padding-top: 100px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: auto;
+  padding: 25px;
+  border: 1px solid #888;
   width: 90%;
-  max-width: 400px;
+  max-width: 500px;
+  border-radius: 8px;
 }
 
-.popup h3 {
+.modal-content h3 {
   margin-top: 0;
-  margin-bottom: 10px;
+  color: #444;
 }
 
-.popup ul {
+.modal-content ul {
   padding-left: 20px;
-  margin: 0;
 }
 
-.popup ul li {
-  margin-bottom: 5px;
+.modal-content li {
+  margin: 5px 0;
+  font-size: 14px;
 }
 
-.popup .close-btn {
-  display: inline-block;
-  margin-top: 10px;
-  background: #ccc;
-  padding: 6px 10px;
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.popup .close-btn:hover {
-  background: #aaa;
-}
