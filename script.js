@@ -1,100 +1,83 @@
-// script.js — Final Version for SkyDeal
+document.addEventListener('DOMContentLoaded', () => {
+  const searchBtn = document.getElementById('searchBtn');
+  const resultsContainer = document.getElementById('results');
 
-// Wait for DOM to be ready
-document.addEventListener("DOMContentLoaded", () => {
-  const searchForm = document.getElementById("flightSearchForm");
-  const resultsContainer = document.getElementById("resultsContainer");
+  if (!searchBtn || !resultsContainer) {
+    console.error('Required elements not found in DOM');
+    return;
+  }
 
-  if (!searchForm) return;
+  searchBtn.addEventListener('click', async () => {
+    const from = document.getElementById('fromInput').value.trim();
+    const to = document.getElementById('toInput').value.trim();
+    const departureDate = document.getElementById('departureDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+    const passengers = document.getElementById('passengers').value || 1;
+    const travelClass = document.getElementById('travelClass').value;
+    const tripType = document.getElementById('tripType').value;
 
-  searchForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    if (!from || !to || !departureDate || !travelClass) {
+      alert("Please fill in all required fields.");
+      return;
+    }
 
-    // Get form values
-    const from = document.getElementById("fromInput").value;
-    const to = document.getElementById("toInput").value;
-    const departureDate = document.getElementById("departureDate").value;
-    const returnDate = document.getElementById("returnDate").value;
-    const passengers = document.getElementById("passengers").value;
-    const travelClass = document.getElementById("travelClass").value;
-    const tripType = document.getElementById("tripType").value;
-
-    // Clear previous results
-    resultsContainer.innerHTML = "<h3>Loading flights...</h3>";
+    const payload = {
+      from,
+      to,
+      departureDate,
+      returnDate: tripType === 'round-trip' ? returnDate : '',
+      passengers: parseInt(passengers),
+      travelClass: travelClass.toLowerCase(),
+      tripType
+    };
 
     try {
-      const res = await fetch("https://skydeal-backend.onrender.com/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to,
-          departureDate,
-          returnDate,
-          passengers,
-          travelClass: travelClass.toLowerCase(), // 🔥 FIXED
-          tripType,
-        }),
+      const res = await fetch('https://skydeal-backend.onrender.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
-
       if (!data || !data.flights || data.flights.length === 0) {
-        resultsContainer.innerHTML = "<p>No flights found.</p>";
+        resultsContainer.innerHTML = `<p>No flights found.</p>`;
         return;
       }
 
-      renderFlightResults(data.flights);
-    } catch (error) {
-      console.error("Search error:", error);
-      resultsContainer.innerHTML = "<p>Something went wrong. Try again.</p>";
+      displayResults(data.flights);
+    } catch (err) {
+      console.error('Search failed:', err);
+      alert('Failed to fetch flights. Please try again.');
     }
   });
+
+  function displayResults(flights) {
+    resultsContainer.innerHTML = `<h3>Outbound Flights</h3>`;
+
+    flights.forEach((flight, index) => {
+      const card = document.createElement('div');
+      card.className = 'flight-card';
+      card.innerHTML = `
+        <p><strong>${flight.airline}</strong> (${flight.flightNumber})</p>
+        <p>${flight.departureTime} → ${flight.arrivalTime}</p>
+        <p>Price: ₹${flight.price}</p>
+        <button class="price-btn" data-price="${flight.price}" data-index="${index}">View Portal Prices</button>
+      `;
+      resultsContainer.appendChild(card);
+    });
+
+    // Attach modal trigger
+    document.querySelectorAll('.price-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const basePrice = parseFloat(e.target.dataset.price);
+        const portals = ['MakeMyTrip', 'Goibibo', 'EaseMyTrip', 'Yatra', 'Cleartrip'];
+        const markup = 100;
+        let popup = `Showing prices with +₹${markup} markup:\n\n`;
+        portals.forEach(p => {
+          popup += `${p}: ₹${basePrice + markup}\n`;
+        });
+        alert(popup);
+      });
+    });
+  }
 });
-
-function renderFlightResults(flights) {
-  const resultsContainer = document.getElementById("resultsContainer");
-  resultsContainer.innerHTML = "<h3>Available Flights</h3>";
-
-  flights.forEach((flight, index) => {
-    const card = document.createElement("div");
-    card.className = "flight-card";
-    card.innerHTML = `
-      <p><strong>${flight.airline}</strong> - ${flight.flightNumber}</p>
-      <p>${flight.departure} → ${flight.arrival}</p>
-      <p>Departure: ${flight.departureTime}, Arrival: ${flight.arrivalTime}</p>
-      <p>Price: ₹${flight.price}</p>
-      <button onclick="showModal(${flight.price}, '${flight.airline}', '${flight.flightNumber}')">View Prices</button>
-    `;
-    resultsContainer.appendChild(card);
-  });
-}
-
-function showModal(basePrice, airline, flightNumber) {
-  const modal = document.createElement("div");
-  modal.className = "modal";
-
-  const portals = ["MakeMyTrip", "Goibibo", "Yatra", "EaseMyTrip", "Cleartrip"];
-
-  let html = `
-    <div class="modal-content">
-      <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-      <h3>${airline} - ${flightNumber}</h3>
-      <p>Simulated Prices from Portals:</p>
-      <ul>
-        ${portals
-          .map(
-            (portal) => `
-            <li><strong>${portal}:</strong> ₹${basePrice + 100}</li>
-          `
-          )
-          .join("")}
-      </ul>
-    </div>
-  `;
-
-  modal.innerHTML = html;
-  document.body.appendChild(modal);
-}
