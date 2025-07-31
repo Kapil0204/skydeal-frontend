@@ -1,113 +1,94 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f4f8;
+  font-family: Arial, sans-serif;
+  background: #f0f4f8;
   margin: 0;
   padding: 0;
 }
 
 .container {
   max-width: 600px;
-  margin: 100px auto;
-  padding: 2rem;
+  margin: 40px auto;
+  padding: 20px 30px;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 h1 {
-  margin-bottom: 2rem;
-  color: #1f2937;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #1e2d40;
+}
+
+h2 {
+  margin-top: 40px;
+  color: #1e2d40;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group.inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 input[type="text"],
 input[type="date"],
+input[type="number"],
 select {
-  width: 48%;
-  padding: 10px;
-  margin: 5px 1%;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  width: 100%;
+  padding: 8px;
   font-size: 1rem;
-}
-
-#return-date {
-  display: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 button {
+  display: block;
   width: 100%;
   padding: 12px;
-  background-color: #337eff;
+  background: #2979ff;
   color: white;
   border: none;
-  border-radius: 5px;
-  margin-top: 15px;
+  border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #235dcc;
-}
-
-label {
-  margin: 0 10px;
-  font-weight: 500;
-}
-
-#results {
-  margin-top: 2rem;
-  text-align: left;
+  background: #1565c0;
 }
 
 .flight-card {
-  background: #f1f5ff;
-  padding: 1rem;
+  background: #eef3fc;
+  margin: 12px 0;
+  padding: 16px;
   border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #d1e0ff;
+  border: 1px solid #ccdff2;
 }
 
-.flight-card button {
-  margin-top: 0.5rem;
-  background-color: #28a745;
+.flight-card h3 {
+  margin: 0 0 6px;
 }
 
-.flight-card button:hover {
-  background-color: #218838;
+.flight-card p {
+  margin: 4px 0;
+  color: #333;
 }
 
-.popup {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+.compare-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
-.popup-inner {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  min-width: 300px;
-  text-align: left;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-}
-
-.popup-inner h3 {
-  margin-top: 0;
-}
-
-.popup-inner button {
-  margin-top: 1rem;
-  width: 100%;
-  background-color: #ff4d4d;
-}
-
-.popup-inner button:hover {
-  background-color: #cc0000;
+.compare-btn:hover {
+  background: #388e3c;
 }
