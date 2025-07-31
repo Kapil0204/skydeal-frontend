@@ -1,94 +1,94 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f0f4f8;
+  background: #f2f7fc;
   margin: 0;
-  padding: 0;
+  padding: 20px;
 }
 
 .container {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 20px 30px;
+  max-width: 700px;
+  margin: auto;
   background: white;
+  padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 24px;
-  color: #1e2d40;
-}
-
-h2 {
-  margin-top: 40px;
-  color: #1e2d40;
+  color: #1e3a8a;
+  margin-bottom: 20px;
 }
 
 .form-group {
-  margin-bottom: 15px;
-}
-
-.form-group.inline {
   display: flex;
-  gap: 10px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
 input[type="text"],
 input[type="date"],
 input[type="number"],
 select {
-  width: 100%;
-  padding: 8px;
-  font-size: 1rem;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
+  font-size: 16px;
 }
 
 button {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  background: #2979ff;
+  background-color: #3b82f6;
   color: white;
+  padding: 12px;
+  font-size: 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 button:hover {
-  background: #1565c0;
+  background-color: #2563eb;
+}
+
+.trip-type {
+  display: flex;
+  gap: 10px;
+}
+
+#results {
+  margin-top: 30px;
+}
+
+h2 {
+  color: #1e293b;
+  margin-top: 24px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
 }
 
 .flight-card {
-  background: #eef3fc;
-  margin: 12px 0;
-  padding: 16px;
+  background: #f1f5f9;
+  padding: 14px;
+  margin-top: 10px;
   border-radius: 8px;
-  border: 1px solid #ccdff2;
+  box-shadow: 0 0 5px rgba(0,0,0,0.06);
 }
 
-.flight-card h3 {
-  margin: 0 0 6px;
-}
-
-.flight-card p {
-  margin: 4px 0;
-  color: #333;
+.flight-card strong {
+  display: block;
+  margin-bottom: 4px;
 }
 
 .compare-btn {
-  background: #4caf50;
-  color: white;
+  background-color: #10b981;
   border: none;
-  padding: 10px;
+  color: white;
+  padding: 10px 16px;
+  margin-top: 8px;
   border-radius: 6px;
-  margin-top: 10px;
   cursor: pointer;
 }
 
 .compare-btn:hover {
-  background: #388e3c;
+  background-color: #059669;
 }
