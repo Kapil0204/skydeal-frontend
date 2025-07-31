@@ -77,3 +77,4 @@ function displayFlights(flights, type) {
     container.appendChild(card);
   });
 }
+
