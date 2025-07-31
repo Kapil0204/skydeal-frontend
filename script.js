@@ -1,77 +1,83 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const searchBtn = document.getElementById("searchBtn");
-  const fromInput = document.getElementById("fromInput");
-  const toInput = document.getElementById("toInput");
-  const departureDate = document.getElementById("departureDate");
-  const returnDate = document.getElementById("returnDate");
-  const travelClass = document.getElementById("travelClass");
-  const passengers = document.getElementById("passengers");
-  const tripType = document.getElementById("tripType");
-  const flightsContainer = document.getElementById("flights");
+document.addEventListener('DOMContentLoaded', () => {
+  const searchBtn = document.getElementById('searchBtn');
+  const fromInput = document.getElementById('from');
+  const toInput = document.getElementById('to');
+  const departureInput = document.getElementById('departure');
+  const returnInput = document.getElementById('return');
+  const classSelect = document.getElementById('class');
+  const passengersInput = document.getElementById('passengers');
+  const tripTypeSelect = document.getElementById('tripType');
+  const resultsContainer = document.getElementById('results');
 
-  if (
-    !searchBtn || !fromInput || !toInput || !departureDate || !travelClass ||
-    !passengers || !tripType || !flightsContainer
-  ) {
-    console.error("❌ Required elements not found in DOM");
-    return;
-  }
+  const airlineNames = {
+    AI: "Air India",
+    6E: "IndiGo",
+    SG: "SpiceJet",
+    UK: "Vistara",
+    G8: "Go First",
+    IX: "Air India Express",
+    I5: "AirAsia India",
+    QP: "Akasa Air"
+    // Add more as needed
+  };
 
-  searchBtn.addEventListener("click", async () => {
+  searchBtn.addEventListener('click', async () => {
     const from = fromInput.value.trim().toUpperCase();
     const to = toInput.value.trim().toUpperCase();
-    const departure = departureDate.value;
-    const retDate = returnDate.value;
-    const travelClassVal = travelClass.value;
-    const passengerCount = passengers.value;
-    const isRoundTrip = tripType.value === "round-trip";
+    const departureDate = departureInput.value;
+    const returnDate = returnInput.value;
+    const travelClass = classSelect.value;
+    const passengers = passengersInput.value;
+    const tripType = tripTypeSelect.value;
 
-    if (!from || !to || !departure) {
-      alert("Please fill in origin, destination, and departure date.");
+    if (!from || !to || !departureDate || !travelClass || !passengers) {
+      alert('Please fill all required fields.');
       return;
     }
 
-    const body = {
+    const payload = {
       from,
       to,
-      departureDate: departure,
-      returnDate: isRoundTrip ? retDate : null,
-      passengers: passengerCount,
-      travelClass: travelClassVal
+      departureDate,
+      returnDate: tripType === 'round-trip' ? returnDate : '',
+      travelClass,
+      passengers
     };
 
-    console.log("📡 Sending request to backend:", body);
-
     try {
-      const response = await fetch("https://skydeal-backend.onrender.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+      const response = await fetch('https://skydeal-backend.onrender.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
-      console.log("✅ Response from backend:", data);
-
-      flightsContainer.innerHTML = "";
+      resultsContainer.innerHTML = '';
 
       if (Array.isArray(data.flights) && data.flights.length > 0) {
-        data.flights.forEach((flight) => {
-          const div = document.createElement("div");
-          div.classList.add("flight-card");
-          div.innerHTML = `
-            <strong>${flight.airline}</strong> ${flight.flightNumber}<br/>
-            ${flight.departure} → ${flight.arrival}<br/>
-            ₹${flight.price}
+        data.flights.forEach(flight => {
+          const airline = airlineNames[flight.carrierCode] || flight.carrierCode;
+          const flightNumber = `${flight.carrierCode}${flight.number}`;
+          const departure = flight.departureDateTime;
+          const arrival = flight.arrivalDateTime;
+          const price = flight.price;
+
+          const card = document.createElement('div');
+          card.className = 'flight-card';
+          card.innerHTML = `
+            <strong>${airline} ${flightNumber}</strong><br>
+            ${departure} → ${arrival}<br>
+            ₹${price}
           `;
-          flightsContainer.appendChild(div);
+          resultsContainer.appendChild(card);
         });
       } else {
-        flightsContainer.innerHTML = "<p>No flights found.</p>";
+        resultsContainer.innerHTML = '<p>No flights found.</p>';
       }
 
-    } catch (err) {
-      console.error("❌ Error fetching flights:", err);
-      flightsContainer.innerHTML = "<p>Failed to fetch flights.</p>";
+    } catch (error) {
+      console.error('Search failed:', error);
+      resultsContainer.innerHTML = '<p>Something went wrong. Please try again.</p>';
     }
   });
 });
