@@ -1,21 +1,20 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("search-form");
+document.addEventListener('DOMContentLoaded', function () {
+  const searchBtn = document.getElementById('searchBtn');
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  searchBtn.addEventListener('click', async () => {
+    console.log('Search button clicked');
 
-    const from = document.getElementById("from").value;
-    const to = document.getElementById("to").value;
-    const departureDate = document.getElementById("departure-date").value;
-    const returnDate = document.getElementById("return-date").value;
-    const passengers = document.getElementById("passengers").value;
-    const travelClass = document.getElementById("travel-class").value;
-    const paymentMethodsRaw = document.getElementById("payment-methods").value;
-    const paymentMethods = paymentMethodsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const tripType = document.querySelector("input[name='tripType']:checked").value;
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const departureDate = document.getElementById('departure-date').value;
+    const returnDateInput = document.getElementById('return-date');
+    const returnDate = returnDateInput && !returnDateInput.disabled ? returnDateInput.value : '';
+    const passengers = document.getElementById('passengers').value;
+    const travelClass = document.getElementById('travel-class').value;
+    const tripType = document.querySelector('input[name="trip-type"]:checked').value;
+
+    const paymentCheckboxes = document.querySelectorAll('.payment-method input[type="checkbox"]:checked');
+    const paymentMethods = Array.from(paymentCheckboxes).map(cb => cb.value);
 
     const payload = {
       from,
@@ -24,44 +23,54 @@ document.addEventListener("DOMContentLoaded", () => {
       returnDate,
       passengers,
       travelClass,
-      paymentMethods,
       tripType,
+      paymentMethods
     };
 
+    console.log('Sending payload:', payload);
+
     try {
-      const response = await fetch("https://skydeal-backend.onrender.com/simulated-flights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const response = await fetch('https://skydeal-backend.onrender.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
-      renderFlights("outbound-flights", data.outboundFlights);
-      renderFlights("return-flights", data.returnFlights);
-    } catch (err) {
-      console.error("❌ Error fetching flights:", err);
+      console.log('Received data:', data);
+
+      if (data.flights) {
+        renderFlights(data.flights, tripType);
+      } else {
+        throw new Error('Invalid flight data received.');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching flights:', error);
+      alert('Something went wrong while fetching flights. Try again.');
     }
   });
-
-  function renderFlights(containerId, flights) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    if (!flights || flights.length === 0) {
-      container.innerHTML = "<p>No flights found.</p>";
-      return;
-    }
-
-    container.innerHTML = flights
-      .map(
-        (flight) => `
-        <div>
-          ✈️ <strong>${flight.flightName}</strong><br/>
-          ⏰ ${flight.departure} → ${flight.arrival}<br/>
-          💸 Best Deal: ${flight.bestDeal ? `${flight.bestDeal.portal} - ${flight.bestDeal.offer} (Code: ${flight.bestDeal.code}) ₹${flight.bestDeal.price}` : "N/A"}
-        </div><hr/>
-      `
-      )
-      .join("");
-  }
 });
+
+function renderFlights(flights, tripType) {
+  const outboundContainer = document.getElementById('outbound-flights');
+  const returnContainer = document.getElementById('return-flights');
+
+  outboundContainer.innerHTML = '';
+  returnContainer.innerHTML = '';
+
+  flights.forEach(flight => {
+    const flightCard = `
+      <div class="flight-card">
+        <p><strong>✈️ ${flight.airline} ${flight.flightNumber}</strong></p>
+        <p>⏰ ${flight.departureTime} → ${flight.arrivalTime}</p>
+        <p>💰 Price: ₹${flight.price}</p>
+      </div>
+    `;
+
+    if (tripType === 'one-way' || flight.direction === 'outbound') {
+      outboundContainer.innerHTML += flightCard;
+    } else if (tripType === 'round-trip' && flight.direction === 'return') {
+      returnContainer.innerHTML += flightCard;
+    }
+  });
+}
