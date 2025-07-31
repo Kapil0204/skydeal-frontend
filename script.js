@@ -1,104 +1,93 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Toggle return date visibility
-  const tripRadios = document.querySelectorAll('input[name="trip-type"]');
-  const returnDateInput = document.getElementById('return-date');
-  tripRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (document.querySelector('input[name="trip-type"]:checked').value === 'round-trip') {
-        returnDateInput.style.display = 'inline-block';
-      } else {
-        returnDateInput.style.display = 'none';
-      }
-    });
-  });
-});
+const searchForm = document.getElementById("searchForm");
+const flightResults = document.getElementById("flightResults");
 
-async function searchFlights() {
-  const from = document.getElementById("from").value;
-  const to = document.getElementById("to").value;
-  const departureDate = document.getElementById("departure-date").value;
-  const returnDate = document.getElementById("return-date").value;
-  const passengers = parseInt(document.getElementById("passengers").value) || 1;
-  const travelClass = document.getElementById("travel-class").value;
-  const tripType = document.querySelector('input[name="trip-type"]:checked').value;
+searchForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  const requestBody = {
+  const from = document.getElementById("fromInput").value;
+  const to = document.getElementById("toInput").value;
+  const departureDate = document.getElementById("departureDate").value;
+  const returnDate = document.getElementById("returnDate").value;
+  const tripType = document.querySelector('input[name="tripType"]:checked').value;
+  const travelClass = document.getElementById("travelClass").value;
+  const passengers = document.getElementById("passengers").value;
+
+  const body = {
     from,
     to,
     departureDate,
-    returnDate: tripType === "round-trip" ? returnDate : null,
+    returnDate: tripType === "round-trip" ? returnDate : "",
     passengers,
-    travelClass
+    travelClass,
+    tripType
   };
 
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "Searching...";
+  flightResults.innerHTML = `<p>Searching...</p>`;
 
   try {
     const response = await fetch("https://skydeal-backend.onrender.com/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
-
-    if (data.error) {
-      resultsDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-      return;
-    }
-
-    if (!data.flights || data.flights.length === 0) {
-      resultsDiv.innerHTML = "No flights found.";
-      return;
-    }
-
-    // Show all flights with popup button
-    const flightCards = data.flights.map((flight, index) => `
-      <div class="flight-card">
-        <strong>${flight.airline}</strong> - ${flight.flightNumber}<br>
-        ${flight.departureTime} → ${flight.arrivalTime}<br>
-        Base Price: ₹${flight.price}<br>
-        <button onclick="showOTAPrices(${flight.price}, ${index})">View OTA Prices</button>
-      </div>
-    `).join("<hr>");
-
-    resultsDiv.innerHTML = flightCards;
-
-  } catch (error) {
-    console.error("Error fetching flights:", error);
-    resultsDiv.innerHTML = `<pre>${JSON.stringify({ error: "Failed to fetch flight data from Amadeus" }, null, 2)}</pre>`;
+    renderFlightResults(data);
+  } catch (err) {
+    console.error("Search error:", err);
+    flightResults.innerHTML = `<p>Failed to fetch flights.</p>`;
   }
+});
+
+function renderFlightResults(data) {
+  flightResults.innerHTML = "";
+
+  if (!data || (!data.outboundFlights.length && !data.returnFlights.length)) {
+    flightResults.innerHTML = "<p>No flights found.</p>";
+    return;
+  }
+
+  const container = document.createElement("div");
+  container.classList.add("flight-container");
+
+  if (data.outboundFlights.length > 0) {
+    const outboundSection = document.createElement("div");
+    outboundSection.classList.add("flight-column");
+    outboundSection.innerHTML = `<h3>Outbound Flights</h3>`;
+    data.outboundFlights.forEach((flight) => outboundSection.appendChild(createFlightCard(flight)));
+    container.appendChild(outboundSection);
+  }
+
+  if (data.returnFlights.length > 0) {
+    const returnSection = document.createElement("div");
+    returnSection.classList.add("flight-column");
+    returnSection.innerHTML = `<h3>Return Flights</h3>`;
+    data.returnFlights.forEach((flight) => returnSection.appendChild(createFlightCard(flight)));
+    container.appendChild(returnSection);
+  }
+
+  flightResults.appendChild(container);
 }
 
-function showOTAPrices(basePrice, index) {
-  const markup = 100;
-  const otaPrices = [
-    { name: "MakeMyTrip", price: basePrice + markup },
-    { name: "Goibibo", price: basePrice + markup },
-    { name: "EaseMyTrip", price: basePrice + markup },
-    { name: "Yatra", price: basePrice + markup },
-    { name: "Cleartrip", price: basePrice + markup }
-  ];
+function createFlightCard(flight) {
+  const card = document.createElement("div");
+  card.className = "flight-card";
 
-  const content = otaPrices.map(ota =>
-    `<div>${ota.name}: ₹${ota.price} <button onclick="alert('Go to ${ota.name}')">Book</button></div>`
-  ).join("");
+  const airline = flight.airline || "Unknown Airline";
+  const number = flight.flightNumber || "";
+  const from = flight.from || "-";
+  const to = flight.to || "-";
+  const dep = flight.departure || "-";
+  const arr = flight.arrival || "-";
+  const price = flight.price ? `₹${flight.price}` : "₹undefined";
 
-  const popup = document.createElement("div");
-  popup.className = "popup";
-  popup.innerHTML = `
-    <div class="popup-inner">
-      <h3>OTA Prices</h3>
-      ${content}
-      <button onclick="closePopup()">Close</button>
-    </div>
+  card.innerHTML = `
+    <strong>${airline} ${number}</strong><br>
+    ${from} → ${to}<br>
+    ${dep} → ${arr}<br>
+    Price: ${price}<br>
+    <button class="price-btn">Compare Prices</button>
   `;
-  document.body.appendChild(popup);
-}
 
-function closePopup() {
-  const popup = document.querySelector(".popup");
-  if (popup) popup.remove();
+  return card;
 }
-
