@@ -7,70 +7,55 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="container">
-    <h1>SkyDeal</h1>
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="from">From</label>
-        <input type="text" id="from" placeholder="Enter origin" />
-      </div>
-      <div class="form-group">
-        <label for="to">To</label>
-        <input type="text" id="to" placeholder="Enter destination" />
-      </div>
-      <div class="form-group">
-        <label for="departureDate">Departure Date</label>
-        <input type="date" id="departureDate" />
-      </div>
-      <div class="form-group">
-        <label for="returnDate">Return Date</label>
-        <input type="date" id="returnDate" />
-      </div>
-      <div class="form-group">
-        <label>Trip Type</label>
-        <div>
-          <label><input type="radio" name="tripType" id="oneWay" checked /> One Way</label>
-          <label><input type="radio" name="tripType" id="roundTrip" /> Round Trip</label>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="passengers">Passengers</label>
-        <input type="number" id="passengers" value="1" min="1" />
-      </div>
-      <div class="form-group">
-        <label for="travelClass">Travel Class</label>
-        <select id="travelClass">
-          <option>Economy</option>
-          <option>Premium Economy</option>
-          <option>Business</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Preferred Payment Methods</label>
-        <input type="text" id="paymentMethods" readonly placeholder="Select Methods" />
-        <div id="paymentDropdown" class="dropdown">
-          <label><input type="checkbox" value="ICICI Bank" /> ICICI Bank</label>
-          <label><input type="checkbox" value="HDFC Bank" /> HDFC Bank</label>
-          <label><input type="checkbox" value="SBI" /> SBI</label>
-          <label><input type="checkbox" value="Axis Bank" /> Axis Bank</label>
-          <label><input type="checkbox" value="Kotak Bank" /> Kotak Bank</label>
-        </div>
-      </div>
-    </div>
-    <button id="searchBtn">Search</button>
+  <h1>SkyDeal</h1>
 
-    <div class="results-grid">
-      <div>
-        <h3>Outbound Flights</h3>
-        <div id="outboundResults"></div>
-      </div>
-      <div>
-        <h3>Return Flights</h3>
-        <div id="returnResults"></div>
-      </div>
+  <form id="search-form">
+    <div>
+      <label>From</label>
+      <input type="text" id="from" required />
     </div>
-  </div>
+    <div>
+      <label>To</label>
+      <input type="text" id="to" required />
+    </div>
+    <div>
+      <label>Departure Date</label>
+      <input type="date" id="departure-date" required />
+    </div>
+    <div>
+      <label>Return Date</label>
+      <input type="date" id="return-date" />
+    </div>
+    <div>
+      <label>Trip Type</label>
+      <input type="radio" name="tripType" value="one-way" checked /> One Way
+      <input type="radio" name="tripType" value="round-trip" /> Round Trip
+    </div>
+    <div>
+      <label>Passengers</label>
+      <input type="number" id="passengers" value="1" required />
+    </div>
+    <div>
+      <label>Travel Class</label>
+      <select id="travel-class">
+        <option value="Economy">Economy</option>
+        <option value="Business">Business</option>
+      </select>
+    </div>
+    <div>
+      <label>Preferred Payment Methods</label>
+      <input type="text" id="payment-methods" placeholder="e.g. ICICI Bank" />
+    </div>
+    <button type="submit">Search</button>
+  </form>
+
+  <h2>Outbound Flights</h2>
+  <div id="outbound-flights"></div>
+
+  <h2>Return Flights</h2>
+  <div id="return-flights"></div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
