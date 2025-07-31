@@ -1,26 +1,28 @@
+/* style.css */
+
 body {
   font-family: Arial, sans-serif;
-  background: #f2f7fc;
+  background-color: #f1f6fc;
   margin: 0;
-  padding: 20px;
+  padding: 0;
 }
 
 .container {
-  max-width: 700px;
-  margin: auto;
-  background: white;
+  max-width: 500px;
+  margin: 40px auto;
+  background-color: #fff;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-h1 {
+h2 {
   text-align: center;
-  color: #1e3a8a;
+  color: #1a237e;
   margin-bottom: 20px;
 }
 
-.form-group {
+form {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -31,64 +33,37 @@ input[type="date"],
 input[type="number"],
 select {
   padding: 10px;
+  font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 16px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  font-size: 0.95rem;
+  align-items: center;
+  margin-top: 6px;
 }
 
 button {
-  background-color: #3b82f6;
-  color: white;
   padding: 12px;
-  font-size: 16px;
+  font-size: 1rem;
+  background-color: #2979ff;
+  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {
-  background-color: #2563eb;
-}
-
-.trip-type {
-  display: flex;
-  gap: 10px;
+  background-color: #1565c0;
 }
 
 #results {
   margin-top: 30px;
+  font-size: 1rem;
+  color: #333;
 }
 
-h2 {
-  color: #1e293b;
-  margin-top: 24px;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 4px;
-}
-
-.flight-card {
-  background: #f1f5f9;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.06);
-}
-
-.flight-card strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.compare-btn {
-  background-color: #10b981;
-  border: none;
-  color: white;
-  padding: 10px 16px;
-  margin-top: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.compare-btn:hover {
-  background-color: #059669;
-}
