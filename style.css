@@ -1,69 +1,146 @@
 /* style.css */
-
 body {
   font-family: Arial, sans-serif;
-  background-color: #f1f6fc;
   margin: 0;
   padding: 0;
+  background-color: #f4f4f4;
 }
 
 .container {
-  max-width: 500px;
-  margin: 40px auto;
-  background-color: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
+h1 {
   text-align: center;
-  color: #1a237e;
-  margin-bottom: 20px;
+  color: #333;
+  margin-bottom: 30px;
 }
 
 form {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+  justify-content: space-between;
 }
 
-input[type="text"],
-input[type="date"],
-input[type="number"],
-select {
+input,
+select,
+button {
   padding: 10px;
-  font-size: 1rem;
+  font-size: 16px;
+  border-radius: 5px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.radio-group {
-  display: flex;
-  gap: 20px;
-  font-size: 0.95rem;
-  align-items: center;
-  margin-top: 6px;
+  flex: 1;
+  min-width: 180px;
 }
 
 button {
-  padding: 12px;
-  font-size: 1rem;
-  background-color: #2979ff;
+  background-color: #007bff;
   color: white;
-  border: none;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  flex: none;
 }
 
 button:hover {
-  background-color: #1565c0;
+  background-color: #0056b3;
 }
 
-#results {
-  margin-top: 30px;
-  font-size: 1rem;
-  color: #333;
+.results-container {
+  display: flex;
+  gap: 40px;
+}
+
+.results-column {
+  flex: 1;
+}
+
+.flight-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  background: #f9f9f9;
+  position: relative;
+}
+
+.flight-card h3 {
+  margin-top: 0;
+}
+
+.flight-card p {
+  margin: 5px 0;
+}
+
+.flight-card button {
+  background-color: #28a745;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.flight-card button:hover {
+  background-color: #218838;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 6px;
+  width: 90%;
+  max-width: 600px;
+  position: relative;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.modal-content ul li {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-content ul li span:last-child {
+  font-weight: bold;
+}
+
+.modal-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
 }
 
