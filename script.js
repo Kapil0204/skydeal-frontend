@@ -1,83 +1,77 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const searchBtn = document.getElementById('searchBtn');
-  const resultsContainer = document.getElementById('results');
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBtn = document.getElementById("searchBtn");
+  const fromInput = document.getElementById("fromInput");
+  const toInput = document.getElementById("toInput");
+  const departureDate = document.getElementById("departureDate");
+  const returnDate = document.getElementById("returnDate");
+  const travelClass = document.getElementById("travelClass");
+  const passengers = document.getElementById("passengers");
+  const tripType = document.getElementById("tripType");
+  const flightsContainer = document.getElementById("flights");
 
-  if (!searchBtn || !resultsContainer) {
-    console.error('Required elements not found in DOM');
+  if (
+    !searchBtn || !fromInput || !toInput || !departureDate || !travelClass ||
+    !passengers || !tripType || !flightsContainer
+  ) {
+    console.error("❌ Required elements not found in DOM");
     return;
   }
 
-  searchBtn.addEventListener('click', async () => {
-    const from = document.getElementById('fromInput').value.trim();
-    const to = document.getElementById('toInput').value.trim();
-    const departureDate = document.getElementById('departureDate').value;
-    const returnDate = document.getElementById('returnDate').value;
-    const passengers = document.getElementById('passengers').value || 1;
-    const travelClass = document.getElementById('travelClass').value;
-    const tripType = document.getElementById('tripType').value;
+  searchBtn.addEventListener("click", async () => {
+    const from = fromInput.value.trim().toUpperCase();
+    const to = toInput.value.trim().toUpperCase();
+    const departure = departureDate.value;
+    const retDate = returnDate.value;
+    const travelClassVal = travelClass.value;
+    const passengerCount = passengers.value;
+    const isRoundTrip = tripType.value === "round-trip";
 
-    if (!from || !to || !departureDate || !travelClass) {
-      alert("Please fill in all required fields.");
+    if (!from || !to || !departure) {
+      alert("Please fill in origin, destination, and departure date.");
       return;
     }
 
-    const payload = {
+    const body = {
       from,
       to,
-      departureDate,
-      returnDate: tripType === 'round-trip' ? returnDate : '',
-      passengers: parseInt(passengers),
-      travelClass: travelClass.toLowerCase(),
-      tripType
+      departureDate: departure,
+      returnDate: isRoundTrip ? retDate : null,
+      passengers: passengerCount,
+      travelClass: travelClassVal
     };
 
+    console.log("📡 Sending request to backend:", body);
+
     try {
-      const res = await fetch('https://skydeal-backend.onrender.com/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const response = await fetch("https://skydeal-backend.onrender.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
       });
 
-      const data = await res.json();
-      if (!data || !data.flights || data.flights.length === 0) {
-        resultsContainer.innerHTML = `<p>No flights found.</p>`;
-        return;
+      const data = await response.json();
+      console.log("✅ Response from backend:", data);
+
+      flightsContainer.innerHTML = "";
+
+      if (Array.isArray(data.flights) && data.flights.length > 0) {
+        data.flights.forEach((flight) => {
+          const div = document.createElement("div");
+          div.classList.add("flight-card");
+          div.innerHTML = `
+            <strong>${flight.airline}</strong> ${flight.flightNumber}<br/>
+            ${flight.departure} → ${flight.arrival}<br/>
+            ₹${flight.price}
+          `;
+          flightsContainer.appendChild(div);
+        });
+      } else {
+        flightsContainer.innerHTML = "<p>No flights found.</p>";
       }
 
-      displayResults(data.flights);
     } catch (err) {
-      console.error('Search failed:', err);
-      alert('Failed to fetch flights. Please try again.');
+      console.error("❌ Error fetching flights:", err);
+      flightsContainer.innerHTML = "<p>Failed to fetch flights.</p>";
     }
   });
-
-  function displayResults(flights) {
-    resultsContainer.innerHTML = `<h3>Outbound Flights</h3>`;
-
-    flights.forEach((flight, index) => {
-      const card = document.createElement('div');
-      card.className = 'flight-card';
-      card.innerHTML = `
-        <p><strong>${flight.airline}</strong> (${flight.flightNumber})</p>
-        <p>${flight.departureTime} → ${flight.arrivalTime}</p>
-        <p>Price: ₹${flight.price}</p>
-        <button class="price-btn" data-price="${flight.price}" data-index="${index}">View Portal Prices</button>
-      `;
-      resultsContainer.appendChild(card);
-    });
-
-    // Attach modal trigger
-    document.querySelectorAll('.price-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const basePrice = parseFloat(e.target.dataset.price);
-        const portals = ['MakeMyTrip', 'Goibibo', 'EaseMyTrip', 'Yatra', 'Cleartrip'];
-        const markup = 100;
-        let popup = `Showing prices with +₹${markup} markup:\n\n`;
-        portals.forEach(p => {
-          popup += `${p}: ₹${basePrice + markup}\n`;
-        });
-        alert(popup);
-      });
-    });
-  }
 });
