@@ -1,12 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const searchBtn = document.getElementById("searchBtn");
   const fromInput = document.getElementById("from");
   const toInput = document.getElementById("to");
   const departureInput = document.getElementById("departure");
   const returnInput = document.getElementById("return");
-  const classSelect = document.getElementById("class");
   const passengersInput = document.getElementById("passengers");
+  const classSelect = document.getElementById("class");
   const tripTypeSelect = document.getElementById("tripType");
+  const searchBtn = document.getElementById("searchBtn");
   const resultsContainer = document.getElementById("results");
 
   const airlineNames = {
@@ -21,6 +21,18 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   searchBtn.addEventListener("click", async function () {
+    if (
+      !fromInput ||
+      !toInput ||
+      !departureInput ||
+      !passengersInput ||
+      !classSelect ||
+      !tripTypeSelect
+    ) {
+      alert("Missing form fields in HTML. Please check IDs.");
+      return;
+    }
+
     const from = fromInput.value.trim().toUpperCase();
     const to = toInput.value.trim().toUpperCase();
     const departureDate = departureInput.value;
