@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal Flight Search</title>
+  <title>SkyDeal</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,29 +11,69 @@
     <h1>SkyDeal Flight Search</h1>
     <form id="searchForm">
       <div class="row">
-        <input type="text" id="from" placeholder="From (e.g. BOM)" required />
-        <input type="text" id="to" placeholder="To (e.g. DEL)" required />
-        <input type="date" id="departureDate" required />
+        <div>
+          <label for="from">From:</label>
+          <input type="text" id="from" required />
+        </div>
+        <div>
+          <label for="to">To:</label>
+          <input type="text" id="to" required />
+        </div>
+        <div>
+          <label for="departureDate">Departure:</label>
+          <input type="date" id="departureDate" required />
+        </div>
+        <div>
+          <label for="returnDate">Return:</label>
+          <input type="date" id="returnDate" />
+        </div>
       </div>
       <div class="row">
-        <input type="date" id="returnDate" />
-        <label><input type="radio" name="tripType" value="one-way" /> One-way</label>
-        <label><input type="radio" name="tripType" value="round-trip" checked /> Round-trip</label>
-      </div>
-      <div class="row">
-        <select id="travelClass">
-          <option value="economy">Economy</option>
-          <option value="business">Business</option>
-        </select>
-        <input type="number" id="passengers" min="1" value="1" required />
-        <button type="submit">Search Flights</button>
+        <div>
+          <label for="passengers">Passengers:</label>
+          <input type="number" id="passengers" min="1" value="1" />
+        </div>
+        <div>
+          <label for="travelClass">Class:</label>
+          <select id="travelClass">
+            <option value="ECONOMY">Economy</option>
+            <option value="BUSINESS">Business</option>
+            <option value="FIRST">First</option>
+          </select>
+        </div>
+        <div>
+          <label for="tripType">Trip Type:</label>
+          <select id="tripType">
+            <option value="one-way">One-way</option>
+            <option value="round-trip">Round-trip</option>
+          </select>
+        </div>
+        <div>
+          <button type="submit" id="searchBtn">Search</button>
+        </div>
       </div>
     </form>
+
     <div id="results">
-      <h2>Outbound Flights</h2>
-      <div id="flightResults"></div>
+      <h2>Search Results</h2>
+      <div id="outbound-results" class="results-section">
+        <h3>Outbound Flights</h3>
+        <div id="outbound-list"></div>
+      </div>
+      <div id="return-results" class="results-section">
+        <h3>Return Flights</h3>
+        <div id="return-list"></div>
+      </div>
     </div>
   </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
