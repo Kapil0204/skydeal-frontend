@@ -2,37 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkyDeal Flight Search</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>SkyDeal Flight Search</h1>
-    <div class="form-group">
-      <input type="text" id="from" placeholder="Origin (e.g., BOM)" />
-      <input type="text" id="to" placeholder="Destination (e.g., DEL)" />
-      <input type="date" id="departureDate" />
-      <input type="date" id="returnDate" />
-      <div class="trip-type">
-        <label><input type="radio" name="tripType" value="one-way" checked> One-way</label>
-        <label><input type="radio" name="tripType" value="round-trip"> Round-trip</label>
+    <h2>SkyDeal Flight Search</h2>
+
+    <form id="flight-search-form">
+      <input type="text" id="from" placeholder="From (e.g. BOM)" required />
+      <input type="text" id="to" placeholder="To (e.g. DEL)" required />
+
+      <input type="date" id="departure-date" required />
+      <input type="date" id="return-date" />
+
+      <div class="radio-group">
+        <label><input type="radio" name="tripType" value="one-way" /> One-way</label>
+        <label><input type="radio" name="tripType" value="round-trip" checked /> Round-trip</label>
       </div>
-      <select id="travelClass">
+
+      <select id="travel-class">
         <option value="economy">Economy</option>
         <option value="business">Business</option>
       </select>
-      <input type="number" id="passengers" value="1" min="1" />
-      <button id="searchBtn">Search Flights</button>
-    </div>
 
-    <div id="results">
-      <h2>Outbound Flights</h2>
-      <div id="outboundResults"></div>
+      <input type="number" id="passengers" min="1" value="1" />
 
-      <h2 id="returnHeader" style="display: none;">Return Flights</h2>
-      <div id="returnResults"></div>
-    </div>
+      <button type="submit">Search Flights</button>
+    </form>
+
+    <div id="results"></div>
   </div>
 
   <script src="script.js"></script>
