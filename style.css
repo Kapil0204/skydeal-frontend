@@ -1,64 +1,113 @@
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f3f6fb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f4f8;
+  margin: 0;
+  padding: 0;
 }
 
 .container {
-  background: white;
+  max-width: 600px;
+  margin: 100px auto;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  width: 500px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
 h1 {
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+  color: #1f2937;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-input, select, button {
-  padding: 0.6rem;
-  border-radius: 6px;
+input[type="text"],
+input[type="date"],
+select {
+  width: 48%;
+  padding: 10px;
+  margin: 5px 1%;
   border: 1px solid #ccc;
+  border-radius: 5px;
   font-size: 1rem;
 }
 
+#return-date {
+  display: none;
+}
+
 button {
-  background-color: #2d74f7;
+  width: 100%;
+  padding: 12px;
+  background-color: #337eff;
   color: white;
   border: none;
+  border-radius: 5px;
+  margin-top: 15px;
+  font-size: 1rem;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 button:hover {
-  background-color: #154ec1;
+  background-color: #235dcc;
 }
 
-.trip-options {
+label {
+  margin: 0 10px;
+  font-weight: 500;
+}
+
+#results {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.flight-card {
+  background: #f1f5ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #d1e0ff;
+}
+
+.flight-card button {
+  margin-top: 0.5rem;
+  background-color: #28a745;
+}
+
+.flight-card button:hover {
+  background-color: #218838;
+}
+
+.popup {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  align-items: center;
+  z-index: 999;
 }
 
-pre {
-  margin-top: 1rem;
+.popup-inner {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  min-width: 300px;
   text-align: left;
-  background-color: #f9f9f9;
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
 }
 
+.popup-inner h3 {
+  margin-top: 0;
+}
 
+.popup-inner button {
+  margin-top: 1rem;
+  width: 100%;
+  background-color: #ff4d4d;
+}
 
+.popup-inner button:hover {
+  background-color: #cc0000;
+}
