@@ -8,33 +8,32 @@
 </head>
 <body>
   <div class="container">
-    <h2>SkyDeal Flight Search</h2>
-
-    <form id="flight-search-form">
-      <input type="text" id="from" placeholder="From (e.g. BOM)" required />
-      <input type="text" id="to" placeholder="To (e.g. DEL)" required />
-
-      <input type="date" id="departure-date" required />
-      <input type="date" id="return-date" />
-
-      <div class="radio-group">
+    <h1>SkyDeal Flight Search</h1>
+    <form id="searchForm">
+      <div class="row">
+        <input type="text" id="from" placeholder="From (e.g. BOM)" required />
+        <input type="text" id="to" placeholder="To (e.g. DEL)" required />
+        <input type="date" id="departureDate" required />
+      </div>
+      <div class="row">
+        <input type="date" id="returnDate" />
         <label><input type="radio" name="tripType" value="one-way" /> One-way</label>
         <label><input type="radio" name="tripType" value="round-trip" checked /> Round-trip</label>
       </div>
-
-      <select id="travel-class">
-        <option value="economy">Economy</option>
-        <option value="business">Business</option>
-      </select>
-
-      <input type="number" id="passengers" min="1" value="1" />
-
-      <button type="submit">Search Flights</button>
+      <div class="row">
+        <select id="travelClass">
+          <option value="economy">Economy</option>
+          <option value="business">Business</option>
+        </select>
+        <input type="number" id="passengers" min="1" value="1" required />
+        <button type="submit">Search Flights</button>
+      </div>
     </form>
-
-    <div id="results"></div>
+    <div id="results">
+      <h2>Outbound Flights</h2>
+      <div id="flightResults"></div>
+    </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
