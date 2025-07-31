@@ -1,43 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>SkyDeal Flight Search</h1>
-    <div class="form">
-      <label>From: <input type="text" id="fromInput" placeholder="e.g. DEL" /></label>
-      <label>To: <input type="text" id="toInput" placeholder="e.g. BOM" /></label>
-      <label>Departure: <input type="date" id="departureDate" /></label>
-      <label>Return: <input type="date" id="returnDate" /></label>
-      <label>Class:
-        <select id="travelClass">
-          <option value="ECONOMY">Economy</option>
-          <option value="PREMIUM_ECONOMY">Premium Economy</option>
-          <option value="BUSINESS">Business</option>
-          <option value="FIRST">First</option>
-        </select>
-      </label>
-      <label>Passengers: <input type="number" id="passengers" min="1" value="1" /></label>
-      <label>Trip Type:
-        <select id="tripType">
-          <option value="one-way">One-way</option>
-          <option value="round-trip">Round-trip</option>
-        </select>
-      </label>
-      <button id="searchBtn">Search</button>
-    </div>
+<div class="search-box">
+  <h1>SkyDeal Flight Search</h1>
 
-    <div id="results">
-      <h3>Search Results</h3>
-      <div id="flights"></div>
-    </div>
-  </div>
+  <label for="from">From:</label>
+  <input type="text" id="from" />
 
-  <script src="script.js"></script>
-</body>
-</html>
+  <label for="to">To:</label>
+  <input type="text" id="to" />
+
+  <label for="departure">Departure:</label>
+  <input type="date" id="departure" />
+
+  <label for="return">Return:</label>
+  <input type="date" id="return" />
+
+  <label for="passengers">Passengers:</label>
+  <input type="number" id="passengers" value="1" />
+
+  <label for="class">Class:</label>
+  <select id="class">
+    <option value="Economy">Economy</option>
+    <option value="Business">Business</option>
+    <option value="First">First</option>
+  </select>
+
+  <label for="tripType">Trip Type:</label>
+  <select id="tripType">
+    <option value="one-way">One-way</option>
+    <option value="round-trip" selected>Round-trip</option>
+  </select>
+
+  <button id="searchBtn">Search</button>
+</div>
+
+<div id="results"></div>
