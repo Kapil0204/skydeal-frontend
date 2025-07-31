@@ -2,126 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyDeal – Flight Offers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal Flight Search</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal Flight Search</h1>
 
-    <form id="flight-form">
-      <input type="text" id="from" placeholder="From (e.g. DEL)" required />
-      <input type="text" id="to" placeholder="To (e.g. BOM)" required />
+    <div class="form-group">
+      <input type="text" id="from" placeholder="From (e.g. DEL)" />
+      <input type="text" id="to" placeholder="To (e.g. BOM)" />
+      <input type="date" id="departureDate" />
+      <input type="date" id="returnDate" style="display: none;" />
+    </div>
 
-      <input type="date" id="departure-date" required />
-      <input type="date" id="return-date" style="display:none;" />
-
-      <br />
+    <div class="form-group inline">
       <label><input type="radio" name="tripType" value="one-way" checked /> One-way</label>
       <label><input type="radio" name="tripType" value="round-trip" /> Round-trip</label>
+    </div>
 
-      <br />
-      <select id="travel-class" required>
-        <option value="ECONOMY">Economy</option>
-        <option value="PREMIUM_ECONOMY">Premium Economy</option>
-        <option value="BUSINESS">Business</option>
+    <div class="form-group inline">
+      <select id="travelClass">
+        <option value="economy">Economy</option>
+        <option value="business">Business</option>
       </select>
+      <input type="number" id="passengers" min="1" value="1" />
+    </div>
 
-      <input type="number" id="passengers" placeholder="Passengers" value="1" min="1" required />
+    <button id="searchBtn">Search Flights</button>
 
-      <button type="submit">Search Flights</button>
-    </form>
+    <div id="results">
+      <div id="outbound-results">
+        <h2>Outbound Flights</h2>
+        <div id="outbound-flights"></div>
+      </div>
 
-    <div id="results"></div>
-  </div>
-
-  <div id="popup" class="popup" style="display: none;">
-    <div class="popup-inner">
-      <h3>Price Comparison</h3>
-      <div id="popup-content"></div>
-      <button onclick="closePopup()">Close</button>
+      <div id="return-results" style="display: none;">
+        <h2>Return Flights</h2>
+        <div id="return-flights"></div>
+      </div>
     </div>
   </div>
 
-  <script>
-    const form = document.getElementById('flight-form');
-    const resultsDiv = document.getElementById('results');
-    const returnDateInput = document.getElementById('return-date');
-    const popup = document.getElementById('popup');
-    const popupContent = document.getElementById('popup-content');
-
-    document.querySelectorAll('input[name="tripType"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'round-trip' && radio.checked) {
-          returnDateInput.style.display = 'inline-block';
-          returnDateInput.required = true;
-        } else {
-          returnDateInput.style.display = 'none';
-          returnDateInput.required = false;
-        }
-      });
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      resultsDiv.innerHTML = 'Searching...';
-
-      const data = {
-        from: document.getElementById('from').value,
-        to: document.getElementById('to').value,
-        departureDate: document.getElementById('departure-date').value,
-        returnDate: document.getElementById('return-date').value || '',
-        passengers: parseInt(document.getElementById('passengers').value),
-        travelClass: document.getElementById('travel-class').value,
-        tripType: document.querySelector('input[name="tripType"]:checked').value
-      };
-
-      try {
-        const response = await fetch('https://skydeal-backend.onrender.com/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          if (result.flights && result.flights.length) {
-            resultsDiv.innerHTML = result.flights.map(flight => `
-              <div class="flight-card">
-                <strong>${flight.airline} ${flight.flightNumber}</strong><br/>
-                ${flight.departureTime} → ${flight.arrivalTime}<br/>
-                Price: ₹${flight.price}<br/>
-                <button onclick="showPopup(${flight.price})">Compare Prices</button>
-              </div>
-            `).join('');
-          } else {
-            resultsDiv.innerHTML = 'No flights found.';
-          }
-        } else {
-          resultsDiv.innerHTML = JSON.stringify(result);
-        }
-      } catch (err) {
-        resultsDiv.innerHTML = 'Failed to fetch data.';
-      }
-    });
-
-    function showPopup(basePrice) {
-      popupContent.innerHTML = `
-        <p>MakeMyTrip: ₹${basePrice + 100}</p>
-        <p>Goibibo: ₹${basePrice + 150}</p>
-        <p>Cleartrip: ₹${basePrice + 200}</p>
-      `;
-      popup.style.display = 'block';
-    }
-
-    function closePopup() {
-      popup.style.display = 'none';
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
