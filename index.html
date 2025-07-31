@@ -9,39 +9,29 @@
 <body>
   <div class="container">
     <h1>SkyDeal Flight Search</h1>
-
     <div class="form-group">
-      <input type="text" id="from" placeholder="From (e.g. DEL)" />
-      <input type="text" id="to" placeholder="To (e.g. BOM)" />
+      <input type="text" id="from" placeholder="Origin (e.g., BOM)" />
+      <input type="text" id="to" placeholder="Destination (e.g., DEL)" />
       <input type="date" id="departureDate" />
-      <input type="date" id="returnDate" style="display: none;" />
-    </div>
-
-    <div class="form-group inline">
-      <label><input type="radio" name="tripType" value="one-way" checked /> One-way</label>
-      <label><input type="radio" name="tripType" value="round-trip" /> Round-trip</label>
-    </div>
-
-    <div class="form-group inline">
+      <input type="date" id="returnDate" />
+      <div class="trip-type">
+        <label><input type="radio" name="tripType" value="one-way" checked> One-way</label>
+        <label><input type="radio" name="tripType" value="round-trip"> Round-trip</label>
+      </div>
       <select id="travelClass">
         <option value="economy">Economy</option>
         <option value="business">Business</option>
       </select>
-      <input type="number" id="passengers" min="1" value="1" />
+      <input type="number" id="passengers" value="1" min="1" />
+      <button id="searchBtn">Search Flights</button>
     </div>
 
-    <button id="searchBtn">Search Flights</button>
-
     <div id="results">
-      <div id="outbound-results">
-        <h2>Outbound Flights</h2>
-        <div id="outbound-flights"></div>
-      </div>
+      <h2>Outbound Flights</h2>
+      <div id="outboundResults"></div>
 
-      <div id="return-results" style="display: none;">
-        <h2>Return Flights</h2>
-        <div id="return-flights"></div>
-      </div>
+      <h2 id="returnHeader" style="display: none;">Return Flights</h2>
+      <div id="returnResults"></div>
     </div>
   </div>
 
