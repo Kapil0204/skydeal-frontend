@@ -3,32 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css"/>
+  <title>SkyDeal – Flight Offers</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>SkyDeal</h1>
-    <div class="form-group">
-      <input type="text" id="from" placeholder="From (e.g. BOM)">
-      <input type="text" id="to" placeholder="To (e.g. DEL)">
-      <input type="date" id="departure-date">
-      <input type="date" id="return-date" style="display: none;">
-      <input type="number" id="passengers" placeholder="Passengers" min="1" value="1">
-      <select id="travel-class">
+    <h1>SkyDeal Flight Search</h1>
+
+    <form id="flight-form">
+      <input type="text" id="from" placeholder="From (e.g. DEL)" required />
+      <input type="text" id="to" placeholder="To (e.g. BOM)" required />
+
+      <input type="date" id="departure-date" required />
+      <input type="date" id="return-date" />
+
+      <br/>
+      <label><input type="radio" name="tripType" value="one-way" checked /> One-way</label>
+      <label><input type="radio" name="tripType" value="round-trip" /> Round-trip</label>
+
+      <br/>
+      <select id="travel-class" required>
         <option value="ECONOMY">Economy</option>
+        <option value="PREMIUM_ECONOMY">Premium Economy</option>
         <option value="BUSINESS">Business</option>
       </select>
-      <div class="trip-options">
-        <label><input type="radio" name="trip-type" value="one-way" checked> One-way</label>
-        <label><input type="radio" name="trip-type" value="round-trip"> Round-trip</label>
-      </div>
-      <button onclick="searchFlights()">Search</button>
-    </div>
-    <pre id="results"></pre>
+
+      <input type="number" id="passengers" placeholder="Passengers" value="1" min="1" required />
+
+      <button type="submit">Search Flights</button>
+    </form>
+
+    <div id="results"></div>
   </div>
+
+  <div id="popup" class="popup" style="display: none;">
+    <div class="popup-inner">
+      <h3>Price Comparison</h3>
+      <div id="popup-content"></div>
+      <button onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
