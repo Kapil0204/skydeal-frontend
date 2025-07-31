@@ -1,35 +1,68 @@
-<div class="search-box">
-  <h1>SkyDeal Flight Search</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SkyDeal - Flight Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f4f4f4;
+    }
 
-  <label for="from">From:</label>
-  <input type="text" id="from" />
+    h1 {
+      color: #333;
+    }
 
-  <label for="to">To:</label>
-  <input type="text" id="to" />
+    .search-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
 
-  <label for="departure">Departure:</label>
-  <input type="date" id="departure" />
+    .search-form input,
+    .search-form select,
+    .search-form button {
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      min-width: 150px;
+    }
 
-  <label for="return">Return:</label>
-  <input type="date" id="return" />
+    .search-form button {
+      background: #0070f3;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
 
-  <label for="passengers">Passengers:</label>
-  <input type="number" id="passengers" value="1" />
+    .flight-card {
+      background: #fff;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 6px solid #0070f3;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+    }
 
-  <label for="class">Class:</label>
-  <select id="class">
-    <option value="Economy">Economy</option>
-    <option value="Business">Business</option>
-    <option value="First">First</option>
-  </select>
+    #results {
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>SkyDeal – Find Real Flights</h1>
 
-  <label for="tripType">Trip Type:</label>
-  <select id="tripType">
-    <option value="one-way">One-way</option>
-    <option value="round-trip" selected>Round-trip</option>
-  </select>
-
-  <button id="searchBtn">Search</button>
-</div>
-
-<div id="results"></div>
+  <div class="search-form">
+    <input id="from" placeholder="From (e.g. DEL)" />
+    <input id="to" placeholder="To (e.g. BOM)" />
+    <input id="date" type="date" />
+    
+    <select id="travelClass">
+      <
