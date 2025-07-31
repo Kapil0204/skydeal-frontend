@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("📦 Sending payload:", payload);
 
     try {
-      const res = await fetch("https://skydeal-backend.onrender.com/simulated-flights", {
+      const res = await fetch("https://flight-offer-api-1.onrender.com/simulated-flights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
