@@ -2,75 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SkyDeal - Real Flights</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      padding: 2rem;
-    }
-
-    h1 {
-      color: #333;
-      margin-bottom: 1rem;
-    }
-
-    .search-form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .search-form input,
-    .search-form select,
-    .search-form button {
-      padding: 0.6rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .search-form button {
-      background-color: #0070f3;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    #results {
-      margin-top: 2rem;
-    }
-
-    .flight-card {
-      background: white;
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-left: 5px solid #0070f3;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>SkyDeal – Find Real Flights</h1>
+  <div class="container">
+    <h1>SkyDeal</h1>
+    <form id="flightForm">
+      <div class="row">
+        <div class="column">
+          <label>From</label>
+          <input type="text" id="from" required />
+        </div>
+        <div class="column">
+          <label>To</label>
+          <input type="text" id="to" required />
+        </div>
+      </div>
 
-  <div class="search-form">
-    <input id="from" placeholder="From (e.g. BOM)" />
-    <input id="to" placeholder="To (e.g. DEL)" />
-    <input id="date" type="date" />
-    <select id="travelClass">
-      <option value="ECONOMY">Economy</option>
-      <option value="BUSINESS">Business</option>
-      <option value="FIRST">First</option>
-    </select>
-    <button id="searchBtn">Search</button>
+      <div class="row">
+        <div class="column">
+          <label>Departure Date</label>
+          <input type="date" id="departureDate" required />
+        </div>
+        <div class="column">
+          <label>Return Date</label>
+          <input type="date" id="returnDate" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="column">
+          <label>Trip Type</label>
+          <div>
+            <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
+            <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
+          </div>
+        </div>
+        <div class="column">
+          <label>Passengers</label>
+          <input type="number" id="passengers" min="1" value="1" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="column">
+          <label>Travel Class</label>
+          <select id="travelClass">
+            <option value="ECONOMY">Economy</option>
+            <option value="BUSINESS">Business</option>
+          </select>
+        </div>
+        <div class="column">
+          <label>Preferred Payment Methods</label>
+          <input type="text" placeholder="Select Methods" disabled />
+        </div>
+      </div>
+
+      <button type="submit">Search</button>
+    </form>
+
+    <div class="results">
+      <div class="flight-column">
+        <h3>Outbound Flights</h3>
+        <div id="outboundResults"></div>
+      </div>
+      <div class="flight-column">
+        <h3>Return Flights</h3>
+        <div id="returnResults"></div>
+      </div>
+    </div>
   </div>
 
-  <div id="results"></div>
+  <div id="modal" class="modal">
+    <div class="modal-content" id="modalContent">
+      <span class="close">&times;</span>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
