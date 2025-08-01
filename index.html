@@ -4,80 +4,174 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      flex: 1 1 45%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, select {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .trip-type {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .search-btn {
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .results {
+      display: flex;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .results-column {
+      flex: 1;
+      background: #fafafa;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .results-column h2 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .flight-card {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .flight-card button {
+      margin-top: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      form, .results {
+        flex-direction: column;
+      }
+
+      .form-group {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal</h1>
-    <form id="flightForm">
-      <div class="row">
-        <div class="column">
-          <label>From</label>
-          <input type="text" id="from" required />
-        </div>
-        <div class="column">
-          <label>To</label>
-          <input type="text" id="to" required />
+    <form id="flight-search-form">
+      <div class="form-group">
+        <label for="from">From</label>
+        <input type="text" id="from" placeholder="e.g. BOM" required />
+      </div>
+      <div class="form-group">
+        <label for="to">To</label>
+        <input type="text" id="to" placeholder="e.g. DEL" required />
+      </div>
+      <div class="form-group">
+        <label for="departure-date">Departure Date</label>
+        <input type="date" id="departure-date" required />
+      </div>
+      <div class="form-group" id="return-date-group">
+        <label for="return-date">Return Date</label>
+        <input type="date" id="return-date" />
+      </div>
+      <div class="form-group">
+        <label>Trip Type</label>
+        <div class="trip-type">
+          <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
+          <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
         </div>
       </div>
-
-      <div class="row">
-        <div class="column">
-          <label>Departure Date</label>
-          <input type="date" id="departureDate" required />
-        </div>
-        <div class="column">
-          <label>Return Date</label>
-          <input type="date" id="returnDate" />
-        </div>
+      <div class="form-group">
+        <label for="passengers">Passengers</label>
+        <input type="number" id="passengers" min="1" value="1" />
       </div>
-
-      <div class="row">
-        <div class="column">
-          <label>Trip Type</label>
-          <div>
-            <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
-            <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
-          </div>
-        </div>
-        <div class="column">
-          <label>Passengers</label>
-          <input type="number" id="passengers" min="1" value="1" required />
-        </div>
+      <div class="form-group">
+        <label for="travel-class">Travel Class</label>
+        <select id="travel-class">
+          <option value="ECONOMY">Economy</option>
+          <option value="BUSINESS">Business</option>
+        </select>
       </div>
-
-      <div class="row">
-        <div class="column">
-          <label>Travel Class</label>
-          <select id="travelClass">
-            <option value="ECONOMY">Economy</option>
-            <option value="BUSINESS">Business</option>
-          </select>
-        </div>
-        <div class="column">
-          <label>Preferred Payment Methods</label>
-          <input type="text" placeholder="Select Methods" disabled />
-        </div>
+      <div class="form-group">
+        <label for="payment-methods">Preferred Payment Methods</label>
+        <input type="text" id="payment-methods" placeholder="Select Methods" disabled />
       </div>
-
-      <button type="submit">Search</button>
+      <div class="form-group" style="flex: 1 1 100%;">
+        <button type="submit" class="search-btn">Search</button>
+      </div>
     </form>
 
     <div class="results">
-      <div class="flight-column">
-        <h3>Outbound Flights</h3>
-        <div id="outboundResults"></div>
+      <div class="results-column">
+        <h2>Outbound Flights</h2>
+        <div id="outbound-results"></div>
       </div>
-      <div class="flight-column">
-        <h3>Return Flights</h3>
-        <div id="returnResults"></div>
+      <div class="results-column">
+        <h2>Return Flights</h2>
+        <div id="return-results"></div>
       </div>
-    </div>
-  </div>
-
-  <div id="modal" class="modal">
-    <div class="modal-content" id="modalContent">
-      <span class="close">&times;</span>
     </div>
   </div>
 
