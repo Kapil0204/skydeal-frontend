@@ -7,18 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   tripTypeInputs.forEach(input => {
     input.addEventListener('change', () => {
-      if (input.value === 'round-trip') {
-        returnDateGroup.style.display = 'block';
-      } else {
-        returnDateGroup.style.display = 'none';
-      }
+      returnDateGroup.style.display = input.value === 'round-trip' ? 'block' : 'none';
     });
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Clear previous results
     outboundResultsDiv.innerHTML = '';
     returnResultsDiv.innerHTML = '';
 
@@ -46,28 +41,31 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await response.json();
+      const flights = data.flights || [];
 
-      const showFlights = (flights, container) => {
-        if (!flights.length) {
-          container.innerHTML = '<p>No flights found.</p>';
-          return;
-        }
+      if (!flights.length) {
+        outboundResultsDiv.innerHTML = '<p>No flights found.</p>';
+        return;
+      }
 
-        flights.forEach((flight, index) => {
-          const div = document.createElement('div');
-          div.className = 'flight-card';
-          div.innerHTML = `
-            <p><strong>${flight.airline}</strong> - ${flight.flightNumber}</p>
-            <p>Depart: ${flight.departure} → Arrive: ${flight.arrival}</p>
-            <p>Price: ₹${flight.price}</p>
-            <button class="price-btn" data-price="${flight.price}" data-airline="${flight.airline}" data-number="${flight.flightNumber}">View Prices</button>
-          `;
-          container.appendChild(div);
-        });
-      };
+      flights.forEach((flight, index) => {
+        const segment = flight.itineraries[0].segments[0];
+        const airline = segment.carrierCode;
+        const flightNumber = segment.number;
+        const departure = segment.departure.at.slice(11, 16); // "HH:MM"
+        const arrival = segment.arrival.at.slice(11, 16);
+        const price = parseFloat(flight.price.total);
 
-      showFlights(data.outboundFlights, outboundResultsDiv);
-      showFlights(data.returnFlights, returnResultsDiv);
+        const div = document.createElement('div');
+        div.className = 'flight-card';
+        div.innerHTML = `
+          <p><strong>${airline}</strong> - ${flightNumber}</p>
+          <p>Depart: ${departure} → Arrive: ${arrival}</p>
+          <p>Price: ₹${price}</p>
+          <button class="price-btn" data-price="${price}" data-airline="${airline}" data-number="${flightNumber}">View Prices</button>
+        `;
+        outboundResultsDiv.appendChild(div);
+      });
 
       document.querySelectorAll('.price-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -85,9 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
           );
         });
       });
+
     } catch (error) {
       console.error('Error fetching flights:', error);
       alert('Failed to fetch flights.');
     }
   });
 });
+
