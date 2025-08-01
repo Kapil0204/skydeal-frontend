@@ -1,53 +1,86 @@
-document.getElementById('searchBtn').addEventListener('click', async () => {
-  const from = document.getElementById('from').value.trim();
-  const to = document.getElementById('to').value.trim();
-  const date = document.getElementById('date').value;
-  const travelClass = document.getElementById('travelClass').value;
+const searchForm = document.getElementById('search-form');
+const outboundResults = document.getElementById('outbound-results');
+const returnResults = document.getElementById('return-results');
 
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = 'Searching...';
+const portals = ['MakeMyTrip', 'Goibibo', 'Yatra', 'Cleartrip', 'EaseMyTrip'];
+
+searchForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  outboundResults.innerHTML = '';
+  returnResults.innerHTML = '';
+
+  const origin = document.getElementById('from').value;
+  const destination = document.getElementById('to').value;
+  const departureDate = document.getElementById('departure-date').value;
+  const returnDate = document.getElementById('return-date').value;
+  const passengers = document.getElementById('passengers').value;
+  const travelClass = document.getElementById('travel-class').value;
+  const tripType = document.querySelector('input[name="trip-type"]:checked').value;
 
   try {
-    const res = await fetch('https://skydeal-backend.onrender.com/search', {
+    const response = await fetch('http://localhost:3000/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from,
-        to,
-        departureDate: date,
+        origin,
+        destination,
+        departureDate,
+        returnDate,
+        passengers,
         travelClass,
-        passengers: 1
+        tripType
       })
     });
 
-    const data = await res.json();
-    resultsDiv.innerHTML = '';
+    const data = await response.json();
+    const outboundFlights = data.outboundFlights || [];
+    const returnFlights = data.returnFlights || [];
 
-    if (!data.flights || data.flights.length === 0) {
-      resultsDiv.textContent = 'No flights found.';
-      return;
-    }
-
-    data.flights.forEach(flight => {
-      const div = document.createElement('div');
-      div.className = 'flight-card';
-      div.innerHTML = `
-        <strong>${flight.airline} ${flight.flightNumber}</strong><br>
-        🛫 ${formatDateTime(flight.departure)} → 🛬 ${formatDateTime(flight.arrival)}<br>
-        💰 <strong>₹${flight.price}</strong>
-      `;
-      resultsDiv.appendChild(div);
+    outboundFlights.forEach(flight => {
+      const card = createFlightCard(flight, 'Outbound');
+      outboundResults.appendChild(card);
     });
 
-  } catch (error) {
-    console.error('Fetch error:', error);
-    resultsDiv.textContent = 'Error fetching flights.';
+    returnFlights.forEach(flight => {
+      const card = createFlightCard(flight, 'Return');
+      returnResults.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error fetching flights:', err);
+    alert('Failed to fetch flights. Try again.');
   }
 });
 
-function formatDateTime(isoString) {
-  const dt = new Date(isoString);
-  const hh = dt.getHours().toString().padStart(2, '0');
-  const mm = dt.getMinutes().toString().padStart(2, '0');
-  return `${hh}:${mm}`;
+function createFlightCard(flight, type) {
+  const card = document.createElement('div');
+  card.className = 'flight-card';
+  card.innerHTML = `
+    <strong>${flight.airline}</strong><br>
+    ${flight.flightNumber}<br>
+    ${flight.departure} → ${flight.arrival}<br>
+    ₹${flight.price}<br>
+    <button class="price-btn">View OTA Prices</button>
+  `;
+
+  card.querySelector('button').addEventListener('click', () => {
+    showPortalPrices(flight);
+  });
+
+  return card;
+}
+
+function showPortalPrices(flight) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+
+  let content = `<h3>Prices for ${flight.flightNumber}</h3>`;
+  portals.forEach(portal => {
+    const price = flight.price + 100;
+    content += `<p><strong>${portal}:</strong> ₹${price}</p>`;
+  });
+  content += '<button onclick="this.parentElement.remove()">Close</button>';
+
+  modal.innerHTML = content;
+  document.body.appendChild(modal);
 }
