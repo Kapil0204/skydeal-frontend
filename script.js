@@ -1,112 +1,109 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const searchForm = document.getElementById('searchForm');
-  const resultsSection = document.getElementById('resultsSection');
-  const outboundResults = document.getElementById('outboundResults');
-  const returnResults = document.getElementById('returnResults');
+  const form = document.querySelector('form');
+  const searchBtn = document.getElementById('searchBtn');
+  const returnDateInput = document.getElementById('returnDate');
   const tripTypeRadios = document.getElementsByName('tripType');
-  const returnDateDiv = document.getElementById('returnDateDiv');
-  const flightModal = document.getElementById('flightModal');
-  const modalContent = document.getElementById('modalContent');
-  const closeModal = document.getElementById('closeModal');
+  const resultsSection = document.getElementById('results');
 
-  const API_URL = 'https://skydeal-backend.onrender.com';
+  // Toggle return date input
+  tripTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      returnDateInput.parentElement.style.display = radio.value === 'round-trip' ? 'block' : 'none';
+    });
+  });
 
-  // ✅ 1. Toggle return date visibility
-  if (tripTypeRadios && tripTypeRadios.length > 0) {
-    tripTypeRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (returnDateDiv) {
-          returnDateDiv.style.display =
-            document.querySelector('input[name="tripType"]:checked').value === 'round-trip'
-              ? 'block'
-              : 'none';
-        }
+  // OTA portals for modal popup
+  const portals = ['MakeMyTrip', 'Goibibo', 'EaseMyTrip', 'Cleartrip', 'Yatra'];
+
+  // Search button click
+  searchBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    resultsSection.innerHTML = ''; // Clear previous results
+
+    const from = document.getElementById('from').value.trim().toUpperCase();
+    const to = document.getElementById('to').value.trim().toUpperCase();
+    const departureDate = document.getElementById('departureDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+    const passengers = parseInt(document.getElementById('passengers').value);
+    const travelClass = document.getElementById('travelClass').value.toLowerCase();
+    const tripType = [...tripTypeRadios].find(r => r.checked)?.value || 'one-way';
+
+    const body = {
+      from,
+      to,
+      departureDate,
+      returnDate: tripType === 'round-trip' ? returnDate : '',
+      passengers,
+      travelClass,
+      tripType
+    };
+
+    try {
+      const response = await fetch('https://skydeal-backend.onrender.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
-    });
-  }
 
-  // ✅ 2. Handle form submission
-  if (searchForm) {
-    searchForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const from = document.getElementById('from').value.trim();
-      const to = document.getElementById('to').value.trim();
-      const departureDate = document.getElementById('departureDate').value;
-      const returnDate = document.getElementById('returnDate').value;
-      const tripType = document.querySelector('input[name="tripType"]:checked').value;
-      const passengers = document.getElementById('passengers').value;
-      const travelClass = document.getElementById('travelClass').value;
-
-      resultsSection.style.display = 'none';
-      outboundResults.innerHTML = '';
-      returnResults.innerHTML = '';
-
-      try {
-        const response = await fetch(`${API_URL}/search`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from, to, departureDate, returnDate, passengers, travelClass, tripType })
-        });
-
-        const data = await response.json();
-
-        const renderFlights = (flights, container) => {
-          flights.forEach(flight => {
-            const card = document.createElement('div');
-            card.className = 'flight-card';
-            card.innerHTML = `
-              <strong>${flight.airline}</strong><br>
-              Flight No: ${flight.flightNumber}<br>
-              Departure: ${flight.departureTime} | Arrival: ${flight.arrivalTime}<br>
-              Price: ₹${flight.price}<br>
-              <button class="view-portals" data-flight='${JSON.stringify(flight)}'>View on Portals</button>
-            `;
-            container.appendChild(card);
-          });
-        };
-
-        renderFlights(data.outboundFlights, outboundResults);
-        if (tripType === 'round-trip') {
-          renderFlights(data.returnFlights, returnResults);
-        }
-
-        resultsSection.style.display = 'flex';
-
-        document.querySelectorAll('.view-portals').forEach(button => {
-          button.addEventListener('click', (e) => {
-            const flight = JSON.parse(e.target.getAttribute('data-flight'));
-            const portals = ['MakeMyTrip', 'Goibibo', 'EaseMyTrip', 'Yatra', 'Cleartrip'];
-            const portalPricing = portals.map(p => {
-              return `<p><strong>${p}</strong>: ₹${flight.price + 100}</p>`;
-            }).join('');
-
-            modalContent.innerHTML = `
-              <h3>${flight.airline} (${flight.flightNumber})</h3>
-              <p>${flight.departureTime} → ${flight.arrivalTime}</p>
-              ${portalPricing}
-            `;
-            flightModal.style.display = 'block';
-          });
-        });
-
-      } catch (error) {
-        console.error('❌ Error fetching flights:', error);
-        alert('Something went wrong while searching flights.');
-      }
-    });
-  }
-
-  // ✅ 3. Modal handling
-  if (closeModal) {
-    closeModal.addEventListener('click', () => {
-      flightModal.style.display = 'none';
-    });
-  }
-
-  window.addEventListener('click', (e) => {
-    if (e.target === flightModal) {
-      flightModal.style.display = 'none';
+      const data = await response.json();
+      displayResults(data, tripType);
+    } catch (err) {
+      console.error('Search failed:', err);
+      alert('Error fetching flights. Please try again.');
     }
   });
+
+  function displayResults(data, tripType) {
+    const outbound = data.outbound || [];
+    const inbound = data.return || [];
+
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.justifyContent = 'space-between';
+    container.style.gap = '30px';
+
+    const outboundCol = document.createElement('div');
+    const returnCol = document.createElement('div');
+
+    const createFlightCard = (flight, label) => {
+      const card = document.createElement('div');
+      card.className = 'flight-card';
+      card.innerHTML = `
+        <strong>${label}</strong><br>
+        ${flight.airline} ${flight.flightNumber}<br>
+        ${flight.departureTime} → ${flight.arrivalTime}<br>
+        ₹${flight.price}
+        <button class="showPricesBtn" style="margin-top: 8px;">View OTA Prices</button>
+      `;
+      card.querySelector('.showPricesBtn').addEventListener('click', () => {
+        showPortalModal(flight);
+      });
+      return card;
+    };
+
+    outbound.forEach(f => outboundCol.appendChild(createFlightCard(f, 'Outbound')));
+    if (tripType === 'round-trip') {
+      inbound.forEach(f => returnCol.appendChild(createFlightCard(f, 'Return')));
+    }
+
+    container.appendChild(outboundCol);
+    if (tripType === 'round-trip') container.appendChild(returnCol);
+
+    resultsSection.appendChild(container);
+  }
+
+  function showPortalModal(flight) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>${flight.airline} ${flight.flightNumber} – ${flight.departureTime} → ${flight.arrivalTime}</h3>
+        <ul>
+          ${portals.map(p => `<li>${p}: ₹${flight.price + 100} <button onclick="alert('Redirecting to ${p}')">Go</button></li>`).join('')}
+        </ul>
+        <button onclick="this.parentElement.parentElement.remove()">Close</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
 });
