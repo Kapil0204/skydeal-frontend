@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SkyDeal - Flight Search</title>
+  <meta charset="UTF-8" />
+  <title>SkyDeal - Real Flights</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
       padding: 2rem;
-      background: #f4f4f4;
     }
 
     h1 {
       color: #333;
+      margin-bottom: 1rem;
     }
 
     .search-form {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      margin-bottom: 2rem;
-      background: #fff;
+      background: white;
       padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .search-form input,
@@ -30,29 +30,28 @@
     .search-form button {
       padding: 0.6rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
       border-radius: 6px;
-      min-width: 150px;
+      border: 1px solid #ccc;
     }
 
     .search-form button {
-      background: #0070f3;
-      color: #fff;
-      cursor: pointer;
+      background-color: #0070f3;
+      color: white;
       border: none;
-    }
-
-    .flight-card {
-      background: #fff;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-left: 6px solid #0070f3;
-      border-radius: 6px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      cursor: pointer;
     }
 
     #results {
       margin-top: 2rem;
+    }
+
+    .flight-card {
+      background: white;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-left: 5px solid #0070f3;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
   </style>
 </head>
@@ -60,16 +59,14 @@
   <h1>SkyDeal – Find Real Flights</h1>
 
   <div class="search-form">
-    <input id="from" placeholder="From (e.g. DEL)" />
-    <input id="to" placeholder="To (e.g. BOM)" />
+    <input id="from" placeholder="From (e.g. BOM)" />
+    <input id="to" placeholder="To (e.g. DEL)" />
     <input id="date" type="date" />
-    
     <select id="travelClass">
       <option value="ECONOMY">Economy</option>
       <option value="BUSINESS">Business</option>
       <option value="FIRST">First</option>
     </select>
-
     <button id="searchBtn">Search</button>
   </div>
 
@@ -78,4 +75,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
