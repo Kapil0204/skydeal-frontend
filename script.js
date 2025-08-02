@@ -1,65 +1,102 @@
-console.log("✅ Script loaded!");
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('flight-search-form');
+  const outboundResultsDiv = document.getElementById('outbound-results');
+  const returnResultsDiv = document.getElementById('return-results');
+  const tripTypeInputs = document.getElementsByName('tripType');
+  const returnDateGroup = document.getElementById('return-date-group');
 
-document.getElementById("search-button").addEventListener("click", async function (e) {
-  e.preventDefault();
-
-  const from = document.getElementById("from").value.trim().toUpperCase();
-  const to = document.getElementById("to").value.trim().toUpperCase();
-  const departureDate = document.getElementById("departure-date").value;
-  const returnDate = document.getElementById("return-date").value;
-  const passengers = document.getElementById("passengers").value || "1";
-  const travelClass = document.getElementById("travel-class").value;
-  const tripType = document.querySelector('input[name="trip-type"]:checked')?.value || "one-way";
-
-  const searchData = {
-    from,
-    to,
-    departureDate,
-    returnDate,
-    passengers,
-    travelClass,
-    tripType
-  };
-
-  console.log("🔍 Sending search request:", searchData);
-
-  try {
-    const response = await fetch("https://skydeal-backend.onrender.com/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(searchData)
+  // Toggle return date field based on trip type
+  tripTypeInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      if (input.value === 'round-trip') {
+        returnDateGroup.style.display = 'block';
+      } else {
+        returnDateGroup.style.display = 'none';
+      }
     });
+  });
 
-    const data = await response.json();
+  // Handle form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    console.log("🎯 Flight Results:", data);
+    // Clear previous results
+    outboundResultsDiv.innerHTML = '';
+    returnResultsDiv.innerHTML = '';
 
-    // Clear existing results
-    document.getElementById("outbound-results").innerHTML = "";
-    document.getElementById("return-results").innerHTML = "";
+    // Collect form values
+    const origin = document.getElementById('from').value;
+    const destination = document.getElementById('to').value;
+    const departureDate = document.getElementById('departure-date').value;
+    const returnDate = document.getElementById('return-date').value;
+    const passengers = parseInt(document.getElementById('passengers').value);
+    const travelClass = document.getElementById('travel-class').value;
+    const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
-    // Display outbound flights
-    data.outbound.forEach(flight => {
-      const div = document.createElement("div");
-      div.className = "flight-card";
-      div.textContent = `${flight.flightNumber} | ${flight.airline} | ${flight.departureTime} - ${flight.arrivalTime} | ₹${flight.price}`;
-      document.getElementById("outbound-results").appendChild(div);
-    });
-
-    // Display return flights (if present)
-    if (Array.isArray(data.return)) {
-      data.return.forEach(flight => {
-        const div = document.createElement("div");
-        div.className = "flight-card";
-        div.textContent = `${flight.flightNumber} | ${flight.airline} | ${flight.departureTime} - ${flight.arrivalTime} | ₹${flight.price}`;
-        document.getElementById("return-results").appendChild(div);
+    try {
+      const response = await fetch('https://skydeal-backend.onrender.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin,
+          destination,
+          departureDate,
+          returnDate,
+          passengers,
+          travelClass,
+          tripType
+        })
       });
-    }
 
-  } catch (error) {
-    console.error("❌ Error fetching flights:", error);
-    alert("Something went wrong while fetching flights.");
-  }
+      const data = await response.json();
+
+      const showFlights = (flights, container) => {
+        if (!flights.length) {
+          container.innerHTML = '<p>No flights found.</p>';
+          return;
+        }
+
+        flights.forEach(flight => {
+          const div = document.createElement('div');
+          div.className = 'flight-card';
+          div.innerHTML = `
+            <p><strong>${flight.flightName}</strong></p>
+            <p>Depart: ${flight.departure} → Arrive: ${flight.arrival}</p>
+            <p>Price: ₹${flight.price}</p>
+            <button class="price-btn"
+              data-price="${flight.price}"
+              data-name="${flight.flightName}">
+              View OTA Prices
+            </button>
+          `;
+          container.appendChild(div);
+        });
+      };
+
+      showFlights(data.outboundFlights, outboundResultsDiv);
+      if (tripType === 'round-trip') {
+        showFlights(data.returnFlights, returnResultsDiv);
+      }
+
+      // Handle OTA price buttons
+      document.querySelectorAll('.price-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const basePrice = parseFloat(btn.dataset.price);
+          const name = btn.dataset.name;
+
+          alert(
+            `Prices for ${name}:\n` +
+            `• MakeMyTrip: ₹${basePrice + 100}\n` +
+            `• Goibibo: ₹${basePrice + 100}\n` +
+            `• Yatra: ₹${basePrice + 100}\n` +
+            `• Cleartrip: ₹${basePrice + 100}\n` +
+            `• EaseMyTrip: ₹${basePrice + 100}`
+          );
+        });
+      });
+    } catch (err) {
+      console.error('❌ Error fetching flights:', err);
+      alert('Something went wrong while fetching flights.');
+    }
+  });
 });
