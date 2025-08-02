@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div class="container">
@@ -27,7 +27,7 @@
           <label for="departure-date">Departure Date</label>
           <input type="date" id="departure-date" required />
         </div>
-        <div class="form-group" id="return-date-group">
+        <div class="form-group">
           <label for="return-date">Return Date</label>
           <input type="date" id="return-date" />
         </div>
@@ -36,16 +36,12 @@
       <div class="form-row">
         <div class="form-group">
           <label>Trip Type</label>
-          <div>
-            <input type="radio" id="one-way" name="tripType" value="one-way" />
-            <label for="one-way">One Way</label>
-            <input type="radio" id="round-trip" name="tripType" value="round-trip" checked />
-            <label for="round-trip">Round Trip</label>
-          </div>
+          <input type="radio" name="trip-type" value="one-way" /> One Way
+          <input type="radio" name="trip-type" value="round-trip" checked /> Round Trip
         </div>
         <div class="form-group">
           <label for="passengers">Passengers</label>
-          <input type="number" id="passengers" value="1" min="1" required />
+          <input type="number" id="passengers" min="1" value="1" />
         </div>
       </div>
 
@@ -53,30 +49,24 @@
         <div class="form-group">
           <label for="travel-class">Travel Class</label>
           <select id="travel-class">
-            <option value="ECONOMY">Economy</option>
-            <option value="BUSINESS">Business</option>
-            <option value="FIRST">First</option>
+            <option value="economy">Economy</option>
+            <option value="business">Business</option>
           </select>
         </div>
         <div class="form-group">
           <label for="payment-methods">Preferred Payment Methods</label>
-          <input type="text" id="payment-methods" placeholder="Select Methods" disabled />
+          <input type="text" id="payment-methods" placeholder="Select Methods" />
         </div>
       </div>
 
-      <button type="submit">Search</button>
+      <button id="search-btn">Search</button>
     </form>
 
-    <div class="results-row">
-      <div>
-        <h3>Outbound Flights</h3>
-        <div id="outbound-results"></div>
-      </div>
-      <div>
-        <h3>Return Flights</h3>
-        <div id="return-results"></div>
-      </div>
-    </div>
+    <h3>Outbound Flights</h3>
+    <div id="outbound-results"></div>
+
+    <h3>Return Flights</h3>
+    <div id="return-results"></div>
   </div>
 
   <script src="script.js"></script>
