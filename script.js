@@ -1,71 +1,48 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const searchBtn = document.getElementById('search-btn');
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBtn = document.getElementById("search-btn");
+  const returnDateGroup = document.getElementById("return-date-group");
 
-  if (!searchBtn) {
-    console.error('Search button not found');
-    return;
-  }
+  // Toggle return date field
+  document.querySelectorAll('input[name="tripType"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      returnDateGroup.style.display =
+        document.getElementById("round-trip").checked ? "block" : "none";
+    });
+  });
 
-  searchBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-    const departureDate = document.getElementById('departure-date').value;
-    const returnDate = document.getElementById('return-date').value;
-    const passengers = parseInt(document.getElementById('passengers').value);
-    const travelClass = document.getElementById('travel-class').value;
-    const paymentMethods = [document.getElementById('payment-methods').value]; // placeholder
-
-    const tripTypeRadio = document.querySelector('input[name="trip-type"]:checked');
-    const tripType = tripTypeRadio ? tripTypeRadio.value : 'one-way';
+  searchBtn.addEventListener("click", async () => {
+    const from = document.getElementById("from").value.trim();
+    const to = document.getElementById("to").value.trim();
+    const departureDate = document.getElementById("departure-date").value;
+    const returnDate = document.getElementById("return-date").value;
+    const passengers = document.getElementById("passengers").value || "1";
+    const travelClass = document.getElementById("travel-class").value;
+    const tripType = document.getElementById("round-trip").checked ? "round-trip" : "one-way";
 
     const requestBody = {
       from,
       to,
       departureDate,
-      returnDate,
+      returnDate: tripType === "round-trip" ? returnDate : "",
       passengers,
       travelClass,
-      paymentMethods,
       tripType
     };
 
     try {
-      const response = await fetch('https://skydeal-backend.onrender.com/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
+      const res = await fetch("https://skydeal-backend.onrender.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      // Basic display logic
-      const outboundDiv = document.getElementById('outbound-results');
-      const returnDiv = document.getElementById('return-results');
+      console.log("Real flights fetched:", data);
+      // Render flights logic goes here...
 
-      outboundDiv.innerHTML = '';
-      returnDiv.innerHTML = '';
-
-      if (data.outboundFlights && Array.isArray(data.outboundFlights)) {
-        data.outboundFlights.forEach(flight => {
-          const div = document.createElement('div');
-          div.textContent = `${flight.airline} ${flight.flightNumber} - ₹${flight.price}`;
-          outboundDiv.appendChild(div);
-        });
-      }
-
-      if (tripType === 'round-trip' && data.returnFlights && Array.isArray(data.returnFlights)) {
-        data.returnFlights.forEach(flight => {
-          const div = document.createElement('div');
-          div.textContent = `${flight.airline} ${flight.flightNumber} - ₹${flight.price}`;
-          returnDiv.appendChild(div);
-        });
-      }
-    } catch (err) {
-      console.error('Flight fetch failed:', err);
+    } catch (error) {
+      console.error("Error fetching flights:", error);
     }
   });
 });
