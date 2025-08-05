@@ -37,7 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const data = await response.json();
-    displayFlights(data.outboundFlights, data.returnFlights);
+displayFlights(data.outboundFlights || [], data.returnFlights || []);
+
     filtersContainer.style.display = "flex"; // Show filters only after search
   });
 
