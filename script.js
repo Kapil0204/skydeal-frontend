@@ -5,10 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const returnDateInput = document.getElementById("returnDate");
   const tripTypeRadios = document.getElementsByName("tripType");
 
-  // Hide return date by default
   returnDateInput.style.display = "none";
 
-  // Toggle return date input
   tripTypeRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
       const selectedType = document.querySelector('input[name="tripType"]:checked').value;
