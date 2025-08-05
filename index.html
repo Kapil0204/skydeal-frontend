@@ -42,14 +42,27 @@
           <option value="BUSINESS">Business</option>
         </select>
       </div>
+      <div class="form-row">
+        <label>Sort By</label>
+        <select id="sort-select">
+          <option value="">Select</option>
+          <option value="price">Price</option>
+          <option value="departure">Departure Time</option>
+        </select>
+      </div>
       <button type="submit">Search</button>
     </form>
 
-    <h2>Outbound Flights</h2>
-    <div id="outbound-results"></div>
-
-    <h2>Return Flights</h2>
-    <div id="return-results"></div>
+    <div class="flight-results-wrapper">
+      <div>
+        <h2>Outbound Flights</h2>
+        <div id="outbound-results"></div>
+      </div>
+      <div>
+        <h2>Return Flights</h2>
+        <div id="return-results"></div>
+      </div>
+    </div>
   </div>
   <script src="script.js"></script>
 </body>
