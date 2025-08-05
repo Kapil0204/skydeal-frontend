@@ -1,29 +1,43 @@
 body {
   font-family: Arial, sans-serif;
-  margin: 20px;
   background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
 h1 {
   text-align: center;
+  color: #111;
 }
 
-.search-container {
+form {
+  margin-bottom: 15px;
+}
+
+.form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
   justify-content: center;
 }
 
-input, select, button {
-  padding: 8px;
-  border-radius: 4px;
+input,
+select,
+button {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 14px;
 }
 
 button {
@@ -37,36 +51,61 @@ button:hover {
   background-color: #0056b3;
 }
 
-.trip-type {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#sort-container {
-  margin-top: 20px;
+.filters {
+  margin: 20px auto;
   text-align: center;
+  display: none;
 }
 
-.results-container {
+.filters.active {
+  display: block;
+}
+
+.flight-columns {
   display: flex;
   justify-content: space-between;
-  margin-top: 30px;
   gap: 20px;
 }
 
-.flight-column {
-  width: 48%;
+.flight-columns > div {
+  width: 100%;
+}
+
+#outbound-flights,
+#return-flights {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .flight-card {
   background-color: #fff;
+  border: 1px solid #eee;
   padding: 15px;
-  margin-bottom: 15px;
   border-radius: 8px;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.flight-card button {
-  margin-top: 10px;
+.flight-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.flight-card p {
+  margin: 3px 0;
+  font-size: 14px;
+}
+
+.view-otas-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.view-otas-btn:hover {
+  background-color: #0056b3;
 }
