@@ -1,111 +1,110 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
   margin: 0;
-  padding: 0;
-}
-
-.container {
-  max-width: 1000px;
-  margin: 20px auto;
   padding: 20px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  background-color: #f7f7f7;
 }
 
 h1 {
   text-align: center;
-  color: #111;
 }
 
-form {
-  margin-bottom: 15px;
-}
-
-.form-row {
+.search-container {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   justify-content: center;
+  margin-bottom: 15px;
 }
 
-input,
-select,
-button {
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
+input[type="text"],
+input[type="date"],
+input[type="number"],
+select {
+  padding: 8px;
   border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
+  padding: 8px 14px;
   background-color: #007bff;
   color: white;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0056b3;
+.radio-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.filters {
-  margin: 20px auto;
-  text-align: center;
-  display: none;
-}
-
-.filters.active {
-  display: block;
-}
-
-.flight-columns {
+.results-container {
   display: flex;
   justify-content: space-between;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
-.flight-columns > div {
-  width: 100%;
-}
-
-#outbound-flights,
-#return-flights {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.flight-column {
+  flex: 1;
+  min-width: 300px;
 }
 
 .flight-card {
-  background-color: #fff;
-  border: 1px solid #eee;
+  background-color: white;
   padding: 15px;
+  margin-bottom: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-.flight-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-}
-
-.flight-card p {
-  margin: 3px 0;
-  font-size: 14px;
-}
-
-.view-otas-btn {
+.flight-card button {
   margin-top: 8px;
-  padding: 6px 12px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
-.view-otas-btn:hover {
-  background-color: #0056b3;
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.close-button {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
 }
