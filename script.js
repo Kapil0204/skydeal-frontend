@@ -1,3 +1,6 @@
+document.addEventListener("DOMContentLoaded", () => {
+  // 🔁 All your existing script.js code goes here
+});
 const searchButton = document.getElementById("search-button");
 const outboundContainer = document.getElementById("outbound-flights");
 const returnContainer = document.getElementById("return-flights");
