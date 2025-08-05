@@ -5,8 +5,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const returnDateInput = document.getElementById("returnDate");
   const tripTypeRadios = document.getElementsByName("tripType");
 
+  let currentOutboundFlights = [];
+  let currentReturnFlights = [];
+
+  // Hide return date by default
   returnDateInput.style.display = "none";
 
+  // Toggle return date input
   tripTypeRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
       const selectedType = document.querySelector('input[name="tripType"]:checked').value;
@@ -27,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     outboundContainer.innerHTML = "";
     returnContainer.innerHTML = "";
+    document.getElementById("sortControls").style.display = "none";
 
     try {
       const response = await fetch("https://skydeal-backend.onrender.com/search", {
@@ -44,8 +50,16 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await response.json();
-      displayFlights(data.outboundFlights, outboundContainer);
-      displayFlights(data.returnFlights, returnContainer);
+
+      // Save flights for sorting
+      currentOutboundFlights = data.outboundFlights || [];
+      currentReturnFlights = data.returnFlights || [];
+
+      displayFlights(currentOutboundFlights, outboundContainer);
+      displayFlights(currentReturnFlights, returnContainer);
+
+      // Show sort buttons
+      document.getElementById("sortControls").style.display = "block";
     } catch (error) {
       console.error("Error fetching flights:", error);
       alert("Failed to fetch flights. Please try again.");
@@ -53,6 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function displayFlights(flights, container) {
+    container.innerHTML = "";
+
     if (!flights || flights.length === 0) {
       container.innerHTML = "<p>No flights found.</p>";
       return;
@@ -65,9 +81,29 @@ document.addEventListener("DOMContentLoaded", () => {
         <p><strong>${flight.flightNumber}</strong> (${flight.airlineName})</p>
         <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
         <p>Stops: ${flight.stops}</p>
-        <p>Price: ₹${flight.price}</p>
+        <p>Price: ₹${parseFloat(flight.price).toFixed(2)}</p>
       `;
       container.appendChild(card);
     });
   }
+
+  // Sorting handler
+  window.sortFlights = function (key) {
+    const sortByDeparture = (a, b) => a.departure.localeCompare(b.departure);
+    const sortByPrice = (a, b) => parseFloat(a.price) - parseFloat(b.price);
+
+    const outboundSorted = [...currentOutboundFlights];
+    const returnSorted = [...currentReturnFlights];
+
+    if (key === "departure") {
+      outboundSorted.sort(sortByDeparture);
+      returnSorted.sort(sortByDeparture);
+    } else if (key === "price") {
+      outboundSorted.sort(sortByPrice);
+      returnSorted.sort(sortByPrice);
+    }
+
+    displayFlights(outboundSorted, outboundContainer);
+    displayFlights(returnSorted, returnContainer);
+  };
 });
