@@ -47,7 +47,7 @@ document.getElementById("flight-search-form").addEventListener("submit", async (
         Departure: ${flight.departure}<br/>
         Arrival: ${flight.arrival}<br/>
         Stops: ${flight.stops}<br/>
-        Price: ₹${flight.price.toFixed(2)}<br/>
+        Price: ₹${Number(flight.price || 0).toFixed(2)}<br/>
         <button onclick="showOTAs('${flight.flightNumber}', ${flight.price})">View on OTAs</button>
       `;
       container.appendChild(div);
