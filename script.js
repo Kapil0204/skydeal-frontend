@@ -76,14 +76,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     flights.forEach((flight) => {
       const card = document.createElement("div");
-      card.className = "flight-card";
-      card.innerHTML = `
-        <p><strong>${flight.flightNumber}</strong> (${flight.airlineName})</p>
-        <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
-        <p>Stops: ${flight.stops}</p>
-        <p>Price: ₹${parseFloat(flight.price).toFixed(2)}</p>
-      `;
-      container.appendChild(card);
+card.className = "flight-card";
+card.innerHTML = `
+  <p><strong>${flight.flightNumber}</strong> (${flight.airlineName})</p>
+  <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
+  <p>Stops: ${flight.stops}</p>
+  <p>Price: ₹${parseFloat(flight.price).toFixed(2)}</p>
+`;
+card.addEventListener("click", () => showPortalPrices(flight));
+container.appendChild(card);
     });
   }
 
