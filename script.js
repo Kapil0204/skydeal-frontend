@@ -1,92 +1,69 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const searchBtn = document.getElementById('searchBtn');
-  const roundTripRadio = document.getElementById('roundTrip');
-  const oneWayRadio = document.getElementById('oneWay');
-  const returnDateContainer = document.getElementById('returnDateContainer');
+document.addEventListener("DOMContentLoaded", () => {
+  const searchForm = document.getElementById("searchForm");
+  const outboundContainer = document.getElementById("outboundContainer");
+  const returnContainer = document.getElementById("returnContainer");
+  const tripTypeSelect = document.getElementById("tripType");
+  const returnDateInput = document.getElementById("returnDate");
 
-  function toggleReturnDate() {
-    if (roundTripRadio.checked) {
-      returnDateContainer.style.display = 'inline-block';
-    } else {
-      returnDateContainer.style.display = 'none';
-    }
-  }
+  tripTypeSelect.addEventListener("change", () => {
+    returnDateInput.style.display =
+      tripTypeSelect.value === "round-trip" ? "inline" : "none";
+  });
 
-  roundTripRadio.addEventListener('change', toggleReturnDate);
-  oneWayRadio.addEventListener('change', toggleReturnDate);
+  searchForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  toggleReturnDate(); // set initial state
+    const from = document.getElementById("from").value.toUpperCase();
+    const to = document.getElementById("to").value.toUpperCase();
+    const departureDate = document.getElementById("departureDate").value;
+    const returnDate = document.getElementById("returnDate").value;
+    const passengers = parseInt(document.getElementById("passengers").value);
+    const travelClass = document.getElementById("travelClass").value;
+    const tripType = document.getElementById("tripType").value;
 
-  searchBtn.addEventListener('click', async () => {
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-    const departureDate = document.getElementById('departureDate').value;
-    const returnDateInput = document.getElementById('returnDate');
-    const returnDate = returnDateInput ? returnDateInput.value : '';
-    const passengers = document.getElementById('passengers').value;
-    const travelClass = document.getElementById('travelClass').value;
-    const tripType = roundTripRadio.checked ? 'round-trip' : 'one-way';
-
-    const searchData = {
-      from,
-      to,
-      departureDate,
-      returnDate: tripType === 'round-trip' ? returnDate : '',
-      passengers,
-      travelClass,
-      tripType
-    };
+    outboundContainer.innerHTML = "";
+    returnContainer.innerHTML = "";
 
     try {
-      const response = await fetch('https://skydeal-backend.onrender.com/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(searchData)
+      const response = await fetch("https://your-render-url.onrender.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to,
+          departureDate,
+          returnDate,
+          passengers,
+          travelClass,
+          tripType
+        })
       });
 
-      const result = await response.json();
-      displayFlights(result);
+      const data = await response.json();
+      displayFlights(data.outboundFlights, outboundContainer);
+      displayFlights(data.returnFlights, returnContainer);
     } catch (error) {
-      console.error('Search failed:', error);
-      alert('Failed to fetch flights. Please try again.');
+      console.error("Error fetching flights:", error);
+      alert("Failed to fetch flights. Please try again.");
     }
   });
 
-  function displayFlights(data) {
-    const outboundDiv = document.getElementById('outboundFlights');
-    const returnDiv = document.getElementById('returnFlights');
-    outboundDiv.innerHTML = '';
-    returnDiv.innerHTML = '';
-
-    if (!data.outboundFlights) {
-      outboundDiv.innerHTML = '<p>No outbound flights found.</p>';
+  function displayFlights(flights, container) {
+    if (!flights || flights.length === 0) {
+      container.innerHTML = "<p>No flights found.</p>";
       return;
     }
 
-    data.outboundFlights.forEach(flight => {
-      const card = createFlightCard(flight);
-      outboundDiv.appendChild(card);
+    flights.forEach((flight) => {
+      const card = document.createElement("div");
+      card.className = "flight-card";
+      card.innerHTML = `
+        <p><strong>${flight.flightNumber}</strong> (${flight.airlineName})</p>
+        <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
+        <p>Stops: ${flight.stops}</p>
+        <p>Price: ₹${flight.price}</p>
+      `;
+      container.appendChild(card);
     });
-
-    if (data.returnFlights && data.returnFlights.length > 0) {
-      data.returnFlights.forEach(flight => {
-        const card = createFlightCard(flight);
-        returnDiv.appendChild(card);
-      });
-    }
-  }
-
-  function createFlightCard(flight) {
-    const div = document.createElement('div');
-    div.className = 'flight-card';
-    div.innerHTML = `
-      <strong>${flight.airline || flight.flightName}</strong><br>
-      Flight: ${flight.flightNumber || ''}<br>
-      From: ${flight.from} @ ${flight.departure}<br>
-      To: ${flight.to} @ ${flight.arrival}<br>
-      Stops: ${flight.stops || '0'}<br>
-      Price: ₹${flight.price}
-    `;
-    return div;
   }
 });
