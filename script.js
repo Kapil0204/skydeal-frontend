@@ -1,4 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+  // Toggle dropdown menu
+window.toggleDropdown = function () {
+  const menu = document.getElementById("dropdownMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+};
+
+// Hide dropdown if clicking outside
+window.addEventListener("click", function (e) {
+  const dropdown = document.getElementById("paymentDropdown");
+  if (!dropdown.contains(e.target)) {
+    document.getElementById("dropdownMenu").style.display = "none";
+  }
+});
+
   const searchForm = document.getElementById("searchForm");
   const outboundContainer = document.getElementById("outboundContainer");
   const returnContainer = document.getElementById("returnContainer");
