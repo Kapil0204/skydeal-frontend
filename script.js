@@ -108,3 +108,35 @@ container.appendChild(card);
     displayFlights(returnSorted, returnContainer);
   };
 });
+function showPortalPrices(flight) {
+  const basePrice = parseFloat(flight.price);
+  const portalPrices = [
+    { portal: "MakeMyTrip", price: basePrice + 100 },
+    { portal: "Goibibo", price: basePrice + 150 },
+    { portal: "EaseMyTrip", price: basePrice + 200 },
+    { portal: "Yatra", price: basePrice + 250 },
+    { portal: "Cleartrip", price: basePrice + 300 },
+  ];
+
+  const list = document.getElementById("portalPriceList");
+  list.innerHTML = "";
+  portalPrices.forEach(p => {
+    const li = document.createElement("li");
+    li.textContent = `${p.portal}: ₹${p.price.toFixed(2)}`;
+    list.appendChild(li);
+  });
+
+  document.getElementById("priceModal").style.display = "flex";
+}
+
+document.getElementById("closeModal").addEventListener("click", () => {
+  document.getElementById("priceModal").style.display = "flex";
+});
+
+window.addEventListener("click", (event) => {
+  const modal = document.getElementById("priceModal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
+
