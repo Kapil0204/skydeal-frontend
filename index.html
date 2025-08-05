@@ -3,23 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
-</head<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SkyDeal - Flight Search</title>
+  <title>SkyDeal: Find the Best Flight Offers</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>SkyDeal Flight Search</h1>
+    <h1>SkyDeal: Find the Best Flight Offers</h1>
     <form id="searchForm">
       <div class="form-row">
-        <label>From: <input type="text" id="from" required /></label>
-        <label>To: <input type="text" id="to" required /></label>
+        <label>From: <input type="text" id="from" placeholder="e.g. BOM" required /></label>
+        <label>To: <input type="text" id="to" placeholder="e.g. DEL" required /></label>
         <label>Departure: <input type="date" id="departureDate" required /></label>
         <label>Return: <input type="date" id="returnDate" /></label>
       </div>
@@ -34,10 +27,8 @@
           </select>
         </label>
         <label>Trip Type:
-          <select id="tripType">
-            <option value="one-way">One Way</option>
-            <option value="round-trip">Round Trip</option>
-          </select>
+          <input type="radio" name="tripType" value="one-way" checked /> One Way
+          <input type="radio" name="tripType" value="round-trip" /> Round Trip
         </label>
       </div>
       <button type="submit" id="searchBtn">Search</button>
@@ -52,41 +43,5 @@
   </div>
 
   <script src="script.js"></script>
-</body>
-</html>
-
-<body>
-  <h1>SkyDeal: Find the Best Flight Offers</h1>
-
-  <div class="search-form">
-    <input type="text" id="from" placeholder="From (e.g. BOM)" />
-    <input type="text" id="to" placeholder="To (e.g. DEL)" />
-    <input type="date" id="departureDate" />
-
-    <input type="number" id="passengers" value="1" min="1" />
-    <select id="travelClass">
-      <option value="economy">Economy</option>
-      <option value="business">Business</option>
-      <option value="first">First</option>
-    </select>
-
-    <button id="searchBtn">Search</button>
-
-    <div>
-      <label><input type="radio" name="tripType" value="oneway" checked /> One Way</label>
-      <label><input type="radio" name="tripType" value="round" /> Round Trip</label>
-    </div>
-
-    <input type="date" id="returnDate" style="display: none;" />
-  </div>
-
-  <h2>Outbound Flights</h2>
-  <div id="outboundResults"></div>
-
-  <h2>Return Flights</h2>
-  <div id="returnResults"></div>
-
-  <!-- ✅ defer ensures DOM loads before script runs -->
-  <script src="script.js" defer></script>
 </body>
 </html>
