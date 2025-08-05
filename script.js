@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     returnContainer.innerHTML = "";
 
     try {
-      const response = await fetch("https://your-render-url.onrender.com/search", {
+      const response = await fetch("https://skydeal-backend.onrender.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
