@@ -4,15 +4,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const tripTypeInputs = document.getElementsByName("tripType");
   const outboundResults = document.getElementById("outbound-results");
   const returnResults = document.getElementById("return-results");
+  const sortSelect = document.getElementById("sort-select");
 
-  const API_BASE_URL = "https://skydeal-backend.onrender.com";
-
+  // Toggle return date input
   tripTypeInputs.forEach((input) => {
     input.addEventListener("change", () => {
       returnDateGroup.style.display = input.value === "round-trip" ? "block" : "none";
     });
   });
 
+  // Handle form submission
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -24,18 +25,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const travelClass = document.getElementById("travel-class").value;
     const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
-    const payload = {
-      from,
-      to,
-      departureDate,
-      returnDate,
-      passengers,
-      travelClass,
-      tripType
-    };
+    const payload = { from, to, departureDate, returnDate, passengers, travelClass, tripType };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/search`, {
+      const res = await fetch("https://skydeal-backend.onrender.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -50,6 +43,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Sort dropdown
+  sortSelect.addEventListener("change", () => {
+    const sortBy = sortSelect.value;
+    sortFlights(outboundResults, sortBy);
+    sortFlights(returnResults, sortBy);
+  });
+
   function displayFlights(flights, container) {
     container.innerHTML = "";
 
@@ -62,25 +62,41 @@ document.addEventListener("DOMContentLoaded", function () {
       const card = document.createElement("div");
       card.className = "flight-card";
       card.innerHTML = `
-        <p><strong>${flight.flightName}</strong></p>
+        <p><strong>${flight.flightNumber}</strong></p>
         <p>Departure: ${flight.departure}</p>
         <p>Arrival: ${flight.arrival}</p>
+        <p>Stops: ${flight.stops === 0 ? 'Non-stop' : flight.stops}</p>
         <p>Price: ₹${flight.price}</p>
-        <button onclick="showPortalPrices('${flight.flightName}', ${flight.price})">View on OTAs</button>
+        <button onclick="alertPricing(${flight.price})">View on OTAs</button>
       `;
       container.appendChild(card);
     });
   }
 
-  window.showPortalPrices = function (flightName, basePrice) {
+  // Alert popup pricing
+  window.alertPricing = function (basePrice) {
+    let msg = `Base Price: ₹${basePrice}\n`;
     const portals = ["MakeMyTrip", "Goibibo", "Cleartrip", "EaseMyTrip", "Yatra"];
-    const markup = 100;
-    let message = `${flightName} pricing:\n\n`;
-
-    portals.forEach(portal => {
-      message += `${portal}: ₹${basePrice + markup}\n`;
+    portals.forEach((p) => {
+      msg += `\n${p}: ₹${parseInt(basePrice) + 100}`;
     });
-
-    alert(message);
+    alert(msg);
   };
+
+  function sortFlights(container, criteria) {
+    const cards = Array.from(container.querySelectorAll(".flight-card"));
+    cards.sort((a, b) => {
+      const getValue = (card, label) => parseInt(card.querySelector(`p:contains(${label})`).textContent.split(": ₹")[1]);
+      if (criteria === "price") {
+        return getValue(a, "Price") - getValue(b, "Price");
+      } else if (criteria === "departure") {
+        return a.querySelector("p:nth-child(2)").textContent.localeCompare(b.querySelector("p:nth-child(2)").textContent);
+      } else {
+        return 0;
+      }
+    });
+    container.innerHTML = "";
+    cards.forEach(card => container.appendChild(card));
+  }
 });
+
