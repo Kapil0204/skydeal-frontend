@@ -59,11 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
     card.className = "flight-card";
 
     card.innerHTML = `
-      <strong>${flight.flightNumber || "Unknown Flight"} (${flight.airline || "Airline"})</strong><br>
-      Departure: ${flight.departureTime}<br>
-      Arrival: ${flight.arrivalTime}<br>
+      <strong>${flight.flightNumber || "Unknown Flight"} (${flight.airlineName || "Airline"})</strong><br>
+      Departure: ${flight.departure}<br>
+      Arrival: ${flight.arrival}<br>
       Stops: ${flight.stops}<br>
-      Price: ₹${flight.price.toFixed(2)}<br>
+      Price: ₹${Number(flight.price).toFixed(2)}<br>
       <button class="view-otas-btn">View on OTAs</button>
     `;
 
@@ -88,11 +88,11 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="modal-content">
         <h3>Prices for ${flight.flightNumber}</h3>
         <ul>
-          <li>MakeMyTrip: ₹${flight.price + 100}</li>
-          <li>Goibibo: ₹${flight.price + 100}</li>
-          <li>EaseMyTrip: ₹${flight.price + 100}</li>
-          <li>Cleartrip: ₹${flight.price + 100}</li>
-          <li>Yatra: ₹${flight.price + 100}</li>
+          <li>MakeMyTrip: ₹${Number(flight.price) + 100}</li>
+          <li>Goibibo: ₹${Number(flight.price) + 100}</li>
+          <li>EaseMyTrip: ₹${Number(flight.price) + 100}</li>
+          <li>Cleartrip: ₹${Number(flight.price) + 100}</li>
+          <li>Yatra: ₹${Number(flight.price) + 100}</li>
         </ul>
       </div>
     `;
