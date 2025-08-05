@@ -2,12 +2,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.getElementById("searchForm");
   const outboundContainer = document.getElementById("outboundContainer");
   const returnContainer = document.getElementById("returnContainer");
-  const tripTypeSelect = document.getElementById("tripType");
   const returnDateInput = document.getElementById("returnDate");
+  const tripTypeRadios = document.getElementsByName("tripType");
 
-  tripTypeSelect.addEventListener("change", () => {
-    returnDateInput.style.display =
-      tripTypeSelect.value === "round-trip" ? "inline" : "none";
+  // Hide return date by default
+  returnDateInput.style.display = "none";
+
+  // Toggle return date input
+  tripTypeRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const selectedType = document.querySelector('input[name="tripType"]:checked').value;
+      returnDateInput.style.display = selectedType === "round-trip" ? "inline" : "none";
+    });
   });
 
   searchForm.addEventListener("submit", async (e) => {
@@ -19,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const returnDate = document.getElementById("returnDate").value;
     const passengers = parseInt(document.getElementById("passengers").value);
     const travelClass = document.getElementById("travelClass").value;
-    const tripType = document.getElementById("tripType").value;
+    const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
     outboundContainer.innerHTML = "";
     returnContainer.innerHTML = "";
