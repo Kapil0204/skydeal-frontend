@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // 🔁 All your existing script.js code goes here
+  // All event listeners and logic go here
 });
 const searchButton = document.getElementById("search-button");
 const outboundContainer = document.getElementById("outbound-flights");
