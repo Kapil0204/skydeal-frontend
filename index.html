@@ -7,61 +7,48 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>SkyDeal</h1>
-    <form id="flight-search-form">
-      <div class="form-row">
-        <label>From</label>
-        <input type="text" id="from" placeholder="e.g. BOM" required />
-      </div>
-      <div class="form-row">
-        <label>To</label>
-        <input type="text" id="to" placeholder="e.g. DEL" required />
-      </div>
-      <div class="form-row">
-        <label>Departure Date</label>
-        <input type="date" id="departure-date" required />
-      </div>
-      <div class="form-row" id="return-date-group">
-        <label>Return Date</label>
-        <input type="date" id="return-date" />
-      </div>
-      <div class="form-row">
-        <label>Trip Type</label>
-        <input type="radio" name="tripType" value="one-way" checked /> One Way
-        <input type="radio" name="tripType" value="round-trip" /> Round Trip
-      </div>
-      <div class="form-row">
-        <label>Passengers</label>
-        <input type="number" id="passengers" value="1" min="1" required />
-      </div>
-      <div class="form-row">
-        <label>Travel Class</label>
-        <select id="travel-class">
-          <option value="ECONOMY">Economy</option>
-          <option value="BUSINESS">Business</option>
-        </select>
-      </div>
-      <button type="submit">Search</button>
-    </form>
+  <h1>SkyDeal: Find the Best Flight Offers</h1>
+  <form id="flight-search-form">
+    <div class="input-row">
+      <input type="text" id="from" placeholder="From (e.g., DEL)" required />
+      <input type="text" id="to" placeholder="To (e.g., BOM)" required />
+      <input type="date" id="departure-date" required />
+      <input type="date" id="return-date" style="display: none;" />
+    </div>
+
+    <div class="trip-type">
+      <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
+      <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
+    </div>
+
+    <label for="passengers"><strong>Passengers</strong></label>
+    <input type="number" id="passengers" min="1" value="1" />
+
+    <label for="travel-class"><strong>Travel Class</strong></label>
+    <select id="travel-class">
+      <option value="ECONOMY">Economy</option>
+      <option value="BUSINESS">Business</option>
+    </select>
 
     <div id="sort-container" style="display: none;">
       <label for="sort-by"><strong>Sort By</strong></label>
       <select id="sort-by">
         <option value="price">Price</option>
-        <option value="departure">Departure Time</option>
+        <option value="departureTime">Departure Time</option>
       </select>
     </div>
 
-    <div class="results-container">
-      <div class="column">
-        <h2>Outbound Flights</h2>
-        <div id="outbound-results"></div>
-      </div>
-      <div class="column">
-        <h2>Return Flights</h2>
-        <div id="return-results"></div>
-      </div>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results" class="results-container">
+    <div>
+      <h2>Outbound Flights</h2>
+      <div id="outbound-flights"></div>
+    </div>
+    <div>
+      <h2>Return Flights</h2>
+      <div id="return-flights"></div>
     </div>
   </div>
 
