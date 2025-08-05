@@ -1,93 +1,110 @@
-document.getElementById('flight-search-form').addEventListener('submit', async function (e) {
+const form = document.getElementById("flight-search-form");
+const outboundDiv = document.getElementById("outbound-results");
+const returnDiv = document.getElementById("return-results");
+const sortBySelect = document.getElementById("sort-by");
+const sortContainer = document.getElementById("sort-container");
+
+let currentResults = {
+  outboundFlights: [],
+  returnFlights: []
+};
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const from = document.getElementById('from').value.toUpperCase();
-  const to = document.getElementById('to').value.toUpperCase();
-  const departureDate = document.getElementById('departure-date').value;
-  const returnDate = document.getElementById('return-date').value;
-  const passengers = document.getElementById('passengers').value;
-  const travelClass = document.getElementById('travel-class').value;
+  const from = document.getElementById("from").value;
+  const to = document.getElementById("to").value;
+  const departureDate = document.getElementById("departure-date").value;
+  const returnDate = document.getElementById("return-date").value;
+  const passengers = document.getElementById("passengers").value;
+  const travelClass = document.getElementById("travel-class").value;
   const tripType = document.querySelector('input[name="tripType"]:checked').value;
 
-  const response = await fetch('https://skydeal-backend.onrender.com/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from,
-      to,
-      departureDate,
-      returnDate,
-      passengers,
-      travelClass,
-      tripType
-    })
+  const payload = {
+    from,
+    to,
+    departureDate,
+    returnDate,
+    passengers,
+    travelClass,
+    tripType
+  };
+
+  const response = await fetch("https://skydeal-backend.onrender.com/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
   });
 
   const data = await response.json();
-  displayFlights(data.outboundFlights, 'outbound-results');
-  displayFlights(data.returnFlights, 'return-results');
+  currentResults = data;
+
+  sortContainer.style.display = "block"; // show sort dropdown
+
+  renderFlights();
 });
 
-function displayFlights(flights, containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
+sortBySelect.addEventListener("change", renderFlights);
 
-  const sortOption = document.getElementById('sort-select').value;
-  if (sortOption === 'price') {
-    flights.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-  } else if (sortOption === 'departure') {
-    flights.sort((a, b) => a.departure.localeCompare(b.departure));
-  }
+function renderFlights() {
+  const sortBy = sortBySelect.value;
 
-  flights.forEach((flight, index) => {
-    const card = document.createElement('div');
-    card.className = 'flight-card';
+  const sortedOutbound = [...currentResults.outboundFlights].sort((a, b) => {
+    return sortBy === "price"
+      ? parseFloat(a.price) - parseFloat(b.price)
+      : a.departure.localeCompare(b.departure);
+  });
 
-    const flightName = document.createElement('p');
-    flightName.innerHTML = `<strong>${flight.flightNumber}</strong> (${flight.airlineName})`;
+  const sortedReturn = [...currentResults.returnFlights].sort((a, b) => {
+    return sortBy === "price"
+      ? parseFloat(a.price) - parseFloat(b.price)
+      : a.departure.localeCompare(b.departure);
+  });
 
-    const departure = document.createElement('p');
-    departure.textContent = `Departure: ${flight.departure}`;
+  outboundDiv.innerHTML = "";
+  returnDiv.innerHTML = "";
 
-    const arrival = document.createElement('p');
-    arrival.textContent = `Arrival: ${flight.arrival}`;
+  sortedOutbound.forEach((flight) => {
+    outboundDiv.appendChild(createFlightCard(flight));
+  });
 
-    const stops = document.createElement('p');
-    stops.textContent = `Stops: ${flight.stops}`;
-
-    const price = document.createElement('p');
-    price.textContent = `Price: ₹${flight.price}`;
-
-    const btn = document.createElement('button');
-    btn.textContent = 'View on OTAs';
-    btn.onclick = () => {
-      const basePrice = parseFloat(flight.price);
-      const markup = 100;
-      const portals = ['MakeMyTrip', 'Goibibo', 'Cleartrip', 'EaseMyTrip', 'Yatra'];
-      const message = portals.map(p => `${p}: ₹${(basePrice + markup).toFixed(0)}`).join('\n');
-      alert(`${flight.flightNumber} pricing:\n\n${message}`);
-    };
-
-    card.appendChild(flightName);
-    card.appendChild(departure);
-    card.appendChild(arrival);
-    card.appendChild(stops);
-    card.appendChild(price);
-    card.appendChild(btn);
-
-    container.appendChild(card);
+  sortedReturn.forEach((flight) => {
+    returnDiv.appendChild(createFlightCard(flight));
   });
 }
 
-// ✅ Toggle return date field
-const tripRadios = document.querySelectorAll('input[name="tripType"]');
-tripRadios.forEach(radio => {
-  radio.addEventListener('change', () => {
-    const returnGroup = document.getElementById('return-date-group');
-    if (document.querySelector('input[name="tripType"]:checked').value === 'round-trip') {
-      returnGroup.style.display = 'block';
-    } else {
-      returnGroup.style.display = 'none';
-    }
-  });
-});
+function createFlightCard(flight) {
+  const card = document.createElement("div");
+  card.className = "flight-card";
+
+  const title = document.createElement("h3");
+  title.textContent = `${flight.flightNumber} (${flight.airlineName})`;
+
+  const departure = document.createElement("p");
+  departure.textContent = `Departure: ${flight.departure}`;
+
+  const arrival = document.createElement("p");
+  arrival.textContent = `Arrival: ${flight.arrival}`;
+
+  const stops = document.createElement("p");
+  stops.textContent = `Stops: ${flight.stops}`;
+
+  const price = document.createElement("p");
+  price.textContent = `Price: ₹${parseFloat(flight.price).toFixed(2)}`;
+
+  const viewBtn = document.createElement("button");
+  viewBtn.className = "view-button";
+  viewBtn.textContent = "View on OTAs";
+  viewBtn.onclick = () => {
+    alert(`Simulated pricing:\n\nMakeMyTrip: ₹${+flight.price + 100}\nGoibibo: ₹${+flight.price + 100}\nCleartrip: ₹${+flight.price + 100}\nEaseMyTrip: ₹${+flight.price + 100}\nYatra: ₹${+flight.price + 100}`);
+  };
+
+  card.appendChild(title);
+  card.appendChild(departure);
+  card.appendChild(arrival);
+  card.appendChild(stops);
+  card.appendChild(price);
+  card.appendChild(viewBtn);
+
+  return card;
+}
