@@ -9,47 +9,45 @@
 <body>
   <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-  <div class="search-container">
-    <input type="text" id="origin" placeholder="From (e.g. BOM)" />
-    <input type="text" id="destination" placeholder="To (e.g. DEL)" />
-    <input type="date" id="departure-date" />
-    <input type="date" id="return-date" />
-    <div class="radio-group">
-      <label><input type="radio" name="trip-type" value="one-way" /> One Way</label>
-      <label><input type="radio" name="trip-type" value="round-trip" checked /> Round Trip</label>
+  <div class="search-box">
+    <input type="text" id="fromInput" placeholder="From (e.g. DEL)" />
+    <input type="text" id="toInput" placeholder="To (e.g. BOM)" />
+    <input type="date" id="departureDate" />
+    
+    <div id="returnDateGroup" style="display:none;">
+      <input type="date" id="returnDate" />
     </div>
+
     <input type="number" id="passengers" min="1" value="1" />
-    <select id="travel-class">
+    <select id="travelClass">
       <option value="economy">Economy</option>
       <option value="business">Business</option>
     </select>
-    <button id="search-button">Search</button>
+
+    <button id="searchBtn">Search</button>
+
+    <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
+    <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
   </div>
 
-  <!-- Filters shown only after results -->
-  <div class="filter-bar hidden" id="filter-bar">
-    <label for="sort">Sort By</label>
-    <select id="sort">
-      <option value="price">Price</option>
-      <option value="departure">Departure</option>
+  <!-- Filters (Hidden initially) -->
+  <div id="filtersContainer" style="display: none; justify-content: center; margin-top: 10px;">
+    <label for="sortSelect">Sort by:</label>
+    <select id="sortSelect">
+      <option value="price">Price (Lowest First)</option>
+      <option value="departure">Departure Time</option>
     </select>
   </div>
 
-  <div class="results-container">
-    <div class="flight-column">
+  <div class="results-section">
+    <div>
       <h2>Outbound Flights</h2>
-      <div id="outbound-flights"></div>
+      <div id="outboundContainer" class="flight-list"></div>
     </div>
-    <div class="flight-column">
-      <h2>Return Flights</h2>
-      <div id="return-flights"></div>
-    </div>
-  </div>
 
-  <!-- OTA Modal -->
-  <div id="modal" class="modal">
-    <div class="modal-content" id="modal-content">
-      <span id="close-modal" class="close-button">&times;</span>
+    <div>
+      <h2>Return Flights</h2>
+      <div id="returnContainer" class="flight-list"></div>
     </div>
   </div>
 
