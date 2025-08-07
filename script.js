@@ -50,19 +50,26 @@ window.addEventListener("click", function (e) {
     document.getElementById("sortControls").style.display = "none";
 
     try {
-      const response = await fetch("https://skydeal-backend.onrender.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from,
-          to,
-          departureDate,
-          returnDate,
-          passengers,
-          travelClass,
-          tripType
-        })
-      });
+      // Get selected payment methods
+const selectedPaymentMethods = Array.from(
+  document.querySelectorAll('#dropdownMenu input[type="checkbox"]:checked')
+).map(cb => cb.value);
+
+const response = await fetch("https://skydeal-backend.onrender.com/search", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    from,
+    to,
+    departureDate,
+    returnDate,
+    passengers,
+    travelClass,
+    tripType,
+    paymentMethods: selectedPaymentMethods
+  })
+});
+
 
       const data = await response.json();
 
