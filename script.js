@@ -1,4 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
+// Load all active payment methods from backend and fill the dropdown
+async function loadPaymentMethods() {
+  try {
+    const resp = await fetch("https://skydeal-backend.onrender.com/payment-methods");
+    const { methods = [] } = await resp.json();
+    const menu = document.getElementById("dropdownMenu");
+    if (!menu) return;
+
+    // Clear current items, then build fresh from backend
+    menu.innerHTML = "";
+    methods.forEach((label) => {
+      const lbl = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = label;
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(" " + label));
+      menu.appendChild(lbl);
+    });
+  } catch (err) {
+    console.error("Failed to load payment methods:", err);
+    // Fallback (optional): keep any existing static entries
+  }
+}
+
+loadPaymentMethods();
 
   // Toggle dropdown menu
 window.toggleDropdown = function () {
