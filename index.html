@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyDeal: Find the Best Flight Offers</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal: Find the Best Flight Offers</h1>
+
     <form id="searchForm">
       <div class="form-row">
         <input type="text" id="from" placeholder="From (e.g. BOM)" required />
@@ -16,6 +17,7 @@
         <input type="date" id="departureDate" required />
         <input type="date" id="returnDate" placeholder="Return" />
       </div>
+
       <div class="form-row">
         <input type="number" id="passengers" value="1" min="1" required />
         <select id="travelClass">
@@ -24,29 +26,27 @@
           <option value="BUSINESS">Business</option>
           <option value="FIRST">First</option>
         </select>
+
         <div class="trip-type">
           <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
           <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
         </div>
-        <div class="dropdown" id="paymentDropdown">
-  <div class="dropdown-toggle" onclick="toggleDropdown()">Select Payment Methods ▾</div>
-  <div class="dropdown-menu" id="dropdownMenu">
-    <label><input type="checkbox" value="ICICI Credit Card"> ICICI Credit Card</label>
-    <label><input type="checkbox" value="HDFC Credit Card"> HDFC Credit Card</label>
-    <label><input type="checkbox" value="Axis Debit Card"> Axis Debit Card</label>
-    <label><input type="checkbox" value="SBI Net Banking"> SBI Net Banking</label>
-    <label><input type="checkbox" value="Paytm Wallet"> Paytm Wallet</label>
-  </div>
-</div>
+
+        <!-- Payment Methods (dropdown content filled by JS; layout unchanged) -->
+        <div class="dropdown">
+          <div class="dropdown-toggle" onclick="toggleDropdown()">Select Payment Methods ▾</div>
+          <div class="dropdown-menu" id="dropdownMenu"></div>
+        </div>
 
         <button type="submit" id="searchBtn">Search</button>
       </div>
+
+      <div id="sortControls" style="display: none; margin-top: 10px;">
+        <strong>Sort By:</strong>
+        <button type="button" onclick="sortFlights('departure')">Departure Time</button>
+        <button type="button" onclick="sortFlights('price')">Price</button>
+      </div>
     </form>
-<div id="sortControls" style="display: none; margin-top: 10px;">
-  <strong>Sort By:</strong>
-  <button type="button" onclick="sortFlights('departure')">Departure Time</button>
-  <button type="button" onclick="sortFlights('price')">Price</button>
-</div>
 
     <div id="results">
       <div class="results-row">
@@ -63,13 +63,14 @@
   </div>
 
   <script src="script.js"></script>
-  <div id="priceModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span id="closeModal" class="close">&times;</span>
-    <h3>Prices on Different Portals</h3>
-    <ul id="portalPriceList"></ul>
-  </div>
-</div>
 
+  <!-- Modal (unchanged structure) -->
+  <div id="priceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <h3>Prices on Different Portals</h3>
+      <ul id="portalPriceList"></ul>
+    </div>
+  </div>
 </body>
 </html>
