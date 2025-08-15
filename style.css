@@ -1,225 +1,177 @@
 /* Base */
+* { box-sizing: border-box; }
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #efefef;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #f2f2f2;
+  color: #111;
   margin: 0;
-  padding: 0;
 }
-
 .container {
   max-width: 900px;
   margin: 30px auto;
   background: #fff;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
 }
+h1 { margin: 0 0 16px; }
+h2 { margin: 18px 0 12px; }
 
-h1 { margin-top: 0; }
-
+/* Form */
 .form-row {
   display: flex;
   gap: 10px;
+  align-items: center;
   margin-bottom: 10px;
-  flex-wrap: wrap;
 }
-
-input[type="text"], input[type="number"], input[type="date"], select {
-  padding: 8px;
-  border: 1px solid #ccc;
+.form-row input[type="text"],
+.form-row input[type="date"],
+.form-row input[type="number"],
+.form-row select {
+  padding: 8px 10px;
+  border: 1px solid #d0d6dd;
   border-radius: 6px;
+  background: #f8fbff;
+  min-width: 140px;
 }
-
-button {
+#searchBtn {
   padding: 8px 12px;
-  border: 1px solid #999;
-  background: #f7f7f7;
+  border: 1px solid #d0d6dd;
+  background: #f0f6ff;
   border-radius: 6px;
   cursor: pointer;
 }
+.trip-type label { margin-right: 10px; }
 
-/* Trips/Results */
+/* Results grid */
 .results-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
 }
+.results-column h2 { margin-bottom: 10px; }
 
-.results-column h2 {
-  margin-bottom: 10px;
-}
-
+/* Cards */
 .flight-card {
-  background: #e0f7fa;
-  padding: 10px;
-  margin-bottom: 10px;
+  background: #e6f7fb;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid #d8eef5;
+}
+.flight-card p { margin: 6px 0; }
+
+.best-deal {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px dashed #9fd0e4;
   border-radius: 6px;
+  background: #f7fdff;
+}
+
+/* Info button (aesthetic) */
+.info-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #b7c7d6;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+  margin-top: 8px;
   cursor: pointer;
 }
+.info-btn::after { content: "i"; }
+.info-btn:hover { background: #f3f7fb; border-color: #9fb3c6; }
 
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-content {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-  position: relative;
-  text-align: left;
-}
-
-.close {
-  position: absolute;
-  top: 10px; right: 15px;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-/* Dropdown (layout unchanged) */
+/* Dropdown */
 .dropdown { position: relative; display: inline-block; }
 .dropdown-toggle {
-  padding: 10px;
-  background: #f0f0f0;
+  padding: 8px 10px;
+  background: #f0f6ff;
+  border: 1px solid #d0d6dd;
+  border-radius: 6px;
   cursor: pointer;
-  border-radius: 4px;
-  border: 1px solid #ccc;
 }
 .dropdown-menu {
   display: none;
   position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  width: 860px;
+  max-height: 360px;
+  overflow: auto;
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 10px;
+  border: 1px solid #d0d6dd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
   z-index: 1000;
+  padding: 10px;
 }
 
-/* Payment methods table (inside dropdown content) */
+/* Payment methods table */
 .pm-table {
-  width: 660px;
+  width: 100%;
   border-collapse: collapse;
 }
-
-.pm-table th {
+.pm-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f6f9fc;
+  z-index: 1;
   text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #e4ebf2;
   font-weight: 600;
-  padding: 6px 8px;
-  border-bottom: 1px solid #eee;
 }
-
 .pm-table td {
   vertical-align: top;
-  padding: 6px 8px;
-}
-
-.pm-col label {
-  display: block;
-  margin-bottom: 6px;
-  white-space: nowrap;
-}
-/* Flight cards */
-.flight-card {
-  background: #e0f7fa;
-  padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-}
-.flight-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.flight-title {
-  font-weight: 700;
-}
-.flight-num {
-  font-weight: 400;
-  color: #333;
-}
-.times, .stops {
-  margin: 6px 0;
-}
-.best-deal {
-  margin-top: 8px;
   padding: 8px;
-  background: #fff;
-  border: 1px dashed #8bc34a;
-  border-radius: 6px;
-}
-.best-portal { font-weight: 700; }
-.best-price { font-weight: 700; margin-left: 6px; }
-.best-coupon { color: #444; margin-left: 6px; }
-
-/* info button */
-.info-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1px solid #555;
-  background: #fff;
-  cursor: pointer;
-  line-height: 22px;
-  font-weight: 700;
 }
 
-/* Payment dropdown table */
-.pm-table {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 720px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.pm-table th, .pm-table td {
-  text-align: left;
-  vertical-align: top;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+/* Make each cell a tidy checklist */
+.pm-table td > div {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
 }
 .pm-item {
-  display: block;
-  margin-bottom: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
 }
+.pm-item input { transform: translateY(1px); }
 
-/* Modal refresh */
+/* Modal */
 .modal {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background-color: rgba(0,0,0,0.35);
-  z-index: 999;
+  background: rgba(0,0,0,.45);
+  z-index: 1500;
 }
 .modal-content {
-  width: 420px;
-  max-width: calc(100vw - 32px);
   background: #fff;
   border-radius: 12px;
-  padding: 16px 18px 14px 18px;
+  width: 420px;
+  max-width: 92vw;
+  padding: 18px 18px 12px;
   position: relative;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }
 .close {
-  position: absolute; top: 8px; right: 10px;
-  width: 28px; height: 28px;
+  position: absolute;
+  right: 10px; top: 8px;
+  width: 30px; height: 30px;
   border-radius: 50%;
-  border: none; background: #f1f1f1;
-  font-size: 20px; line-height: 28px;
+  border: 1px solid #e2e6ea;
+  background: #fff;
+  font-size: 18px;
+  line-height: 28px;
   cursor: pointer;
 }
-.modal-title {
-  margin: 4px 0 8px 0;
-  font-size: 18px; font-weight: 700;
-}
-.portal-list { padding-left: 18px; }
-.portal-list li { margin-bottom: 8px; }
-.coupon-hint { color: #555; font-size: 12px; display: inline-block; margin-top: 2px; }
-
+.modal-content h3 { margin: 2px 0 10px; }
+#portalPriceList { padding-left: 18px; margin: 0; }
+#portalPriceList li { margin: 6px 0; }
