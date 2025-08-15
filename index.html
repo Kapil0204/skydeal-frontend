@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>SkyDeal: Find the Best Flight Offers</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkyDeal</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,8 +12,8 @@
 
     <form id="searchForm">
       <div class="form-row">
-        <input type="text" id="from" placeholder="BOM" required />
-        <input type="text" id="to" placeholder="DEL" required />
+        <input type="text" id="from" placeholder="From (e.g. BOM)" required />
+        <input type="text" id="to" placeholder="To (e.g. DEL)" required />
         <input type="date" id="departureDate" required />
         <input type="date" id="returnDate" placeholder="Return" />
       </div>
@@ -32,22 +32,32 @@
           <label><input type="radio" name="tripType" value="round-trip" checked /> Round Trip</label>
         </div>
 
-        <!-- Payment Methods dropdown (layout preserved, only inner content/styles improved) -->
+        <!-- Payment methods dropdown (same position as before) -->
         <div class="dropdown" id="paymentDropdown">
-          <div class="dropdown-toggle" onclick="toggleDropdown()">Select Payment Methods ▾</div>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <table class="pm-table">
-              <thead>
-                <tr>
-                  <th>Credit Cards</th>
-                  <th>Debit Cards</th>
-                  <th>UPI</th>
-                  <th>Netbanking</th>
-                  <th>Wallets</th>
-                </tr>
-              </thead>
-              <tbody id="pmTableBody"><tr><td colspan="5" style="padding:8px">Loading…</td></tr></tbody>
-            </table>
+          <button type="button" class="dropdown-toggle" id="paymentToggle">Select Payment Methods ▾</button>
+          <div class="dropdown-menu" id="paymentMenu">
+            <div class="pm-grid">
+              <div class="pm-col">
+                <div class="pm-col-title">Credit Cards</div>
+                <div class="pm-col-body" id="pmCredit"></div>
+              </div>
+              <div class="pm-col">
+                <div class="pm-col-title">Debit Cards</div>
+                <div class="pm-col-body" id="pmDebit"></div>
+              </div>
+              <div class="pm-col">
+                <div class="pm-col-title">UPI</div>
+                <div class="pm-col-body" id="pmUPI"></div>
+              </div>
+              <div class="pm-col">
+                <div class="pm-col-title">Netbanking</div>
+                <div class="pm-col-body" id="pmNetbanking"></div>
+              </div>
+              <div class="pm-col">
+                <div class="pm-col-title">Wallets</div>
+                <div class="pm-col-body" id="pmWallets"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -55,8 +65,7 @@
       </div>
     </form>
 
-    <!-- Sort controls (shown after results) -->
-    <div id="sortControls" style="display:none; margin-top:10px;">
+    <div id="sortControls" style="display:none; margin-top: 10px;">
       <strong>Sort By:</strong>
       <button type="button" onclick="sortFlights('departure')">Departure Time</button>
       <button type="button" onclick="sortFlights('price')">Price</button>
@@ -76,11 +85,11 @@
     </div>
   </div>
 
-  <!-- Modal: portal price comparison -->
+  <!-- Prices modal -->
   <div id="priceModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button id="closeModal" class="close" title="Close">×</button>
-      <h3>Prices on Different Portals</h3>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" title="Close">✕</button>
+      <h3 id="modalTitle">Prices on Different Portals</h3>
       <ul id="portalPriceList"></ul>
     </div>
   </div>
