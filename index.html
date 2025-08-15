@@ -1,20 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
   <title>SkyDeal: Find the Best Flight Offers</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-    <!-- Search form -->
     <form id="searchForm">
       <div class="form-row">
-        <input type="text" id="from" placeholder="From (e.g. BOM)" required />
-        <input type="text" id="to" placeholder="To (e.g. DEL)" required />
+        <input type="text" id="from" placeholder="BOM" required />
+        <input type="text" id="to" placeholder="DEL" required />
         <input type="date" id="departureDate" required />
         <input type="date" id="returnDate" placeholder="Return" />
       </div>
@@ -29,11 +28,11 @@
         </select>
 
         <div class="trip-type">
-          <label><input type="radio" name="tripType" value="one-way" checked /> One Way</label>
-          <label><input type="radio" name="tripType" value="round-trip" /> Round Trip</label>
+          <label><input type="radio" name="tripType" value="one-way" /> One Way</label>
+          <label><input type="radio" name="tripType" value="round-trip" checked /> Round Trip</label>
         </div>
 
-        <!-- Payment methods dropdown (table is filled by JS) -->
+        <!-- Payment Methods dropdown (layout preserved, only inner content/styles improved) -->
         <div class="dropdown" id="paymentDropdown">
           <div class="dropdown-toggle" onclick="toggleDropdown()">Select Payment Methods ▾</div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -47,7 +46,7 @@
                   <th>Wallets</th>
                 </tr>
               </thead>
-              <tbody id="pmTableBody"><!-- populated by script.js --></tbody>
+              <tbody id="pmTableBody"><tr><td colspan="5" style="padding:8px">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -56,14 +55,13 @@
       </div>
     </form>
 
-    <!-- Sort controls -->
-    <div id="sortControls" style="display: none; margin-top: 10px;">
+    <!-- Sort controls (shown after results) -->
+    <div id="sortControls" style="display:none; margin-top:10px;">
       <strong>Sort By:</strong>
       <button type="button" onclick="sortFlights('departure')">Departure Time</button>
       <button type="button" onclick="sortFlights('price')">Price</button>
     </div>
 
-    <!-- Results -->
     <div id="results">
       <div class="results-row">
         <div class="results-column">
@@ -78,12 +76,12 @@
     </div>
   </div>
 
-  <!-- Modal for per-portal prices -->
-  <div id="priceModal" class="modal" style="display: none;">
+  <!-- Modal: portal price comparison -->
+  <div id="priceModal" class="modal" style="display:none;">
     <div class="modal-content">
-      <button id="closeModal" class="close" aria-label="Close">×</button>
-      <h3 class="modal-title">Prices on Different Portals</h3>
-      <ul id="portalPriceList" class="portal-list"></ul>
+      <button id="closeModal" class="close" title="Close">×</button>
+      <h3>Prices on Different Portals</h3>
+      <ul id="portalPriceList"></ul>
     </div>
   </div>
 
