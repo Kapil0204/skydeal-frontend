@@ -1,177 +1,87 @@
-/* Base */
 * { box-sizing: border-box; }
 body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #f2f2f2;
-  color: #111;
-  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; background: #f3f3f3; color: #111;
 }
 .container {
-  max-width: 900px;
-  margin: 30px auto;
-  background: #fff;
-  padding: 22px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  max-width: 960px; margin: 24px auto; background: #fff;
+  padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,.05);
 }
 h1 { margin: 0 0 16px; }
-h2 { margin: 18px 0 12px; }
-
-/* Form */
 .form-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 10px;
+  display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
 }
 .form-row input[type="text"],
 .form-row input[type="date"],
 .form-row input[type="number"],
 .form-row select {
-  padding: 8px 10px;
-  border: 1px solid #d0d6dd;
-  border-radius: 6px;
-  background: #f8fbff;
-  min-width: 140px;
+  padding: 10px; border: 1px solid #ccc; border-radius: 8px;
+  background: #f7f9fc; min-width: 160px;
 }
-#searchBtn {
-  padding: 8px 12px;
-  border: 1px solid #d0d6dd;
-  background: #f0f6ff;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.trip-type label { margin-right: 10px; }
+.trip-type { display:flex; align-items:center; gap:16px; }
 
-/* Results grid */
-.results-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+button {
+  padding: 9px 12px; border: 1px solid #d0d7de; border-radius: 8px;
+  background: #f6f8fa; cursor: pointer;
 }
-.results-column h2 { margin-bottom: 10px; }
+button:hover { background: #eef2f6; }
 
-/* Cards */
+/* Results */
+.results-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.results-column h2 { margin-top: 12px; }
 .flight-card {
-  background: #e6f7fb;
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 14px;
-  border: 1px solid #d8eef5;
+  background: #e0f7fa; padding: 14px; margin-bottom: 12px; border-radius: 10px;
 }
-.flight-card p { margin: 6px 0; }
-
 .best-deal {
-  margin-top: 8px;
-  padding: 8px 10px;
-  border: 1px dashed #9fd0e4;
-  border-radius: 6px;
-  background: #f7fdff;
+  margin-top: 8px; padding: 8px 10px; border-radius: 8px;
+  border: 1px dashed #9ad0d6; background: #f7ffff; display:flex; align-items:center; gap:10px;
 }
-
-/* Info button (aesthetic) */
 .info-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #b7c7d6;
-  background: #fff;
-  color: #333;
-  font-weight: 600;
-  margin-top: 8px;
-  cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #b9c6d3; background: #fff; cursor: pointer;
+  font-weight: 700; color: #3b82f6;
 }
-.info-btn::after { content: "i"; }
-.info-btn:hover { background: #f3f7fb; border-color: #9fb3c6; }
+.info-btn:hover { background:#eff6ff; }
 
 /* Dropdown */
-.dropdown { position: relative; display: inline-block; }
-.dropdown-toggle {
-  padding: 8px 10px;
-  background: #f0f6ff;
-  border: 1px solid #d0d6dd;
-  border-radius: 6px;
-  cursor: pointer;
-}
+.dropdown { position: relative; }
+.dropdown-toggle { background:#eef2ff; border-color:#c7d2fe; }
 .dropdown-menu {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  width: 860px;
-  max-height: 360px;
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #d0d6dd;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-  z-index: 1000;
-  padding: 10px;
+  position: absolute; top: calc(100% + 6px); right: 0; left: auto;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+  padding: 12px;
+  width: 92vw; max-width: 940px;
+  max-height: 60vh; overflow: auto; z-index: 1000; display: none;
 }
-
-/* Payment methods table */
-.pm-table {
-  width: 100%;
-  border-collapse: collapse;
+.pm-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px;
 }
-.pm-table thead th {
-  position: sticky;
-  top: 0;
-  background: #f6f9fc;
-  z-index: 1;
-  text-align: left;
-  padding: 8px;
-  border-bottom: 1px solid #e4ebf2;
-  font-weight: 600;
-}
-.pm-table td {
-  vertical-align: top;
-  padding: 8px;
-}
-
-/* Make each cell a tidy checklist */
-.pm-table td > div {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-.pm-item {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 14px;
-}
-.pm-item input { transform: translateY(1px); }
+.pm-col-title { font-weight: 700; margin-bottom: 8px; }
+.pm-col-body label { display:block; margin: 6px 0; }
 
 /* Modal */
 .modal {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.45);
-  z-index: 1500;
+  position: fixed; inset: 0; background: rgba(0,0,0,.35);
+  display: flex; align-items:center; justify-content:center; z-index: 2000;
 }
 .modal-content {
-  background: #fff;
-  border-radius: 12px;
-  width: 420px;
-  max-width: 92vw;
-  padding: 18px 18px 12px;
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  width: min(520px, 92vw); background:#fff; border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.2);
+  padding: 18px 18px 8px; position: relative;
 }
-.close {
-  position: absolute;
-  right: 10px; top: 8px;
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  border: 1px solid #e2e6ea;
-  background: #fff;
-  font-size: 18px;
-  line-height: 28px;
-  cursor: pointer;
+.modal-close {
+  position: absolute; right: 10px; top: 10px;
+  border: 0; background: transparent; font-size: 18px; cursor: pointer;
 }
-.modal-content h3 { margin: 2px 0 10px; }
-#portalPriceList { padding-left: 18px; margin: 0; }
-#portalPriceList li { margin: 6px 0; }
+#portalPriceList { margin: 8px 0 4px 18px; padding: 0; }
+
+/* Sort controls */
+#sortControls button { margin-left: 8px; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .results-row { grid-template-columns: 1fr; }
+  .pm-grid { grid-template-columns: repeat(2, 1fr); }
+}
