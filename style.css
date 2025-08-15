@@ -126,3 +126,100 @@ button {
   margin-bottom: 6px;
   white-space: nowrap;
 }
+/* Flight cards */
+.flight-card {
+  background: #e0f7fa;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+.flight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.flight-title {
+  font-weight: 700;
+}
+.flight-num {
+  font-weight: 400;
+  color: #333;
+}
+.times, .stops {
+  margin: 6px 0;
+}
+.best-deal {
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 1px dashed #8bc34a;
+  border-radius: 6px;
+}
+.best-portal { font-weight: 700; }
+.best-price { font-weight: 700; margin-left: 6px; }
+.best-coupon { color: #444; margin-left: 6px; }
+
+/* info button */
+.info-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #555;
+  background: #fff;
+  cursor: pointer;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+/* Payment dropdown table */
+.pm-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 720px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.pm-table th, .pm-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+.pm-item {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Modal refresh */
+.modal {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background-color: rgba(0,0,0,0.35);
+  z-index: 999;
+}
+.modal-content {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 18px 14px 18px;
+  position: relative;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+}
+.close {
+  position: absolute; top: 8px; right: 10px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none; background: #f1f1f1;
+  font-size: 20px; line-height: 28px;
+  cursor: pointer;
+}
+.modal-title {
+  margin: 4px 0 8px 0;
+  font-size: 18px; font-weight: 700;
+}
+.portal-list { padding-left: 18px; }
+.portal-list li { margin-bottom: 8px; }
+.coupon-hint { color: #555; font-size: 12px; display: inline-block; margin-top: 2px; }
+
