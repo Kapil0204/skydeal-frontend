@@ -1,4 +1,3 @@
-// script.js
 document.addEventListener("DOMContentLoaded", () => {
   // ---------- Elements ----------
   const searchForm = document.getElementById("searchForm");
@@ -14,13 +13,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeModalBtn = document.getElementById("closeModal");
   const portalPriceList = document.getElementById("portalPriceList");
 
+  // IMPORTANT: use your deployed backend base
   const BACKEND = "https://skydeal-backend.onrender.com";
 
   // ---------- State ----------
   let currentOutboundFlights = [];
   let currentReturnFlights = [];
 
-  // ---------- Trip type: toggle return date ----------
+  // Airline map to print "Airline Name + Flight No"
+  const AIRLINE_MAP = {
+    "AI": "Air India",
+    "6E": "IndiGo",
+    "UK": "Vistara",
+    "SG": "SpiceJet",
+    "G8": "Go First",
+    "IX": "Air India Express",
+    "I5": "AirAsia India",
+    "QP": "Akasa Air"
+  };
+
+  // ---------- Trip type (show/hide return date) ----------
   returnDateInput.style.display = "none";
   tripTypeRadios.forEach(radio => {
     radio.addEventListener("change", () => {
@@ -32,20 +44,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ---------- Payment dropdown behavior ----------
+  // ---------- Dropdown open/close ----------
   window.toggleDropdown = function () {
     const menu = document.getElementById("dropdownMenu");
     menu.style.display = (menu.style.display === "block") ? "none" : "block";
   };
-
   window.addEventListener("click", (e) => {
-    const dropdown = document.getElementById("paymentDropdown");
-    if (!dropdown.contains(e.target)) {
-      document.getElementById("dropdownMenu").style.display = "none";
-    }
+    const dd = document.getElementById("paymentDropdown");
+    if (!dd.contains(e.target)) dropdownMenu.style.display = "none";
   });
 
-  // ---------- Helpers ----------
+  // ---------- Utils ----------
   const numberINR = (n) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
@@ -55,39 +64,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function bestDealFromPortalPrices(portalPrices) {
-    if (!Array.isArray(portalPrices) || portalPrices.length === 0) return null;
-    // choose minimum finalPrice; if tie keep first
+    if (!Array.isArray(portalPrices) || !portalPrices.length) return null;
     let best = portalPrices[0];
     for (const p of portalPrices) {
-      if (p.finalPrice < best.finalPrice) best = p;
+      if ((p.finalPrice ?? p.basePrice) < (best.finalPrice ?? best.basePrice)) best = p;
     }
     return best;
   }
 
-  // ---------- Render Payment Methods Table ----------
+  function airlineLine(airlineName, flightNumber) {
+    // flightNumber looks like "AI 9485"
+    let code = "";
+    let num = flightNumber;
+    const m = String(flightNumber || "").match(/^([A-Z0-9]{1,3})\s*(.+)$/);
+    if (m) { code = m[1]; num = m[2]; }
+    const prettyAirline = AIRLINE_MAP[airlineName] || AIRLINE_MAP[code] || airlineName || code || "";
+    return `${prettyAirline} ${code ? code + " " : ""}${num}`;
+  }
+
+  // ---------- Payment Methods: render + dedupe ----------
   function renderPaymentMethodsTable(methods = []) {
     try {
-      if (!Array.isArray(methods)) methods = [];
+      const normalize = (s) => String(s || "")
+        .toLowerCase()
+        .replace(/ease ?my ?trip|easemytrip|emt/g, "")        // remove brand word
+        .replace(/\b(small\s+finance|ltd|limited)\b/g, "")
+        .replace(/\b(credit|debit|cards?|card|bank|green|infinite|visa|travelone|emi)\b/g, "")
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-      const normaliseLabel = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-
-      // filter very generic labels
-      const GENERIC_PM = new Set(
-        ["credit card", "debit card", "upi", "netbanking", "bank offers", "wallets"].map(normaliseLabel)
-      );
-
-      // dedupe
+      const GENERIC = new Set(["other", "wallet", "wallets", "upi", "netbanking", "bank offers"]);
       const seen = new Set();
       const cleaned = [];
-      for (const raw of methods) {
+
+      for (const raw of (Array.isArray(methods) ? methods : [])) {
         const label = String(raw || "").trim();
-        const key = normaliseLabel(label);
-        if (!key || GENERIC_PM.has(key)) continue;
-        if (seen.has(key)) continue;
+        const key = normalize(label);
+        if (!key || GENERIC.has(key)) continue;          // drop generic & empty
+        if (seen.has(key)) continue;                     // drop duplicates
         seen.add(key);
         cleaned.push(label);
       }
 
+      // Buckets
       const buckets = { credit: [], debit: [], upi: [], netbanking: [], wallet: [] };
       for (const label of cleaned) {
         const L = label.toLowerCase();
@@ -95,27 +115,30 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (L.includes("upi")) buckets.upi.push(label);
         else if (L.includes("netbank")) buckets.netbanking.push(label);
         else if (L.includes("debit")) buckets.debit.push(label);
-        else buckets.credit.push(label); // default bucket
+        else buckets.credit.push(label);
       }
 
+      // Sort each bucket alphabetically (natural-ish)
+      const cmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base" });
+      Object.keys(buckets).forEach(k => buckets[k].sort(cmp));
+
       const mkCell = (list, groupName) => {
-        const div = document.createElement("div");
+        const wrap = document.createElement("div");
         for (const text of list) {
-          const id = `pm_${groupName}_${normaliseLabel(text).replace(/\W+/g, "_")}`;
+          const id = `pm_${groupName}_${normalize(text).replace(/\W+/g, "_")}`;
           const label = document.createElement("label");
           label.className = "pm-item";
           label.innerHTML = `<input type="checkbox" value="${text}" id="${id}"> ${text}`;
-          div.appendChild(label);
+          wrap.appendChild(label);
         }
-        // Always add "Other"
-        const otherId = `pm_${groupName}__other`;
+        // Single “Other” at the end of each column
         const otherLabel = document.createElement("label");
         otherLabel.className = "pm-item";
-        otherLabel.innerHTML = `<input type="checkbox" value="Other ${groupName}" id="${otherId}"> Other`;
-        div.appendChild(otherLabel);
+        otherLabel.innerHTML = `<input type="checkbox" value="Other ${groupName}"> Other`;
+        wrap.appendChild(otherLabel);
 
         const td = document.createElement("td");
-        td.appendChild(div);
+        td.appendChild(wrap);
         return td;
       };
 
@@ -129,20 +152,12 @@ document.addEventListener("DOMContentLoaded", () => {
       pmTableBody.appendChild(tr);
     } catch (err) {
       console.error("renderPaymentMethodsTable error:", err);
-      // Fallback: just render Other cells
-      pmTableBody.innerHTML = `
-        <tr>
-          <td><label class="pm-item"><input type="checkbox" value="Other Credit"> Other</label></td>
-          <td><label class="pm-item"><input type="checkbox" value="Other Debit"> Other</label></td>
-          <td><label class="pm-item"><input type="checkbox" value="Other UPI"> Other</label></td>
-          <td><label class="pm-item"><input type="checkbox" value="Other Netbanking"> Other</label></td>
-          <td><label class="pm-item"><input type="checkbox" value="Other Wallets"> Other</label></td>
-        </tr>`;
+      pmTableBody.innerHTML = `<tr><td colspan="5" style="padding:8px">Unable to load payment methods.</td></tr>`;
     }
   }
 
   async function loadPaymentMethods() {
-    // Render skeleton quickly
+    // render blank structure immediately
     renderPaymentMethodsTable([]);
     try {
       const resp = await fetch(`${BACKEND}/payment-methods`, { headers: { Accept: "application/json" } });
@@ -151,14 +166,13 @@ document.addEventListener("DOMContentLoaded", () => {
       renderPaymentMethodsTable(data?.methods || []);
     } catch (e) {
       console.error("Failed to load payment methods:", e);
-      // Keep skeleton with “Other”
     }
   }
 
   // ---------- Display Flights ----------
-  function buildInfoLine(best) {
+  function buildBestDealLine(best) {
     if (!best) return "";
-    const p = numberINR(best.finalPrice);
+    const p = numberINR(best.finalPrice ?? best.basePrice);
     let line = `Best deal: <strong>${best.portal}</strong> ${p}`;
     if (best.appliedOffer) {
       const methodHint =
@@ -183,18 +197,17 @@ document.addEventListener("DOMContentLoaded", () => {
       card.className = "flight-card";
 
       const best = bestDealFromPortalPrices(flight.portalPrices || []);
+      const header = airlineLine(flight.airlineName, flight.flightNumber);
 
       card.innerHTML = `
-        <p><strong>${flight.airlineName} ${flight.flightNumber}</strong></p>
+        <p><strong>${header}</strong></p>
         <p>Departure: ${flight.departure} | Arrival: ${flight.arrival}</p>
         <p>Stops: ${flight.stops}</p>
-        <p class="best-deal">${buildInfoLine(best)}</p>
-        <button class="info-btn" title="See prices across portals" aria-label="More info">i</button>
+        <p class="best-deal">${buildBestDealLine(best)}</p>
+        <button class="info-btn" title="See prices across portals" aria-label="More info"></button>
       `;
 
-      // Open modal with portal prices
-      const infoBtn = card.querySelector(".info-btn");
-      infoBtn.addEventListener("click", (ev) => {
+      card.querySelector(".info-btn").addEventListener("click", (ev) => {
         ev.stopPropagation();
         showPortalPrices(flight);
       });
@@ -205,29 +218,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- Sorting ----------
   window.sortFlights = function (key) {
-    const sortByDeparture = (a, b) => a.departure.localeCompare(b.departure);
-    const sortByPrice = (a, b) => {
-      // sort by best deal price if available, else by original price
-      const aBest = bestDealFromPortalPrices(a.portalPrices || []);
-      const bBest = bestDealFromPortalPrices(b.portalPrices || []);
-      const aVal = aBest ? aBest.finalPrice : parseFloat(a.price);
-      const bVal = bBest ? bBest.finalPrice : parseFloat(b.price);
-      return aVal - bVal;
+    const byDeparture = (a, b) => a.departure.localeCompare(b.departure);
+    const byBestPrice = (a, b) => {
+      const ab = bestDealFromPortalPrices(a.portalPrices || []);
+      const bb = bestDealFromPortalPrices(b.portalPrices || []);
+      const av = ab ? (ab.finalPrice ?? ab.basePrice) : parseFloat(a.price);
+      const bv = bb ? (bb.finalPrice ?? bb.basePrice) : parseFloat(b.price);
+      return av - bv;
     };
 
-    const outboundSorted = [...currentOutboundFlights];
-    const returnSorted = [...currentReturnFlights];
-
+    const out = [...currentOutboundFlights];
+    const ret = [...currentReturnFlights];
     if (key === "departure") {
-      outboundSorted.sort(sortByDeparture);
-      returnSorted.sort(sortByDeparture);
+      out.sort(byDeparture); ret.sort(byDeparture);
     } else if (key === "price") {
-      outboundSorted.sort(sortByPrice);
-      returnSorted.sort(sortByPrice);
+      out.sort(byBestPrice); ret.sort(byBestPrice);
     }
-
-    displayFlights(outboundSorted, outboundContainer);
-    displayFlights(returnSorted, returnContainer);
+    displayFlights(out, outboundContainer);
+    displayFlights(ret, returnContainer);
   };
 
   // ---------- Modal ----------
@@ -240,17 +248,17 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       prices.forEach((p) => {
         const li = document.createElement("li");
-        let line = `${p.portal}: ${numberINR(p.basePrice)}`;
-        if (p.appliedOffer && p.discountApplied > 0) {
-          line = `${p.portal}: ${numberINR(p.basePrice)} → ${numberINR(p.finalPrice)}`;
-          const c = p.appliedOffer.couponCode ? ` (Coupon: ${p.appliedOffer.couponCode})` : "";
-          li.innerHTML = `${line}${c}`;
-        } else if (p.finalPrice !== p.basePrice) {
-          // safety: show final if differs
-          line = `${p.portal}: ${numberINR(p.basePrice)} → ${numberINR(p.finalPrice)}`;
-          li.textContent = line;
+        const base = numberINR(p.basePrice);
+        const finalVal = p.finalPrice ?? p.basePrice;
+
+        if (p.appliedOffer && (p.discountApplied ?? 0) > 0) {
+          li.innerHTML = `${p.portal}: ${base} → ${numberINR(finalVal)}${
+            p.appliedOffer.couponCode ? ` (Coupon: ${p.appliedOffer.couponCode})` : ""
+          }`;
+        } else if (finalVal !== p.basePrice) {
+          li.textContent = `${p.portal}: ${base} → ${numberINR(finalVal)}`;
         } else {
-          li.textContent = line;
+          li.textContent = `${p.portal}: ${base}`;
         }
         portalPriceList.appendChild(li);
       });
@@ -259,17 +267,10 @@ document.addEventListener("DOMContentLoaded", () => {
     priceModal.style.display = "flex";
   }
 
-  closeModalBtn.addEventListener("click", () => {
-    priceModal.style.display = "none";
-  });
+  closeModalBtn.addEventListener("click", () => { priceModal.style.display = "none"; });
+  window.addEventListener("click", (e) => { if (e.target === priceModal) priceModal.style.display = "none"; });
 
-  window.addEventListener("click", (event) => {
-    if (event.target === priceModal) {
-      priceModal.style.display = "none";
-    }
-  });
-
-  // ---------- Search handler ----------
+  // ---------- Search ----------
   searchForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -281,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const travelClass = document.getElementById("travelClass").value;
     const tripType = Array.from(tripTypeRadios).find(r => r.checked)?.value || "one-way";
 
-    // hide sort until results
     sortControls.style.display = "none";
     outboundContainer.innerHTML = "";
     returnContainer.innerHTML = "";
@@ -293,21 +293,12 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          from,
-          to,
-          departureDate,
-          returnDate,
-          passengers,
-          travelClass,
-          tripType,
+          from, to, departureDate, returnDate, passengers, travelClass, tripType,
           paymentMethods: selectedPaymentMethods
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
 
       currentOutboundFlights = data.outboundFlights || [];
@@ -315,10 +306,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       displayFlights(currentOutboundFlights, outboundContainer);
       displayFlights(currentReturnFlights, returnContainer);
-
       sortControls.style.display = "block";
-    } catch (error) {
-      console.error("Search error:", error);
+    } catch (err) {
+      console.error("Search error:", err);
       alert("Failed to fetch flights. Please try again.");
     }
   });
