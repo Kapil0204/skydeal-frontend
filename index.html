@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SkyDeal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SkyDeal: Find the Best Flight Offers</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -32,30 +32,30 @@
           <label><input type="radio" name="tripType" value="round-trip" checked /> Round Trip</label>
         </div>
 
-        <!-- Payment methods dropdown (same position as before) -->
+        <!-- Payment Methods dropdown (two-level) -->
         <div class="dropdown" id="paymentDropdown">
-          <button type="button" class="dropdown-toggle" id="paymentToggle">Select Payment Methods ▾</button>
-          <div class="dropdown-menu" id="paymentMenu">
-            <div class="pm-grid">
-              <div class="pm-col">
-                <div class="pm-col-title">Credit Cards</div>
-                <div class="pm-col-body" id="pmCredit"></div>
+          <button type="button" class="dropdown-toggle" id="pmToggle">Select Payment Methods ▾</button>
+          <div class="dropdown-menu" id="pmMenu">
+            <div class="pm-cats">
+              <div class="pm-cat">
+                <label class="pm-cat-label"><input type="checkbox" data-cat="credit" /> Credit Cards</label>
+                <div class="pm-sub" data-sub="credit"></div>
               </div>
-              <div class="pm-col">
-                <div class="pm-col-title">Debit Cards</div>
-                <div class="pm-col-body" id="pmDebit"></div>
+              <div class="pm-cat">
+                <label class="pm-cat-label"><input type="checkbox" data-cat="debit" /> Debit Cards</label>
+                <div class="pm-sub" data-sub="debit"></div>
               </div>
-              <div class="pm-col">
-                <div class="pm-col-title">UPI</div>
-                <div class="pm-col-body" id="pmUPI"></div>
+              <div class="pm-cat">
+                <label class="pm-cat-label"><input type="checkbox" data-cat="upi" /> UPI</label>
+                <div class="pm-sub" data-sub="upi"></div>
               </div>
-              <div class="pm-col">
-                <div class="pm-col-title">Netbanking</div>
-                <div class="pm-col-body" id="pmNetbanking"></div>
+              <div class="pm-cat">
+                <label class="pm-cat-label"><input type="checkbox" data-cat="netbanking" /> Netbanking</label>
+                <div class="pm-sub" data-sub="netbanking"></div>
               </div>
-              <div class="pm-col">
-                <div class="pm-col-title">Wallets</div>
-                <div class="pm-col-body" id="pmWallets"></div>
+              <div class="pm-cat">
+                <label class="pm-cat-label"><input type="checkbox" data-cat="wallets" /> Wallets</label>
+                <div class="pm-sub" data-sub="wallets"></div>
               </div>
             </div>
           </div>
@@ -63,13 +63,13 @@
 
         <button type="submit" id="searchBtn">Search</button>
       </div>
-    </form>
 
-    <div id="sortControls" style="display:none; margin-top: 10px;">
-      <strong>Sort By:</strong>
-      <button type="button" onclick="sortFlights('departure')">Departure Time</button>
-      <button type="button" onclick="sortFlights('price')">Price</button>
-    </div>
+      <div id="sortControls" style="display:none; gap:8px; margin-top:10px;">
+        <strong>Sort By:</strong>
+        <button type="button" id="sortDepartureBtn">Departure Time</button>
+        <button type="button" id="sortPriceBtn">Price</button>
+      </div>
+    </form>
 
     <div id="results">
       <div class="results-row">
@@ -85,12 +85,12 @@
     </div>
   </div>
 
-  <!-- Prices modal -->
+  <!-- Info Modal -->
   <div id="priceModal" class="modal" style="display:none;">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal-close" id="closeModal" title="Close">✕</button>
-      <h3 id="modalTitle">Prices on Different Portals</h3>
-      <ul id="portalPriceList"></ul>
+    <div class="modal-content">
+      <button class="close" id="closeModal" aria-label="Close">×</button>
+      <h3>Portal Deals</h3>
+      <ul id="portalPriceList" class="portal-list"></ul>
     </div>
   </div>
 
