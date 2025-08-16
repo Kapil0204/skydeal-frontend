@@ -1,24 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SkyDeal: Find the Best Flight Offers</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="container">
+  <div class="app">
     <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-    <form id="searchForm">
-      <div class="form-row">
-        <input type="text" id="from" placeholder="From (e.g. BOM)" required />
-        <input type="text" id="to" placeholder="To (e.g. DEL)" required />
+    <form id="searchForm" class="controls">
+      <div class="row">
+        <input type="text" id="from" placeholder="BOM" required />
+        <input type="text" id="to" placeholder="DEL" required />
         <input type="date" id="departureDate" required />
-        <input type="date" id="returnDate" placeholder="Return" />
+        <input type="date" id="returnDate" />
       </div>
 
-      <div class="form-row">
+      <div class="row">
         <input type="number" id="passengers" value="1" min="1" required />
         <select id="travelClass">
           <option value="ECONOMY">Economy</option>
@@ -32,42 +32,25 @@
           <label><input type="radio" name="tripType" value="round-trip" checked /> Round Trip</label>
         </div>
 
-        <!-- Payment Methods dropdown (two-level) -->
-        <div class="dropdown" id="paymentDropdown">
-          <button type="button" class="dropdown-toggle" id="pmToggle">Select Payment Methods ▾</button>
-          <div class="dropdown-menu" id="pmMenu">
-            <div class="pm-cats">
-              <div class="pm-cat">
-                <label class="pm-cat-label"><input type="checkbox" data-cat="credit" /> Credit Cards</label>
-                <div class="pm-sub" data-sub="credit"></div>
-              </div>
-              <div class="pm-cat">
-                <label class="pm-cat-label"><input type="checkbox" data-cat="debit" /> Debit Cards</label>
-                <div class="pm-sub" data-sub="debit"></div>
-              </div>
-              <div class="pm-cat">
-                <label class="pm-cat-label"><input type="checkbox" data-cat="upi" /> UPI</label>
-                <div class="pm-sub" data-sub="upi"></div>
-              </div>
-              <div class="pm-cat">
-                <label class="pm-cat-label"><input type="checkbox" data-cat="netbanking" /> Netbanking</label>
-                <div class="pm-sub" data-sub="netbanking"></div>
-              </div>
-              <div class="pm-cat">
-                <label class="pm-cat-label"><input type="checkbox" data-cat="wallets" /> Wallets</label>
-                <div class="pm-sub" data-sub="wallets"></div>
-              </div>
+        <!-- Payment methods dropdown (unchanged trigger) -->
+        <div class="dropdown">
+          <button type="button" id="paymentToggle" class="btn">Select Payment Methods ▾</button>
+          <div id="paymentPanel" class="dropdown-menu">
+            <!-- will be filled by script.js with a neat multi-column grid -->
+            <div class="pm-grid" id="pmGrid">
+              <div class="pm-loading">Loading payment methods…</div>
             </div>
           </div>
         </div>
 
-        <button type="submit" id="searchBtn">Search</button>
+        <button type="submit" class="btn primary">Search</button>
       </div>
 
-      <div id="sortControls" style="display:none; gap:8px; margin-top:10px;">
+      <!-- Sort controls (appear after results) -->
+      <div id="sortControls" class="row" style="display:none; margin-top:10px;">
         <strong>Sort By:</strong>
-        <button type="button" id="sortDepartureBtn">Departure Time</button>
-        <button type="button" id="sortPriceBtn">Price</button>
+        <button type="button" class="btn pill" onclick="sortFlights('departure')">Departure Time</button>
+        <button type="button" class="btn pill" onclick="sortFlights('price')">Price</button>
       </div>
     </form>
 
@@ -85,11 +68,11 @@
     </div>
   </div>
 
-  <!-- Info Modal -->
+  <!-- Prices Modal -->
   <div id="priceModal" class="modal" style="display:none;">
     <div class="modal-content">
-      <button class="close" id="closeModal" aria-label="Close">×</button>
-      <h3>Portal Deals</h3>
+      <button type="button" id="closeModal" class="icon-btn close" aria-label="Close">✕</button>
+      <h3>Prices on Different Portals</h3>
       <ul id="portalPriceList" class="portal-list"></ul>
     </div>
   </div>
