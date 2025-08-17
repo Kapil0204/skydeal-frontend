@@ -1,229 +1,291 @@
-// script.js
+// ====== CONFIG ======
+const BACKEND_URL = "https://skydeal-backend.onrender.com/search"; // Your Render backend /search
 
-// === GLOBALS ===
-const BACKEND_URL = "https://skydeal-backend.onrender.com";
-let paymentMethodsLoaded = false;
-let paymentMethodsCache = [];
+// EXPECTED HTML IDs / names (match these in your HTML):
+// - Inputs: #from, #to, #departureDate, #returnDate, #passengers, #travelClass
+// - Trip type radios: name="tripType" values: "one-way" | "round-trip"
+// - Return date wrapper: #returnDateGroup (shown/hidden by trip type)
+// - Buttons: #searchBtn
+// - Result containers: #outboundContainer, #returnContainer
+// - Filters / sort host: #filtersContainer (we'll inject sort controls here)
 
-// === UTILS ===
-async function fetchJSONWithTimeout(url, ms = 15000) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
+// ====== UTIL ======
+const qs  = (sel, root=document) => root.querySelector(sel);
+const qsa = (sel, root=document) => [...root.querySelectorAll(sel)];
+
+function fmtTime(isoOrHM) {
+  // Accepts "HH:mm" or ISO. Return "HH:mm"
+  if (!isoOrHM) return "";
+  if (/^\d{2}:\d{2}$/.test(isoOrHM)) return isoOrHM;
+  const d = new Date(isoOrHM);
+  if (isNaN(d)) return "";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
-// === PAYMENT METHODS ===
-function renderPaymentMethods(methods) {
-  const drop = document.getElementById("paymentDropdown");
-  if (!drop) return;
+function safeText(v, fallback = "") {
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === "string" && v.trim() === "") return fallback;
+  return v;
+}
 
-  drop.innerHTML = "";
-  const frag = document.createDocumentFragment();
+function createEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
 
-  methods.forEach((label, i) => {
-    const id = `pm_${i}`;
-    const row = document.createElement("label");
-    row.className = "pm-item"; // style with CSS
-    row.innerHTML = `
-      <input type="checkbox" value="${label}" id="${id}" />
-      <span>${label}</span>
-    `;
-    frag.appendChild(row);
+// ====== MODAL (built dynamically so we don't rely on specific HTML) ======
+let modalEl = null;
+function ensureModal() {
+  if (modalEl) return modalEl;
+  modalEl = document.createElement("div");
+  modalEl.id = "skydealModal";
+  Object.assign(modalEl.style, {
+    position: "fixed", inset: "0", background: "rgba(0,0,0,0.35)",
+    display: "none", alignItems: "center", justifyContent: "center",
+    zIndex: "9999"
   });
 
-  drop.appendChild(frag);
-}
-
-async function loadPaymentMethods() {
-  const drop = document.getElementById("paymentDropdown");
-  if (!drop) return;
-
-  drop.innerHTML = `<div class="pm-loading">Loading payment methods...</div>`;
-
-  try {
-    if (!paymentMethodsLoaded) {
-      const data = await fetchJSONWithTimeout(
-        `${BACKEND_URL}/payment-methods`,
-        15000
-      );
-      const raw = Array.isArray(data?.methods) ? data.methods : [];
-
-      // dedupe + normalize
-      const map = new Map();
-      raw.forEach((m) => {
-        if (typeof m === "string") {
-          const key = m.toLowerCase().replace(/\s+/g, " ").trim();
-          if (key && !map.has(key)) map.set(key, m.trim());
-        }
-      });
-
-      paymentMethodsCache = Array.from(map.values()).sort((a, b) =>
-        a.localeCompare(b)
-      );
-      paymentMethodsLoaded = true;
-    }
-
-    renderPaymentMethods(paymentMethodsCache);
-  } catch (err) {
-    console.error("payment-methods load error:", err);
-    drop.innerHTML = `
-      <div class="pm-error">
-        Couldn't load payment methods.
-        <button id="pmRetry" type="button">Retry</button>
-      </div>`;
-    document
-      .getElementById("pmRetry")
-      ?.addEventListener("click", loadPaymentMethods);
-  }
-}
-
-function setupDropdown() {
-  const toggle = document.getElementById("paymentToggle");
-  const wrap = toggle?.parentElement;
-  if (!toggle || !wrap) return;
-
-  toggle.addEventListener("click", () => {
-    wrap.classList.toggle("open");
-    if (wrap.classList.contains("open") && !paymentMethodsLoaded) {
-      loadPaymentMethods();
-    }
+  const content = document.createElement("div");
+  content.id = "skydealModalContent";
+  Object.assign(content.style, {
+    background: "#fff", borderRadius: "12px", padding: "16px",
+    maxWidth: "560px", width: "92%", boxShadow: "0 10px 30px rgba(0,0,0,0.15)"
   });
 
-  document.addEventListener("click", (e) => {
-    if (!wrap.contains(e.target)) wrap.classList.remove("open");
-  });
+  const header = createEl("div", "modal-header");
+  Object.assign(header.style, { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" });
+
+  const title = createEl("h3", "", "Price Comparison");
+  Object.assign(title.style, { margin: 0, fontSize: "18px" });
+
+  const closeBtn = createEl("button", "", "×");
+  Object.assign(closeBtn.style, { fontSize: "20px", lineHeight: "20px", border: "none", background: "transparent", cursor: "pointer" });
+  closeBtn.addEventListener("click", hideModal);
+
+  header.append(title, closeBtn);
+
+  const body = createEl("div"); body.id = "skydealModalBody";
+  Object.assign(body.style, { display: "grid", gap: "8px" });
+
+  content.append(header, body);
+  modalEl.appendChild(content);
+  modalEl.addEventListener("click", (e) => { if (e.target === modalEl) hideModal(); });
+  document.body.appendChild(modalEl);
+  return modalEl;
+}
+function showModal(htmlBody, heading = "Price Comparison") {
+  ensureModal();
+  qs("#skydealModalBody").innerHTML = htmlBody;
+  qs("#skydealModalContent h3").textContent = heading;
+  modalEl.style.display = "flex";
+}
+function hideModal() {
+  if (modalEl) modalEl.style.display = "none";
 }
 
-// === SEARCH ===
-async function onSearch(e) {
-  e.preventDefault();
+// ====== SORT CONTROLS ======
+let currentSortKey = "price"; // default after results
+function renderSortControls(onChange) {
+  const host = qs("#filtersContainer");
+  if (!host) return;
 
-  const origin = document.getElementById("origin").value.trim();
-  const destination = document.getElementById("destination").value.trim();
-  const departureDate = document.getElementById("departure-date").value;
-  const returnDate = document.getElementById("return-date").value;
-  const cabinClass = document.getElementById("cabin-class").value;
-  const tripType = document.querySelector(
-    "input[name='tripType']:checked"
-  )?.value;
-
-  const selectedPaymentMethods = Array.from(
-    document.querySelectorAll("#paymentDropdown input:checked")
-  ).map((el) => el.value);
-
-  const body = {
-    origin,
-    destination,
-    departureDate,
-    returnDate: tripType === "round-trip" ? returnDate : null,
-    cabinClass,
-    tripType,
-    passengers: 1,
-    paymentMethods: selectedPaymentMethods,
-  };
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+  let wrap = qs("#skydealSortWrap");
+  if (!wrap) {
+    wrap = createEl("div");
+    wrap.id = "skydealSortWrap";
+    wrap.style.display = "flex";
+    wrap.style.gap = "8px";
+    wrap.style.alignItems = "center";
+    wrap.style.margin = "8px 0 12px";
+    const label = createEl("span", "", "Sort by:");
+    const select = document.createElement("select");
+    select.id = "skydealSortSelect";
+    ["Price (asc)", "Departure time (asc)"].forEach((opt, i) => {
+      const o = createEl("option", "", opt);
+      o.value = i === 0 ? "price" : "depTime";
+      select.appendChild(o);
     });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    renderFlights(data);
-  } catch (err) {
-    console.error("Search error:", err);
-    alert("Search failed. Please try again.");
+    select.addEventListener("change", (e) => {
+      currentSortKey = e.target.value;
+      if (typeof onChange === "function") onChange(currentSortKey);
+    });
+    wrap.append(label, select);
+    host.innerHTML = ""; // ensure no duplicates
+    host.appendChild(wrap);
   }
 }
 
-// === RENDER FLIGHTS ===
-function renderFlights(data) {
-  const outboundDiv = document.getElementById("outbound-flights");
-  const returnDiv = document.getElementById("return-flights");
-  outboundDiv.innerHTML = "";
-  returnDiv.innerHTML = "";
+// ====== RENDERING ======
+function sortFlights(flights, key) {
+  const copy = [...flights];
+  if (key === "depTime") {
+    copy.sort((a, b) => new Date(a.departureTime || a.departure || 0) - new Date(b.departureTime || b.departure || 0));
+  } else {
+    copy.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+  }
+  return copy;
+}
 
-  if (!data || (!data.outbound?.length && !data.return?.length)) {
-    outboundDiv.innerHTML = "<p>No results found.</p>";
+function renderFlightList(container, flights, sideLabel) {
+  container.innerHTML = "";
+  if (!flights || flights.length === 0) {
+    const empty = createEl("div", "", `No ${sideLabel} flights found.`);
+    Object.assign(empty.style, { padding: "8px", opacity: "0.8" });
+    container.appendChild(empty);
     return;
   }
 
-  function makeCard(f) {
-    const card = document.createElement("div");
-    card.className = "flight-card";
-    card.innerHTML = `
-      <h3>${f.carrier} ${f.flightNumber}</h3>
-      <p>Departure: ${f.departure} | Arrival: ${f.arrival}</p>
-      <p>Stops: ${f.stops}</p>
-      ${
-        f.bestOffer
-          ? `<div class="best-offer">
-              Best deal: <strong>${f.bestOffer.portal}</strong> ₹${f.bestOffer.price} 
-              (${f.bestOffer.paymentMethod}, Coupon: ${f.bestOffer.coupon || "-"})
-              <button class="info-btn" data-offers='${JSON.stringify(
-                f.allOffers
-              )}'>i</button>
-            </div>`
-          : ""
-      }
-    `;
-    return card;
-  }
+  const list = createEl("div");
+  Object.assign(list.style, { display: "grid", gap: "10px" });
 
-  data.outbound?.forEach((f) => outboundDiv.appendChild(makeCard(f)));
-  data.return?.forEach((f) => returnDiv.appendChild(makeCard(f)));
-
-  document.querySelectorAll(".info-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const offers = JSON.parse(e.target.dataset.offers || "[]");
-      showOffersModal(offers);
+  flights.forEach((f) => {
+    const card = createEl("div", "flight-card");
+    Object.assign(card.style, {
+      border: "1px solid #e6e6e6", borderRadius: "10px", padding: "10px", cursor: "pointer"
     });
+
+    const airlineName = safeText(f.airlineName || f.carrierName || f.airline || f.carrier || "", "—");
+    const flightNo    = safeText(f.flightNumber || f.number || "", "");
+    const dep         = fmtTime(f.departureTime || f.departure);
+    const arr         = fmtTime(f.arrivalTime || f.arrival);
+    const stops       = (f.stops !== undefined && f.stops !== null) ? f.stops :
+                        (f.numberOfStops !== undefined ? f.numberOfStops : (f.itineraries?.[0]?.segments?.length ? (f.itineraries[0].segments.length - 1) : 0));
+    const price       = (typeof f.price === "number") ? f.price : (parseFloat(f.price?.total || f.price?.base) || NaN);
+
+    const title = createEl("div", "");
+    title.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>`;
+    const times = createEl("div", "", `${dep} → ${arr}`);
+    const meta  = createEl("div", "", `Stops: ${isNaN(stops) ? "—" : stops}`);
+    const cost  = createEl("div", "", isNaN(price) ? "" : `₹${Math.round(price).toLocaleString("en-IN")}`);
+
+    [title, times, meta, cost].forEach(el => { el.style.margin = "2px 0"; });
+
+    card.append(title, times, meta, cost);
+    card.addEventListener("click", () => openComparisonModal({ airlineName, flightNo, dep, arr, price }));
+    list.appendChild(card);
   });
+
+  container.appendChild(list);
 }
 
-// === MODAL ===
-function showOffersModal(offers) {
-  const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.innerHTML = `
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <h3>Prices on Different Portals</h3>
-      <ul>
-        ${offers
-          .map(
-            (o) =>
-              `<li><strong>${o.portal}</strong>: ₹${o.price} (${o.paymentMethod}${
-                o.coupon ? `, Coupon: ${o.coupon}` : ""
-              })</li>`
-          )
-          .join("")}
-      </ul>
+function openComparisonModal({ airlineName, flightNo, dep, arr, price }) {
+  // Simulated OTA prices = Amadeus price + ₹100 each (no original/base shown)
+  const portals = ["MakeMyTrip", "Goibibo", "Cleartrip", "Yatra", "EaseMyTrip"];
+  const rows = portals.map(p => {
+    const finalPrice = isNaN(price) ? "—" : `₹${(Math.round(price) + 100).toLocaleString("en-IN")}`;
+    return `<div style="display:flex;justify-content:space-between;gap:8px;border:1px solid #eee;border-radius:8px;padding:8px;">
+      <div><strong>${p}</strong><div style="font-size:12px;opacity:0.8;">${airlineName}${flightNo ? " " + flightNo : ""} • ${dep} → ${arr}</div></div>
+      <div style="font-weight:600;">${finalPrice}</div>
+    </div>`;
+  }).join("");
+
+  const body = `
+    <div style="display:grid;gap:8px;">
+      ${rows}
+      <div style="font-size:12px;opacity:0.75;">(Simulated pricing: Amadeus fare + ₹100 per portal)</div>
     </div>
   `;
-  document.body.appendChild(modal);
-
-  modal.querySelector(".close-btn").addEventListener("click", () =>
-    modal.remove()
-  );
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.remove();
-  });
+  showModal(body, "Compare prices across portals");
 }
 
-// === INIT ===
+// ====== MAIN SEARCH FLOW ======
 document.addEventListener("DOMContentLoaded", () => {
-  setupDropdown();
-  document
-    .getElementById("searchForm")
-    .addEventListener("submit", onSearch);
-});
+  const fromInput        = qs("#from");
+  const toInput          = qs("#to");
+  const depInput         = qs("#departureDate");
+  const retInput         = qs("#returnDate");
+  const returnGroup      = qs("#returnDateGroup");
+  const paxInput         = qs("#passengers");
+  const classInput       = qs("#travelClass");
+  const searchBtn        = qs("#searchBtn");
+  const outboundContainer= qs("#outboundContainer");
+  const returnContainer  = qs("#returnContainer");
 
+  // Trip type toggle: hide/show return date neatly
+  const tripTypeRadios = qsa('input[name="tripType"]');
+  function applyTripTypeUI() {
+    const value = (qs('input[name="tripType"]:checked')?.value) || "one-way";
+    if (value === "round-trip") {
+      if (returnGroup) returnGroup.style.display = "block";
+    } else {
+      if (returnGroup) returnGroup.style.display = "none";
+      if (retInput) retInput.value = "";
+    }
+  }
+  tripTypeRadios.forEach(r => r.addEventListener("change", applyTripTypeUI));
+  applyTripTypeUI(); // initial
+
+  async function doSearch() {
+    // minimal guard
+    const from  = fromInput?.value?.trim();
+    const to    = toInput?.value?.trim();
+    const date  = depInput?.value;
+    const trip  = (qs('input[name="tripType"]:checked')?.value) || "one-way";
+    const ret   = retInput?.value || "";
+
+    if (!from || !to || !date) {
+      alert("Please fill From, To, and Departure Date.");
+      return;
+    }
+
+    // Build payload expected by your backend (/search already handles round trips)
+    const payload = {
+      from, to,
+      departureDate: date,
+      returnDate: (trip === "round-trip" ? ret : ""),
+      passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
+      travelClass: (classInput?.value || "ECONOMY")
+    };
+
+    // Fetch
+    outboundContainer.innerHTML = "Loading…";
+    if (returnContainer) returnContainer.innerHTML = "";
+
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+      const data = await res.json();
+      // Expected shape: { outboundFlights: [...], returnFlights: [...] }
+      // If your backend returns a different shape, map here.
+      let outbound = data?.outboundFlights || data?.flights || [];
+      let returns  = data?.returnFlights || [];
+
+      // Show sort controls AFTER having results
+      renderSortControls((key) => {
+        const s1 = sortFlights(outbound, key);
+        renderFlightList(outboundContainer, s1, "outbound");
+        if (retInput?.value && returns?.length) {
+          const s2 = sortFlights(returns, key);
+          renderFlightList(returnContainer, s2, "return");
+        }
+      });
+
+      // Initial paint, sorted by price asc
+      const s1 = sortFlights(outbound, currentSortKey);
+      renderFlightList(outboundContainer, s1, "outbound");
+
+      if (retInput?.value && returns?.length) {
+        const s2 = sortFlights(returns, currentSortKey);
+        renderFlightList(returnContainer, s2, "return");
+      } else if (returnContainer) {
+        // Keep the second column clean on one-way
+        returnContainer.innerHTML = "";
+      }
+    } catch (err) {
+      console.error("Search error:", err);
+      outboundContainer.innerHTML = "<div style='color:#b00020;'>Failed to fetch flights. Please try again.</div>";
+      if (returnContainer) returnContainer.innerHTML = "";
+    }
+  }
+
+  if (searchBtn) searchBtn.addEventListener("click", doSearch);
+});
