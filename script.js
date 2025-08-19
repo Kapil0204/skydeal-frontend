@@ -14,6 +14,14 @@ const qsa = (sel, root=document) => [...root.querySelectorAll(sel)];
 function fmtTime(v){ if(!v) return ""; if(/^\d{2}:\d{2}$/.test(v)) return v; const d=new Date(v); if(isNaN(d)) return ""; const hh=String(d.getHours()).padStart(2,"0"); const mm=String(d.getMinutes()).padStart(2,"0"); return `${hh}:${mm}`; }
 function safeText(v,f=""){ if(v===null||v===undefined) return f; if(typeof v==="string" && v.trim()==="") return f; return v; }
 function el(t,c,txt){ const e=document.createElement(t); if(c) e.className=c; if(txt!==undefined) e.textContent=txt; return e; }
+function formatINR(n){ const v=Number(n); return Number.isFinite(v)?`₹${Math.round(v).toLocaleString("en-IN")}`:"—"; }
+function toISOFromInput(str){
+  if(!str) return "";
+  const s=String(str).trim();
+  const m1=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(m1){ const[,dd,mm,yyyy]=m1; return `${yyyy}-${mm}-${dd}`; }
+  const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m2) return s;
+  const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
+}
 
 // ====== PAYMENT SELECTOR (LEFT = TYPES, RIGHT = BANKS FROM BACKEND) ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
@@ -223,6 +231,14 @@ function renderSortControls(onChange){
   }
 }
 
+// ====== BEST DEAL HELPERS ======
+function getBestDeal(portalPrices){
+  if (!Array.isArray(portalPrices) || portalPrices.length===0) return null;
+  const valid = portalPrices.filter(p => Number.isFinite(Number(p.finalPrice)));
+  if (!valid.length) return null;
+  return valid.reduce((best,p)=> Number(p.finalPrice) < Number(best.finalPrice) ? p : best);
+}
+
 // ====== RENDERING ======
 function sortFlights(flights,key){
   const copy=[...flights];
@@ -238,29 +254,48 @@ function renderFlightList(container, flights, sideLabel){
   }
   const list = el("div"); Object.assign(list.style,{display:"grid",gap:"10px"});
   flights.forEach(f=>{
-    const card = el("div","flight-card"); Object.assign(card.style,{border:"1px solid #e6e6e6",borderRadius:"10px",padding:"10px",cursor:"pointer"});
+    const card = el("div","flight-card"); Object.assign(card.style,{border:"1px solid #e6e6e6",borderRadius:"10px",padding:"10px"});
+
     const airlineName = safeText(f.airlineName||f.carrierName||f.airline||f.carrier||"","—");
     const flightNo    = safeText(f.flightNumber||f.number||"","");
     const dep         = fmtTime(f.departureTime||f.departure);
     const arr         = fmtTime(f.arrivalTime||f.arrival);
     const stops       = (f.stops!==undefined&&f.stops!==null)?f.stops:(f.numberOfStops!==undefined?f.numberOfStops:(f.itineraries?.[0]?.segments?.length?(f.itineraries[0].segments.length-1):0));
-    const price       = (typeof f.price==="number")?f.price:(parseFloat(f.price?.total||f.price?.base||f.price) || NaN);
+    const basePrice   = parseFloat(f.price?.total||f.price?.base||f.price);
+    const best        = getBestDeal(f.portalPrices);
 
-    const title = el("div",""); title.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>`;
-    const times = el("div","",`${dep} → ${arr}`);
-    const meta  = el("div","",`Stops: ${isNaN(stops)?"—":stops}`);
-    const cost  = el("div","", isNaN(price) ? "" : `₹${Math.round(price).toLocaleString("en-IN")}`);
-    [title,times,meta,cost].forEach(e=> e.style.margin="2px 0");
+    const top = el("div");
+    top.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>
+                     <div>${dep} → ${arr}</div>
+                     <div>Stops: ${isNaN(stops)?"—":stops}</div>`;
 
-    card.append(title, times, meta, cost);
-    card.addEventListener("click", ()=>openComparisonModal(f, {airlineName,flightNo,dep,arr,price}));
+    const bestLine = el("div");
+    Object.assign(bestLine.style,{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",flexWrap:"wrap"});
+    if (best) {
+      const pm = best.appliedOffer?.paymentMethodLabel ? ` • ${best.appliedOffer.paymentMethodLabel}` : "";
+      bestLine.innerHTML =
+        `<span style="font-weight:600;">Best on ${best.portal}: ${formatINR(best.finalPrice)}</span>` +
+        `<span style="opacity:.8;">(was ${formatINR(basePrice)})${pm}</span>`;
+    } else if (Number.isFinite(basePrice)) {
+      bestLine.innerHTML = `<span style="font-weight:600;">Base fare: ${formatINR(basePrice)}</span>`;
+    }
+
+    const infoBtn = el("button","", "i");
+    Object.assign(infoBtn.style,{marginLeft:"auto",border:"1px solid #e5e7eb",borderRadius:"6px",padding:"2px 8px",cursor:"pointer"});
+    infoBtn.addEventListener("click", ()=>openComparisonModal(f, {
+      airlineName, flightNo, dep, arr, price: basePrice
+    }));
+
+    const lineWrap = el("div"); Object.assign(lineWrap.style,{display:"flex",alignItems:"center",gap:"8px"});
+    lineWrap.append(bestLine, infoBtn);
+
+    card.append(top, lineWrap);
     list.appendChild(card);
   });
   container.appendChild(list);
 }
 
 function openComparisonModal(flight, basics){
-  // Prefer backend-calculated portalPrices if present
   const portals = Array.isArray(flight.portalPrices) && flight.portalPrices.length
     ? flight.portalPrices.map(p => ({
         name: p.portal,
@@ -278,7 +313,7 @@ function openComparisonModal(flight, basics){
       }));
 
   const rows = portals.map(p=>{
-    const priceStr = isNaN(p.final) ? "—" : `₹${Math.round(p.final).toLocaleString("en-IN")}`;
+    const priceStr = isNaN(p.final) ? "—" : formatINR(p.final);
     const note = p.appliedOffer?.couponCode
       ? `<div style="font-size:12px;opacity:.75;">Code: ${p.appliedOffer.couponCode} • ${p.appliedOffer.paymentMethodLabel || ""}</div>`
       : "";
@@ -343,18 +378,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   // --- Search core ---
   async function doSearch(){
-    const from=fromInput?.value?.trim(), to=toInput?.value?.trim(), date=depInput?.value;
-    const v = (qs('input[name="tripType"]:checked')?.value) || "one-way";
-    const ret=retInput?.value||"";
-    if(!from||!to||!date){ alert("Please fill From, To, and Departure Date."); return; }
+    const from=fromInput?.value?.trim(), to=toInput?.value?.trim();
+    const dateISO = toISOFromInput(depInput?.value);
+    const trip=(qs('input[name="tripType"]:checked')?.value)||"one-way";
+    const retISO  = toISOFromInput(retInput?.value || "");
+    if(!from||!to||!dateISO){ alert("Please fill From, To, and Departure Date."); return; }
 
     const payload = {
       from, to,
-      departureDate: date,
-      returnDate: (trip==="round-trip" ? ret : ""),
+      departureDate: dateISO,
+      returnDate: (trip==="round-trip" ? retISO : ""),
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
-      // If you later want to filter offers server-side by chosen methods:
+      // If you later want server filtering by selections:
       // paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`)
     };
 
@@ -376,7 +412,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       renderSortControls((key)=>{
         const s1 = sortFlights(outbound, key);
         renderFlightList(outboundContainer, s1, "outbound");
-        if(ret && returns?.length){
+        if(retISO && returns?.length){
           const s2 = sortFlights(returns, key);
           renderFlightList(returnContainer, s2, "return");
         }
@@ -385,7 +421,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       const s1 = sortFlights(outbound, "price");
       renderFlightList(outboundContainer, s1, "outbound");
 
-      if(ret && returns?.length){
+      if(retISO && returns?.length){
         const s2 = sortFlights(returns, "price");
         renderFlightList(returnContainer, s2, "return");
       } else if(returnContainer){
