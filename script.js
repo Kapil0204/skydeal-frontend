@@ -1,10 +1,6 @@
 // ====== CONFIG ======
-const BACKEND_URL = "https://skydeal-backend.onrender.com/search"; // /search endpoint
-
-// EXPECTED HTML IDs (adjust here if your HTML uses different ones):
-// #from, #to, #departureDate, #returnDate, #passengers, #travelClass
-// Trip radios: name="tripType" values: "one-way" | "round-trip"
-// #returnDateGroup, #searchBtn, #outboundContainer, #returnContainer, #filtersContainer
+const BACKEND_URL = "https://skydeal-backend.onrender.com/search";          // /search endpoint
+const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options"; // NEW
 
 // ====== UTIL ======
 const qs  = (sel, root=document) => root.querySelector(sel);
@@ -13,23 +9,18 @@ function fmtTime(v){ if(!v) return ""; if(/^\d{2}:\d{2}$/.test(v)) return v; con
 function safeText(v,f=""){ if(v===null||v===undefined) return f; if(typeof v==="string" && v.trim()==="") return f; return v; }
 function el(t,c,txt){ const e=document.createElement(t); if(c) e.className=c; if(txt!==undefined) e.textContent=txt; return e; }
 
-// ====== PAYMENT SELECTOR (LEFT = TYPES, RIGHT = BANKS UNDER TYPE) ======
+// ====== PAYMENT SELECTOR (LEFT = TYPES, RIGHT = BANKS FROM BACKEND) ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
-const BANKS = ["ICICI Bank","HDFC Bank","Axis Bank","SBI","Kotak"]; // extend anytime
-
-// Selection is an array of { type, bank }
-let selectedPayments = [];
+let selectedPayments = [];            // array of { type, bank }
 let activeType = PAYMENT_TYPES[0];
+let paymentMap = null;                // { type: string -> banks: string[] } from backend
+let paymentMapLoading = null;         // Promise cache
 
 function findPaymentTrigger(){
-  // Prefer explicit id="paymentBtn" if present; otherwise match by label text
   return qs("#paymentBtn") ||
          qsa("button, [role='button']").find(b => /select\s*payment\s*methods/i.test((b.textContent||"").trim()));
 }
-
-function isSelected(type, bank){
-  return selectedPayments.some(x => x.type===type && x.bank===bank);
-}
+function isSelected(type, bank){ return selectedPayments.some(x => x.type===type && x.bank===bank); }
 function toggleSelection(type, bank, checked){
   const idx = selectedPayments.findIndex(x => x.type===type && x.bank===bank);
   if(checked && idx===-1) selectedPayments.push({ type, bank });
@@ -42,6 +33,16 @@ function updatePaymentButtonLabel(trigger){
   trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
 }
 
+async function loadPaymentMap(){
+  if(paymentMap) return paymentMap;
+  if(paymentMapLoading) return paymentMapLoading;
+  paymentMapLoading = fetch(PAYMENT_OPTIONS_URL)
+    .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(j => (paymentMap = j.options || {}))
+    .catch(e => { console.error("Payment options fetch failed:", e); paymentMap = {}; return paymentMap; });
+  return paymentMapLoading;
+}
+
 function positionMenuBelow(trigger, menu){
   const r = trigger.getBoundingClientRect();
   menu.style.left = `${Math.max(8, r.left + window.scrollX)}px`;
@@ -50,7 +51,24 @@ function positionMenuBelow(trigger, menu){
 
 function renderBanksPane(col, type){
   col.innerHTML = "";
-  BANKS.forEach(bank=>{
+  const banks = (paymentMap && paymentMap[type]) ? paymentMap[type] : null;
+
+  if(!banks) {
+    // still loading OR fetch failed — show a tiny loader
+    const msg = el("div","", "Loading…");
+    Object.assign(msg.style,{opacity:.8, padding:"6px 2px"});
+    col.appendChild(msg);
+    return;
+  }
+
+  if(Array.isArray(banks) && banks.length === 0){
+    const none = el("div","", "No offers for this method");
+    Object.assign(none.style,{opacity:.75, padding:"6px 2px"});
+    col.appendChild(none);
+    return;
+  }
+
+  banks.forEach(bank=>{
     const row = el("label");
     Object.assign(row.style,{display:"flex",gap:"8px",alignItems:"center",padding:"6px 4px",cursor:"pointer"});
     const cb = document.createElement("input");
@@ -103,10 +121,12 @@ function buildTypeBankMenu(trigger){
   });
   grid.appendChild(typeCol);
 
-  // RIGHT: Banks for active type
+  // RIGHT: Banks (loaded dynamically)
   const bankCol = el("div");
   Object.assign(bankCol.style,{paddingLeft:"4px", maxHeight:"230px", overflow:"auto"});
   grid.appendChild(bankCol);
+
+  // Render initial view
   renderBanksPane(bankCol, activeType);
 
   // Footer
@@ -131,6 +151,7 @@ function buildTypeBankMenu(trigger){
   document.body.appendChild(menu);
   positionMenuBelow(trigger, menu);
 
+  // Close handlers
   setTimeout(()=>{
     const outside = (e)=>{ if(!menu.contains(e.target) && e.target!==trigger) togglePaymentMenu(false, trigger); };
     const onEsc   = (e)=>{ if(e.key==="Escape") togglePaymentMenu(false, trigger); };
@@ -139,6 +160,8 @@ function buildTypeBankMenu(trigger){
     document.addEventListener("keydown", onEsc);
   },0);
 
+  // Ensure data is loaded, then refresh right pane
+  loadPaymentMap().then(()=> renderBanksPane(bankCol, activeType)).catch(()=>{});
   return menu;
 }
 
@@ -174,7 +197,7 @@ function ensureModal(){
   content.append(header, body);
   modalEl.appendChild(content);
   modalEl.addEventListener("click",(e)=>{ if(e.target===modalEl) hideModal(); });
-  document.body.appendChild(modalEl);
+  document.body.appendChild(modelEl);
   return modalEl;
 }
 function showModal(htmlBody, heading="Price Comparison"){ ensureModal(); qs("#skydealModalBody").innerHTML=htmlBody; qs("#skydealModalContent h3").textContent=heading; modalEl.style.display="flex"; }
@@ -246,18 +269,20 @@ function openComparisonModal({ airlineName, flightNo, dep, arr, price }){
 }
 
 // ====== MAIN ======
-let currentSortKeyGlobal = "price"; // keep default price asc
-
 document.addEventListener("DOMContentLoaded", ()=>{
   const fromInput=qs("#from"), toInput=qs("#to"), depInput=qs("#departureDate"), retInput=qs("#returnDate");
   const returnGroup=qs("#returnDateGroup"), paxInput=qs("#passengers"), classInput=qs("#travelClass");
   const searchBtn=qs("#searchBtn"), outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
 
-  // Payment selector wiring
+  // Payment selector
   const paymentTrigger = findPaymentTrigger();
   if(paymentTrigger){
     paymentTrigger.style.cursor="pointer";
-    paymentTrigger.addEventListener("click",(e)=>{ e.preventDefault(); togglePaymentMenu(true, paymentTrigger); });
+    paymentTrigger.addEventListener("click", async (e)=>{
+      e.preventDefault();
+      // Prime cache early so first paint shows quickly
+      loadPaymentMap().finally(()=> togglePaymentMenu(true, paymentTrigger));
+    });
     updatePaymentButtonLabel(paymentTrigger);
   }
 
@@ -279,22 +304,18 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!from||!to||!date){ alert("Please fill From, To, and Departure Date."); return; }
 
     const payload = {
-      from, to,
-      departureDate: date,
+      from, to, departureDate: date,
       returnDate: (trip==="round-trip" ? ret : ""),
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY")
-      // Note: selectedPayments (array of {type, bank}) is available for future backend use
+      // selectedPayments available for future: [{type, bank}, ...]
     };
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
 
     try{
-      const res = await fetch(BACKEND_URL, {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
-      });
+      const res = await fetch(BACKEND_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
       if(!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
 
@@ -302,7 +323,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
       let returns  = data?.returnFlights  || [];
 
       renderSortControls((key)=>{
-        currentSortKeyGlobal = key;
         const s1 = sortFlights(outbound, key);
         renderFlightList(outboundContainer, s1, "outbound");
         if(retInput?.value && returns?.length){
@@ -311,11 +331,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
         }
       });
 
-      const s1 = sortFlights(outbound, currentSortKeyGlobal);
+      const s1 = sortFlights(outbound, "price");
       renderFlightList(outboundContainer, s1, "outbound");
 
       if(retInput?.value && returns?.length){
-        const s2 = sortFlights(returns, currentSortKeyGlobal);
+        const s2 = sortFlights(returns, "price");
         renderFlightList(returnContainer, s2, "return");
       } else if(returnContainer){
         returnContainer.innerHTML = "";
