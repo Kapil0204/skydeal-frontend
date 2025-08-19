@@ -348,15 +348,25 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
 
   // Payment selector
-  const paymentTrigger = findPaymentTrigger();
-  if(paymentTrigger){
-    paymentTrigger.style.cursor="pointer";
-    paymentTrigger.addEventListener("click", async (e)=>{
-      e.preventDefault();
-      loadPaymentMap().finally(()=> togglePaymentMenu(true, paymentTrigger));
-    });
-    updatePaymentButtonLabel(paymentTrigger);
-  }
+const paymentTrigger = findPaymentTrigger();
+const pmStatus = qs("#pmStatus");        // ← the little “Loading payment methods…” chip
+if (pmStatus) pmStatus.style.display = "none";  // hide by default
+
+if (paymentTrigger) {
+  paymentTrigger.style.cursor = "pointer";
+  paymentTrigger.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (pmStatus) pmStatus.style.display = "inline-flex";  // show while fetching
+    try {
+      await loadPaymentMap();
+    } finally {
+      if (pmStatus) pmStatus.style.display = "none";        // hide after fetch
+    }
+    togglePaymentMenu(true, paymentTrigger);
+  });
+  updatePaymentButtonLabel(paymentTrigger);
+}
+
 
   // Trip type toggle
   const tripRadios = qsa('input[name="tripType"]');
