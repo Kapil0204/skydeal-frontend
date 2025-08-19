@@ -255,6 +255,40 @@ select{
   border-radius: 6px;
   padding: 4px 6px;
 }
+/* --- Payment menu: make the selected left category readable --- */
+
+/* 1) Reset any inherited light bg in the left column */
+#skydealPaymentMenu .types * {
+  background: transparent !important;
+  color: #f8fafc !important;     /* visible on dark */
+}
+
+/* 2) Explicit selected/active states (covering common patterns) */
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types button[aria-current="true"],
+#skydealPaymentMenu .types button.is-active,
+#skydealPaymentMenu .types .type-item.is-active,
+#skydealPaymentMenu .types .type-item:focus {
+  background: #334155 !important; /* dark slate */
+  color: #f8fafc !important;       /* light text */
+  font-weight: 600;
+  border-radius: 6px;
+  outline: none !important;
+}
+
+/* 3) If the current implementation uses :focus-only styling */
+#skydealPaymentMenu .types :focus {
+  background: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* 4) Optional nicer hover (no layout change) */
+#skydealPaymentMenu .types *:hover {
+  background: #2b3a4f !important;
+  color: #ffffff !important;
+}
 
 
 
