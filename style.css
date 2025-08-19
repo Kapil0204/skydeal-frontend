@@ -289,6 +289,52 @@ select{
   background: #2b3a4f !important;
   color: #ffffff !important;
 }
+/* === Payment menu: left column selected text must be readable === */
+
+/* Base: make all left items dark text on dark bg */
+#skydealPaymentMenu .types label,
+#skydealPaymentMenu .types button,
+#skydealPaymentMenu .types .type-item {
+  background: transparent !important;
+  color: #f8fafc !important;
+  border: 1px solid transparent !important;
+}
+
+/* 1) Most common pattern: <input type="radio/checkbox"> + <label> */
+#skydealPaymentMenu .types input:checked + label {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+/* 2) ARIA/JS driven patterns */
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types .is-active,
+#skydealPaymentMenu .types button[aria-current="true"] {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* 3) Remove focus ring that may be turning bg light */
+#skydealPaymentMenu .types :focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 4) Hover cue (optional, no layout change) */
+#skydealPaymentMenu .types label:hover,
+#skydealPaymentMenu .types button:hover,
+#skydealPaymentMenu .types .type-item:hover {
+  background: #2b3a4f !important;
+  color: #ffffff !important;
+}
+
 
 
 
