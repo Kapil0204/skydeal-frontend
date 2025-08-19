@@ -16,52 +16,117 @@ function fmtTime(isoOrHM){ if(!isoOrHM)return""; if(/^\d{2}:\d{2}$/.test(isoOrHM
 function safeText(v,f=""){ if(v===null||v===undefined)return f; if(typeof v==="string"&&v.trim()==="")return f; return v;}
 function createEl(tag, className, text){ const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el;}
 
-// ====== PAYMENT METHODS POPOVER ======
-const PAYMENT_OPTIONS = ["ICICI Bank","HDFC Bank","Axis Bank","SBI","Kotak"];
-let selectedPaymentMethods = [];
+// ====== PAYMENT METHODS (2‑LEVEL SELECTOR) ======
+const BANKS = ["ICICI Bank","HDFC Bank","Axis Bank","SBI","Kotak"];
+const TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
+
+// Store as array of { bank, type }
+let selectedPayments = [];
+let activeBank = BANKS[0];
 
 function findPaymentTrigger(){
-  // Tries #paymentBtn first; falls back to any button whose text matches
+  // Prefer explicit id if you add it: id="paymentBtn"
   return qs("#paymentBtn") ||
-         qsa("button, [role='button']").find(b => /select\s*payment\s*methods/i.test(b.textContent || ""));
+         qsa("button, [role='button']").find(b => /select\s*payment\s*methods/i.test((b.textContent||"").trim()));
 }
 
-function buildPaymentMenu(trigger){
+function isSelected(bank, type){
+  return selectedPayments.some(x => x.bank===bank && x.type===type);
+}
+function toggleSelection(bank, type, checked){
+  const idx = selectedPayments.findIndex(x => x.bank===bank && x.type===type);
+  if(checked && idx===-1) selectedPayments.push({bank, type});
+  if(!checked && idx>-1) selectedPayments.splice(idx,1);
+}
+
+function countSelections(){ return selectedPayments.length; }
+function updatePaymentButtonLabel(trigger){
+  if(!trigger) return;
+  const n = countSelections();
+  trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
+}
+
+function buildTwoLevelMenu(trigger){
   const menu = document.createElement("div");
-  Object.assign(menu.style,{
-    position:"absolute", background:"#fff", border:"1px solid #e5e7eb", borderRadius:"10px",
-    boxShadow:"0 10px 30px rgba(0,0,0,.12)", padding:"10px", zIndex:99999, minWidth:"220px"
-  });
   menu.id = "skydealPaymentMenu";
+  Object.assign(menu.style,{
+    position:"absolute", background:"#fff", border:"1px solid #e5e7eb", borderRadius:"12px",
+    boxShadow:"0 10px 30px rgba(0,0,0,.14)", padding:"12px", zIndex:99999, minWidth:"480px"
+  });
 
   const title = createEl("div","", "Select Payment Methods");
-  Object.assign(title.style,{fontWeight:"600", marginBottom:"6px"});
+  Object.assign(title.style,{fontWeight:"600", marginBottom:"8px"});
   menu.appendChild(title);
 
-  PAYMENT_OPTIONS.forEach(opt=>{
-    const row = createEl("label");
-    Object.assign(row.style,{display:"flex",gap:"8px",alignItems:"center",padding:"4px 2px",cursor:"pointer"});
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = opt;
-    cb.checked = selectedPaymentMethods.includes(opt);
-    cb.addEventListener("change",()=>{
-      if(cb.checked && !selectedPaymentMethods.includes(opt)) selectedPaymentMethods.push(opt);
-      if(!cb.checked) selectedPaymentMethods = selectedPaymentMethods.filter(x=>x!==opt);
-      updatePaymentButtonLabel(trigger);
+  const grid = createEl("div");
+  Object.assign(grid.style,{display:"grid", gridTemplateColumns:"1fr 2fr", gap:"12px", minHeight:"180px"});
+  menu.appendChild(grid);
+
+  // Left: bank list
+  const bankCol = createEl("div");
+  Object.assign(bankCol.style,{borderRight:"1px solid #eee", paddingRight:"8px", maxHeight:"220px", overflow:"auto"});
+  BANKS.forEach(b=>{
+    const item = createEl("div","", b);
+    Object.assign(item.style,{
+      padding:"6px 8px", borderRadius:"8px", cursor:"pointer",
+      background: (b===activeBank) ? "#f1f5f9" : "transparent", fontWeight:(b===activeBank)?"600":"500"
     });
-    const span = createEl("span","",opt);
-    row.append(cb, span);
-    menu.appendChild(row);
+    item.addEventListener("click", ()=>{
+      activeBank = b;
+      // re-render right pane & highlight
+      renderTypesPane(typesCol, b);
+      [...bankCol.children].forEach(ch=>{
+        ch.style.background = (ch.textContent===b) ? "#f1f5f9" : "transparent";
+        ch.style.fontWeight = (ch.textContent===b) ? "600" : "500";
+      });
+    });
+    bankCol.appendChild(item);
+  });
+  grid.appendChild(bankCol);
+
+  // Right: types for active bank
+  const typesCol = createEl("div");
+  Object.assign(typesCol.style,{paddingLeft:"4px", maxHeight:"220px", overflow:"auto"});
+  grid.appendChild(typesCol);
+
+  function renderTypesPane(col, bank){
+    col.innerHTML = "";
+    TYPES.forEach(t=>{
+      const row = createEl("label");
+      Object.assign(row.style,{display:"flex",gap:"8px",alignItems:"center",padding:"6px 4px",cursor:"pointer"});
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = t; cb.checked = isSelected(bank, t);
+      cb.addEventListener("change",()=>{
+        toggleSelection(bank, t, cb.checked);
+        updatePaymentButtonLabel(trigger);
+      });
+      row.append(cb, createEl("span","", t));
+      col.appendChild(row);
+    });
+  }
+  renderTypesPane(typesCol, activeBank);
+
+  const footer = createEl("div");
+  Object.assign(footer.style,{display:"flex",justifyContent:"space-between",gap:"8px",marginTop:"10px"});
+
+  const clearBtn = createEl("button","", "Clear");
+  Object.assign(clearBtn.style,{padding:"6px 10px",border:"1px solid #e5e7eb",borderRadius:"8px",background:"#fff",cursor:"pointer"});
+  clearBtn.addEventListener("click",()=>{
+    selectedPayments = [];
+    renderTypesPane(typesCol, activeBank);
+    updatePaymentButtonLabel(trigger);
   });
 
-  const done = createEl("button","", "Done");
-  Object.assign(done.style,{marginTop:"8px",padding:"6px 10px",border:"1px solid #e5e7eb",borderRadius:"8px",cursor:"pointer",background:"#f8fafc"});
-  done.addEventListener("click",()=>togglePaymentMenu(false, trigger));
-  menu.appendChild(done);
+  const doneBtn = createEl("button","", "Done");
+  Object.assign(doneBtn.style,{padding:"6px 12px",border:"1px solid #2563eb",borderRadius:"8px",background:"#2563eb",color:"#fff",cursor:"pointer"});
+  doneBtn.addEventListener("click", ()=>togglePaymentMenu(false, trigger));
+
+  footer.append(clearBtn, doneBtn);
+  menu.appendChild(footer);
 
   document.body.appendChild(menu);
   positionMenuBelow(trigger, menu);
+
   setTimeout(()=>{
     const outside = (e)=>{ if(!menu.contains(e.target) && e.target!==trigger) togglePaymentMenu(false, trigger); };
     const onEsc = (e)=>{ if(e.key==="Escape") togglePaymentMenu(false, trigger); };
@@ -69,6 +134,7 @@ function buildPaymentMenu(trigger){
     document.addEventListener("mousedown", outside);
     document.addEventListener("keydown", onEsc);
   },0);
+
   return menu;
 }
 
@@ -82,7 +148,7 @@ function togglePaymentMenu(show, trigger){
   let menu = qs("#skydealPaymentMenu");
   if(show){
     if(menu){ positionMenuBelow(trigger, menu); menu.style.display="block"; return; }
-    menu = buildPaymentMenu(trigger);
+    buildTwoLevelMenu(trigger);
   } else {
     if(menu){
       menu.style.display="none";
@@ -90,15 +156,6 @@ function togglePaymentMenu(show, trigger){
       document.removeEventListener("keydown", menu._esc || (()=>{}));
       menu.remove();
     }
-  }
-}
-
-function updatePaymentButtonLabel(trigger){
-  if(!trigger) return;
-  if(selectedPaymentMethods.length === 0){
-    trigger.textContent = "Select Payment Methods";
-  } else {
-    trigger.textContent = `${selectedPaymentMethods.length} selected`;
   }
 }
 
@@ -188,7 +245,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const returnGroup=qs("#returnDateGroup"), paxInput=qs("#passengers"), classInput=qs("#travelClass");
   const searchBtn=qs("#searchBtn"), outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
 
-  // Payment menu wiring
+  // Payment two‑level menu wiring
   const paymentTrigger = findPaymentTrigger();
   if(paymentTrigger){
     paymentTrigger.style.cursor="pointer";
@@ -220,7 +277,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       returnDate:(trip==="round-trip"?ret:""),
       passengers:(paxInput?.value?Number(paxInput.value):1)||1,
       travelClass:(classInput?.value||"ECONOMY")
-      // NOTE: selectedPaymentMethods available here if you want to send later
+      // FYI: selectedPayments (array of {bank,type}) is available to send later
     };
 
     outboundContainer.innerHTML="Loading…"; if(returnContainer) returnContainer.innerHTML="";
