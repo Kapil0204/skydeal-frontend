@@ -244,5 +244,17 @@ select{
   color: #f8fafc !important;
   border: 1px solid #475569 !important;
 }
+/* Fix left-hand selected category in payment menu */
+#skydealPaymentMenu .types label[aria-selected="true"],
+#skydealPaymentMenu .types label.active,
+#pmMenu .pm-section h4,
+.dropdown-menu .pm-section h4 {
+  background: #334155 !important;   /* dark slate highlight */
+  color: #f8fafc !important;        /* keep text visible */
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
 
 
