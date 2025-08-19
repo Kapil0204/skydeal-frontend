@@ -179,3 +179,28 @@ select{
 }
 .portal-list{padding-left:18px;margin:12px 0 0 0}
 .portal-list li{margin:6px 0}
+/* Fix for Payment Methods Dropdown */
+.dropdown-menu {
+  background: var(--panel); /* same as app panel */
+  color: var(--ink);
+}
+
+.dropdown-menu label,
+.dropdown-menu h4,
+.dropdown-menu .pm-item {
+  color: var(--ink);
+}
+
+/* Fix for Portal Comparison Modal */
+.modal-content {
+  background: var(--panel); /* match app panel */
+  color: var(--ink);        /* ensure text visible */
+}
+
+.modal-content h3,
+.modal-content li,
+.modal-content p,
+.modal-content span {
+  color: var(--ink);
+}
+
