@@ -334,6 +334,52 @@ select{
   background: #2b3a4f !important;
   color: #ffffff !important;
 }
+/* ===== Payment menu: left column active item visible ===== */
+/* 1) Reset any UA default (white) background/outline on left column items */
+#skydealPaymentMenu .types * {
+  background: transparent !important;
+  color: #f8fafc !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important; /* we add our own bg for active */
+}
+
+/* 2) If the component uses input + label (radio/checkbox) to mark the active type */
+#skydealPaymentMenu .types input:checked + label {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+/* 3) Cover ARIA/JS-driven active states too */
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types .is-active,
+#skydealPaymentMenu .types button[aria-current="true"] {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* 4) Ensure the default (first) item shows as selected when menu opens */
+#skydealPaymentMenu .types > *:first-child,
+#skydealPaymentMenu .types > *:first-child * {
+  background: #334155 !important;   /* forces “Credit Card” visible */
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* 5) Divider + checkbox accent unchanged */
+#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
+#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
+
+/* (No layout/spacing changes anywhere) */
+
 
 
 
