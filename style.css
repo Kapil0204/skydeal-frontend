@@ -175,3 +175,40 @@ button:hover,
   background: #2b3a54;
   border-color: #415576;
 }
+/* ===== SkyDeal layout lock (restore original gutters/centering) ===== */
+/* This targets your existing top-level wrapper (whichever is present). 
+   It ONLY sets max-width + auto margins + side padding. */
+.skydeal-root,
+.app,
+.wrapper,
+.container {
+  max-width: 980px;     /* same visual width as your original layout */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  /* optional top margin so the page doesn’t hug the top edge */
+  margin-top: 40px;
+}
+
+/* Keep heading size consistent with the original */
+h1 {
+  font-size: 32px;
+  line-height: 1.25;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* (Optional) If your search block is wrapped in its own card element, 
+   you can keep its look unchanged while staying dark-themed.
+   Comment this block out if you don’t use a search card wrapper. */
+.search-card,
+.form-card,
+.searchBox {
+  background: rgba(255,255,255,0.04); /* subtle on dark; set to #fff if you want the old white card */
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.10);
+}
+
