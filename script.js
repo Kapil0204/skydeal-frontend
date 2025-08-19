@@ -242,7 +242,7 @@ function renderSortControls(onChange){
   }
 }
 
-// ====== BEST DEAL HELPERS ======
+// ====== BEST DEAL ======
 function getBestDeal(portalPrices){
   if (!Array.isArray(portalPrices) || portalPrices.length===0) return null;
   const valid = portalPrices.filter(p => Number.isFinite(Number(p.finalPrice)));
@@ -266,7 +266,6 @@ function renderFlightList(container, flights, sideLabel){
   const list = el("div"); Object.assign(list.style,{display:"grid",gap:"10px"});
   flights.forEach(f=>{
     const card = el("div","flight-card"); Object.assign(card.style,{border:"1px solid #e6e6e6",borderRadius:"10px",padding:"10px"});
-
     const airlineName = safeText(f.airlineName||f.carrierName||f.airline||f.carrier||"","—");
     const flightNo    = safeText(f.flightNumber||f.number||"","");
     const dep         = fmtTime(f.departureTime||f.departure);
@@ -369,25 +368,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
   tripRadios.forEach(r=>r.addEventListener("change", applyTripTypeUI));
   applyTripTypeUI();
 
-  // --- Search wiring (button, form submit, Enter) ---
+  // --- Search wiring ---
   const searchBtn =
     qs("#searchBtn") ||
     qsa("button,input[type='submit']").find(b => /search/i.test(b?.textContent || b?.value || ""));
-
   const searchForm = searchBtn ? searchBtn.closest("form") : qs("form");
 
-  async function doSearchWrapper(e){
-    if (e) e.preventDefault();
-    await doSearch();
-  }
-  if (searchBtn) searchBtn.addEventListener("click", doSearchWrapper);
+  async function doSearchWrapper(e){ if (e) e.preventDefault(); await doSearch(); }
+  if (searchBtn)  searchBtn.addEventListener("click",  doSearchWrapper);
   if (searchForm) searchForm.addEventListener("submit", doSearchWrapper);
   ["#from","#to","#departureDate","#returnDate","#passengers","#travelClass"].forEach(sel=>{
-    const elx = qs(sel);
-    if (elx) elx.addEventListener("keydown", (ev)=>{ if (ev.key === "Enter") doSearchWrapper(ev); });
+    const elx = qs(sel); if (elx) elx.addEventListener("keydown", (ev)=>{ if (ev.key === "Enter") doSearchWrapper(ev); });
   });
 
-  // --- Search core ---
   async function doSearch(){
     const from=fromInput?.value?.trim(), to=toInput?.value?.trim();
     const dateISO = toISOFromInput(depInput?.value);
