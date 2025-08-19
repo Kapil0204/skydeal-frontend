@@ -473,6 +473,57 @@ select{
 /* Keep divider + checkbox accent as-is */
 #skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
 #skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
+/* --- Payment menu: force the left-top item ("Credit Card") to render dark --- */
+
+/* Make the first left-column item a positioning context */
+#skydealPaymentMenu .types > *:first-child {
+  position: relative !important;
+}
+
+/* Overlay a dark background behind its content (no layout change) */
+#skydealPaymentMenu .types > *:first-child::before {
+  content: "";
+  position: absolute;
+  inset: 0;                             /* fill the item */
+  background: #334155;                  /* dark slate */
+  border-radius: 6px;                   /* same rounded look */
+  z-index: 0;                           /* behind the text */
+}
+
+/* Ensure the text sits above the overlay and is light */
+#skydealPaymentMenu .types > *:first-child,
+#skydealPaymentMenu .types > *:first-child * {
+  color: #ffffff !important;
+  z-index: 1;
+}
+
+/* Optional: same look when user switches to other types */
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .is-active,
+#skydealPaymentMenu .types button[aria-current="true"] {
+  position: relative !important;
+}
+#skydealPaymentMenu .types .active::before,
+#skydealPaymentMenu .types [aria-selected="true"]::before,
+#skydealPaymentMenu .types .is-active::before,
+#skydealPaymentMenu .types button[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #334155;
+  border-radius: 6px;
+  z-index: 0;
+}
+#skydealPaymentMenu .types .active *,
+#skydealPaymentMenu .types [aria-selected="true"] *,
+#skydealPaymentMenu .types .is-active *,
+#skydealPaymentMenu .types button[aria-current="true"] * {
+  color: #ffffff !important;
+  position: relative;
+  z-index: 1;
+}
+
 
 
 
