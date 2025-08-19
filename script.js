@@ -2,12 +2,6 @@
 const BACKEND_URL = "https://skydeal-backend.onrender.com/search";
 const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options";
 
-// EXPECTED HTML IDs (match if you can):
-// #from, #to, #departureDate, #returnDate, #passengers, #travelClass
-// Trip radios: name="tripType" values: "one-way" | "round-trip"
-// #returnDateGroup, #searchBtn, #outboundContainer, #returnContainer, #filtersContainer
-// Optional: #paymentBtn (button text fallback also supported)
-
 // ====== UTIL ======
 const qs  = (sel, root=document) => root.querySelector(sel);
 const qsa = (sel, root=document) => [...root.querySelectorAll(sel)];
@@ -29,6 +23,7 @@ let selectedPayments = [];            // [{ type, bank }]
 let activeType = PAYMENT_TYPES[0];
 let paymentMap = null;                // { type -> [banks] }
 let paymentMapLoading = null;
+let paymentLoadError = null;
 
 function findPaymentTrigger(){
   return qs("#paymentBtn") ||
@@ -50,10 +45,12 @@ function updatePaymentButtonLabel(trigger){
 async function loadPaymentMap(){
   if(paymentMap) return paymentMap;
   if(paymentMapLoading) return paymentMapLoading;
-  paymentMapLoading = fetch(PAYMENT_OPTIONS_URL)
-    .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(j => (paymentMap = j.options || {}))
-    .catch(e => { console.error("Payment options fetch failed:", e); paymentMap = {}; return paymentMap; });
+  paymentLoadError = null;
+  paymentMapLoading = fetch(PAYMENT_OPTIONS_URL, { mode: "cors" })
+    .then(r => { if(!r.ok) throw new Error(`${r.status}`); return r.json(); })
+    .then(j => { paymentMap = j.options || {}; return paymentMap; })
+    .catch(e => { console.error("Payment options fetch failed:", e); paymentLoadError = e; paymentMap = null; return null; })
+    .finally(()=> { paymentMapLoading = null; });
   return paymentMapLoading;
 }
 
@@ -65,9 +62,23 @@ function positionMenuBelow(trigger, menu){
 
 function renderBanksPane(col, type){
   col.innerHTML = "";
+  if (paymentLoadError) {
+    const box = el("div");
+    box.innerHTML = `<div style="opacity:.75; margin-bottom:6px;">Couldn’t load payment options (network/CORS).</div>`;
+    const btn = el("button","", "Retry");
+    Object.assign(btn.style,{padding:"6px 10px",border:"1px solid #e5e7eb",borderRadius:"8px",background:"#fff",cursor:"pointer"});
+    btn.addEventListener("click", ()=>{
+      col.innerHTML = "Loading…";
+      loadPaymentMap().then(()=> renderBanksPane(col, type));
+    });
+    box.appendChild(btn);
+    col.appendChild(box);
+    return;
+  }
+
   const banks = (paymentMap && paymentMap[type]) ? paymentMap[type] : null;
 
-  if(!banks) {
+  if(!paymentMap && !paymentLoadError){
     const msg = el("div","", "Loading…");
     Object.assign(msg.style,{opacity:.8, padding:"6px 2px"});
     col.appendChild(msg);
@@ -390,8 +401,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       returnDate: (trip==="round-trip" ? retISO : ""),
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
-      // If you later want server filtering by selections:
-      // paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`)
+      // paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`) // enable later if you want server-side filter
     };
 
     outboundContainer.innerHTML = "Loading…";
