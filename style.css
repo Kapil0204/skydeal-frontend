@@ -1,115 +1,159 @@
+/* =========================
+   SkyDeal — Dark Theme CSS
+   (layout unchanged; colors only)
+   ========================= */
+
 :root{
-  --bg:#0f172a;         /* page background */
-  --card:#1e293b;       /* card/panels */
+  --bg:#0f172a;         /* page background (dark navy) */
+  --panel:#1e293b;      /* app panel / dropdowns / modals */
+  --card:#1f2a3a;       /* flight card background */
   --ink:#f8fafc;        /* primary text */
   --muted:#cbd5e1;      /* secondary text */
-  --accent:#3b82f6;     /* brand accent */
+  --accent:#3b82f6;     /* bright blue (buttons, accents) */
   --pill:#334155;       /* subtle chip/button bg */
-  --border:#475569;     /* borders */
-  --panel:#1e293b;      /* dropdowns/modals */
+  --border:#475569;     /* borders on dark */
   --shadow:0 6px 18px rgba(0,0,0,.5);
 }
 
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
 
+/* ---- Container & headings (same spacing as old) ---- */
 .app{
-  max-width:940px;margin:40px auto;padding:20px 24px;
-  background:var(--card);border-radius:14px;box-shadow:var(--shadow)
+  max-width:940px;
+  margin:40px auto;
+  padding:20px 24px;
+  background:var(--panel);
+  border-radius:14px;
+  box-shadow:var(--shadow);
 }
-h1{margin:6px 0 18px} h2{margin:18px 0 12px}
+h1{margin:6px 0 18px 0}
+h2{margin:18px 0 12px 0}
 
+/* ---- Controls row (unchanged layout) ---- */
 .controls .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 input[type="text"],input[type="date"],input[type="number"],select{
-  padding:10px 12px;border:1px solid var(--border);border-radius:8px;min-width:130px;
-  background:#0f172a;color:var(--ink)
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  min-width:130px;
+  background:#0f172a;
+  color:var(--ink);
 }
-.trip-type{display:flex;gap:14px;align-items:center;margin-left:6px}
+.trip-type{display:flex;gap:14px;align-items:center;margin-left:6px;color:var(--ink)}
 
-.btn{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--pill);color:var(--ink);cursor:pointer}
+.btn{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--pill);
+  color:var(--ink);
+  cursor:pointer;
+}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pill{background:var(--pill);border-color:var(--border)}
 
+/* ---- Results columns (unchanged grid) ---- */
 .results-row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .results-column h2{margin-top:8px}
 
-.flight-card{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px}
-.flight-card p{margin:6px 0;color:var(--muted)}
-.info-btn{width:28px;height:28px;border-radius:999px;border:1px solid var(--border);background:#0f172a;color:var(--ink);display:grid;place-items:center;cursor:pointer;font-weight:bold}
-.info-btn:hover{background:#1e293b}
-
-/* ---------- Payment methods dropdown (two‑pane) ---------- */
-#skydealPaymentMenu{
-  background:var(--panel) !important;color:var(--ink) !important;border:1px solid var(--border) !important;
-  box-shadow:var(--shadow)
+/* ---- Flight card ---- */
+.flight-card{
+  background:var(--card);
+  padding:14px;
+  border-radius:10px;
+  margin-bottom:12px;
+  border:1px solid var(--border);
 }
-#skydealPaymentMenu *{color:var(--ink) !important}
+.flight-card p{margin:6px 0;color:var(--muted)}
+.info-btn{
+  width:28px;height:28px;border-radius:999px;border:1px solid var(--border);
+  background:#0f172a;color:var(--ink);display:grid;place-items:center;cursor:pointer;font-weight:700;
+}
+.info-btn:hover{background:#162036}
+
+/* =========================
+   Payment Methods dropdown
+   (two‑pane menu)
+   ========================= */
+
+/* Root menu container created by script.js (keep id) */
+#skydealPaymentMenu{
+  position:absolute; /* left/top set by script */
+  background:var(--panel) !important;
+  color:var(--ink) !important;
+  border:1px solid var(--border) !important;
+  border-radius:12px !important;
+  box-shadow:var(--shadow) !important;
+  padding:12px !important;
+  min-width:520px;
+  z-index:99999;
+}
+
+/* Make all inner text visible on dark */
+#skydealPaymentMenu *{color:var(--ink) !important;opacity:1 !important}
+
+/* Left column (types) divider */
 #skydealPaymentMenu .types{border-right:1px solid var(--border) !important}
 
-/* Left column items: neutral base */
-#skydealPaymentMenu .types button,
-#skydealPaymentMenu .types label{
-  -webkit-appearance:none;appearance:none;
-  background:transparent !important;color:var(--ink) !important;border:1px solid transparent;border-radius:6px;padding:4px 6px
-}
-/* Selected/active (covers aria/class + input+label patterns) */
+/* Selected/active type must be readable */
 #skydealPaymentMenu .types [aria-selected="true"],
 #skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
 #skydealPaymentMenu .types .is-active,
 #skydealPaymentMenu .types button[aria-current="true"],
 #skydealPaymentMenu .types input:checked + label{
-  background:#334155 !important;color:#fff !important;font-weight:600;border-radius:6px
+  background:#334155 !important;
+  color:#ffffff !important;
+  font-weight:600 !important;
+  border-radius:6px !important;
+  padding:4px 6px !important;
 }
-/* Ensure the very first item (“Credit Card”) is readable by default */
-#skydealPaymentMenu .types button:first-of-type,
-#skydealPaymentMenu .types label:first-of-type{
-  background:#334155 !important;color:#fff !important;font-weight:600
-}
-/* Checkbox accent in right pane */
-#skydealPaymentMenu input[type="checkbox"]{accent-color:var(--accent)}
 
-/* ---------- Legacy dropdown (if older menu is used) ---------- */
+/* First item visible on open (e.g., “Credit Card”) */
+#skydealPaymentMenu .types > *:first-child{
+  background:#334155 !important;
+  color:#ffffff !important;
+  font-weight:600 !important;
+  border-radius:6px !important;
+  padding:4px 6px !important;
+}
+
+/* Checkbox accent */
+#skydealPaymentMenu input[type="checkbox"]{accent-color:var(--accent) !important}
+
+/* Legacy fallback if an old menu renders */
 #pmMenu,.dropdown-menu{
-  background:var(--panel) !important;color:var(--ink) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow)
+  background:var(--panel) !important;color:var(--ink) !important;border:1px solid var(--border) !important;
 }
-#pmMenu *,.dropdown-menu *{color:var(--ink) !important}
+#pmMenu *, .dropdown-menu *{color:var(--ink) !important;opacity:1 !important}
 
-/* ---------- Price comparison modal ---------- */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:999}
-.modal-content{
-  position:relative;background:var(--panel);border:1px solid var(--border);border-radius:12px;
-  padding:18px 22px;min-width:360px;max-width:520px;box-shadow:var(--shadow);color:var(--ink)
+/* Tiny loading pill near the button (hidden by default; JS toggles) */
+#pmStatus{display:none; margin-left:8px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--pill); color:var(--ink); font-size:12px}
+
+/* =========================
+   Compare‑prices modal
+   ========================= */
+
+#skydealModal{ /* created by script.js */ }
+#skydealModalContent,
+#priceModal .modal-content{
+  background:var(--panel) !important;
+  color:var(--ink) !important;
+  border:1px solid var(--border) !important;
+  box-shadow:var(--shadow) !important;
 }
-.modal-content h3,.modal-content li,.modal-content p,.modal-content span{color:var(--ink)}
-.icon-btn.close{position:absolute;top:10px;right:10px;border:1px solid var(--border);background:#0f172a;color:var(--ink);border-radius:8px}
-.portal-list{padding-left:18px;margin:12px 0 0} .portal-list li{margin:6px 0}
-
-/* --- Fix: left column active item in payment menu has inline white bg --- */
-
-/* Base: keep all left items neat */
-#skydealPaymentMenu .types > div {
-  border-radius: 8px;
-  background: transparent !important;
-  color: var(--ink) !important;
+#skydealModalContent *, #priceModal .modal-content *{color:var(--ink) !important;opacity:1 !important}
+#priceModal .icon-btn.close{
+  background:#0f172a !important;color:var(--ink) !important;border:1px solid var(--border) !important;
 }
 
-/* Active item has inline background (e.g., rgb(241,245,249)) — force dark */
-#skydealPaymentMenu .types > div[style*="background"] {
-  background: #334155 !important;
-  color: #ffffff !important;
+/* =========================
+   Misc (unchanged look)
+   ========================= */
+
+/* Optional helper for any dashed “best deal” row you may still use */
+.best-badge{
+  margin-top:10px;border:2px dashed var(--border);background:#0f172a;
+  padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
-/* Hide the payment-methods loader by default */
-#pmStatus {
-  display: none;
-  margin-left: 8px;
-  padding: 6px 10px;
-  background: var(--pill);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--ink);
-  font-size: 14px;
-}
-/* Show while body has the pm-loading flag */
-.pm-loading #pmStatus { display: inline-flex; }
-
-
-
