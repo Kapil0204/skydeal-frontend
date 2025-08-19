@@ -1,214 +1,183 @@
-/* =====================================================
-   SkyDeal – Color pass only (layout-preserving)
-   - No widths/heights/grids/margins changed
-   - Keeps your existing layout intact
-   ===================================================== */
+/* =========================================================
+   SkyDeal – DARK THEME (COLORS ONLY, LAYOUT-PRESERVING)
+   Scope: body.skydeal-dark … (no widths/heights/margins)
+   ========================================================= */
 
-/* Dark page background only — leaves all layout and card sizes untouched */
-body {
+body.skydeal-dark {
   background: radial-gradient(1200px 600px at 50% -10%, #121827 0%, #0f141d 38%, #0d131c 100%);
+  color: #ecf1f8; /* base text color for headings/labels */
 }
 
-/* ---------------------------
-   Flight cards (color only)
-   --------------------------- */
-.flight-card {
-  background: #eaf6ff;                 /* subtle aqua card */
-  border: 1px solid #d7eafe;
-  border-radius: 12px;                  /* same radius vibe as before */
-}
-
-.flight-card strong { color: #0b1b2b; } /* headline */
-.flight-card .meta,
-.flight-card .details { color: #1f2937; }  /* secondary text */
-.flight-card .best { color: #00c2c7; font-weight: 700; } /* teal accent */
-.flight-card .was  { color: #6b7280; }  /* muted */
-
-/* Make the small “i” button a bit more prominent without moving anything */
-.flight-card button,
-.flight-card .info-btn {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: 50%;
-  background: #2b3748;
-  color: #e7eefb;
-  border: 1px solid #4a5568;
-  font-weight: 700;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.flight-card button:hover,
-.flight-card .info-btn:hover {
-  background: #509cff;                 /* your primary blue on hover */
-  border-color: #63b3ed;
-  color: #0e1420;
-}
-
-/* ---------------------------
-   Headings (color only)
-   --------------------------- */
-h1, h2, h3 {
+/* Headings only (no size changes) */
+body.skydeal-dark h1,
+body.skydeal-dark h2,
+body.skydeal-dark h3 {
   color: #ecf1f8;
 }
-.section-title,
-#outboundTitle,
-#returnTitle {
+
+/* Section titles (if present) */
+body.skydeal-dark #outboundTitle,
+body.skydeal-dark #returnTitle,
+body.skydeal-dark .section-title {
   color: #e1e8f3;
 }
 
-/* ---------------------------
-   Inputs / selects / radios
-   (color/focus only; no sizes)
-   --------------------------- */
-input[type="text"],
-input[type="date"],
-input[type="number"],
-select {
-  background: #0f172a;             /* dark field */
-  border: 1px solid #334155;
+/* -----------------------------------
+   Inputs / selects / radios – COLOR ONLY
+   ----------------------------------- */
+body.skydeal-dark input[type="text"],
+body.skydeal-dark input[type="date"],
+body.skydeal-dark input[type="number"],
+body.skydeal-dark select {
+  background: #0f172a;
+  border-color: #334155;
   color: #e6edf7;
-  outline: none;
 }
-input::placeholder { color: #94a3b8; }
-input:focus,
-select:focus {
+
+body.skydeal-dark input::placeholder {
+  color: #94a3b8;
+}
+
+body.skydeal-dark input:focus,
+body.skydeal-dark select:focus {
   border-color: #509cff;
   box-shadow: 0 0 0 3px rgba(80,156,255,.25);
 }
 
-/* Search & small buttons (colors only) */
-button,
-.btn {
-  background: #243049;
-  color: #dbe7ff;
-  border: 1px solid #3a4a63;
-  cursor: pointer;
+/* Radio labels text (keeps your radio inputs as-is) */
+body.skydeal-dark label {
+  color: #cdd6e6;
 }
-button:hover,
-.btn:hover {
-  background: #2b3a54;
-  border-color: #415576;
-}
-#searchBtn,
-.btn-primary {
+
+/* -----------------------------------
+   Primary / secondary buttons – COLOR ONLY
+   (Targets your existing Search button & generic buttons)
+   ----------------------------------- */
+body.skydeal-dark #searchBtn,
+body.skydeal-dark .btn-primary {
   background: #509cff;
   border-color: #509cff;
   color: #0e1420;
 }
-#searchBtn:hover,
-.btn-primary:hover {
+
+body.skydeal-dark #searchBtn:hover,
+body.skydeal-dark .btn-primary:hover {
   filter: brightness(1.06);
 }
 
-/* “selected count” pill inside the payment button (if you render it) */
-.btn-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px; height: 18px;
-  border-radius: 9px;
-  background: #00c2c7;    /* teal accent */
+/* Non-primary buttons (e.g., payment trigger) */
+body.skydeal-dark button,
+body.skydeal-dark .btn {
+  background: #243049;
+  border: 1px solid #3a4a63;
+  color: #dbe7ff;
+}
+
+body.skydeal-dark button:hover,
+body.skydeal-dark .btn:hover {
+  background: #2b3a54;
+  border-color: #415576;
+}
+
+/* Optional: if you render a small count bubble inside the payment button */
+body.skydeal-dark .btn-badge {
+  background: #00c2c7; /* teal accent */
   color: #0e1420;
-  font-size: 12px; font-weight: 700;
-  margin-left: 8px;
 }
 
-/* ---------------------------
-   Payment two‑pane menu
-   (color only; no dimensions)
-   --------------------------- */
-#skydealPaymentMenu {
-  background: #111827;
-  color: #e6edf7;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-}
-#skydealPaymentMenu .types { border-right: 1px solid #2b3a4f; }
-#skydealPaymentMenu .type-item { color: #c7d2fe; }
-#skydealPaymentMenu .type-item.active {
-  background: #1f2937;
-  color: #fff;
-  font-weight: 600;
-}
-#skydealPaymentMenu label { color: #d1d5db; }
-#skydealPaymentMenu input[type="checkbox"] { accent-color: #509cff; }
-#skydealPaymentMenu .footer .clear {
-  background: #1f2a3d; color: #cbd5e1; border: 1px solid #334155;
-}
-#skydealPaymentMenu .footer .done,
-#skydealPaymentMenu .footer .primary {
-  background: #509cff; border-color: #509cff; color: #0e1420;
+/* -----------------------------------
+   Flight cards – COLOR ONLY
+   ----------------------------------- */
+body.skydeal-dark .flight-card {
+  background: #eaf6ff;            /* soft aqua card */
+  border-color: #d7eafe;
+  /* border-radius, padding, sizes remain from your original CSS */
 }
 
-/* ---------------------------
-   Modal (comparison) colors
-   --------------------------- */
-#skydealModal {
-  background: rgba(0,0,0,.45);   /* overlay tint only */
+body.skydeal-dark .flight-card strong { color: #0b1b2b; }
+body.skydeal-dark .flight-card .meta,
+body.skydeal-dark .flight-card .details { color: #1f2937; }
+body.skydeal-dark .flight-card .best { color: #00c2c7; }  /* teal accent */
+body.skydeal-dark .flight-card .was  { color: #6b7280; }
+
+/* “i” info button – COLOR ONLY (keeps your dimensions) */
+body.skydeal-dark .flight-card .info-btn,
+body.skydeal-dark .flight-card button.info-btn {
+  background: #2b3748;
+  color: #e7eefb;
+  border-color: #4a5568;
 }
-#skydealModalContent {
+
+body.skydeal-dark .flight-card .info-btn:hover,
+body.skydeal-dark .flight-card button.info-btn:hover {
+  background: #509cff;
+  border-color: #63b3ed;
+  color: #0e1420;
+}
+
+/* -----------------------------------
+   Modal (comparison) – COLOR ONLY
+   ----------------------------------- */
+body.skydeal-dark #skydealModal {
+  background: rgba(0,0,0,.45); /* overlay tint only */
+}
+
+body.skydeal-dark #skydealModalContent {
   background: #0f172a;
   color: #e6edf7;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-#skydealModalContent h3 { color: #eaf2ff; }
-#skydealModalBody > div {
-  background: #152239;
-  border: 1px solid #273348;
-  border-radius: 10px;
+  border-color: #334155;
 }
 
-/* Close button (the ×) */
-#skydealModalContent button {
+body.skydeal-dark #skydealModalContent h3 { color: #eaf2ff; }
+
+body.skydeal-dark #skydealModalBody > div {
+  background: #152239;
+  border-color: #273348;
+}
+
+/* Close button (×) inside modal header – color only */
+body.skydeal-dark #skydealModalContent button {
   background: #1f2937;
   border: 1px solid #334155;
   color: #cbd5e1;
 }
-#skydealModalContent button:hover {
+body.skydeal-dark #skydealModalContent button:hover {
   background: #2b3a54;
   border-color: #415576;
 }
-/* ===== SkyDeal layout lock (restore original gutters/centering) ===== */
-/* This targets your existing top-level wrapper (whichever is present). 
-   It ONLY sets max-width + auto margins + side padding. */
-.skydeal-root,
-.app,
-.wrapper,
-.container {
-  max-width: 980px;     /* same visual width as your original layout */
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 24px;
-  padding-right: 24px;
-  /* optional top margin so the page doesn’t hug the top edge */
-  margin-top: 40px;
+
+/* -----------------------------------
+   Payment two‑pane menu – COLOR ONLY
+   ----------------------------------- */
+body.skydeal-dark #skydealPaymentMenu {
+  background: #111827;
+  color: #e6edf7;
+  border-color: #334155;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }
 
-/* Keep heading size consistent with the original */
-h1 {
-  font-size: 32px;
-  line-height: 1.25;
-  margin-top: 0;
-  margin-bottom: 16px;
+body.skydeal-dark #skydealPaymentMenu .types {
+  border-right: 1px solid #2b3a4f;
 }
 
-/* (Optional) If your search block is wrapped in its own card element, 
-   you can keep its look unchanged while staying dark-themed.
-   Comment this block out if you don’t use a search card wrapper. */
-.search-card,
-.form-card,
-.searchBox {
-  background: rgba(255,255,255,0.04); /* subtle on dark; set to #fff if you want the old white card */
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 16px 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.10);
+body.skydeal-dark #skydealPaymentMenu .type-item { color: #c7d2fe; }
+body.skydeal-dark #skydealPaymentMenu .type-item.active {
+  background: #1f2937;
+  color: #fff;
+  font-weight: 600;
 }
 
+body.skydeal-dark #skydealPaymentMenu label { color: #d1d5db; }
+body.skydeal-dark #skydealPaymentMenu input[type="checkbox"] { accent-color: #509cff; }
+
+body.skydeal-dark #skydealPaymentMenu .footer .clear {
+  background: #1f2a3d;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+}
+body.skydeal-dark #skydealPaymentMenu .footer .done,
+body.skydeal-dark #skydealPaymentMenu .footer .primary {
+  background: #509cff;
+  border-color: #509cff;
+  color: #0e1420;
+}
