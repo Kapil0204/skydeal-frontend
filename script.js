@@ -1,6 +1,12 @@
 // ====== CONFIG ======
-const BACKEND_URL = "https://skydeal-backend.onrender.com/search";          // /search endpoint
-const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options"; // NEW
+const BACKEND_URL = "https://skydeal-backend.onrender.com/search";
+const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options";
+
+// EXPECTED HTML IDs (match if you can):
+// #from, #to, #departureDate, #returnDate, #passengers, #travelClass
+// Trip radios: name="tripType" values: "one-way" | "round-trip"
+// #returnDateGroup, #searchBtn, #outboundContainer, #returnContainer, #filtersContainer
+// Optional: #paymentBtn (button text fallback also supported)
 
 // ====== UTIL ======
 const qs  = (sel, root=document) => root.querySelector(sel);
@@ -11,10 +17,10 @@ function el(t,c,txt){ const e=document.createElement(t); if(c) e.className=c; if
 
 // ====== PAYMENT SELECTOR (LEFT = TYPES, RIGHT = BANKS FROM BACKEND) ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
-let selectedPayments = [];            // array of { type, bank }
+let selectedPayments = [];            // [{ type, bank }]
 let activeType = PAYMENT_TYPES[0];
-let paymentMap = null;                // { type: string -> banks: string[] } from backend
-let paymentMapLoading = null;         // Promise cache
+let paymentMap = null;                // { type -> [banks] }
+let paymentMapLoading = null;
 
 function findPaymentTrigger(){
   return qs("#paymentBtn") ||
@@ -54,7 +60,6 @@ function renderBanksPane(col, type){
   const banks = (paymentMap && paymentMap[type]) ? paymentMap[type] : null;
 
   if(!banks) {
-    // still loading OR fetch failed — show a tiny loader
     const msg = el("div","", "Loading…");
     Object.assign(msg.style,{opacity:.8, padding:"6px 2px"});
     col.appendChild(msg);
@@ -76,8 +81,7 @@ function renderBanksPane(col, type){
     cb.checked = isSelected(type, bank);
     cb.addEventListener("change", ()=>{
       toggleSelection(type, bank, cb.checked);
-      const trigger = findPaymentTrigger();
-      updatePaymentButtonLabel(trigger);
+      updatePaymentButtonLabel(findPaymentTrigger());
     });
     row.append(cb, el("span","", `${bank} ${type}`));
     col.appendChild(row);
@@ -197,7 +201,7 @@ function ensureModal(){
   content.append(header, body);
   modalEl.appendChild(content);
   modalEl.addEventListener("click",(e)=>{ if(e.target===modalEl) hideModal(); });
-  document.body.appendChild(modelEl);
+  document.body.appendChild(modalEl);
   return modalEl;
 }
 function showModal(htmlBody, heading="Price Comparison"){ ensureModal(); qs("#skydealModalBody").innerHTML=htmlBody; qs("#skydealModalContent h3").textContent=heading; modalEl.style.display="flex"; }
@@ -223,7 +227,7 @@ function renderSortControls(onChange){
 function sortFlights(flights,key){
   const copy=[...flights];
   if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(b.departureTime||b.departure||0));
-  else copy.sort((a,b)=> (a.price??Infinity) - (b.price??Infinity));
+  else copy.sort((a,b)=> (Number(a.price)??Infinity) - (Number(b.price)??Infinity));
   return copy;
 }
 
@@ -240,7 +244,7 @@ function renderFlightList(container, flights, sideLabel){
     const dep         = fmtTime(f.departureTime||f.departure);
     const arr         = fmtTime(f.arrivalTime||f.arrival);
     const stops       = (f.stops!==undefined&&f.stops!==null)?f.stops:(f.numberOfStops!==undefined?f.numberOfStops:(f.itineraries?.[0]?.segments?.length?(f.itineraries[0].segments.length-1):0));
-    const price       = (typeof f.price==="number")?f.price:(parseFloat(f.price?.total||f.price?.base)||NaN);
+    const price       = (typeof f.price==="number")?f.price:(parseFloat(f.price?.total||f.price?.base||f.price) || NaN);
 
     const title = el("div",""); title.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>`;
     const times = el("div","",`${dep} → ${arr}`);
@@ -249,22 +253,46 @@ function renderFlightList(container, flights, sideLabel){
     [title,times,meta,cost].forEach(e=> e.style.margin="2px 0");
 
     card.append(title, times, meta, cost);
-    card.addEventListener("click", ()=>openComparisonModal({airlineName,flightNo,dep,arr,price}));
+    card.addEventListener("click", ()=>openComparisonModal(f, {airlineName,flightNo,dep,arr,price}));
     list.appendChild(card);
   });
   container.appendChild(list);
 }
 
-function openComparisonModal({ airlineName, flightNo, dep, arr, price }){
-  const portals = ["MakeMyTrip","Goibibo","Cleartrip","Yatra","EaseMyTrip"];
+function openComparisonModal(flight, basics){
+  // Prefer backend-calculated portalPrices if present
+  const portals = Array.isArray(flight.portalPrices) && flight.portalPrices.length
+    ? flight.portalPrices.map(p => ({
+        name: p.portal,
+        final: Number(p.finalPrice),
+        base: Number(p.basePrice),
+        discountApplied: p.discountApplied || 0,
+        appliedOffer: p.appliedOffer || null
+      }))
+    : ["MakeMyTrip","Goibibo","Cleartrip","Yatra","EaseMyTrip"].map(name => ({
+        name,
+        final: isNaN(basics.price) ? NaN : Math.round(basics.price) + 100,
+        base: basics.price,
+        discountApplied: 0,
+        appliedOffer: null
+      }));
+
   const rows = portals.map(p=>{
-    const finalPrice = isNaN(price) ? "—" : `₹${(Math.round(price)+100).toLocaleString("en-IN")}`;
+    const priceStr = isNaN(p.final) ? "—" : `₹${Math.round(p.final).toLocaleString("en-IN")}`;
+    const note = p.appliedOffer?.couponCode
+      ? `<div style="font-size:12px;opacity:.75;">Code: ${p.appliedOffer.couponCode} • ${p.appliedOffer.paymentMethodLabel || ""}</div>`
+      : "";
     return `<div style="display:flex;justify-content:space-between;gap:8px;border:1px solid #eee;border-radius:8px;padding:8px;">
-      <div><strong>${p}</strong><div style="font-size:12px;opacity:0.8;">${airlineName}${flightNo?" "+flightNo:""} • ${dep} → ${arr}</div></div>
-      <div style="font-weight:600;">${finalPrice}</div>
+      <div>
+        <strong>${p.name}</strong>
+        <div style="font-size:12px;opacity:0.8;">${basics.airlineName}${basics.flightNo?" "+basics.flightNo:""} • ${basics.dep} → ${basics.arr}</div>
+        ${note}
+      </div>
+      <div style="font-weight:600;">${priceStr}</div>
     </div>`;
   }).join("");
-  const body = `<div style="display:grid;gap:8px;">${rows}<div style="font-size:12px;opacity:.75;">(Simulated pricing: Amadeus fare + ₹100 per portal)</div></div>`;
+
+  const body = `<div style="display:grid;gap:8px;">${rows}${flight.portalPrices ? "" : `<div style="font-size:12px;opacity:.75;">(Fallback demo: Amadeus fare + ₹100 per portal)</div>`}</div>`;
   showModal(body, "Compare prices across portals");
 }
 
@@ -272,7 +300,7 @@ function openComparisonModal({ airlineName, flightNo, dep, arr, price }){
 document.addEventListener("DOMContentLoaded", ()=>{
   const fromInput=qs("#from"), toInput=qs("#to"), depInput=qs("#departureDate"), retInput=qs("#returnDate");
   const returnGroup=qs("#returnDateGroup"), paxInput=qs("#passengers"), classInput=qs("#travelClass");
-  const searchBtn=qs("#searchBtn"), outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
+  const outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
 
   // Payment selector
   const paymentTrigger = findPaymentTrigger();
@@ -280,7 +308,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     paymentTrigger.style.cursor="pointer";
     paymentTrigger.addEventListener("click", async (e)=>{
       e.preventDefault();
-      // Prime cache early so first paint shows quickly
       loadPaymentMap().finally(()=> togglePaymentMenu(true, paymentTrigger));
     });
     updatePaymentButtonLabel(paymentTrigger);
@@ -289,14 +316,32 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // Trip type toggle
   const tripRadios = qsa('input[name="tripType"]');
   function applyTripTypeUI(){
-    const v = (qs('input[name="tripType"]:checked')?.value) || "one-way";
+    const v = (qs('input[name="tripType"]:checked")?.value) || "one-way";
     if(v==="round-trip"){ if(returnGroup) returnGroup.style.display="block"; }
     else { if(returnGroup) returnGroup.style.display="none"; if(retInput) retInput.value=""; }
   }
   tripRadios.forEach(r=>r.addEventListener("change", applyTripTypeUI));
   applyTripTypeUI();
 
-  // Search
+  // --- Search wiring (button, form submit, Enter) ---
+  const searchBtn =
+    qs("#searchBtn") ||
+    qsa("button,input[type='submit']").find(b => /search/i.test(b?.textContent || b?.value || ""));
+
+  const searchForm = searchBtn ? searchBtn.closest("form") : qs("form");
+
+  async function doSearchWrapper(e){
+    if (e) e.preventDefault();
+    await doSearch();
+  }
+  if (searchBtn) searchBtn.addEventListener("click", doSearchWrapper);
+  if (searchForm) searchForm.addEventListener("submit", doSearchWrapper);
+  ["#from","#to","#departureDate","#returnDate","#passengers","#travelClass"].forEach(sel=>{
+    const elx = qs(sel);
+    if (elx) elx.addEventListener("keydown", (ev)=>{ if (ev.key === "Enter") doSearchWrapper(ev); });
+  });
+
+  // --- Search core ---
   async function doSearch(){
     const from=fromInput?.value?.trim(), to=toInput?.value?.trim(), date=depInput?.value;
     const trip=(qs('input[name="tripType"]:checked')?.value)||"one-way";
@@ -304,18 +349,24 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!from||!to||!date){ alert("Please fill From, To, and Departure Date."); return; }
 
     const payload = {
-      from, to, departureDate: date,
+      from, to,
+      departureDate: date,
       returnDate: (trip==="round-trip" ? ret : ""),
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
-      travelClass: (classInput?.value || "ECONOMY")
-      // selectedPayments available for future: [{type, bank}, ...]
+      travelClass: (classInput?.value || "ECONOMY"),
+      // If you later want to filter offers server-side by chosen methods:
+      // paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`)
     };
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
 
     try{
-      const res = await fetch(BACKEND_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
+      const res = await fetch(BACKEND_URL, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
       if(!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
 
@@ -325,7 +376,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       renderSortControls((key)=>{
         const s1 = sortFlights(outbound, key);
         renderFlightList(outboundContainer, s1, "outbound");
-        if(retInput?.value && returns?.length){
+        if(ret && returns?.length){
           const s2 = sortFlights(returns, key);
           renderFlightList(returnContainer, s2, "return");
         }
@@ -334,7 +385,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       const s1 = sortFlights(outbound, "price");
       renderFlightList(outboundContainer, s1, "outbound");
 
-      if(retInput?.value && returns?.length){
+      if(ret && returns?.length){
         const s2 = sortFlights(returns, "price");
         renderFlightList(returnContainer, s2, "return");
       } else if(returnContainer){
@@ -346,6 +397,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
       if(returnContainer) returnContainer.innerHTML = "";
     }
   }
-
-  if(searchBtn) searchBtn.addEventListener("click", doSearch);
 });
