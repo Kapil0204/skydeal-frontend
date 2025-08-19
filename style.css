@@ -1,183 +1,181 @@
-/* =========================================================
-   SkyDeal – DARK THEME (COLORS ONLY, LAYOUT-PRESERVING)
-   Scope: body.skydeal-dark … (no widths/heights/margins)
-   ========================================================= */
-
-body.skydeal-dark {
-  background: radial-gradient(1200px 600px at 50% -10%, #121827 0%, #0f141d 38%, #0d131c 100%);
-  color: #ecf1f8; /* base text color for headings/labels */
+:root{
+  --bg:#0f172a;         /* dark navy background */
+  --card:#1e293b;       /* card background */
+  --ink:#f8fafc;        /* primary text color */
+  --muted:#cbd5e1;      /* muted/secondary text */
+  --accent:#3b82f6;     /* bright blue accent */
+  --pill:#334155;       /* subtle pill/button bg */
+  --border:#475569;     /* border color */
+  --panel:#1e293b;      /* dropdowns/panels */
+  --shadow:0 6px 18px rgba(0,0,0,.5);
 }
 
-/* Headings only (no size changes) */
-body.skydeal-dark h1,
-body.skydeal-dark h2,
-body.skydeal-dark h3 {
-  color: #ecf1f8;
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
 }
 
-/* Section titles (if present) */
-body.skydeal-dark #outboundTitle,
-body.skydeal-dark #returnTitle,
-body.skydeal-dark .section-title {
-  color: #e1e8f3;
+html,body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
 }
 
-/* -----------------------------------
-   Inputs / selects / radios – COLOR ONLY
-   ----------------------------------- */
-body.skydeal-dark input[type="text"],
-body.skydeal-dark input[type="date"],
-body.skydeal-dark input[type="number"],
-body.skydeal-dark select {
-  background: #0f172a;
-  border-color: #334155;
-  color: #e6edf7;
+.app{
+  max-width:940px;
+  margin:40px auto;
+  padding:20px 24px;
+  background:#1e293b;
+  border-radius:14px;
+  box-shadow:var(--shadow);
 }
 
-body.skydeal-dark input::placeholder {
-  color: #94a3b8;
+h1{margin:6px 0 18px 0}
+h2{margin:18px 0 12px 0}
+
+.controls .row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
 }
 
-body.skydeal-dark input:focus,
-body.skydeal-dark select:focus {
-  border-color: #509cff;
-  box-shadow: 0 0 0 3px rgba(80,156,255,.25);
+input[type="text"],
+input[type="date"],
+input[type="number"],
+select{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  min-width:130px;
+  background:#0f172a;
+  color:var(--ink);
 }
 
-/* Radio labels text (keeps your radio inputs as-is) */
-body.skydeal-dark label {
-  color: #cdd6e6;
+.trip-type{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-left:6px;
+  color:var(--ink);
 }
 
-/* -----------------------------------
-   Primary / secondary buttons – COLOR ONLY
-   (Targets your existing Search button & generic buttons)
-   ----------------------------------- */
-body.skydeal-dark #searchBtn,
-body.skydeal-dark .btn-primary {
-  background: #509cff;
-  border-color: #509cff;
-  color: #0e1420;
+.btn{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--pill);
+  color:var(--ink);
+  cursor:pointer;
+}
+.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.btn.pill{
+  background:var(--pill);
+  border-color:var(--border);
 }
 
-body.skydeal-dark #searchBtn:hover,
-body.skydeal-dark .btn-primary:hover {
-  filter: brightness(1.06);
+.results-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
 }
 
-/* Non-primary buttons (e.g., payment trigger) */
-body.skydeal-dark button,
-body.skydeal-dark .btn {
-  background: #243049;
-  border: 1px solid #3a4a63;
-  color: #dbe7ff;
+.results-column h2{margin-top:8px}
+
+.flight-card{
+  background:var(--card);
+  padding:14px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+.flight-card p{margin:6px 0;color:var(--muted)}
+
+.best-badge{
+  margin-top:10px;
+  border:2px dashed #475569;
+  background:#0f172a;
+  padding:10px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
 }
 
-body.skydeal-dark button:hover,
-body.skydeal-dark .btn:hover {
-  background: #2b3a54;
-  border-color: #415576;
+.info-btn{
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#0f172a;
+  color:var(--ink);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-weight:bold;
+}
+.info-btn:hover{
+  background:#1e293b;
 }
 
-/* Optional: if you render a small count bubble inside the payment button */
-body.skydeal-dark .btn-badge {
-  background: #00c2c7; /* teal accent */
-  color: #0e1420;
+/* Dropdown */
+.dropdown{position:relative}
+.dropdown-menu{
+  display:none;
+  position:absolute;
+  top:40px;
+  right:0;
+  width:780px;
+  max-height:380px;
+  overflow:auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  padding:14px;
+  color:var(--ink);
 }
+.dropdown.open .dropdown-menu{display:block}
 
-/* -----------------------------------
-   Flight cards – COLOR ONLY
-   ----------------------------------- */
-body.skydeal-dark .flight-card {
-  background: #eaf6ff;            /* soft aqua card */
-  border-color: #d7eafe;
-  /* border-radius, padding, sizes remain from your original CSS */
+.pm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.pm-section h4{margin:0 0 8px 0}
+.pm-list{display:flex;flex-direction:column;gap:8px}
+.pm-item{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.pm-loading{padding:20px;color:var(--muted)}
+
+/* Modal */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
 }
-
-body.skydeal-dark .flight-card strong { color: #0b1b2b; }
-body.skydeal-dark .flight-card .meta,
-body.skydeal-dark .flight-card .details { color: #1f2937; }
-body.skydeal-dark .flight-card .best { color: #00c2c7; }  /* teal accent */
-body.skydeal-dark .flight-card .was  { color: #6b7280; }
-
-/* “i” info button – COLOR ONLY (keeps your dimensions) */
-body.skydeal-dark .flight-card .info-btn,
-body.skydeal-dark .flight-card button.info-btn {
-  background: #2b3748;
-  color: #e7eefb;
-  border-color: #4a5568;
+.modal-content{
+  position:relative;
+  background:#1e293b;
+  border-radius:12px;
+  padding:18px 22px;
+  min-width:360px;
+  max-width:520px;
+  box-shadow:var(--shadow);
+  color:var(--ink);
 }
-
-body.skydeal-dark .flight-card .info-btn:hover,
-body.skydeal-dark .flight-card button.info-btn:hover {
-  background: #509cff;
-  border-color: #63b3ed;
-  color: #0e1420;
+.icon-btn.close{
+  position:absolute;
+  top:10px;
+  right:10px;
+  border:none;
+  background:#0f172a;
+  color:var(--ink);
+  border-radius:8px;
+  border:1px solid var(--border);
 }
-
-/* -----------------------------------
-   Modal (comparison) – COLOR ONLY
-   ----------------------------------- */
-body.skydeal-dark #skydealModal {
-  background: rgba(0,0,0,.45); /* overlay tint only */
-}
-
-body.skydeal-dark #skydealModalContent {
-  background: #0f172a;
-  color: #e6edf7;
-  border-color: #334155;
-}
-
-body.skydeal-dark #skydealModalContent h3 { color: #eaf2ff; }
-
-body.skydeal-dark #skydealModalBody > div {
-  background: #152239;
-  border-color: #273348;
-}
-
-/* Close button (×) inside modal header – color only */
-body.skydeal-dark #skydealModalContent button {
-  background: #1f2937;
-  border: 1px solid #334155;
-  color: #cbd5e1;
-}
-body.skydeal-dark #skydealModalContent button:hover {
-  background: #2b3a54;
-  border-color: #415576;
-}
-
-/* -----------------------------------
-   Payment two‑pane menu – COLOR ONLY
-   ----------------------------------- */
-body.skydeal-dark #skydealPaymentMenu {
-  background: #111827;
-  color: #e6edf7;
-  border-color: #334155;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-}
-
-body.skydeal-dark #skydealPaymentMenu .types {
-  border-right: 1px solid #2b3a4f;
-}
-
-body.skydeal-dark #skydealPaymentMenu .type-item { color: #c7d2fe; }
-body.skydeal-dark #skydealPaymentMenu .type-item.active {
-  background: #1f2937;
-  color: #fff;
-  font-weight: 600;
-}
-
-body.skydeal-dark #skydealPaymentMenu label { color: #d1d5db; }
-body.skydeal-dark #skydealPaymentMenu input[type="checkbox"] { accent-color: #509cff; }
-
-body.skydeal-dark #skydealPaymentMenu .footer .clear {
-  background: #1f2a3d;
-  color: #cbd5e1;
-  border: 1px solid #334155;
-}
-body.skydeal-dark #skydealPaymentMenu .footer .done,
-body.skydeal-dark #skydealPaymentMenu .footer .primary {
-  background: #509cff;
-  border-color: #509cff;
-  color: #0e1420;
-}
+.portal-list{padding-left:18px;margin:12px 0 0 0}
+.portal-list li{margin:6px 0}
