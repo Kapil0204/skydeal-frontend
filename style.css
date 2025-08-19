@@ -523,6 +523,51 @@ select{
   position: relative;
   z-index: 1;
 }
+/* === Payment menu: make left "Credit Card" chip readable in ALL cases === */
+
+/* 0) Kill any UA/inline background on everything inside the left column */
+#skydealPaymentMenu .types, 
+#skydealPaymentMenu .types * {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 1) FORCE the first visible item to be a dark chip (no layout change) */
+#skydealPaymentMenu .types > *:first-child,
+#skydealPaymentMenu .types > *:first-child > *,
+#skydealPaymentMenu .types > *:first-child > label,
+#skydealPaymentMenu .types > *:first-child > button,
+#skydealPaymentMenu .types > :first-child label,
+#skydealPaymentMenu .types > :first-child button,
+#skydealPaymentMenu .types > :first-child span,
+#skydealPaymentMenu .types > :first-child div {
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  border-radius: 6px !important;
+}
+
+/* 2) If selection is driven by input:checked + label, catch that too */
+#skydealPaymentMenu .types input:checked + label {
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+}
+
+/* 3) And if selection uses ARIA/classes, catch those as well */
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types .is-active,
+#skydealPaymentMenu .types button[aria-current="true"] {
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+}
+
 
 
 
