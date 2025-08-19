@@ -1,578 +1,84 @@
 :root{
-  --bg:#0f172a;         /* dark navy background */
-  --card:#1e293b;       /* card background */
-  --ink:#f8fafc;        /* primary text color */
-  --muted:#cbd5e1;      /* muted/secondary text */
-  --accent:#3b82f6;     /* bright blue accent */
-  --pill:#334155;       /* subtle pill/button bg */
-  --border:#475569;     /* border color */
-  --panel:#1e293b;      /* dropdowns/panels */
+  --bg:#0f172a;         /* page background */
+  --card:#1e293b;       /* card/panels */
+  --ink:#f8fafc;        /* primary text */
+  --muted:#cbd5e1;      /* secondary text */
+  --accent:#3b82f6;     /* brand accent */
+  --pill:#334155;       /* subtle chip/button bg */
+  --border:#475569;     /* borders */
+  --panel:#1e293b;      /* dropdowns/modals */
   --shadow:0 6px 18px rgba(0,0,0,.5);
 }
 
-*{
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
-}
-
-html,body{
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
 
 .app{
-  max-width:940px;
-  margin:40px auto;
-  padding:20px 24px;
-  background:#1e293b;
-  border-radius:14px;
-  box-shadow:var(--shadow);
+  max-width:940px;margin:40px auto;padding:20px 24px;
+  background:var(--card);border-radius:14px;box-shadow:var(--shadow)
 }
+h1{margin:6px 0 18px} h2{margin:18px 0 12px}
 
-h1{margin:6px 0 18px 0}
-h2{margin:18px 0 12px 0}
+.controls .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+input[type="text"],input[type="date"],input[type="number"],select{
+  padding:10px 12px;border:1px solid var(--border);border-radius:8px;min-width:130px;
+  background:#0f172a;color:var(--ink)
+}
+.trip-type{display:flex;gap:14px;align-items:center;margin-left:6px}
 
-.controls .row{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-bottom:10px;
-}
+.btn{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--pill);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 
-input[type="text"],
-input[type="date"],
-input[type="number"],
-select{
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  min-width:130px;
-  background:#0f172a;
-  color:var(--ink);
-}
-
-.trip-type{
-  display:flex;
-  gap:14px;
-  align-items:center;
-  margin-left:6px;
-  color:var(--ink);
-}
-
-.btn{
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:var(--pill);
-  color:var(--ink);
-  cursor:pointer;
-}
-.btn.primary{
-  background:var(--accent);
-  border-color:var(--accent);
-  color:#fff;
-}
-.btn.pill{
-  background:var(--pill);
-  border-color:var(--border);
-}
-
-.results-row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:22px;
-}
-
+.results-row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .results-column h2{margin-top:8px}
 
-.flight-card{
-  background:var(--card);
-  padding:14px;
-  border-radius:10px;
-  margin-bottom:12px;
-}
+.flight-card{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px}
 .flight-card p{margin:6px 0;color:var(--muted)}
+.info-btn{width:28px;height:28px;border-radius:999px;border:1px solid var(--border);background:#0f172a;color:var(--ink);display:grid;place-items:center;cursor:pointer;font-weight:bold}
+.info-btn:hover{background:#1e293b}
 
-.best-badge{
-  margin-top:10px;
-  border:2px dashed #475569;
-  background:#0f172a;
-  padding:10px;
-  border-radius:8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
+/* ---------- Payment methods dropdown (two‑pane) ---------- */
+#skydealPaymentMenu{
+  background:var(--panel) !important;color:var(--ink) !important;border:1px solid var(--border) !important;
+  box-shadow:var(--shadow)
 }
+#skydealPaymentMenu *{color:var(--ink) !important}
+#skydealPaymentMenu .types{border-right:1px solid var(--border) !important}
 
-.info-btn{
-  width:28px;
-  height:28px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:#0f172a;
-  color:var(--ink);
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-  font-weight:bold;
+/* Left column items: neutral base */
+#skydealPaymentMenu .types button,
+#skydealPaymentMenu .types label{
+  -webkit-appearance:none;appearance:none;
+  background:transparent !important;color:var(--ink) !important;border:1px solid transparent;border-radius:6px;padding:4px 6px
 }
-.info-btn:hover{
-  background:#1e293b;
-}
-
-/* Dropdown */
-.dropdown{position:relative}
-.dropdown-menu{
-  display:none;
-  position:absolute;
-  top:40px;
-  right:0;
-  width:780px;
-  max-height:380px;
-  overflow:auto;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  box-shadow:var(--shadow);
-  padding:14px;
-  color:var(--ink);
-}
-.dropdown.open .dropdown-menu{display:block}
-
-.pm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
-.pm-section h4{margin:0 0 8px 0}
-.pm-list{display:flex;flex-direction:column;gap:8px}
-.pm-item{display:flex;gap:8px;align-items:center;color:var(--muted)}
-.pm-loading{padding:20px;color:var(--muted)}
-
-/* Modal */
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-.modal-content{
-  position:relative;
-  background:#1e293b;
-  border-radius:12px;
-  padding:18px 22px;
-  min-width:360px;
-  max-width:520px;
-  box-shadow:var(--shadow);
-  color:var(--ink);
-}
-.icon-btn.close{
-  position:absolute;
-  top:10px;
-  right:10px;
-  border:none;
-  background:#0f172a;
-  color:var(--ink);
-  border-radius:8px;
-  border:1px solid var(--border);
-}
-.portal-list{padding-left:18px;margin:12px 0 0 0}
-.portal-list li{margin:6px 0}
-/* Fix for Payment Methods Dropdown */
-.dropdown-menu {
-  background: var(--panel); /* same as app panel */
-  color: var(--ink);
-}
-
-.dropdown-menu label,
-.dropdown-menu h4,
-.dropdown-menu .pm-item {
-  color: var(--ink);
-}
-
-/* Fix for Portal Comparison Modal */
-.modal-content {
-  background: var(--panel); /* match app panel */
-  color: var(--ink);        /* ensure text visible */
-}
-
-.modal-content h3,
-.modal-content li,
-.modal-content p,
-.modal-content span {
-  color: var(--ink);
-}
-/* ==== Payment Methods dropdown (two‑pane) ==== */
-#skydealPaymentMenu {
-  background: #1e293b !important;   /* match app panel */
-  color: #f8fafc !important;
-  border: 1px solid #475569 !important;
-}
-/* Force ALL inner text visible */
-#skydealPaymentMenu * {
-  color: #f8fafc !important;
-  opacity: 1 !important;
-}
-/* Keep column divider + checkbox accent */
-#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
-#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
-
-/* Legacy fallback, if the older menu is mounted */
-#pmMenu, .dropdown-menu {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid #475569 !important;
-}
-#pmMenu *, .dropdown-menu * { color: #f8fafc !important; opacity: 1 !important; }
-
-/* ==== Compare‑prices modal ==== */
-#priceModal .modal-content,
-#skydealModalContent {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid #475569 !important;
-}
-/* Force ALL inner text visible */
-#priceModal .modal-content * ,
-#skydealModalContent * {
-  color: #f8fafc !important;
-  opacity: 1 !important;
-}
-#priceModal .icon-btn.close {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-  border: 1px solid #475569 !important;
-}
-/* Fix left-hand selected category in payment menu */
-#skydealPaymentMenu .types label[aria-selected="true"],
-#skydealPaymentMenu .types label.active,
-#pmMenu .pm-section h4,
-.dropdown-menu .pm-section h4 {
-  background: #334155 !important;   /* dark slate highlight */
-  color: #f8fafc !important;        /* keep text visible */
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 4px 6px;
-}
-/* --- Payment menu: make the selected left category readable --- */
-
-/* 1) Reset any inherited light bg in the left column */
-#skydealPaymentMenu .types * {
-  background: transparent !important;
-  color: #f8fafc !important;     /* visible on dark */
-}
-
-/* 2) Explicit selected/active states (covering common patterns) */
+/* Selected/active (covers aria/class + input+label patterns) */
 #skydealPaymentMenu .types [aria-selected="true"],
 #skydealPaymentMenu .types .active,
-#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types .is-active,
 #skydealPaymentMenu .types button[aria-current="true"],
-#skydealPaymentMenu .types button.is-active,
-#skydealPaymentMenu .types .type-item.is-active,
-#skydealPaymentMenu .types .type-item:focus {
-  background: #334155 !important; /* dark slate */
-  color: #f8fafc !important;       /* light text */
-  font-weight: 600;
-  border-radius: 6px;
-  outline: none !important;
+#skydealPaymentMenu .types input:checked + label{
+  background:#334155 !important;color:#fff !important;font-weight:600;border-radius:6px
 }
-
-/* 3) If the current implementation uses :focus-only styling */
-#skydealPaymentMenu .types :focus {
-  background: #334155 !important;
-  color: #f8fafc !important;
+/* Ensure the very first item (“Credit Card”) is readable by default */
+#skydealPaymentMenu .types button:first-of-type,
+#skydealPaymentMenu .types label:first-of-type{
+  background:#334155 !important;color:#fff !important;font-weight:600
 }
+/* Checkbox accent in right pane */
+#skydealPaymentMenu input[type="checkbox"]{accent-color:var(--accent)}
 
-/* 4) Optional nicer hover (no layout change) */
-#skydealPaymentMenu .types *:hover {
-  background: #2b3a4f !important;
-  color: #ffffff !important;
+/* ---------- Legacy dropdown (if older menu is used) ---------- */
+#pmMenu,.dropdown-menu{
+  background:var(--panel) !important;color:var(--ink) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow)
 }
-/* === Payment menu: left column selected text must be readable === */
+#pmMenu *,.dropdown-menu *{color:var(--ink) !important}
 
-/* Base: make all left items dark text on dark bg */
-#skydealPaymentMenu .types label,
-#skydealPaymentMenu .types button,
-#skydealPaymentMenu .types .type-item {
-  background: transparent !important;
-  color: #f8fafc !important;
-  border: 1px solid transparent !important;
+/* ---------- Price comparison modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-content{
+  position:relative;background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:18px 22px;min-width:360px;max-width:520px;box-shadow:var(--shadow);color:var(--ink)
 }
-
-/* 1) Most common pattern: <input type="radio/checkbox"> + <label> */
-#skydealPaymentMenu .types input:checked + label {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 4px 6px;
-}
-
-/* 2) ARIA/JS driven patterns */
-#skydealPaymentMenu .types [aria-selected="true"],
-#skydealPaymentMenu .types .active,
-#skydealPaymentMenu .types .selected,
-#skydealPaymentMenu .types .is-active,
-#skydealPaymentMenu .types button[aria-current="true"] {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-/* 3) Remove focus ring that may be turning bg light */
-#skydealPaymentMenu .types :focus {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* 4) Hover cue (optional, no layout change) */
-#skydealPaymentMenu .types label:hover,
-#skydealPaymentMenu .types button:hover,
-#skydealPaymentMenu .types .type-item:hover {
-  background: #2b3a4f !important;
-  color: #ffffff !important;
-}
-/* ===== Payment menu: left column active item visible ===== */
-/* 1) Reset any UA default (white) background/outline on left column items */
-#skydealPaymentMenu .types * {
-  background: transparent !important;
-  color: #f8fafc !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-color: transparent !important; /* we add our own bg for active */
-}
-
-/* 2) If the component uses input + label (radio/checkbox) to mark the active type */
-#skydealPaymentMenu .types input:checked + label {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 4px 6px;
-}
-
-/* 3) Cover ARIA/JS-driven active states too */
-#skydealPaymentMenu .types [aria-selected="true"],
-#skydealPaymentMenu .types .active,
-#skydealPaymentMenu .types .selected,
-#skydealPaymentMenu .types .is-active,
-#skydealPaymentMenu .types button[aria-current="true"] {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-/* 4) Ensure the default (first) item shows as selected when menu opens */
-#skydealPaymentMenu .types > *:first-child,
-#skydealPaymentMenu .types > *:first-child * {
-  background: #334155 !important;   /* forces “Credit Card” visible */
-  color: #ffffff !important;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-/* 5) Divider + checkbox accent unchanged */
-#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
-#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
-
-/* (No layout/spacing changes anywhere) */
-/* --- Payment menu: force left column item to be readable --- */
-
-/* Kill native button styling in the left column */
-#skydealPaymentMenu .types button,
-#skydealPaymentMenu .types input[type="button"],
-#skydealPaymentMenu .types input[type="submit"],
-#skydealPaymentMenu .types .type-item {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background: transparent !important;
-  color: #f8fafc !important;
-  border: 1px solid transparent !important;
-  border-radius: 6px !important;
-  padding: 4px 6px !important;
-}
-
-/* Selected/active states (cover several patterns) */
-#skydealPaymentMenu .types button[aria-selected="true"],
-#skydealPaymentMenu .types .type-item.active,
-#skydealPaymentMenu .types .type-item.is-active,
-#skydealPaymentMenu .types button.is-active,
-#skydealPaymentMenu .types [aria-current="true"] {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-
-/* If selection is implemented via input + label */
-#skydealPaymentMenu .types input:checked + label {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
-  padding: 4px 6px !important;
-}
-
-/* Hover cue (optional, no layout change) */
-#skydealPaymentMenu .types button:hover,
-#skydealPaymentMenu .types .type-item:hover,
-#skydealPaymentMenu .types label:hover {
-  background: #2b3a4f !important;
-  color: #ffffff !important;
-}
-
-/* Keep divider + checkbox accent as-is */
-#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
-#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
-/* --- Payment menu: force left column item to be readable --- */
-
-/* Kill native button styling in the left column */
-#skydealPaymentMenu .types button,
-#skydealPaymentMenu .types input[type="button"],
-#skydealPaymentMenu .types input[type="submit"],
-#skydealPaymentMenu .types .type-item {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background: transparent !important;
-  color: #f8fafc !important;
-  border: 1px solid transparent !important;
-  border-radius: 6px !important;
-  padding: 4px 6px !important;
-}
-
-/* Selected/active states (cover several patterns) */
-#skydealPaymentMenu .types button[aria-selected="true"],
-#skydealPaymentMenu .types .type-item.active,
-#skydealPaymentMenu .types .type-item.is-active,
-#skydealPaymentMenu .types button.is-active,
-#skydealPaymentMenu .types [aria-current="true"] {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-
-/* If selection is implemented via input + label */
-#skydealPaymentMenu .types input:checked + label {
-  background: #334155 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
-  padding: 4px 6px !important;
-}
-
-/* Hover cue (optional, no layout change) */
-#skydealPaymentMenu .types button:hover,
-#skydealPaymentMenu .types .type-item:hover,
-#skydealPaymentMenu .types label:hover {
-  background: #2b3a4f !important;
-  color: #ffffff !important;
-}
-
-/* Keep divider + checkbox accent as-is */
-#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
-#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
-/* --- Payment menu: force the left-top item ("Credit Card") to render dark --- */
-
-/* Make the first left-column item a positioning context */
-#skydealPaymentMenu .types > *:first-child {
-  position: relative !important;
-}
-
-/* Overlay a dark background behind its content (no layout change) */
-#skydealPaymentMenu .types > *:first-child::before {
-  content: "";
-  position: absolute;
-  inset: 0;                             /* fill the item */
-  background: #334155;                  /* dark slate */
-  border-radius: 6px;                   /* same rounded look */
-  z-index: 0;                           /* behind the text */
-}
-
-/* Ensure the text sits above the overlay and is light */
-#skydealPaymentMenu .types > *:first-child,
-#skydealPaymentMenu .types > *:first-child * {
-  color: #ffffff !important;
-  z-index: 1;
-}
-
-/* Optional: same look when user switches to other types */
-#skydealPaymentMenu .types .active,
-#skydealPaymentMenu .types [aria-selected="true"],
-#skydealPaymentMenu .types .is-active,
-#skydealPaymentMenu .types button[aria-current="true"] {
-  position: relative !important;
-}
-#skydealPaymentMenu .types .active::before,
-#skydealPaymentMenu .types [aria-selected="true"]::before,
-#skydealPaymentMenu .types .is-active::before,
-#skydealPaymentMenu .types button[aria-current="true"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #334155;
-  border-radius: 6px;
-  z-index: 0;
-}
-#skydealPaymentMenu .types .active *,
-#skydealPaymentMenu .types [aria-selected="true"] *,
-#skydealPaymentMenu .types .is-active *,
-#skydealPaymentMenu .types button[aria-current="true"] * {
-  color: #ffffff !important;
-  position: relative;
-  z-index: 1;
-}
-/* === Payment menu: make left "Credit Card" chip readable in ALL cases === */
-
-/* 0) Kill any UA/inline background on everything inside the left column */
-#skydealPaymentMenu .types, 
-#skydealPaymentMenu .types * {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* 1) FORCE the first visible item to be a dark chip (no layout change) */
-#skydealPaymentMenu .types > *:first-child,
-#skydealPaymentMenu .types > *:first-child > *,
-#skydealPaymentMenu .types > *:first-child > label,
-#skydealPaymentMenu .types > *:first-child > button,
-#skydealPaymentMenu .types > :first-child label,
-#skydealPaymentMenu .types > :first-child button,
-#skydealPaymentMenu .types > :first-child span,
-#skydealPaymentMenu .types > :first-child div {
-  background: #334155 !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  border-radius: 6px !important;
-}
-
-/* 2) If selection is driven by input:checked + label, catch that too */
-#skydealPaymentMenu .types input:checked + label {
-  background: #334155 !important;
-  color: #ffffff !important;
-  border-radius: 6px !important;
-}
-
-/* 3) And if selection uses ARIA/classes, catch those as well */
-#skydealPaymentMenu .types [aria-selected="true"],
-#skydealPaymentMenu .types .active,
-#skydealPaymentMenu .types .selected,
-#skydealPaymentMenu .types .is-active,
-#skydealPaymentMenu .types button[aria-current="true"] {
-  background: #334155 !important;
-  color: #ffffff !important;
-  border-radius: 6px !important;
-}
-
-
-
-
-
-
-
-
-
+.modal-content h3,.modal-content li,.modal-content p,.modal-content span{color:var(--ink)}
+.icon-btn.close{position:absolute;top:10px;right:10px;border:1px solid var(--border);background:#0f172a;color:var(--ink);border-radius:8px}
+.portal-list{padding-left:18px;margin:12px 0 0} .portal-list li{margin:6px 0}
