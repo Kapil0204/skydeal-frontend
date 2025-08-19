@@ -203,4 +203,46 @@ select{
 .modal-content span {
   color: var(--ink);
 }
+/* ==== Payment Methods dropdown (two‑pane) ==== */
+#skydealPaymentMenu {
+  background: #1e293b !important;   /* match app panel */
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+/* Force ALL inner text visible */
+#skydealPaymentMenu * {
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+/* Keep column divider + checkbox accent */
+#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
+#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
+
+/* Legacy fallback, if the older menu is mounted */
+#pmMenu, .dropdown-menu {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+#pmMenu *, .dropdown-menu * { color: #f8fafc !important; opacity: 1 !important; }
+
+/* ==== Compare‑prices modal ==== */
+#priceModal .modal-content,
+#skydealModalContent {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+/* Force ALL inner text visible */
+#priceModal .modal-content * ,
+#skydealModalContent * {
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+#priceModal .icon-btn.close {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+
 
