@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // --- Search core ---
   async function doSearch(){
     const from=fromInput?.value?.trim(), to=toInput?.value?.trim(), date=depInput?.value;
-    const trip=(qs('input[name="tripType"]:checked')?.value)||"one-way";
+    const v = (qs('input[name="tripType"]:checked')?.value) || "one-way";
     const ret=retInput?.value||"";
     if(!from||!to||!date){ alert("Please fill From, To, and Departure Date."); return; }
 
