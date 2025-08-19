@@ -1,56 +1,391 @@
-:root{
-  --bg:#f2f3f5;
-  --card:#e0f7fa;
-  --ink:#111;
-  --muted:#555;
-  --accent:#3b82f6;
-  --pill:#eef2ff;
-  --border:#d9e1e8;
-  --panel:#fff;
-  --shadow:0 6px 18px rgba(0,0,0,.08);
+/* ===========================
+   SkyDeal – Dark Pro Theme
+   =========================== */
+
+:root {
+  /* Core palette */
+  --bg: #0f141d;
+  --bg-2: #121823;
+  --card: #1a212d;
+  --card-2: #1e2a32;
+  --field: #151a24;
+  --border: #343e50;
+  --border-soft: #2b3547;
+
+  /* Text */
+  --text: #e9eef6;
+  --text-2: #c0c8d6;
+  --text-3: #909db2;
+
+  /* Accent */
+  --primary: #509cff;    /* blue */
+  --accent: #00c2c7;     /* teal (replaces green) */
+
+  /* States */
+  --muted: #657089;
+  --hover: #293345;
+  --shadow: 0 10px 30px rgba(0,0,0,.18);
+  --ring: 0 0 0 3px rgba(80,156,255,.25);
 }
 
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif}
-html,body{margin:0;background:var(--bg);color:var(--ink)}
-
-.app{max-width:940px;margin:40px auto;padding:20px 24px;background:#fff;border-radius:14px;box-shadow:var(--shadow)}
-h1{margin:6px 0 18px 0}
-h2{margin:18px 0 12px 0}
-
-.controls .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-input[type="text"],input[type="date"],input[type="number"],select{
-  padding:10px 12px;border:1px solid var(--border);border-radius:8px;min-width:130px;background:#fff
+/* Global reset-ish */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-.trip-type{display:flex;gap:14px;align-items:center;margin-left:6px}
 
-.btn{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.pill{background:var(--pill);border-color:#c7d2fe}
-
-.results-row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-.results-column h2{margin-top:8px}
-.flight-card{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px}
-.flight-card p{margin:6px 0;color:var(--muted)}
-.best-badge{margin-top:10px;border:2px dashed #cde; background:#f8fbff;padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.info-btn{width:28px;height:28px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;display:grid;place-items:center;cursor:pointer}
-.info-btn:hover{background:#f1f5f9}
-
-/* Dropdown */
-.dropdown{position:relative}
-.dropdown-menu{
-  display:none;position:absolute;top:40px;right:0;width:780px;max-height:380px;overflow:auto;
-  background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px
+/* Layout wrapper (your main container) */
+.container, .wrapper, .app {
+  max-width: 1024px;
+  margin: 48px auto;
+  padding: 0 22px;
 }
-.dropdown.open .dropdown-menu{display:block}
-.pm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
-.pm-section h4{margin:0 0 8px 0}
-.pm-list{display:flex;flex-direction:column;gap:8px}
-.pm-item{display:flex;gap:8px;align-items:center;color:var(--muted)}
-.pm-loading{padding:20px;color:var(--muted)}
 
-/* Modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:999}
-.modal-content{position:relative;background:#fff;border-radius:12px;padding:18px 22px;min-width:360px;max-width:520px;box-shadow:var(--shadow)}
-.icon-btn.close{position:absolute;top:10px;right:10px;border:none;background:#fff;border-radius:8px;border:1px solid var(--border)}
-.portal-list{padding-left:18px;margin:12px 0 0 0}
-.portal-list li{margin:6px 0}
+/* Title */
+h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0 0 18px 0;
+  color: var(--text);
+}
+
+/* --------------------------
+   Search card
+   -------------------------- */
+.search-card, .searchBox, .form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: center;
+}
+
+.form-grid + .form-grid { margin-top: 20px; }
+
+/* Inputs */
+input[type="text"], input[type="date"], input[type="number"], select {
+  width: 100%;
+  height: 54px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--field);
+  color: var(--text);
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+input::placeholder { color: var(--text-3); }
+
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: var(--ring);
+}
+
+/* Trip type radios row (if you have a row container, else buttons below will sit inline) */
+.radio-row { display: flex; gap: 12px; align-items: center; }
+
+/* Pill buttons (One Way / Round Trip) – use <button> elements or label wrappers */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #262e3e;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.pill.is-active {
+  background: var(--primary);
+  color: #0e1420;
+  border-color: var(--primary);
+}
+.pill:hover { background: var(--hover); }
+
+/* Payment button + Search button (generic) */
+button, .btn {
+  height: 54px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #243049;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .02s ease;
+}
+button:hover, .btn:hover {
+  background: var(--hover);
+  border-color: var(--border-soft);
+}
+button:active, .btn:active { transform: translateY(1px); }
+
+/* Primary action */
+.btn-primary, #searchBtn {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0e1420;
+}
+.btn-primary:hover, #searchBtn:hover {
+  filter: brightness(1.08);
+}
+
+/* Payment 'selected count' bubble inside the button if used */
+.btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #0e1420;
+  font-size: 12px; font-weight: 700;
+  margin-left: 8px;
+}
+
+/* --------------------------
+   Sections + spacing
+   -------------------------- */
+.section-title {
+  margin: 28px 0 10px 0; /* header space */
+  font-size: 22px;
+  color: var(--text);
+}
+#outboundContainer, #returnContainer {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px; /* extra space between title and list */
+}
+
+/* Two-column layout on large screens (your HTML already renders them in two separate containers,
+   so this ensures they look balanced when stacked on small screens) */
+@media (min-width: 1024px) {
+  .results-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+}
+
+/* --------------------------
+   Flight cards
+   -------------------------- */
+.flight-card {
+  background: #1e2a32;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.flight-card strong { color: var(--text); }
+
+.flight-card .meta {
+  color: var(--text-3);
+  font-size: 13.5px;
+}
+
+.flight-card .best-line {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.flight-card .best {
+  color: var(--accent);
+  font-weight: 700;
+}
+.flight-card .was {
+  color: var(--text-3);
+}
+
+/* “i” button (we apply stronger default so it looks prominent even if inline styles exist) */
+.flight-card button,
+.flight-card .info-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: #2b3748;
+  color: #e7eefb;
+  border: 1px solid #4a5568;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.flight-card button:hover,
+.flight-card .info-btn:hover {
+  background: var(--primary);
+  border-color: #63b3ed;
+  color: #0e1420;
+}
+
+/* --------------------------
+   Modal (comparison)
+   -------------------------- */
+#skydealModal {
+  position: fixed;
+  inset: 0;
+  display: none; /* JS toggles to flex */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.45);
+  z-index: 9999;
+  padding: 18px;
+}
+
+#skydealModalContent {
+  width: min(560px, 96vw);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+#skydealModalContent h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+}
+
+#skydealModalBody > div {
+  background: #203042;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+/* Close button in header (the “×”) */
+#skydealModalContent button {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: #263146;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+#skydealModalContent button:hover { background: var(--hover); }
+
+/* --------------------------
+   Payment two-pane menu
+   -------------------------- */
+#skydealPaymentMenu {
+  position: absolute;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  z-index: 99999;
+  min-width: 520px;
+  color: var(--text);
+}
+
+#skydealPaymentMenu > div:first-child {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#skydealPaymentMenu .types {
+  border-right: 1px solid var(--border);
+  max-height: 230px;
+  overflow: auto;
+  padding-right: 8px;
+}
+
+#skydealPaymentMenu .banks {
+  max-height: 230px;
+  overflow: auto;
+  padding-left: 4px;
+}
+
+#skydealPaymentMenu .type-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-2);
+}
+#skydealPaymentMenu .type-item.active {
+  background: #f1f5f90d; /* subtle lighter bg */
+  color: var(--text);
+  font-weight: 600;
+}
+
+#skydealPaymentMenu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  cursor: pointer;
+  color: var(--text-2);
+}
+#skydealPaymentMenu input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--primary);
+}
+#skydealPaymentMenu .footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+#skydealPaymentMenu .footer button {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+#skydealPaymentMenu .footer .clear {
+  background: #20283a;
+  color: var(--text-2);
+}
+#skydealPaymentMenu .footer .done,
+#skydealPaymentMenu .footer .primary {
+  background: var(--primary);
+  color: #0e1420;
+  border-color: var(--primary);
+}
+
+/* --------------------------
+   Helpers / small elements
+   -------------------------- */
+.small { font-size: 12px; color: var(--text-3); }
+.muted { color: var(--text-3); }
+.hr {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* --------------------------
+   Responsive tweaks
+   -------------------------- */
+@media (max-width: 1023px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  #skydealPaymentMenu { min-width: 92vw; }
+}
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .container, .wrapper, .app { margin: 32px auto; }
+  h1 { font-size: 26px; }
+}
