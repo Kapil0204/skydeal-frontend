@@ -157,3 +157,6 @@ input[type="text"],input[type="date"],input[type="number"],select{
   margin-top:10px;border:2px dashed var(--border);background:#0f172a;
   padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
+/* Hide old loading chip next to the payment button */
+#pmStatus, .pm-status, #paymentBtn + span { display: none !important; }
+
