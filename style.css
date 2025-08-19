@@ -379,6 +379,54 @@ select{
 #skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
 
 /* (No layout/spacing changes anywhere) */
+/* --- Payment menu: force left column item to be readable --- */
+
+/* Kill native button styling in the left column */
+#skydealPaymentMenu .types button,
+#skydealPaymentMenu .types input[type="button"],
+#skydealPaymentMenu .types input[type="submit"],
+#skydealPaymentMenu .types .type-item {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  color: #f8fafc !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+}
+
+/* Selected/active states (cover several patterns) */
+#skydealPaymentMenu .types button[aria-selected="true"],
+#skydealPaymentMenu .types .type-item.active,
+#skydealPaymentMenu .types .type-item.is-active,
+#skydealPaymentMenu .types button.is-active,
+#skydealPaymentMenu .types [aria-current="true"] {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* If selection is implemented via input + label */
+#skydealPaymentMenu .types input:checked + label {
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+}
+
+/* Hover cue (optional, no layout change) */
+#skydealPaymentMenu .types button:hover,
+#skydealPaymentMenu .types .type-item:hover,
+#skydealPaymentMenu .types label:hover {
+  background: #2b3a4f !important;
+  color: #ffffff !important;
+}
+
+/* Keep divider + checkbox accent as-is */
+#skydealPaymentMenu .types { border-right: 1px solid #475569 !important; }
+#skydealPaymentMenu input[type="checkbox"] { accent-color: #3b82f6 !important; }
+
 
 
 
