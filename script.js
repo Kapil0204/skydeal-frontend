@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // Trip type toggle
   const tripRadios = qsa('input[name="tripType"]');
   function applyTripTypeUI(){
-    const v = (qs('input[name="tripType"]:checked")?.value) || "one-way";
+    const v = (qs('input[name="tripType"]:checked')?.value) || "one-way";
     if(v==="round-trip"){ if(returnGroup) returnGroup.style.display="block"; }
     else { if(returnGroup) returnGroup.style.display="none"; if(retInput) retInput.value=""; }
   }
