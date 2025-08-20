@@ -177,5 +177,47 @@ select{
   border-radius:8px;
   border:1px solid var(--border);
 }
+/* ==== FIX: Payment menu text invisible on light theme ==== */
+#skydealPaymentMenu {
+  background: #fff !important;
+  color: #111 !important;
+  border: 1px solid #e5e7eb !important;
+}
+#skydealPaymentMenu * {
+  color: #111 !important;     /* stop forcing white text */
+  opacity: 1 !important;
+}
+#skydealPaymentMenu .types {
+  border-right: 1px solid #e5e7eb !important;
+}
+#skydealPaymentMenu .types > * {
+  background: transparent !important;
+}
+/* Selected/active item on the left column */
+#skydealPaymentMenu .types [aria-selected="true"],
+#skydealPaymentMenu .types .active,
+#skydealPaymentMenu .types .selected,
+#skydealPaymentMenu .types input:checked + label {
+  background: #eef2ff !important; /* subtle light highlight */
+  color: #111 !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+}
+/* Checkbox accent (optional) */
+#skydealPaymentMenu input[type="checkbox"] {
+  accent-color: #2563eb !important;
+}
+
+/* ==== FIX: Compare prices modal to light theme ==== */
+#skydealModalContent {
+  background: #fff !important;
+  color: #111 !important;
+  border: 1px solid #e5e7eb !important;
+}
+#skydealModalContent * {
+  color: #111 !important;
+}
+
 .portal-list{padding-left:18px;margin:12px 0 0 0}
 .portal-list li{margin:6px 0}
