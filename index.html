@@ -12,11 +12,19 @@
 
     <form id="searchForm" class="controls">
       <div class="row">
-        <input type="text" id="from" placeholder="BOM" required />
-        <input type="text" id="to" placeholder="DEL" required />
-        <input type="date" id="departureDate" required />
-        <input type="date" id="returnDate" />
-      </div>
+  <input type="text" id="from" placeholder="BOM" required />
+  <input type="text" id="to" placeholder="DEL" required />
+
+  <div class="date-input">
+    <input type="date" id="departureDate" required />
+    <span class="calendar-icon">📅</span>
+  </div>
+
+  <div class="date-input">
+    <input type="date" id="returnDate" />
+    <span class="calendar-icon">📅</span>
+  </div>
+</div>
 
       <div class="row">
         <input type="number" id="passengers" value="1" min="1" required />
