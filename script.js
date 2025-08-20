@@ -102,7 +102,9 @@ function renderBanksPane(col, type){
       toggleSelection(type, bank, cb.checked);
       updatePaymentButtonLabel(findPaymentTrigger());
     });
-    row.append(cb, el("span","", `${bank} ${type}`));
+    const label = bank; // bank already IS the final label from API now
+row.append(cb, el("span","", label));
+cb.value = label;   // so filters send the same label the backend expects
     col.appendChild(row);
   });
 }
