@@ -409,14 +409,13 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!from||!to||!dateISO){ alert("Please fill From, To, and Departure Date."); return; }
 
     const payload = {
-      from, to,
-      departureDate: dateISO,
-      returnDate: (trip==="round-trip" ? retISO : ""),
-      passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
-      travelClass: (classInput?.value || "ECONOMY"),
-      // ✨ IMPORTANT: send the exact labels the backend expects
-      paymentMethods: selectedPayments.map(x => x.bank)
-    };
+  from, to,
+  departureDate: dateISO,
+  returnDate: (trip==="round-trip" && retISO) ? retISO : "",
+  passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
+  travelClass: (classInput?.value || "ECONOMY"),
+  paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`) // enable filter
+};
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
