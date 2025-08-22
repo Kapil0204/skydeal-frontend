@@ -25,9 +25,14 @@ let paymentMap = null;                // { type -> [banks] }
 let paymentMapLoading = null;
 let paymentLoadError = null;
 
+// --- helpers for the count badge (optional external chip) ---
+function getSelectedCountChip(){
+  return qs("#selectedCountBadge") || qs("#pmSelectedCount") || qs("#pmCount") || null;
+}
+
 function findPaymentTrigger(){
   return qs("#paymentBtn") ||
-         qsa("button, [role='button']").find(b => /select\s*payment\s*methods/i.test((b.textContent||"").trim()));
+         qsa("button, [role='button']").find(b => /select\s*payment\s*methods|selected\s*\d*/i.test((b.textContent||"").trim()));
 }
 function isSelected(type, bank){ return selectedPayments.some(x => x.type===type && x.bank===bank); }
 function toggleSelection(type, bank, checked){
@@ -36,10 +41,13 @@ function toggleSelection(type, bank, checked){
   if(!checked && idx>-1) selectedPayments.splice(idx, 1);
 }
 function countSelections(){ return selectedPayments.length; }
+
+// update both the trigger label AND (optionally) an external chip
 function updatePaymentButtonLabel(trigger){
-  if(!trigger) return;
   const n = countSelections();
-  trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
+  if (trigger) trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
+  const chip = getSelectedCountChip();
+  if (chip)  chip.textContent = `${n} selected`; // always show the true count
 }
 
 async function loadPaymentMap(){
@@ -102,9 +110,9 @@ function renderBanksPane(col, type){
       toggleSelection(type, bank, cb.checked);
       updatePaymentButtonLabel(findPaymentTrigger());
     });
-    const label = bank; // bank already IS the final label from API now
-row.append(cb, el("span","", label));
-cb.value = label;   // so filters send the same label the backend expects
+    const label = bank; // bank already IS the final label from API now (e.g., "HSBC (Credit Card EMI)")
+    row.append(cb, el("span","", label));
+    cb.value = label;   // so filters send the same label the backend expects
     col.appendChild(row);
   });
 }
@@ -350,25 +358,25 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const outboundContainer=qs("#outboundContainer"), returnContainer=qs("#returnContainer");
 
   // Payment selector
-const paymentTrigger = findPaymentTrigger();
-const pmStatus = qs("#pmStatus");        // ← the little “Loading payment methods…” chip
-if (pmStatus) pmStatus.style.display = "none";  // hide by default
+  const paymentTrigger = findPaymentTrigger();
+  const pmStatus = qs("#pmStatus");        // ← the little “Loading payment methods…” chip
+  if (pmStatus) pmStatus.style.display = "none";  // hide by default
 
-if (paymentTrigger) {
-  paymentTrigger.style.cursor = "pointer";
-  paymentTrigger.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (pmStatus) pmStatus.style.display = "inline-flex";  // show while fetching
-    try {
-      await loadPaymentMap();
-    } finally {
-      if (pmStatus) pmStatus.style.display = "none";        // hide after fetch
-    }
-    togglePaymentMenu(true, paymentTrigger);
-  });
-  updatePaymentButtonLabel(paymentTrigger);
-}
-
+  if (paymentTrigger) {
+    paymentTrigger.style.cursor = "pointer";
+    paymentTrigger.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (pmStatus) pmStatus.style.display = "inline-flex";  // show while fetching
+      try {
+        await loadPaymentMap();
+      } finally {
+        if (pmStatus) pmStatus.style.display = "none";        // hide after fetch
+      }
+      togglePaymentMenu(true, paymentTrigger);
+    });
+    // initialize as "0 selected" to avoid stale hard-coded text
+    updatePaymentButtonLabel(paymentTrigger);
+  }
 
   // Trip type toggle
   const tripRadios = qsa('input[name="tripType"]');
@@ -406,7 +414,8 @@ if (paymentTrigger) {
       returnDate: (trip==="round-trip" ? retISO : ""),
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
-      // paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`) // enable later if you want server-side filter
+      // ✨ IMPORTANT: send the exact labels the backend expects
+      paymentMethods: selectedPayments.map(x => x.bank)
     };
 
     outboundContainer.innerHTML = "Loading…";
