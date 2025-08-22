@@ -25,9 +25,6 @@ let paymentMap = null;                // { type -> [banks] }
 let paymentMapLoading = null;
 let paymentLoadError = null;
 
-function getSelectedCountChip(){
-  return qs("#selectedCountBadge") || qs("#pmSelectedCount") || qs("#pmCount") || null;
-}
 function findPaymentTrigger(){
   return qs("#paymentBtn") ||
          qsa("button, [role='button']").find(b => /select\s*payment\s*methods|selected\s*\d*/i.test((b.textContent||"").trim()));
@@ -42,8 +39,6 @@ function countSelections(){ return selectedPayments.length; }
 function updatePaymentButtonLabel(trigger){
   const n = countSelections();
   if (trigger) trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
-  const chip = getSelectedCountChip();
-  if (chip)  chip.textContent = `${n} selected`;
 }
 
 async function loadPaymentMap(){
@@ -51,7 +46,7 @@ async function loadPaymentMap(){
   if(paymentMapLoading) return paymentMapLoading;
   paymentLoadError = null;
   paymentMapLoading = fetch(PAYMENT_OPTIONS_URL, { mode: "cors" })
-    .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(r => { if(!r.ok) throw new Error(`${r.status}`); return r.json(); })
     .then(j => { paymentMap = j.options || {}; return paymentMap; })
     .catch(e => { console.error("Payment options fetch failed:", e); paymentLoadError = e; paymentMap = null; return null; })
     .finally(()=> { paymentMapLoading = null; });
@@ -106,9 +101,7 @@ function renderBanksPane(col, type){
       toggleSelection(type, bank, cb.checked);
       updatePaymentButtonLabel(findPaymentTrigger());
     });
-    const label = bank; // bank label from API (e.g., "HSBC (Credit Card EMI)")
-    row.append(cb, el("span","", label));
-    cb.value = label;
+    row.append(cb, el("span","", bank));
     col.appendChild(row);
   });
 }
@@ -349,19 +342,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   // Payment selector
   const paymentTrigger = findPaymentTrigger();
-  const pmStatus = qs("#pmStatus");
-  if (pmStatus) pmStatus.style.display = "none";
-
   if (paymentTrigger) {
     paymentTrigger.style.cursor = "pointer";
     paymentTrigger.addEventListener("click", async (e) => {
       e.preventDefault();
-      if (pmStatus) pmStatus.style.display = "inline-flex";
-      try {
-        await loadPaymentMap();
-      } finally {
-        if (pmStatus) pmStatus.style.display = "none";
-      }
+      await loadPaymentMap();
       togglePaymentMenu(true, paymentTrigger);
     });
     updatePaymentButtonLabel(paymentTrigger);
@@ -397,6 +382,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const retISO  = toISOFromInput(retInput?.value || "");
     if(!from||!to||!dateISO){ alert("Please fill From, To, and Departure Date."); return; }
 
+    // send objects with bank + type
     const payload = {
       from: (from || "").trim().toUpperCase(),
       to:   (to   || "").trim().toUpperCase(),
@@ -404,7 +390,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       returnDate: (trip==="round-trip" && retISO) ? retISO : null,
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
-      paymentMethods: selectedPayments.map(x => x.bank) // send exact labels
+      paymentMethods: selectedPayments.map(x => ({ type: x.type, bank: x.bank }))
     };
     console.log("Payload being sent:", payload);
 
