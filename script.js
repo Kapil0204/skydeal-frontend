@@ -17,7 +17,7 @@ function toISOFromInput(str){
   const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
 }
 
-// ====== PAYMENT SELECTOR (LEFT = TYPES, RIGHT = BANKS FROM BACKEND) ======
+// ====== PAYMENT SELECTOR ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
 let selectedPayments = [];            // [{ type, bank }]
 let activeType = PAYMENT_TYPES[0];
@@ -25,11 +25,9 @@ let paymentMap = null;                // { type -> [banks] }
 let paymentMapLoading = null;
 let paymentLoadError = null;
 
-// --- helpers for the count badge (optional external chip) ---
 function getSelectedCountChip(){
   return qs("#selectedCountBadge") || qs("#pmSelectedCount") || qs("#pmCount") || null;
 }
-
 function findPaymentTrigger(){
   return qs("#paymentBtn") ||
          qsa("button, [role='button']").find(b => /select\s*payment\s*methods|selected\s*\d*/i.test((b.textContent||"").trim()));
@@ -41,13 +39,11 @@ function toggleSelection(type, bank, checked){
   if(!checked && idx>-1) selectedPayments.splice(idx, 1);
 }
 function countSelections(){ return selectedPayments.length; }
-
-// update both the trigger label AND (optionally) an external chip
 function updatePaymentButtonLabel(trigger){
   const n = countSelections();
   if (trigger) trigger.textContent = n ? `${n} selected` : "Select Payment Methods";
   const chip = getSelectedCountChip();
-  if (chip)  chip.textContent = `${n} selected`; // always show the true count
+  if (chip)  chip.textContent = `${n} selected`;
 }
 
 async function loadPaymentMap(){
@@ -55,7 +51,7 @@ async function loadPaymentMap(){
   if(paymentMapLoading) return paymentMapLoading;
   paymentLoadError = null;
   paymentMapLoading = fetch(PAYMENT_OPTIONS_URL, { mode: "cors" })
-    .then(r => { if(!r.ok) throw new Error(`${r.status}`); return r.json(); })
+    .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(j => { paymentMap = j.options || {}; return paymentMap; })
     .catch(e => { console.error("Payment options fetch failed:", e); paymentLoadError = e; paymentMap = null; return null; })
     .finally(()=> { paymentMapLoading = null; });
@@ -110,9 +106,9 @@ function renderBanksPane(col, type){
       toggleSelection(type, bank, cb.checked);
       updatePaymentButtonLabel(findPaymentTrigger());
     });
-    const label = bank; // bank already IS the final label from API now (e.g., "HSBC (Credit Card EMI)")
+    const label = bank; // bank label from API (e.g., "HSBC (Credit Card EMI)")
     row.append(cb, el("span","", label));
-    cb.value = label;   // so filters send the same label the backend expects
+    cb.value = label;
     col.appendChild(row);
   });
 }
@@ -133,7 +129,6 @@ function buildTypeBankMenu(trigger){
   Object.assign(grid.style,{display:"grid", gridTemplateColumns:"1.2fr 2fr", gap:"12px", minHeight:"190px"});
   menu.appendChild(grid);
 
-  // LEFT: Payment Types
   const typeCol = el("div");
   Object.assign(typeCol.style,{borderRight:"1px solid #eee", paddingRight:"8px", maxHeight:"230px", overflow:"auto"});
   PAYMENT_TYPES.forEach(t=>{
@@ -154,15 +149,12 @@ function buildTypeBankMenu(trigger){
   });
   grid.appendChild(typeCol);
 
-  // RIGHT: Banks (loaded dynamically)
   const bankCol = el("div");
   Object.assign(bankCol.style,{paddingLeft:"4px", maxHeight:"230px", overflow:"auto"});
   grid.appendChild(bankCol);
 
-  // Render initial view
   renderBanksPane(bankCol, activeType);
 
-  // Footer
   const footer = el("div");
   Object.assign(footer.style,{display:"flex",justifyContent:"space-between",gap:"8px",marginTop:"10px"});
 
@@ -184,7 +176,6 @@ function buildTypeBankMenu(trigger){
   document.body.appendChild(menu);
   positionMenuBelow(trigger, menu);
 
-  // Close handlers
   setTimeout(()=>{
     const outside = (e)=>{ if(!menu.contains(e.target) && e.target!==trigger) togglePaymentMenu(false, trigger); };
     const onEsc   = (e)=>{ if(e.key==="Escape") togglePaymentMenu(false, trigger); };
@@ -193,7 +184,6 @@ function buildTypeBankMenu(trigger){
     document.addEventListener("keydown", onEsc);
   },0);
 
-  // Ensure data is loaded, then refresh right pane
   loadPaymentMap().then(()=> renderBanksPane(bankCol, activeType)).catch(()=>{});
   return menu;
 }
@@ -359,22 +349,21 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   // Payment selector
   const paymentTrigger = findPaymentTrigger();
-  const pmStatus = qs("#pmStatus");        // ← the little “Loading payment methods…” chip
-  if (pmStatus) pmStatus.style.display = "none";  // hide by default
+  const pmStatus = qs("#pmStatus");
+  if (pmStatus) pmStatus.style.display = "none";
 
   if (paymentTrigger) {
     paymentTrigger.style.cursor = "pointer";
     paymentTrigger.addEventListener("click", async (e) => {
       e.preventDefault();
-      if (pmStatus) pmStatus.style.display = "inline-flex";  // show while fetching
+      if (pmStatus) pmStatus.style.display = "inline-flex";
       try {
         await loadPaymentMap();
       } finally {
-        if (pmStatus) pmStatus.style.display = "none";        // hide after fetch
+        if (pmStatus) pmStatus.style.display = "none";
       }
       togglePaymentMenu(true, paymentTrigger);
     });
-    // initialize as "0 selected" to avoid stale hard-coded text
     updatePaymentButtonLabel(paymentTrigger);
   }
 
@@ -412,13 +401,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
       from: (from || "").trim().toUpperCase(),
       to:   (to   || "").trim().toUpperCase(),
       departureDate: dateISO,
-      returnDate: (trip==="round-trip" && retISO) ? retISO : null, // << change: null for one-way
+      returnDate: (trip==="round-trip" && retISO) ? retISO : null,
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
-      // send exact labels backend expects
-      paymentMethods: selectedPayments.map(x => x.bank)
+      paymentMethods: selectedPayments.map(x => x.bank) // send exact labels
     };
-    console.log("Payload being sent:", payload); // << debug
+    console.log("Payload being sent:", payload);
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
@@ -430,7 +418,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
         body: JSON.stringify(payload)
       });
 
-      // << improved error visibility
       if(!res.ok){
         const text = await res.text();
         console.error("Search failed. HTTP", res.status, "Body:", text);
@@ -461,7 +448,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         returnContainer.innerHTML = "";
       }
     }catch(err){
-      console.error("Search error:", err, "Payload sent:", payload); // << include payload in logs
+      console.error("Search error:", err, "Payload sent:", payload);
       outboundContainer.innerHTML = "<div style='color:#b00020;'>Failed to fetch flights. Please try again.</div>";
       if(returnContainer) returnContainer.innerHTML = "";
     }
