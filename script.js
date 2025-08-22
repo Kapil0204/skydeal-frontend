@@ -409,13 +409,16 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!from||!to||!dateISO){ alert("Please fill From, To, and Departure Date."); return; }
 
     const payload = {
-  from, to,
-  departureDate: dateISO,
-  returnDate: (trip==="round-trip" && retISO) ? retISO : "",
-  passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
-  travelClass: (classInput?.value || "ECONOMY"),
-  paymentMethods: selectedPayments.map(x => `${x.bank} ${x.type}`) // enable filter
-};
+      from: (from || "").trim().toUpperCase(),
+      to:   (to   || "").trim().toUpperCase(),
+      departureDate: dateISO,
+      returnDate: (trip==="round-trip" && retISO) ? retISO : null, // << change: null for one-way
+      passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
+      travelClass: (classInput?.value || "ECONOMY"),
+      // send exact labels backend expects
+      paymentMethods: selectedPayments.map(x => x.bank)
+    };
+    console.log("Payload being sent:", payload); // << debug
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
@@ -426,7 +429,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
-      if(!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+      // << improved error visibility
+      if(!res.ok){
+        const text = await res.text();
+        console.error("Search failed. HTTP", res.status, "Body:", text);
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
       const data = await res.json();
 
       let outbound = data?.outboundFlights || data?.flights || [];
@@ -451,7 +461,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         returnContainer.innerHTML = "";
       }
     }catch(err){
-      console.error("Search error:", err);
+      console.error("Search error:", err, "Payload sent:", payload); // << include payload in logs
       outboundContainer.innerHTML = "<div style='color:#b00020;'>Failed to fetch flights. Please try again.</div>";
       if(returnContainer) returnContainer.innerHTML = "";
     }
