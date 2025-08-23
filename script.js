@@ -246,7 +246,7 @@ function getBestDeal(portalPrices){
 // ====== RENDERING ======
 function sortFlights(flights,key){
   const copy=[...flights];
-  if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(b.departureTime||b.departure||0));
+  if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(a.departureTime||a.departure||0));
   else copy.sort((a,b)=> (Number(a.price)??Infinity) - (Number(b.price)??Infinity));
   return copy;
 }
@@ -259,6 +259,14 @@ function renderFlightList(container, flights, sideLabel){
   const list = el("div"); Object.assign(list.style,{display:"grid",gap:"10px"});
   flights.forEach(f=>{
     const card = el("div","flight-card"); Object.assign(card.style,{border:"1px solid #e6e6e6",borderRadius:"10px",padding:"10px"});
+
+    // Prefer flightName if backend provides it; else airlineName + flightNumber
+    const primaryName = safeText(
+      f.flightName ||
+      (f.airlineName ? `${f.airlineName}${f.flightNumber ? " " + f.flightNumber.split(" ")[1] : ""}` : ""),
+      "—"
+    );
+
     const airlineName = safeText(f.airlineName||f.carrierName||f.airline||f.carrier||"","—");
     const flightNo    = safeText(f.flightNumber||f.number||"","");
     const dep         = fmtTime(f.departureTime||f.departure);
@@ -268,7 +276,7 @@ function renderFlightList(container, flights, sideLabel){
     const best        = getBestDeal(f.portalPrices);
 
     const top = el("div");
-    top.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>
+    top.innerHTML = `<strong>${primaryName || (airlineName + (flightNo ? " " + flightNo : ""))}</strong>
                      <div>${dep} → ${arr}</div>
                      <div>Stops: ${isNaN(stops)?"—":stops}</div>`;
 
@@ -382,7 +390,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const retISO  = toISOFromInput(retInput?.value || "");
     if(!from||!to||!dateISO){ alert("Please fill From, To, and Departure Date."); return; }
 
-    // send objects with bank + type
+    // Build payload (uppercase IATA + explicit tripType)
     const payload = {
       from: (from || "").trim().toUpperCase(),
       to:   (to   || "").trim().toUpperCase(),
@@ -390,9 +398,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
       returnDate: (trip==="round-trip" && retISO) ? retISO : null,
       passengers: (paxInput?.value ? Number(paxInput.value) : 1) || 1,
       travelClass: (classInput?.value || "ECONOMY"),
+      tripType: trip,
       paymentMethods: selectedPayments.map(x => ({ type: x.type, bank: x.bank }))
     };
-    console.log("Payload being sent:", payload);
+    console.log("Sending payload:", payload);
 
     outboundContainer.innerHTML = "Loading…";
     if(returnContainer) returnContainer.innerHTML = "";
@@ -411,9 +420,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
       }
 
       const data = await res.json();
+      console.log("Search response:", data);
 
-      let outbound = data?.outboundFlights || data?.flights || [];
-      let returns  = data?.returnFlights  || [];
+      const outbound = data?.outboundFlights || data?.flights || [];
+      const returns  = data?.returnFlights  || [];
 
       renderSortControls((key)=>{
         const s1 = sortFlights(outbound, key);
@@ -440,3 +450,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
   }
 });
+
