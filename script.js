@@ -16,7 +16,16 @@ function toISOFromInput(str){
   const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m2) return s;
   const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
 }
-function timeToMinutes(t){ if(!t||!/\d{2}:\d{2}/.test(t)) return Number.POSITIVE_INFINITY; const [h,m]=t.split(":").map(Number); return h*60+m; }
+
+// --- ONLY NEW: read ?airlines=6E or 6E,QP (dev probe) ---
+function getProbeAirlines() {
+  try {
+    const raw = new URLSearchParams(location.search).get("airlines");
+    if (!raw) return null;
+    const codes = raw.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+    return codes.length ? codes : null;
+  } catch { return null; }
+}
 
 // ====== PAYMENT SELECTOR ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
@@ -220,75 +229,12 @@ function ensureModal(){
 function showModal(htmlBody, heading="Price Comparison"){ ensureModal(); qs("#skydealModalBody").innerHTML=htmlBody; qs("#skydealModalContent h3").textContent=heading; modalEl.style.display="flex"; }
 function hideModal(){ if(modalEl) modalEl.style.display="none"; }
 
-// ====== SORT/FILTER CONTROLS (per-side) ======
-const controlState = {
-  outbound: { sortKey: "price", airline: "ALL", nonstop: false },
-  return:   { sortKey: "price", airline: "ALL", nonstop: false },
+// ====== SORT / FILTER STATE ======
+let currentSortKey = "price";
+let filters = {
+  outbound: { airline: "All", nonStopOnly: false },
+  return:   { airline: "All", nonStopOnly: false }
 };
-
-function buildControlsBar(sideKey, flights, onChange){
-  const bar = el("div");
-  Object.assign(bar.style,{
-    display:"flex", gap:"6px", alignItems:"center", margin:"6px 0 8px", flexWrap:"wrap",
-    fontSize:"12px"
-  });
-
-  // Sort
-  bar.appendChild(el("span","", "Sort:"));
-  const sortSel = document.createElement("select");
-  ["Price","Departure time","Arrival time"].forEach((label,i)=>{
-    const opt = el("option","", label);
-    opt.value = i===0?"price":(i===1?"depTime":"arrTime");
-    sortSel.appendChild(opt);
-  });
-  Object.assign(sortSel.style,{fontSize:"12px",padding:"2px 6px"});
-  sortSel.value = controlState[sideKey].sortKey;
-  sortSel.addEventListener("change",(e)=>{ controlState[sideKey].sortKey = e.target.value; onChange(); });
-  bar.appendChild(sortSel);
-
-  // Airline filter
-  bar.appendChild(el("span","", "Airline:"));
-  const airlineSel = document.createElement("select");
-  const airlines = Array.from(new Set((flights||[]).map(f=>f.airlineName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  airlineSel.appendChild(el("option","", "All"));
-  airlineSel.firstChild.value = "ALL";
-  airlines.forEach(a=>{ const o=el("option","",a); o.value=a; airlineSel.appendChild(o); });
-  Object.assign(airlineSel.style,{fontSize:"12px",padding:"2px 6px"});
-  airlineSel.value = controlState[sideKey].airline;
-  airlineSel.addEventListener("change",(e)=>{ controlState[sideKey].airline = e.target.value; onChange(); });
-  bar.appendChild(airlineSel);
-
-  // Non-stop toggle
-  const nsWrap = el("label");
-  Object.assign(nsWrap.style,{display:"flex",alignItems:"center",gap:"4px",marginLeft:"6px",fontSize:"12px"});
-  const nsCb = document.createElement("input");
-  nsCb.type="checkbox"; nsCb.checked = controlState[sideKey].nonstop;
-  nsCb.addEventListener("change",()=>{ controlState[sideKey].nonstop = nsCb.checked; onChange(); });
-  nsWrap.append(nsCb, el("span","", "Non-stop"));
-  bar.appendChild(nsWrap);
-
-  return bar;
-}
-
-function sortAndFilterFlights(flights, state){
-  let out = Array.isArray(flights)? [...flights] : [];
-
-  if(state.airline && state.airline!=="ALL"){
-    out = out.filter(f => (f.airlineName||"") === state.airline);
-  }
-  if(state.nonstop){
-    out = out.filter(f => Number(f.stops) === 0);
-  }
-
-  if(state.sortKey==="depTime"){
-    out.sort((a,b)=> timeToMinutes(a.departure||a.departureTime) - timeToMinutes(b.departure||b.departureTime));
-  } else if(state.sortKey==="arrTime"){
-    out.sort((a,b)=> timeToMinutes(a.arrival||a.arrivalTime) - timeToMinutes(b.arrival||b.arrivalTime));
-  } else {
-    out.sort((a,b)=> (Number(a.price)??Infinity) - (Number(b.price)??Infinity)); // default price
-  }
-  return out;
-}
 
 // ====== BEST DEAL ======
 function getBestDeal(portalPrices){
@@ -299,6 +245,66 @@ function getBestDeal(portalPrices){
 }
 
 // ====== RENDERING ======
+function sortFlights(flights,key){
+  const copy=[...flights];
+  if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(b.departureTime||b.departure||0));
+  else if(key==="arrTime") copy.sort((a,b)=> new Date(a.arrivalTime||a.arrival||0) - new Date(b.arrivalTime||b.arrival||0));
+  else copy.sort((a,b)=> (Number(a.price)??Infinity) - (Number(b.price)??Infinity));
+  return copy;
+}
+function applyFilters(flights, {airline, nonStopOnly}){
+  let out = flights || [];
+  if (airline && airline !== "All") out = out.filter(f => (f.airlineName||"") === airline);
+  if (nonStopOnly) out = out.filter(f => (Number(f.stops) || 0) === 0);
+  return out;
+}
+function renderSortAndFilters(containerId, flights, side){
+  const host = qs(containerId);
+  if (!host) return;
+  let wrap = qs(`${containerId} .skydeal-sortbar`);
+  if (!wrap) {
+    wrap = el("div","skydeal-sortbar");
+    Object.assign(wrap.style,{display:"flex",gap:"10px",alignItems:"center",margin:"6px 0 8px",flexWrap:"wrap",fontSize:"14px"});
+    host.prepend(wrap);
+  } else {
+    wrap.innerHTML = "";
+  }
+
+  // Sort
+  const label = el("span","", "Sort");
+  const select = document.createElement("select");
+  ["Price","Departure time","Arrival time"].forEach((opt,i)=>{
+    const o=el("option","",opt);
+    o.value = i===0 ? "price" : i===1 ? "depTime" : "arrTime";
+    if (o.value === currentSortKey) o.selected = true;
+    select.appendChild(o);
+  });
+  select.addEventListener("change", (e)=>{
+    currentSortKey = e.target.value;
+  });
+
+  // Airline filter
+  const airlineLabel = el("span","", "Airline");
+  const airlineSel = document.createElement("select");
+  const setKey = side==="outbound" ? "outbound" : "return";
+  const airlineSet = Array.from(new Set((flights||[]).map(f => f.airlineName).filter(Boolean))).sort();
+  airlineSel.appendChild(el("option","", "All"));
+  airlineSet.forEach(a => airlineSel.appendChild(el("option","", a)));
+  airlineSel.value = filters[setKey].airline;
+  airlineSel.addEventListener("change",(e)=>{ filters[setKey].airline = e.target.value; });
+
+  // Non-stop toggle
+  const nsWrap = el("label");
+  Object.assign(nsWrap.style,{display:"flex",gap:"6px",alignItems:"center"});
+  const ns = document.createElement("input");
+  ns.type = "checkbox";
+  ns.checked = !!filters[setKey].nonStopOnly;
+  ns.addEventListener("change", ()=>{ filters[setKey].nonStopOnly = ns.checked; });
+  nsWrap.append(ns, el("span","", "Non-stop"));
+
+  wrap.append(label, select, airlineLabel, airlineSel, nsWrap);
+}
+
 function renderFlightList(container, flights, sideLabel){
   container.innerHTML="";
   if(!flights || flights.length===0){
@@ -311,20 +317,20 @@ function renderFlightList(container, flights, sideLabel){
     const flightNo    = safeText(f.flightNumber||f.number||"","");
     const dep         = fmtTime(f.departureTime||f.departure);
     const arr         = fmtTime(f.arrivalTime||f.arrival);
-    const stopsCount  = (f.stops!==undefined&&f.stops!==null)?f.stops:(f.itineraries?.[0]?.segments?.length?(f.itineraries[0].segments.length-1):0);
-    const stopCodes   = Array.isArray(f.stopCodes)? f.stopCodes : [];
+    const stops       = (f.stops!==undefined&&f.stops!==null)?f.stops:(f.numberOfStops!==undefined?f.numberOfStops:(f.itineraries?.[0]?.segments?.length?(f.itineraries[0].segments.length-1):0));
+    const stopCodes   = Array.isArray(f.stopCodes) ? f.stopCodes : [];
     const basePrice   = parseFloat(f.price?.total||f.price?.base||f.price);
     const best        = getBestDeal(f.portalPrices);
 
-    const stopsText = isNaN(stopsCount) ? "—" : (stopsCount > 0 ? `${stopsCount} (${stopCodes.join(", ") || "—"})` : "0");
+    const stopsLabel = isNaN(stops) ? "—" : (Number(stops) === 0 ? "0" : `${stops} (${stopCodes.join(", ")})`);
 
     const top = el("div");
     top.innerHTML = `<strong>${airlineName}${flightNo ? " " + flightNo : ""}</strong>
                      <div>${dep} → ${arr}</div>
-                     <div>Stops: ${stopsText}</div>`;
+                     <div>Stops: ${stopsLabel}</div>`;
 
     const bestLine = el("div");
-    Object.assign(bestLine.style,{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",flexWrap:"wrap",fontSize:"12px"});
+    Object.assign(bestLine.style,{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",flexWrap:"wrap"});
     if (best) {
       const pm = best.appliedOffer?.paymentMethodLabel ? ` • ${best.appliedOffer.paymentMethodLabel}` : "";
       bestLine.innerHTML =
@@ -335,7 +341,7 @@ function renderFlightList(container, flights, sideLabel){
     }
 
     const infoBtn = el("button","", "i");
-    Object.assign(infoBtn.style,{marginLeft:"auto",border:"1px solid #e5e7eb",borderRadius:"6px",padding:"2px 8px",cursor:"pointer",fontSize:"12px"});
+    Object.assign(infoBtn.style,{marginLeft:"auto",border:"1px solid #e5e7eb",borderRadius:"6px",padding:"2px 8px",cursor:"pointer"});
     infoBtn.addEventListener("click", ()=>openComparisonModal(f, {
       airlineName, flightNo, dep, arr, price: basePrice
     }));
@@ -426,21 +432,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const elx = qs(sel); if (elx) elx.addEventListener("keydown", (ev)=>{ if (ev.key === "Enter") doSearchWrapper(ev); });
   });
 
-  function ensureControlsMount(container, id){
-    let existing = document.getElementById(id);
-    if (existing) existing.remove();
-    const mount = el("div"); mount.id = id;
-    container.parentNode.insertBefore(mount, container); // place just above results
-    return mount;
-  }
-
-  function rerenderSide(sideKey, allFlights){
-    const state = controlState[sideKey];
-    const container = sideKey==="outbound" ? outboundContainer : returnContainer;
-    const sorted = sortAndFilterFlights(allFlights, state);
-    renderFlightList(container, sorted, sideKey);
-  }
-
   async function doSearch(){
     const from=fromInput?.value?.trim(), to=toInput?.value?.trim();
     const dateISO = toISOFromInput(depInput?.value);
@@ -457,6 +448,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
       travelClass: (classInput?.value || "ECONOMY"),
       paymentMethods: selectedPayments.map(x => ({ type: x.type, bank: x.bank }))
     };
+
+    // ONLY CHANGE: pass airline probe if present (dev-only)
+    const probe = getProbeAirlines();
+    if (probe) payload.includedAirlineCodes = probe;
+
     console.log("Payload being sent:", payload);
 
     outboundContainer.innerHTML = "Loading…";
@@ -468,32 +464,30 @@ document.addEventListener("DOMContentLoaded", ()=>{
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
+
       if(!res.ok){
         const text = await res.text();
         console.error("Search failed. HTTP", res.status, "Body:", text);
         throw new Error(`Request failed: ${res.status}`);
       }
+
       const data = await res.json();
 
       let outbound = data?.outboundFlights || data?.flights || [];
       let returns  = data?.returnFlights  || [];
 
-      // default state (sort by price by default)
-      controlState.outbound = { sortKey:"price", airline:"ALL", nonstop:false };
-      controlState.return   = { sortKey:"price", airline:"ALL", nonstop:false };
+      // show controls above each list
+      renderSortAndFilters("#outboundHeader", outbound, "outbound");
+      renderSortAndFilters("#returnHeader", returns, "return");
 
-      const outMount = ensureControlsMount(outboundContainer, "outboundControls");
-      const outBar = buildControlsBar("outbound", outbound, ()=>rerenderSide("outbound", outbound));
-      outMount.appendChild(outBar);
-      rerenderSide("outbound", outbound); // initial render: price sort
+      // apply filters + sort (default Price)
+      const s1 = sortFlights(applyFilters(outbound, filters.outbound), currentSortKey);
+      renderFlightList(outboundContainer, s1, "outbound");
 
-      if (retISO && returns?.length && returnContainer){
-        const retMount = ensureControlsMount(returnContainer, "returnControls");
-        const retBar = buildControlsBar("return", returns, ()=>rerenderSide("return", returns));
-        retMount.appendChild(retBar);
-        rerenderSide("return", returns);
+      if(retISO && returns?.length){
+        const s2 = sortFlights(applyFilters(returns, filters.return), currentSortKey);
+        renderFlightList(returnContainer, s2, "return");
       } else if(returnContainer){
-        const old = document.getElementById("returnControls"); if(old) old.remove();
         returnContainer.innerHTML = "";
       }
     }catch(err){
