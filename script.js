@@ -17,7 +17,7 @@ function toISOFromInput(str){
   const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
 }
 
-// --- ONLY NEW BIT: read ?airlines=6E or 6E,QP (dev probe) ---
+// --- ONLY NEW: read ?airlines=6E or 6E,QP (dev probe) ---
 function getProbeAirlines() {
   try {
     const raw = new URLSearchParams(location.search).get("airlines");
@@ -229,13 +229,22 @@ function ensureModal(){
 function showModal(htmlBody, heading="Price Comparison"){ ensureModal(); qs("#skydealModalBody").innerHTML=htmlBody; qs("#skydealModalContent h3").textContent=heading; modalEl.style.display="flex"; }
 function hideModal(){ if(modalEl) modalEl.style.display="none"; }
 
-// ====== SORT / FILTER STATE (working version) ======
+// ====== SORT / FILTER STATE ======
 let currentSortKey = "price";
 let filters = {
   outbound: { airline: "All", nonStopOnly: false },
   return:   { airline: "All", nonStopOnly: false }
 };
 
+// ====== BEST DEAL ======
+function getBestDeal(portalPrices){
+  if (!Array.isArray(portalPrices) || portalPrices.length===0) return null;
+  const valid = portalPrices.filter(p => Number.isFinite(Number(p.finalPrice)));
+  if (!valid.length) return null;
+  return valid.reduce((best,p)=> Number(p.finalPrice) < Number(best.finalPrice) ? p : best);
+}
+
+// ====== RENDERING ======
 function sortFlights(flights,key){
   const copy=[...flights];
   if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(b.departureTime||b.departure||0));
@@ -272,7 +281,6 @@ function renderSortAndFilters(containerId, flights, side){
   });
   select.addEventListener("change", (e)=>{
     currentSortKey = e.target.value;
-    // Re-render handled by caller after it reads state
   });
 
   // Airline filter
@@ -489,4 +497,3 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
   }
 });
-
