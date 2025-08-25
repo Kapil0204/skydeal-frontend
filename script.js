@@ -17,7 +17,7 @@ function toISOFromInput(str){
   const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
 }
 
-// --- NEW (dev-only) helper: read ?airlines=6E,QP to probe carriers ---
+// --- ONLY NEW BIT: read ?airlines=6E or 6E,QP (dev probe) ---
 function getProbeAirlines() {
   try {
     const raw = new URLSearchParams(location.search).get("airlines");
@@ -229,22 +229,13 @@ function ensureModal(){
 function showModal(htmlBody, heading="Price Comparison"){ ensureModal(); qs("#skydealModalBody").innerHTML=htmlBody; qs("#skydealModalContent h3").textContent=heading; modalEl.style.display="flex"; }
 function hideModal(){ if(modalEl) modalEl.style.display="none"; }
 
-// ====== SORT / FILTER STATE ======
-let currentSortKey = "price"; // default: Price
+// ====== SORT / FILTER STATE (working version) ======
+let currentSortKey = "price";
 let filters = {
   outbound: { airline: "All", nonStopOnly: false },
   return:   { airline: "All", nonStopOnly: false }
 };
 
-// ====== BEST DEAL ======
-function getBestDeal(portalPrices){
-  if (!Array.isArray(portalPrices) || portalPrices.length===0) return null;
-  const valid = portalPrices.filter(p => Number.isFinite(Number(p.finalPrice)));
-  if (!valid.length) return null;
-  return valid.reduce((best,p)=> Number(p.finalPrice) < Number(best.finalPrice) ? p : best);
-}
-
-// ====== RENDERING ======
 function sortFlights(flights,key){
   const copy=[...flights];
   if(key==="depTime") copy.sort((a,b)=> new Date(a.departureTime||a.departure||0) - new Date(b.departureTime||b.departure||0));
@@ -254,15 +245,10 @@ function sortFlights(flights,key){
 }
 function applyFilters(flights, {airline, nonStopOnly}){
   let out = flights || [];
-  if (airline && airline !== "All") {
-    out = out.filter(f => (f.airlineName||"") === airline);
-  }
-  if (nonStopOnly) {
-    out = out.filter(f => (Number(f.stops) || 0) === 0);
-  }
+  if (airline && airline !== "All") out = out.filter(f => (f.airlineName||"") === airline);
+  if (nonStopOnly) out = out.filter(f => (Number(f.stops) || 0) === 0);
   return out;
 }
-
 function renderSortAndFilters(containerId, flights, side){
   const host = qs(containerId);
   if (!host) return;
@@ -275,6 +261,7 @@ function renderSortAndFilters(containerId, flights, side){
     wrap.innerHTML = "";
   }
 
+  // Sort
   const label = el("span","", "Sort");
   const select = document.createElement("select");
   ["Price","Departure time","Arrival time"].forEach((opt,i)=>{
@@ -285,7 +272,7 @@ function renderSortAndFilters(containerId, flights, side){
   });
   select.addEventListener("change", (e)=>{
     currentSortKey = e.target.value;
-    // re-render handled by caller
+    // Re-render handled by caller after it reads state
   });
 
   // Airline filter
@@ -296,9 +283,7 @@ function renderSortAndFilters(containerId, flights, side){
   airlineSel.appendChild(el("option","", "All"));
   airlineSet.forEach(a => airlineSel.appendChild(el("option","", a)));
   airlineSel.value = filters[setKey].airline;
-  airlineSel.addEventListener("change",(e)=>{
-    filters[setKey].airline = e.target.value;
-  });
+  airlineSel.addEventListener("change",(e)=>{ filters[setKey].airline = e.target.value; });
 
   // Non-stop toggle
   const nsWrap = el("label");
@@ -456,7 +441,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       paymentMethods: selectedPayments.map(x => ({ type: x.type, bank: x.bank }))
     };
 
-    // NEW: dev probe for NDC/coverage checks (e.g., ?airlines=6E or 6E,QP)
+    // ONLY CHANGE: pass airline probe if present (dev-only)
     const probe = getProbeAirlines();
     if (probe) payload.includedAirlineCodes = probe;
 
@@ -483,16 +468,16 @@ document.addEventListener("DOMContentLoaded", ()=>{
       let outbound = data?.outboundFlights || data?.flights || [];
       let returns  = data?.returnFlights  || [];
 
-      // Render sort+filters bars (compact)
+      // show controls above each list
       renderSortAndFilters("#outboundHeader", outbound, "outbound");
       renderSortAndFilters("#returnHeader", returns, "return");
 
-      // Apply filters and sort
-      const s1 = sortFlights(applyFilters(outbound, filters.outbound), "price");
+      // apply filters + sort (default Price)
+      const s1 = sortFlights(applyFilters(outbound, filters.outbound), currentSortKey);
       renderFlightList(outboundContainer, s1, "outbound");
 
       if(retISO && returns?.length){
-        const s2 = sortFlights(applyFilters(returns, filters.return), "price");
+        const s2 = sortFlights(applyFilters(returns, filters.return), currentSortKey);
         renderFlightList(returnContainer, s2, "return");
       } else if(returnContainer){
         returnContainer.innerHTML = "";
@@ -504,3 +489,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
   }
 });
+
