@@ -18,66 +18,82 @@ function toISOFromInput(str){
 }
 function timeToMinutes(t){ if(!t||!/\d{2}:\d{2}/.test(t)) return Number.POSITIVE_INFINITY; const [h,m]=t.split(":").map(Number); return h*60+m; }
 
-// ---------- NEW: airline display normalizer (safe, additive) ----------
+// ---------- Airline display normalizer (enhanced) ----------
 const CARRIER_NAMES = {
-  // India / common
-  "6E":"IndiGo",
-  "AI":"Air India",
-  "IX":"Air India Express",
-  "I5":"AIX Connect",
-  "QP":"Akasa Air",
-  "SG":"SpiceJet",
-  "UK":"Vistara",
-  "G8":"Go First",
-  // International (a few common; harmless if unused)
-  "EK":"Emirates", "QR":"Qatar Airways", "EY":"Etihad", "SQ":"Singapore Airlines",
-  "TG":"Thai Airways", "WY":"Oman Air", "UL":"SriLankan", "MH":"Malaysia Airlines"
+  "6E":"IndiGo","AI":"Air India","IX":"Air India Express","I5":"AIX Connect","QP":"Akasa Air","SG":"SpiceJet","UK":"Vistara","G8":"Go First",
+  "EK":"Emirates","QR":"Qatar Airways","EY":"Etihad","SQ":"Singapore Airlines","TG":"Thai Airways","WY":"Oman Air","UL":"SriLankan","MH":"Malaysia Airlines"
 };
+const looksInvalid = (s) => !s || /^-?\d+$/.test(String(s)) || String(s).startsWith("-");
 
-function parseFlightNo(str) {
-  if (!str) return null;
-  const s = String(str).trim();
-  // match "AI 123", "6E-213", "UK213", etc.
-  const m = s.match(/^([A-Z0-9]{2})\s*-?\s*(\d{1,4})$/i);
-  if (!m) return null;
-  return { code: m[1].toUpperCase(), num: m[2] };
+function parseFlightNo(str){
+  if(!str) return null;
+  const m = String(str).trim().match(/^([A-Z0-9]{2})\s*-?\s*(\d{1,4})$/i);
+  return m ? { code:m[1].toUpperCase(), num:m[2] } : null;
 }
 
-function normalizeAirlineDisplay(flight) {
-  // Try: explicit fields from backend first
-  let rawName = (flight.airlineName || flight.carrierName || flight.airline || flight.carrier || "").trim();
-  let rawNo   = (flight.flightNumber || flight.number || "").trim();
-  let code    = (flight.carrierCode || "").toUpperCase();
+function firstSegment(obj){
+  const seg = obj?.itineraries?.[0]?.segments?.[0] ?? (Array.isArray(obj?.segments) ? obj.segments[0] : null);
+  return seg || null;
+}
 
-  // Some buggy values looked like "-32213". Treat those as invalid.
-  const looksInvalid = (s) => !s || /^-?\d+$/.test(s) || s.startsWith("-");
-
-  // If flightNumber is valid and includes code+number, parse it
-  const parsed = parseFlightNo(rawNo);
-  if (parsed) {
-    code = parsed.code || code;
-    rawNo = `${parsed.code} ${parsed.num}`;
-    // Fill name from code if missing/invalid
-    if (looksInvalid(rawName)) rawName = CARRIER_NAMES[parsed.code] || parsed.code;
-  } else {
-    // If number missing/invalid but we have a carrierCode and maybe separate numeric number
-    if (looksInvalid(rawNo) && code && flight.segments && flight.segments.length) {
-      // (not used today, but harmless if future backend adds segments)
-      const seg0 = flight.segments[0];
-      const maybeNum = (seg0 && (seg0.number || seg0.flightNumber || seg0.no)) || "";
-      const p2 = parseFlightNo(`${code}${maybeNum}`);
-      if (p2) rawNo = `${p2.code} ${p2.num}`;
+function pickFirstValid(arr, type){
+  for(const v of arr){
+    if(!v) continue;
+    const s = String(v).trim();
+    if(type === "code"){
+      if(/^[A-Z0-9]{2}$/.test(s)) return s.toUpperCase();
+    }else if(type === "num"){
+      const m = parseFlightNo(s);
+      if(m) return {code:m.code, num:m.num};
+      if(/^\d{1,4}$/.test(s)) return {code:null, num:s};
     }
-    if (looksInvalid(rawName) && code) rawName = CARRIER_NAMES[code] || code;
   }
-
-  // Final sanitization fallback
-  if (!rawName) rawName = code || "—";
-  if (!rawNo || looksInvalid(rawNo)) rawNo = code ? `${code}` : "—";
-
-  return { airlineName: rawName, flightNo: rawNo, carrierCode: code || null };
+  return null;
 }
-// ---------- end NEW ----------
+
+function normalizeAirlineDisplay(f){
+  // Prefer a clean pair from the first segment
+  const seg = firstSegment(f);
+
+  const codeFromSeg = pickFirstValid([
+    seg?.marketingCarrierCode, seg?.carrierCode, seg?.operatingCarrierCode,
+    seg?.airline, seg?.airlineCode
+  ], "code");
+
+  const numFromSeg = pickFirstValid([
+    seg?.marketingFlightNumber, seg?.flightNumber, seg?.number
+  ], "num");
+
+  // Top-level fallbacks
+  const codeTop = pickFirstValid([
+    f?.carrierCode, f?.marketingCarrierCode, f?.operatingCarrierCode, f?.airlineCode, parseFlightNo(f?.flightNumber)?.code
+  ], "code");
+
+  const numTop = pickFirstValid([
+    f?.flightNumber, f?.number
+  ], "num");
+
+  // Combine best candidates
+  let code = (numFromSeg?.code) || codeFromSeg || codeTop || null;
+  let num  = (numFromSeg?.num)  || (numTop?.num) || null;
+
+  if(!code && parseFlightNo(f?.flightNumber)) {
+    const p = parseFlightNo(f.flightNumber); code=p.code; num=p.num;
+  }
+  // Build final printable values
+  let flightNo = (code && num) ? `${code} ${num}` : (code ? code : (num || "—"));
+
+  // Airline name
+  let airlineName = (f.airlineName||f.carrierName||f.airline||f.carrier||"").trim();
+  if(looksInvalid(airlineName)){
+    if(code) airlineName = CARRIER_NAMES[code] || code;
+  }
+  if(!airlineName) airlineName = code || "—";
+  if(looksInvalid(flightNo)) flightNo = code || "—";
+
+  return { airlineName, flightNo, carrierCode: code };
+}
+// ---------- end normalizer ----------
 
 // ====== PAYMENT SELECTOR ======
 const PAYMENT_TYPES = ["Credit Card","Debit Card","EMI","NetBanking","Wallet","UPI"];
@@ -310,10 +326,7 @@ function buildControlsBar(sideKey, flights, onChange){
   // Airline filter
   bar.appendChild(el("span","", "Airline:"));
   const airlineSel = document.createElement("select");
-  const airlines = Array.from(new Set((flights||[]).map(f=>{
-    const n = normalizeAirlineDisplay(f).airlineName;
-    return n || "";
-  }).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const airlines = Array.from(new Set((flights||[]).map(f=> normalizeAirlineDisplay(f).airlineName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
   airlineSel.appendChild(el("option","", "All"));
   airlineSel.firstChild.value = "ALL";
   airlines.forEach(a=>{ const o=el("option","",a); o.value=a; airlineSel.appendChild(o); });
@@ -372,7 +385,6 @@ function renderFlightList(container, flights, sideLabel){
   flights.forEach(f=>{
     const card = el("div","flight-card"); Object.assign(card.style,{border:"1px solid #e6e6e6",borderRadius:"10px",padding:"10px"});
 
-    // ---- CHANGED: use normalized airline/flight number
     const { airlineName, flightNo } = normalizeAirlineDisplay(f);
 
     const dep         = fmtTime(f.departureTime||f.departure);
