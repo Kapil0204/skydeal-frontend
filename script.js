@@ -121,64 +121,63 @@ function pickFirstValid(arr, type){
   return null;
 }
 
-// ====== NORMALIZE AIRLINE DISPLAY ======
+// ====== NORMALIZE AIRLINE DISPLAY (v2) ======
 function normalizeAirlineDisplay(f) {
-
   const CARRIER_NAME_BY_CODE = {
-    "6E": "IndiGo",
-    "AI": "Air India",
-    "IX": "Air India Express",
-    "I5": "AIX Connect",
-    "UK": "Vistara",
-    "SG": "SpiceJet",
-    "QP": "Akasa Air",
-    "G8": "Go First",
-    "9I": "Alliance Air",
-    // common international
-    "SQ": "Singapore Airlines",
-    "EK": "Emirates",
-    "QR": "Qatar Airways",
-    "EY": "Etihad Airways",
-    "BA": "British Airways",
-    "LH": "Lufthansa",
-    "AF": "Air France",
-    "KL": "KLM",
-    "MH": "Malaysia Airlines",
-    "TG": "Thai Airways",
+    "6E":"IndiGo","AI":"Air India","IX":"Air India Express","I5":"AIX Connect",
+    "UK":"Vistara","SG":"SpiceJet","QP":"Akasa Air","G8":"Go First","9I":"Alliance Air",
+    "SQ":"Singapore Airlines","EK":"Emirates","QR":"Qatar Airways","EY":"Etihad Airways",
+    "BA":"British Airways","LH":"Lufthansa","AF":"Air France","KL":"KLM",
+    "MH":"Malaysia Airlines","TG":"Thai Airways",
   };
 
-  // 1) Airline name
-  let name =
-    f.airlineName ||
-    f.carrierName ||
-    f.airline ||
-    f.carrier ||
-    "";
+  // Try to discover a usable carrier code from many possible places
+  const tryGetCode = () => {
+    const candidates = [
+      f.carrierCode,
+      f.airlineCode,
+      f.carrier,
+      f.airline,
+      f.validatingAirlineCodes && f.validatingAirlineCodes[0],
+      // nested segment spots
+      f.itineraries && f.itineraries[0] && f.itineraries[0].segments && f.itineraries[0].segments[0] && (
+        f.itineraries[0].segments[0].carrierCode ||
+        f.itineraries[0].segments[0].marketingCarrierCode ||
+        f.itineraries[0].segments[0].operatingCarrierCode
+      ),
+    ].filter(Boolean).map(String);
 
-  if (!name || /^-\d+$/.test(name)) {
-    const code = (f.carrierCode || "").toUpperCase();
-    if (CARRIER_NAME_BY_CODE[code]) {
-      name = CARRIER_NAME_BY_CODE[code];
-    } else {
-      name = code || "—";
+    for (const raw of candidates) {
+      const code = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (code.length >= 1 && code.length <= 3) return code;
     }
-  }
+    return "";
+  };
 
-  // 2) Flight Number
+  const code = tryGetCode();
+
+  // Airline name: if backend sent garbage (like "-32213" or empty), replace with mapped name
+  const rawName = (f.airlineName || f.carrierName || f.airline || f.carrier || "").toString().trim();
+  const looksBogus = !rawName || /^-?\d+$/.test(rawName); // only digits (maybe with a leading -)
+  let airlineName = looksBogus
+    ? (CARRIER_NAME_BY_CODE[code] || code || "—")
+    : rawName;
+
+  // Flight number: normalize
   let num = (f.flightNumber || f.number || "").toString().trim();
-  num = num.replace(/^[-\s]+/, ""); // remove leading "-"
+  num = num.replace(/^[-\s]+/, ""); // strip leading dash/spaces
 
-  const code = (f.carrierCode || "").toUpperCase();
-
-  if (!num && code) {
-    num = code;        // fallback
+  // If num already contains a code (e.g., "AI 610"), keep it
+  if (!/\b[A-Z0-9]{1,3}\s*\d+/.test(num)) {
+    // If num is just digits and we have a code, format "CODE 1234"
+    if (/^\d+$/.test(num) && code) num = `${code} ${num}`;
+    // If empty but we have a code, show just the code
+    if (!num && code) num = code;
   }
-  else if (/^\d+$/.test(num) && code) {
-    num = `${code} ${num}`; // convert "32213" → "AI 32213"
-  }
 
-  return { airlineName: name, flightNo: num };
+  return { airlineName, flightNo: num };
 }
+
 
 // ---------- end normalizer ----------
 
