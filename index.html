@@ -3,111 +3,126 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>SkyDeal: Find the Best Flight Offers</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="wrap">
+  <div class="app-shell">
     <header class="hero">
       <h1>SkyDeal: Find the Best Flight Offers</h1>
-
-      <div class="toolbar">
-        <input id="from" class="txt" placeholder="From (IATA e.g. BLR)" maxlength="3" />
-        <input id="to" class="txt" placeholder="To (IATA e.g. BOM)" maxlength="3" />
-
-        <input id="depart" class="txt" type="date" />
-        <input id="return" class="txt" type="date" />
-
-        <input id="pax" class="txt num" type="number" min="1" value="1" />
-        <select id="cabin" class="txt">
-          <option value="ECONOMY" selected>Economy</option>
-          <option value="PREMIUM_ECONOMY">Premium Economy</option>
-          <option value="BUSINESS">Business</option>
-          <option value="FIRST">First</option>
-        </select>
-
-        <div class="triptype">
-          <label><input type="radio" name="trip" value="one-way" id="oneWay" /> One Way</label>
-          <label><input type="radio" name="trip" value="round-trip" id="roundTrip" checked /> Round Trip</label>
-        </div>
-
-        <button id="paymentBtn" type="button" class="btn ghost">Select Payment Methods ▾</button>
-        <button id="searchBtn" type="button" class="btn primary">Search</button>
-      </div>
     </header>
 
-    <section class="columns">
-      <div class="col">
-        <div class="col-head">
-          <h2>Outbound Flights</h2>
-          <div class="filters">
-            <select id="outAirline" class="mini"></select>
-            <select id="outTime" class="mini">
-              <option value="">Any time</option>
-              <option value="morning">Morning (05–12)</option>
-              <option value="afternoon">Afternoon (12–17)</option>
-              <option value="evening">Evening (17–22)</option>
-              <option value="night">Night (22–05)</option>
-            </select>
-            <select id="outSort" class="mini">
-              <option value="price_asc">Sort: Price (asc)</option>
-              <option value="price_desc">Price (desc)</option>
-              <option value="dep_asc">Departure (asc)</option>
-              <option value="dep_desc">Departure (desc)</option>
-            </select>
-          </div>
+    <section class="search-card">
+      <div class="inputs-row">
+        <input id="fromInput" class="input" placeholder="BOM" />
+        <input id="toInput" class="input" placeholder="DEL" />
+        <input id="departInput" class="input" type="date" />
+        <input id="returnInput" class="input" type="date" />
+        <select id="passengersInput" class="input">
+          <option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option>
+        </select>
+        <select id="cabinInput" class="input">
+          <option>Economy</option><option>Premium Economy</option>
+          <option>Business</option>
+        </select>
+        <div class="trip-type">
+          <label><input type="radio" name="trip" value="one-way" /> One Way</label>
+          <label><input type="radio" name="trip" value="round-trip" checked /> Round Trip</label>
         </div>
-        <div id="outboundResults" class="results"></div>
+
+        <!-- Payment Selector Trigger -->
+        <button id="paymentTrigger" class="button ghost">2 selected ▾</button>
+        <button id="searchBtn" class="button primary">Search</button>
       </div>
 
-      <div class="col">
-        <div class="col-head">
-          <h2>Return Flights</h2>
-          <div class="filters">
-            <select id="retAirline" class="mini"></select>
-            <select id="retTime" class="mini">
-              <option value="">Any time</option>
-              <option value="morning">Morning (05–12)</option>
-              <option value="afternoon">Afternoon (12–17)</option>
-              <option value="evening">Evening (17–22)</option>
-              <option value="night">Night (22–05)</option>
-            </select>
-            <select id="retSort" class="mini">
-              <option value="price_asc">Sort: Price (asc)</option>
-              <option value="price_desc">Price (desc)</option>
-              <option value="dep_asc">Departure (asc)</option>
-              <option value="dep_desc">Departure (desc)</option>
-            </select>
+      <!-- Payment Selector Modal -->
+      <div id="paymentModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-panel">
+          <div class="modal-header">
+            <div class="tabs">
+              <button data-tab="creditCard" class="tab active">Credit Cards</button>
+              <button data-tab="debitCard" class="tab">Debit Cards</button>
+              <button data-tab="wallet" class="tab">Wallets</button>
+              <button data-tab="upi" class="tab">UPI</button>
+              <button data-tab="netBanking" class="tab">NetBanking</button>
+              <button data-tab="emi" class="tab">EMI</button>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <!-- Each tab’s list will be injected here -->
+            <div id="pmLists"></div>
+          </div>
+
+          <div class="modal-footer">
+            <button id="clearPM" class="button ghost">Clear</button>
+            <button id="donePM" class="button primary">Done</button>
           </div>
         </div>
-        <div id="returnResults" class="results"></div>
       </div>
     </section>
-  </div>
 
-  <!-- Payment Methods Popover -->
-  <div id="paymentPopover" class="popover hidden" role="dialog" aria-label="Payment Methods">
-    <div class="pm-header">
-      <div id="pmTabs" class="tabs"></div>
-    </div>
-    <div id="pmLists" class="pm-lists"></div>
-    <div class="pm-actions">
-      <button id="pmClear" class="btn ghost" type="button">Clear</button>
-      <button id="pmDone" class="btn primary" type="button">Done</button>
-    </div>
-  </div>
-
-  <!-- Compare Prices Modal -->
-  <div id="modal" class="modal hidden" role="dialog" aria-label="Portal Prices">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h3 id="modalTitle">Prices</h3>
-        <button id="modalClose" class="x">&times;</button>
+    <section class="results-grid">
+      <div class="results-col">
+        <div class="results-head">
+          <h2>Outbound Flights</h2>
+          <div class="row-controls">
+            <select id="outboundTimeFilter" class="input small">
+              <option value="any">Any time</option>
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+              <option value="night">Night</option>
+            </select>
+            <select id="sortOutbound" class="input small">
+              <option value="price-asc">Sort: Price (asc)</option>
+              <option value="price-desc">Sort: Price (desc)</option>
+              <option value="dep-asc">Sort: Departure (asc)</option>
+              <option value="dep-desc">Sort: Departure (desc)</option>
+            </select>
+          </div>
+        </div>
+        <div id="outboundList" class="card-list" aria-live="polite">No flights</div>
       </div>
-      <div id="modalBody" class="modal-body"></div>
+
+      <div class="results-col">
+        <div class="results-head">
+          <h2>Return Flights</h2>
+          <div class="row-controls">
+            <select id="returnTimeFilter" class="input small">
+              <option value="any">Any time</option>
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+              <option value="night">Night</option>
+            </select>
+            <select id="sortReturn" class="input small">
+              <option value="price-asc">Sort: Price (asc)</option>
+              <option value="price-desc">Sort: Price (desc)</option>
+              <option value="dep-asc">Sort: Departure (asc)</option>
+              <option value="dep-desc">Sort: Departure (desc)</option>
+            </select>
+          </div>
+        </div>
+        <div id="returnList" class="card-list" aria-live="polite">No flights</div>
+      </div>
+    </section>
+
+    <!-- Modal for portal prices (kept as-is behavior) -->
+    <div id="portalModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h3 id="portalTitle">Prices across portals</h3>
+        </div>
+        <div id="portalBody" class="modal-body"></div>
+        <div class="modal-footer">
+          <button id="closePortal" class="button primary">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script src="./script.js"></script>
 </body>
 </html>
