@@ -1,391 +1,344 @@
-/******************************
- * SKYDEAL FRONTEND – DO NOT CHANGE LAYOUT
- * Only logic restored: backend search + tabbed payment selector (live from Mongo)
- ******************************/
-
-/* ========= CONFIG (same names as before) ========= */
+/***** CONFIG *****/
 const BACKEND_URL = "https://skydeal-backend.onrender.com/search";
 const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options";
 
-/* ========= SELECTORS (adjust ONLY if your IDs differ) ========= */
-const els = {
-  from:        document.querySelector('#from'),
-  to:          document.querySelector('#to'),
-  departDate:  document.querySelector('#departDate'),
-  returnDate:  document.querySelector('#returnDate'),
-  pax:         document.querySelector('#passengers'),
-  cabin:       document.querySelector('#cabin'),           // Economy / Business etc
-  oneWay:      document.querySelector('#oneWay'),
-  roundTrip:   document.querySelector('#roundTrip'),
-  searchBtn:   document.querySelector('#searchBtn'),
-
-  // Payment selector button + popover container we already had
-  paymentBtn:  document.querySelector('#paymentBtn'),
-  pmPopover:   document.querySelector('#paymentPopover'),  // the floating panel/div
-  pmTabs:      document.querySelector('#pmTabs'),          // the tab buttons container
-  pmLists:     document.querySelector('#pmLists'),         // area where lists render
-  pmDone:      document.querySelector('#pmDone'),
-  pmClear:     document.querySelector('#pmClear'),
-
-  // Results (existing two columns)
-  outboundWrap: document.querySelector('#outboundResults'),
-  returnWrap:   document.querySelector('#returnResults'),
-
-  // Optional filters you already had—leave wired if present (safe to be null)
-  outAirlineFilter: document.querySelector('#outAirlineFilter'),
-  outTimeFilter:    document.querySelector('#outTimeFilter'),
-  retAirlineFilter: document.querySelector('#retAirlineFilter'),
-  retTimeFilter:    document.querySelector('#retTimeFilter'),
-  sortSelect:       document.querySelector('#sortSelect')
-};
-
-/* ========= STATE ========= */
+/***** STATE *****/
 const state = {
-  paymentCatalog: {
-    // will be filled live from backend:
-    // { creditCard: [{label, key}], debitCard:[], wallets:[], netBanking:[], upi:[] }
-  },
-  selectedPayments: new Set(), // store keys like "credit|ICICI Bank Credit Card"
-  lastSearch: null,
+  paymentOptions: null,     // fetched from /payment-options
+  selectedPayments: new Set(),
+  lastSearchParams: null,
+  raw: { outbound: [], ret: [] },
 };
 
-/* ========= UTIL ========= */
-const fmtINR = n => Number(n).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
-const val = (el, d="") => (el && el.value || d).trim().toUpperCase ? (el.value || d).trim().toUpperCase() : (el?.value || d);
+/***** UTILS *****/
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => root.querySelectorAll(sel);
 
-function readTripType() {
-  if (els.roundTrip && els.roundTrip.checked) return 'round-trip';
-  return 'one-way';
+function fmtINR(n){ const v = Number(n||0); return isFinite(v) ? v.toLocaleString("en-IN",{maximumFractionDigits:2}) : "--"; }
+function pad2(n){ return String(n).padStart(2,"0"); }
+function toTimeStr(isoLike){ // supports "11:00" or "2025-12-15T11:00"
+  if(!isoLike) return "--:--";
+  if(/^\d{2}:\d{2}$/.test(isoLike)) return isoLike;
+  const d = new Date(isoLike);
+  if(isNaN(d)) return "--:--";
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function minutesFromHHMM(hhmm){ if(!/^\d{2}:\d{2}$/.test(hhmm)) return Number.POSITIVE_INFINITY; const [h,m]=hhmm.split(":").map(Number); return h*60+m; }
+function inBucket(hhmm, bucket){
+  if(!bucket) return true;
+  const t = minutesFromHHMM(hhmm);
+  if(bucket==="morning") return t>=300 && t<720;
+  if(bucket==="afternoon") return t>=720 && t<1020;
+  if(bucket==="evening") return t>=1020 && t<1320;
+  if(bucket==="night") return (t>=1320 && t<1440) || t<300;
+  return true;
+}
+function normalizeIata(v){ return (v||"").trim().toUpperCase().slice(0,3); }
+
+/***** PAYMENT METHODS POPOVER *****/
+function buildPaymentTabs(data){
+  const tabs = [];
+  if(data.creditCards?.length) tabs.push(["creditCards","Credit Cards"]);
+  if(data.debitCards?.length)  tabs.push(["debitCards","Debit Cards"]);
+  if(data.wallets?.length)     tabs.push(["wallets","Wallets"]);
+  if(data.upi?.length)         tabs.push(["upi","UPI"]);
+  if(data.netbanking?.length)  tabs.push(["netbanking","NetBanking"]);
+  return tabs;
 }
 
-function formatTime(hhmm) {
-  // accepts "11:00" or ISO, returns "11:00"
-  if (!hhmm) return "--:--";
-  if (/^\d{2}:\d{2}$/.test(hhmm)) return hhmm;
-  const d = new Date(hhmm);
-  if (isNaN(d)) return "--:--";
-  return d.toTimeString().slice(0,5);
+function renderPaymentPopover(){
+  const pop = $("#paymentPopover");
+  const tabsWrap = $("#pmTabs");
+  const lists = $("#pmLists");
+  tabsWrap.innerHTML = "";
+  lists.innerHTML = "";
+
+  const data = state.paymentOptions || {};
+  const tabs = buildPaymentTabs(data);
+
+  if(!tabs.length){
+    lists.innerHTML = `<div class="pm-group"><em>No payment options found.</em></div>`;
+    return;
+  }
+
+  tabs.forEach(([key, label], i) => {
+    const t = document.createElement("button");
+    t.className = `tab ${i===0?"active":""}`;
+    t.dataset.key = key;
+    t.textContent = label;
+    tabsWrap.appendChild(t);
+
+    const group = document.createElement("div");
+    group.className = `pm-group`;
+    group.dataset.key = key;
+    group.style.display = i===0 ? "block" : "none";
+
+    const list = data[key] || [];
+    list.forEach(opt => {
+      const id = `${key}:${opt.value || opt.label || opt}`;
+      const title = opt.label || String(opt);
+      const row = document.createElement("label");
+      row.className = "pm-item";
+      row.innerHTML = `
+        <input type="checkbox" value="${id}">
+        <span>${title}</span>
+      `;
+      const cb = row.querySelector("input");
+      if(state.selectedPayments.has(id)) cb.checked = true;
+      group.appendChild(row);
+    });
+
+    lists.appendChild(group);
+  });
 }
 
-/* ========= PAYMENT OPTIONS (TABBED) ========= */
-const TABS = [
-  { key: 'creditCard',  label: 'Credit Card' },
-  { key: 'debitCard',   label: 'Debit Card' },
-  { key: 'wallets',     label: 'Wallets' },
-  { key: 'netBanking',  label: 'NetBanking' },
-  { key: 'upi',         label: 'UPI' },
-];
+function togglePaymentPopover(force){
+  const pop = $("#paymentPopover");
+  const btn = $("#paymentBtn");
+  if(force === true){ pop.classList.remove("hidden"); positionPopover(btn, pop); return; }
+  if(force === false){ pop.classList.add("hidden"); return; }
+  pop.classList.toggle("hidden");
+  if(!pop.classList.contains("hidden")) positionPopover(btn, pop);
+}
 
-async function loadPaymentOptions() {
-  try {
-    const r = await fetch(PAYMENT_OPTIONS_URL);
-    if (!r.ok) throw new Error('Failed to load payment options');
+function positionPopover(anchor, pop){
+  const r = anchor.getBoundingClientRect();
+  pop.style.top = `${r.bottom + window.scrollY + 8}px`;
+  pop.style.left = `${Math.min(r.left + window.scrollX, window.innerWidth-460)}px`;
+}
+
+function updatePaymentBtnLabel(){
+  const count = state.selectedPayments.size;
+  $("#paymentBtn").textContent = count ? `${count} selected ▾` : "Select Payment Methods ▾";
+}
+
+/***** RENDER RESULTS *****/
+function airlineSet(list){
+  const s = new Set(list.map(x=>x.airlineName).filter(Boolean));
+  return ["All Airlines", ...Array.from(s).sort()];
+}
+function applyFilters(list, type){
+  const airlineSel = $(`#${type}Airline`).value || "";
+  const bucketSel  = $(`#${type}Time`).value || "";
+  let out = list.slice();
+  if(airlineSel && airlineSel!=="All Airlines") out = out.filter(x => x.airlineName===airlineSel);
+  if(bucketSel) out = out.filter(x => inBucket(x.departure, bucketSel));
+
+  const sortSel = $(`#${type}Sort`).value;
+  if(sortSel==="price_asc") out.sort((a,b)=>Number(a.price)-Number(b.price));
+  if(sortSel==="price_desc") out.sort((a,b)=>Number(b.price)-Number(a.price));
+  if(sortSel==="dep_asc") out.sort((a,b)=>minutesFromHHMM(a.departure)-minutesFromHHMM(b.departure));
+  if(sortSel==="dep_desc") out.sort((a,b)=>minutesFromHHMM(b.departure)-minutesFromHHMM(a.departure));
+  return out;
+}
+
+function renderResults(type, list){
+  const box = type==="out" ? $("#outboundResults") : $("#returnResults");
+  box.innerHTML = "";
+  if(!list.length){ box.innerHTML = `<div class="badge">No flights</div>`; return; }
+
+  const airlines = airlineSet(list);
+  const sel = $(`#${type==="out"?"out":"ret"}Airline`);
+  sel.innerHTML = airlines.map(a => `<option value="${a}">${a}</option>`).join("");
+
+  applyFilters(list, type==="out"?"out":"ret").forEach((f, idx) => {
+    const node = document.createElement("div");
+    node.className = "card";
+    node.innerHTML = `
+      <div class="meta">
+        <span class="badge">${f.airlineName || "Airline"}</span>
+        <span class="badge">#${f.flightNumber || "--"}</span>
+        <span>${f.departure} → ${f.arrival}</span>
+        <span class="badge">${f.stops ? `${f.stops} stop` : "Nonstop"}</span>
+      </div>
+      <div class="cta">
+        <div class="price">₹ ${fmtINR(f.price)}</div>
+        <button class="btn ghost compareBtn" data-type="${type}" data-idx="${idx}">Compare Prices</button>
+      </div>
+    `;
+    box.appendChild(node);
+  });
+}
+
+/***** MODAL *****/
+function showPricesModal(title, portalPrices){
+  $("#modalTitle").textContent = title;
+  const body = $("#modalBody");
+  body.innerHTML = portalPrices.map(p => {
+    const deal = p.appliedOffer ? `
+      <div class="offer">${p.appliedOffer.title}${p.appliedOffer.couponCode ? ` · Code: ${p.appliedOffer.couponCode}`:""}</div>` : "";
+    return `
+      <div class="price-row">
+        <div>
+          <div><strong>${p.portal}</strong></div>
+          ${deal}
+        </div>
+        <div class="final">₹ ${fmtINR(p.finalPrice)}</div>
+      </div>`;
+  }).join("");
+  $("#modal").classList.remove("hidden");
+}
+function closeModal(){ $("#modal").classList.add("hidden"); }
+
+/***** SEARCH *****/
+async function doSearch(){
+  const from = normalizeIata($("#from").value);
+  const to = normalizeIata($("#to").value);
+  const departureDate = $("#depart").value;
+  const returnDate = $("#return").value || null;
+  const tripType = $("#roundTrip").checked ? "round-trip" : "one-way";
+  const passengers = Math.max(1, Number($("#pax").value||1));
+  const travelClass = $("#cabin").value || "ECONOMY";
+
+  if(!from || !to || !departureDate){
+    alert("Please enter From, To and Departure date.");
+    return;
+  }
+
+  const payload = { from, to, departureDate, returnDate, tripType, passengers, travelClass };
+
+  $("#outboundResults").innerHTML = `<div class="badge">Loading…</div>`;
+  $("#returnResults").innerHTML = `<div class="badge">Loading…</div>`;
+
+  try{
+    const r = await fetch(BACKEND_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
-    // Expecting shape: { creditCard:[{label,key}], debitCard:[], wallets:[], netBanking:[], upi:[] }
-    state.paymentCatalog = data || {};
-    buildPaymentTabs();
-  } catch (e) {
-    console.error('Payment options error:', e);
-    // Fallback minimal catalog so the UI still works
-    state.paymentCatalog = {
-      creditCard: [
-        { label: 'ICICI Bank Credit Card', key: 'credit|ICICI' },
-        { label: 'HDFC Bank Credit Card',  key: 'credit|HDFC'  },
-        { label: 'Axis Bank Credit Card',  key: 'credit|AXIS'  },
-        { label: 'SBI Credit Card',        key: 'credit|SBI'   },
-      ],
-      debitCard: [],
-      wallets: [],
-      netBanking: [],
-      upi: []
-    };
-    buildPaymentTabs();
+
+    state.lastSearchParams = payload;
+    state.raw.outbound = Array.isArray(data.outboundFlights) ? data.outboundFlights : [];
+    state.raw.ret      = Array.isArray(data.returnFlights) ? data.returnFlights : [];
+
+    // render
+    renderResults("out", state.raw.outbound);
+    renderResults("ret", state.raw.ret);
+  }catch(e){
+    console.error("Search failed:", e);
+    $("#outboundResults").innerHTML = `<div class="badge">No flights</div>`;
+    $("#returnResults").innerHTML = `<div class="badge">No flights</div>`;
   }
 }
 
-function buildPaymentTabs() {
-  if (!els.pmTabs || !els.pmLists) return; // if your markup doesn’t include popover yet
-  els.pmTabs.innerHTML = '';
-  els.pmLists.innerHTML = '';
-
-  // Tabs
-  TABS.forEach((t, i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pm-tab' + (i===0 ? ' active':'');
-    b.textContent = t.label;
-    b.dataset.tab = t.key;
-    b.addEventListener('click', () => switchTab(t.key));
-    els.pmTabs.appendChild(b);
-  });
-
-  // Lists (one per tab)
-  TABS.forEach((t, i) => {
-    const listWrap = document.createElement('div');
-    listWrap.className = 'pm-list' + (i===0 ? '' : ' hidden');
-    listWrap.dataset.for = t.key;
-
-    const items = state.paymentCatalog[t.key] || [];
-    if (!items.length) {
-      const p = document.createElement('p');
-      p.className = 'pm-empty';
-      p.textContent = 'No options';
-      listWrap.appendChild(p);
-    } else {
-      items.forEach(({ label, key }) => {
-        // Normalize keys if backend doesn’t provide them
-        const k = key || `${t.key}|${label}`;
-        const row = document.createElement('label');
-        row.className = 'pm-row';
-
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = state.selectedPayments.has(k);
-        cb.addEventListener('change', () => {
-          if (cb.checked) state.selectedPayments.add(k);
-          else state.selectedPayments.delete(k);
-          updatePaymentBtnLabel();
-        });
-
-        const span = document.createElement('span');
-        span.textContent = label;
-
-        row.appendChild(cb);
-        row.appendChild(span);
-        row.dataset.key = k;
-        listWrap.appendChild(row);
-      });
-    }
-    els.pmLists.appendChild(listWrap);
-  });
-
+/***** INIT *****/
+async function loadPaymentOptions(){
+  try{
+    const r = await fetch(PAYMENT_OPTIONS_URL);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    state.paymentOptions = await r.json();
+  }catch(e){
+    console.warn("Payment options fetch failed; falling back to defaults.", e);
+    // fallback minimal groups
+    state.paymentOptions = {
+      creditCards: [
+        {label:"ICICI Bank Credit Card", value:"credit:ICICI"},
+        {label:"HDFC Bank Credit Card", value:"credit:HDFC"},
+        {label:"Axis Bank Credit Card", value:"credit:AXIS"},
+        {label:"SBI Credit Card", value:"credit:SBI"},
+      ],
+      debitCards: [],
+      wallets: [],
+      upi: [{label:"UPI", value:"upi:any"}],
+      netbanking: [{label:"NetBanking", value:"nb:any"}]
+    };
+  }
+  renderPaymentPopover();
   updatePaymentBtnLabel();
 }
 
-function switchTab(key) {
-  // buttons
-  els.pmTabs.querySelectorAll('.pm-tab').forEach(b=>{
-    b.classList.toggle('active', b.dataset.tab===key);
-  });
-  // lists
-  els.pmLists.querySelectorAll('.pm-list').forEach(w=>{
-    w.classList.toggle('hidden', w.dataset.for!==key);
-  });
-}
-
-function updatePaymentBtnLabel() {
-  if (!els.paymentBtn) return;
-  const count = state.selectedPayments.size;
-  els.paymentBtn.querySelector('.pm-label')?.remove();
-
-  const span = document.createElement('span');
-  span.className = 'pm-label';
-  span.textContent = count ? `${count} selected` : 'Select Payment Methods';
-  els.paymentBtn.appendChild(span);
-}
-
-/* popover open/close */
-function togglePaymentPopover(show) {
-  if (!els.pmPopover || !els.paymentBtn) return;
-  const visible = show ?? els.pmPopover.classList.contains('hidden');
-  els.pmPopover.classList.toggle('hidden', !visible);
-  if (visible) positionPopover();
-}
-function positionPopover() {
-  // simple anchor below the button
-  const r = els.paymentBtn.getBoundingClientRect();
-  Object.assign(els.pmPopover.style, {
-    position: 'absolute',
-    left: `${r.left}px`,
-    top: `${r.bottom + 8}px`
-  });
-}
-document.addEventListener('click', (e)=>{
-  if (!els.pmPopover || els.pmPopover.classList.contains('hidden')) return;
-  const within = e.target===els.pmPopover || els.pmPopover.contains(e.target) || e.target===els.paymentBtn || els.paymentBtn.contains(e.target);
-  if (!within) togglePaymentPopover(false);
-});
-
-/* ========= SEARCH ========= */
-function getSelectedPaymentLabels() {
-  // Pass selected payments to backend as labels if needed later; currently backend applies offers automatically
-  return Array.from(state.selectedPayments);
-}
-
-async function doSearch() {
-  // Read fields without altering layout
-  const from = els.from?.value?.trim().toUpperCase() || '';
-  const to = els.to?.value?.trim().toUpperCase() || '';
-  const departureDate = els.departDate?.value || '';
-  const returnDate = els.returnDate?.value || '';
-  const tripType = readTripType();
-  const passengers = Math.max(1, parseInt(els.pax?.value || '1', 10));
-  const travelClass = (els.cabin?.value || 'ECONOMY').toUpperCase();
-
-  if (!from || !to || !departureDate) {
-    renderEmptyResults('Please enter From, To and Departure date.');
-    return;
-  }
-
-  // Build payload—this matches the backend you just deployed
-  const payload = {
-    from, to, departureDate, passengers, travelClass, tripType
-  };
-  if (tripType === 'round-trip' && returnDate) payload.returnDate = returnDate;
-
-  // (Optional) send selected payment method keys if you want to use them later on the backend
-  payload.paymentMethods = getSelectedPaymentLabels();
-
-  try {
-    setLoading(true);
-    const r = await fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (!r.ok) throw new Error(`Search failed (${r.status})`);
-    const data = await r.json();
-    state.lastSearch = data;
-    renderResults(data);
-  } catch (e) {
-    console.error('Search error:', e);
-    renderEmptyResults('No flights found.');
-  } finally {
-    setLoading(false);
-  }
-}
-
-/* ========= RENDER ========= */
-function clearNode(n){
-  if (!n) return; while(n.firstChild) n.removeChild(n.firstChild);
-}
-function renderEmptyResults(msg){
-  clearNode(els.outboundWrap);
-  clearNode(els.returnWrap);
-  if (els.outboundWrap) {
-    const p=document.createElement('p'); p.className='muted'; p.textContent=msg||'No flights';
-    els.outboundWrap.appendChild(p);
-  }
-  if (els.returnWrap) {
-    const p=document.createElement('p'); p.className='muted'; p.textContent=msg||'No flights';
-    els.returnWrap.appendChild(p);
-  }
-}
-
-function renderResults(data){
-  const out = Array.isArray(data?.outboundFlights) ? data.outboundFlights : [];
-  const ret = Array.isArray(data?.returnFlights) ? data.returnFlights : [];
-
-  renderList(els.outboundWrap, out);
-  renderList(els.returnWrap, ret);
-}
-
-function renderList(container, list){
-  if (!container) return;
-  clearNode(container);
-  if (!list.length){
-    const p=document.createElement('p'); p.className='muted'; p.textContent='No flights';
-    container.appendChild(p);
-    return;
-  }
-  list.forEach(f=>{
-    // f is already marked up by backend: airlineName, flightNumber, departure, arrival, price, portalPrices[]
-    const card = document.createElement('div');
-    card.className = 'flight-card';
-
-    const header = document.createElement('div');
-    header.className = 'fc-head';
-    header.textContent = `${f.airlineName || 'Airline'} ${f.flightNumber || ''}`.trim();
-
-    const times = document.createElement('div');
-    times.className = 'fc-times';
-    times.textContent = `${formatTime(f.departure)} → ${formatTime(f.arrival)}`;
-
-    const price = document.createElement('div');
-    price.className = 'fc-price';
-    price.textContent = fmtINR(f.price || 0);
-
-    // Best portal (already computed by backend incl. +₹250 & offers)
-    const portals = Array.isArray(f.portalPrices) ? f.portalPrices : [];
-    const best = portals.slice().sort((a,b)=>(a.finalPrice??1e15)-(b.finalPrice??1e15))[0];
-
-    const deal = document.createElement('div');
-    deal.className = 'fc-deal';
-    if (best) {
-      const line = [];
-      line.push(best.portal);
-      line.push(`→ ${fmtINR(best.finalPrice)}`);
-      if (best.appliedOffer) {
-        const o = best.appliedOffer;
-        // backend sends normalized fields; show compact note
-        const note = [];
-        if (o.couponCode) note.push(o.couponCode);
-        if (o.discountPercent) note.push(`${o.discountPercent}%`);
-        if (o.maxDiscountAmount) note.push(`cap ${fmtINR(o.maxDiscountAmount)}`);
-        deal.textContent = `${line.join(' ')}  •  ${note.join(' | ')}`;
-      } else {
-        deal.textContent = line.join(' ');
-      }
-    } else {
-      deal.textContent = '—';
-    }
-
-    card.appendChild(header);
-    card.appendChild(times);
-    card.appendChild(price);
-    card.appendChild(deal);
-    container.appendChild(card);
-  });
-}
-
-function setLoading(on){
-  document.body.classList.toggle('loading', !!on);
-}
-
-/* ========= WIRE UP ========= */
 function wireEvents(){
-  // Search
-  els.searchBtn && els.searchBtn.addEventListener('click', doSearch);
+  // Ensure return date toggles with trip type
+  const toggleReturn = () => {
+    const rt = $("#roundTrip").checked;
+    $("#return").disabled = !rt;
+    $("#return").parentElement?.classList?.toggle?.("disabled", !rt);
+  };
+  $("#oneWay").addEventListener("change", toggleReturn);
+  $("#roundTrip").addEventListener("change", toggleReturn);
+  toggleReturn();
 
-  // Trip toggle hide/show return date (no layout change)
-  if (els.oneWay && els.returnDate) {
-    els.oneWay.addEventListener('change', () => {
-      els.returnDate.closest('.return-date-wrap')?.classList.toggle('hidden', true);
-    });
-  }
-  if (els.roundTrip && els.returnDate) {
-    els.roundTrip.addEventListener('change', () => {
-      els.returnDate.closest('.return-date-wrap')?.classList.toggle('hidden', false);
-    });
-  }
-
-  // Payment popover
-  if (els.paymentBtn) {
-    els.paymentBtn.addEventListener('click', () => togglePaymentPopover());
-  }
-  els.pmDone && els.pmDone.addEventListener('click', ()=> togglePaymentPopover(false));
-  els.pmClear && els.pmClear.addEventListener('click', ()=>{
+  // Buttons
+  $("#paymentBtn").addEventListener("click", () => togglePaymentPopover());
+  $("#pmDone").addEventListener("click", () => { togglePaymentPopover(false); updatePaymentBtnLabel(); });
+  $("#pmClear").addEventListener("click", () => {
     state.selectedPayments.clear();
-    // uncheck all
-    els.pmLists?.querySelectorAll('input[type="checkbox"]')?.forEach(cb=>cb.checked=false);
+    $$("#pmLists input[type=checkbox]").forEach(cb => cb.checked = false);
     updatePaymentBtnLabel();
   });
+  $("#searchBtn").addEventListener("click", doSearch);
 
-  // (Optional) filters you already had
-  [els.outAirlineFilter, els.outTimeFilter, els.retAirlineFilter, els.retTimeFilter, els.sortSelect]
-    .filter(Boolean)
-    .forEach(el => el.addEventListener('change', ()=> {
-      // keep it simple: re-render from lastSearch; your existing CSS/HTML stays as-is
-      if (state.lastSearch) renderResults(state.lastSearch);
-    }));
+  // Tabs switching
+  $("#pmTabs").addEventListener("click", (e)=>{
+    const tab = e.target.closest(".tab");
+    if(!tab) return;
+    $$(".tab").forEach(x=>x.classList.remove("active"));
+    tab.classList.add("active");
+    const key = tab.dataset.key;
+    $$("#pmLists .pm-group").forEach(g => g.style.display = (g.dataset.key===key) ? "block" : "none");
+  });
+
+  // Checkbox selections
+  $("#pmLists").addEventListener("change", (e)=>{
+    const cb = e.target;
+    if(cb && cb.matches("input[type=checkbox]")){
+      if(cb.checked) state.selectedPayments.add(cb.value);
+      else state.selectedPayments.delete(cb.value);
+      updatePaymentBtnLabel();
+    }
+  });
+
+  // Compare prices modal (event delegation)
+  document.addEventListener("click", (e)=>{
+    const c = e.target.closest(".compareBtn");
+    if(c){
+      const type = c.dataset.type; const idx = Number(c.dataset.idx);
+      const list = type==="out" ? applyFilters(state.raw.outbound, "out") : applyFilters(state.raw.ret, "ret");
+      const f = list[idx]; if(!f) return;
+      showPricesModal(`${f.airlineName || "Flight"} · ${f.departure} → ${f.arrival}`, f.portalPrices||[]);
+    }
+  });
+  $("#modalClose").addEventListener("click", closeModal);
+  $("#modal").addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
+
+  // Filters re-render
+  ["outAirline","outTime","outSort"].forEach(id => {
+    $(`#${id}`).addEventListener("change", () => renderResults("out", state.raw.outbound));
+  });
+  ["retAirline","retTime","retSort"].forEach(id => {
+    $(`#${id}`).addEventListener("change", () => renderResults("ret", state.raw.ret));
+  });
+
+  // Close popover on outside click
+  document.addEventListener("click", (e)=>{
+    const pop = $("#paymentPopover");
+    if(pop.classList.contains("hidden")) return;
+    if(!e.target.closest("#paymentPopover") && !e.target.closest("#paymentBtn")){
+      togglePaymentPopover(false);
+    }
+  });
+
+  // Position popover on resize/scroll
+  window.addEventListener("resize", ()=>{ if(!$("#paymentPopover").classList.contains("hidden")) positionPopover($("#paymentBtn"), $("#paymentPopover")); });
+  window.addEventListener("scroll", ()=>{ if(!$("#paymentPopover").classList.contains("hidden")) positionPopover($("#paymentBtn"), $("#paymentPopover")); });
 }
 
-/* ========= INIT ========= */
-(function init(){
+async function init(){
+  // sensible defaults for today/today+2
+  const today = new Date();
+  const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  $("#depart").value = toISO(today);
+  const ret = new Date(today); ret.setDate(today.getDate()+2);
+  $("#return").value = toISO(ret);
+
+  await loadPaymentOptions();
   wireEvents();
-  loadPaymentOptions(); // build the tabbed selector from Mongo
-  // default: show return date if round trip is on
-  if (els.roundTrip?.checked && els.returnDate){
-    els.returnDate.closest('.return-date-wrap')?.classList.remove('hidden');
-  }
-})();
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", init);
+}else{
+  init();
+}
