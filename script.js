@@ -17,6 +17,76 @@ function toISOFromInput(str){
   const d=new Date(s); return isNaN(d)?"":d.toISOString().slice(0,10);
 }
 function timeToMinutes(t){ if(!t||!/\d{2}:\d{2}/.test(t)) return Number.POSITIVE_INFINITY; const [h,m]=t.split(":").map(Number); return h*60+m; }
+// ====== AIRLINE FALLBACKS (carrierCode → name) ======
+const CARRIER_NAME_BY_CODE = {
+  // India + common
+  "6E": "IndiGo",
+  "AI": "Air India",
+  "IX": "Air India Express",
+  "I5": "AIX Connect",
+  "UK": "Vistara",
+  "SG": "SpiceJet",
+  "QP": "Akasa Air",
+  "G8": "Go First",
+  "9I": "Alliance Air",
+
+  // add a few frequent internationals we often see
+  "SQ": "Singapore Airlines",
+  "EK": "Emirates",
+  "QR": "Qatar Airways",
+  "EY": "Etihad Airways",
+  "BA": "British Airways",
+  "LH": "Lufthansa",
+  "AF": "Air France",
+  "KL": "KLM",
+  "MH": "Malaysia Airlines",
+  "TG": "Thai Airways",
+};
+
+function resolveAirlineName(f) {
+  // Prefer any present name from backend
+  const v =
+    f.airlineName ||
+    f.carrierName ||
+    f.airline ||
+    f.carrier ||
+    "";
+
+  // if we already have something meaningful, use it
+  if (typeof v === "string" && v.trim() && !/^-\d+$/.test(v.trim())) {
+    return v.trim();
+  }
+
+  // else fallback to mapping from carrierCode
+  const code = (f.carrierCode || "").toUpperCase().trim();
+  if (code && CARRIER_NAME_BY_CODE[code]) return CARRIER_NAME_BY_CODE[code];
+
+  // fallback last-resort
+  return code || "—";
+}
+
+function resolveFlightNumber(f) {
+  // Try backend values first
+  let num = (f.flightNumber || f.number || "").toString().trim();
+
+  // If backend sent something like "-32213" or just a number, normalize it
+  num = num.replace(/^[-\s]+/, ""); // strip any leading dashes/spaces
+
+  const code = (f.carrierCode || "").toUpperCase().trim();
+
+  // If it already contains a code (e.g., "AI 618") just return it
+  if (/\b[A-Z0-9]{1,2}\s*\d+/.test(num)) return num;
+
+  // If we’ve got only digits and a code, build "CODE 1234"
+  if (code && /^\d+$/.test(num)) return `${code} ${num}`;
+
+  // If we have only code or only number, return what we have
+  if (code && !num) return code;
+  if (num) return num;
+
+  return ""; // nothing available
+}
+
 
 // ---------- Airline display normalizer (enhanced) ----------
 const CARRIER_NAMES = {
@@ -51,48 +121,65 @@ function pickFirstValid(arr, type){
   return null;
 }
 
-function normalizeAirlineDisplay(f){
-  // Prefer a clean pair from the first segment
-  const seg = firstSegment(f);
+// ====== NORMALIZE AIRLINE DISPLAY ======
+function normalizeAirlineDisplay(f) {
 
-  const codeFromSeg = pickFirstValid([
-    seg?.marketingCarrierCode, seg?.carrierCode, seg?.operatingCarrierCode,
-    seg?.airline, seg?.airlineCode
-  ], "code");
+  const CARRIER_NAME_BY_CODE = {
+    "6E": "IndiGo",
+    "AI": "Air India",
+    "IX": "Air India Express",
+    "I5": "AIX Connect",
+    "UK": "Vistara",
+    "SG": "SpiceJet",
+    "QP": "Akasa Air",
+    "G8": "Go First",
+    "9I": "Alliance Air",
+    // common international
+    "SQ": "Singapore Airlines",
+    "EK": "Emirates",
+    "QR": "Qatar Airways",
+    "EY": "Etihad Airways",
+    "BA": "British Airways",
+    "LH": "Lufthansa",
+    "AF": "Air France",
+    "KL": "KLM",
+    "MH": "Malaysia Airlines",
+    "TG": "Thai Airways",
+  };
 
-  const numFromSeg = pickFirstValid([
-    seg?.marketingFlightNumber, seg?.flightNumber, seg?.number
-  ], "num");
+  // 1) Airline name
+  let name =
+    f.airlineName ||
+    f.carrierName ||
+    f.airline ||
+    f.carrier ||
+    "";
 
-  // Top-level fallbacks
-  const codeTop = pickFirstValid([
-    f?.carrierCode, f?.marketingCarrierCode, f?.operatingCarrierCode, f?.airlineCode, parseFlightNo(f?.flightNumber)?.code
-  ], "code");
-
-  const numTop = pickFirstValid([
-    f?.flightNumber, f?.number
-  ], "num");
-
-  // Combine best candidates
-  let code = (numFromSeg?.code) || codeFromSeg || codeTop || null;
-  let num  = (numFromSeg?.num)  || (numTop?.num) || null;
-
-  if(!code && parseFlightNo(f?.flightNumber)) {
-    const p = parseFlightNo(f.flightNumber); code=p.code; num=p.num;
+  if (!name || /^-\d+$/.test(name)) {
+    const code = (f.carrierCode || "").toUpperCase();
+    if (CARRIER_NAME_BY_CODE[code]) {
+      name = CARRIER_NAME_BY_CODE[code];
+    } else {
+      name = code || "—";
+    }
   }
-  // Build final printable values
-  let flightNo = (code && num) ? `${code} ${num}` : (code ? code : (num || "—"));
 
-  // Airline name
-  let airlineName = (f.airlineName||f.carrierName||f.airline||f.carrier||"").trim();
-  if(looksInvalid(airlineName)){
-    if(code) airlineName = CARRIER_NAMES[code] || code;
+  // 2) Flight Number
+  let num = (f.flightNumber || f.number || "").toString().trim();
+  num = num.replace(/^[-\s]+/, ""); // remove leading "-"
+
+  const code = (f.carrierCode || "").toUpperCase();
+
+  if (!num && code) {
+    num = code;        // fallback
   }
-  if(!airlineName) airlineName = code || "—";
-  if(looksInvalid(flightNo)) flightNo = code || "—";
+  else if (/^\d+$/.test(num) && code) {
+    num = `${code} ${num}`; // convert "32213" → "AI 32213"
+  }
 
-  return { airlineName, flightNo, carrierCode: code };
+  return { airlineName: name, flightNo: num };
 }
+
 // ---------- end normalizer ----------
 
 // ====== PAYMENT SELECTOR ======
