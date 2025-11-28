@@ -4,31 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="./style.css" />
 </head>
-  <body>
+<body>
   <div class="app">
-    <h1>SkyDeal: Find the Best Flight Offers</h1>
+    <div class="search-card">
+      <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-    <form id="searchForm" class="controls">
-      <div class="row">
-  <input type="text" id="from" placeholder="BOM" required />
-  <input type="text" id="to" placeholder="DEL" required />
+      <div class="search-row">
+        <input id="from" class="input" placeholder="From (e.g., BLR)" />
+        <input id="to" class="input" placeholder="To (e.g., BOM)" />
+        <input id="departDate" class="input" type="date" />
+        <input id="returnDate" class="input" type="date" />
 
-  <div class="date-input">
-    <input type="date" id="departureDate" required />
-    <span class="calendar-icon">📅</span>
-  </div>
+        <input id="passengers" class="input" type="number" min="1" value="1" />
 
-  <div class="date-input">
-    <input type="date" id="returnDate" />
-    <span class="calendar-icon">📅</span>
-  </div>
-</div>
-
-      <div class="row">
-        <input type="number" id="passengers" value="1" min="1" required />
-        <select id="travelClass">
+        <select id="travelClass" class="select">
           <option value="ECONOMY">Economy</option>
           <option value="PREMIUM_ECONOMY">Premium Economy</option>
           <option value="BUSINESS">Business</option>
@@ -36,55 +27,81 @@
         </select>
 
         <div class="trip-type">
-          <label><input type="radio" name="tripType" value="one-way" /> One Way</label>
-          <label><input type="radio" name="tripType" value="round-trip" checked /> Round Trip</label>
+          <label><input type="radio" name="tripType" value="one-way"/> One Way</label>
+          <label><input type="radio" name="tripType" value="round-trip" checked/> Round Trip</label>
         </div>
 
-        <!-- Payment methods dropdown (unchanged trigger) -->
-        <div class="dropdown">
-          <button type="button" id="paymentToggle" class="btn">Select Payment Methods ▾</button>
-          <div id="paymentPanel" class="dropdown-menu">
-            <!-- will be filled by script.js with a neat multi-column grid -->
-            <div class="pm-grid" id="pmGrid">
-              <div class="pm-loading">Loading payment methods…</div>
+        <!-- Payment Methods dropdown -->
+        <div class="dropdown" id="paymentDropdown">
+          <button id="paymentDropdownBtn" type="button" class="btn secondary">
+            Select Payment Methods ▾
+          </button>
+          <div id="paymentMenu" class="dropdown-menu">
+            <div id="paymentMenuBody" class="dropdown-body"></div>
+            <div class="dropdown-actions">
+              <button id="paymentClear" type="button" class="btn light">Clear</button>
+              <button id="paymentApply" type="button" class="btn primary">Done</button>
             </div>
           </div>
         </div>
 
-        <button type="submit" class="btn primary">Search</button>
+        <button id="searchBtn" class="btn primary">Search</button>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="results-col">
+        <h2>Outbound Flights</h2>
+        <div class="filters" id="outFilters">
+          <select id="outAirlineFilter" class="select small"><option value="">All Airlines</option></select>
+          <select id="outTimeFilter" class="select small">
+            <option value="">Any time</option>
+            <option value="morning">Morning (05–11)</option>
+            <option value="afternoon">Afternoon (11–17)</option>
+            <option value="evening">Evening (17–21)</option>
+            <option value="night">Night (21–05)</option>
+          </select>
+          <select id="outSort" class="select small">
+            <option value="price">Sort: Price (asc)</option>
+            <option value="depart">Sort: Depart (asc)</option>
+            <option value="arrive">Sort: Arrive (asc)</option>
+          </select>
+        </div>
+        <div id="outResults" class="cards"></div>
       </div>
 
-      <!-- Sort controls (appear after results) -->
-      <div id="sortControls" class="row" style="display:none; margin-top:10px;">
-        <strong>Sort By:</strong>
-        <button type="button" class="btn pill" onclick="sortFlights('departure')">Departure Time</button>
-        <button type="button" class="btn pill" onclick="sortFlights('price')">Price</button>
-      </div>
-    </form>
-
-    <div id="results">
-      <div class="results-row">
-        <div class="results-column">
-          <h2>Outbound Flights</h2>
-          <div id="outboundContainer"></div>
+      <div class="results-col">
+        <h2>Return Flights</h2>
+        <div class="filters" id="retFilters">
+          <select id="retAirlineFilter" class="select small"><option value="">All Airlines</option></select>
+          <select id="retTimeFilter" class="select small">
+            <option value="">Any time</option>
+            <option value="morning">Morning (05–11)</option>
+            <option value="afternoon">Afternoon (11–17)</option>
+            <option value="evening">Evening (17–21)</option>
+            <option value="night">Night (21–05)</option>
+          </select>
+          <select id="retSort" class="select small">
+            <option value="price">Sort: Price (asc)</option>
+            <option value="depart">Sort: Depart (asc)</option>
+            <option value="arrive">Sort: Arrive (asc)</option>
+          </select>
         </div>
-        <div class="results-column">
-          <h2>Return Flights</h2>
-          <div id="returnContainer"></div>
-        </div>
+        <div id="retResults" class="cards"></div>
       </div>
     </div>
   </div>
 
-  <!-- Prices Modal -->
-  <div id="priceModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button type="button" id="closeModal" class="icon-btn close" aria-label="Close">✕</button>
-      <h3>Prices on Different Portals</h3>
-      <ul id="portalPriceList" class="portal-list"></ul>
+  <!-- Price comparison modal -->
+  <div id="modalBackdrop" class="modal-backdrop" hidden></div>
+  <div id="priceModal" class="modal" hidden>
+    <div class="modal-header">
+      <h3 id="modalTitle">Price Comparison</h3>
+      <button id="modalClose" class="btn light">&times;</button>
     </div>
+    <div id="modalBody" class="modal-body"></div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
