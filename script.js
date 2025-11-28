@@ -1,97 +1,236 @@
-:root{
-  --bg:#101720;
-  --surface:#1c2632;
-  --surface-2:#232f3d;
-  --text:#e7eef8;
-  --muted:#a9b6c6;
-  --primary:#6ea8fe;
-  --radius:16px;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  overflow-y:scroll; overflow-x:hidden; /* <- stops horizontal scroll */
-}
-.app-shell{display:flex; flex-direction:column; min-height:100vh}
-.hero{padding:24px 16px 0}
-.hero h1{margin:0 auto; max-width:1200px; font-size:36px; font-weight:800}
+// ==== CONFIG ====
+const BACKEND_BASE = (window.SKYDEAL_API_BASE || "https://skydeal-backend.onrender.com").replace(/\/+$/,'');
+// endpoints we use:
+//  - GET  /api/payment-methods         -> grouped payment methods from Mongo
+//  - POST /search                      -> real flights (Amadeus) {from,to,departureDate,returnDate,passengers,travelClass,tripType}
 
-.search-card{
-  margin:16px auto 0; padding:16px;
-  max-width:1200px; background:var(--surface);
-  border-radius:var(--radius); box-shadow:0 10px 24px rgba(0,0,0,.25);
-}
-.inputs-row{
-  display:grid; grid-template-columns: repeat(8, minmax(0,1fr));
-  gap:12px;
-}
-.input{
-  width:100%; padding:12px 12px; border-radius:12px; border:1px solid #2b3a4c;
-  background:var(--surface-2); color:var(--text);
-}
-.input.small{padding:8px 10px; font-size:14px}
+// ==== DOM HOOKS ====
+const fromInput = document.getElementById('fromInput');
+const toInput = document.getElementById('toInput');
+const departInput = document.getElementById('departInput');
+const returnInput = document.getElementById('returnInput');
+const passengersInput = document.getElementById('passengersInput');
+const cabinInput = document.getElementById('cabinInput');
+const searchBtn = document.getElementById('searchBtn');
 
-.trip-type{
-  display:flex; align-items:center; justify-content:center; gap:12px;
-  background:var(--surface-2); border:1px solid #2b3a4c; border-radius:12px; padding:8px 10px;
-}
-.button{
-  border:0; border-radius:12px; padding:12px 16px; cursor:pointer; font-weight:600;
-}
-.button.primary{background:var(--primary); color:#081221}
-.button.ghost{background:var(--surface-2); color:var(--text); border:1px solid #2b3a4c}
+const outboundList = document.getElementById('outboundList');
+const returnList   = document.getElementById('returnList');
 
-.results-grid{
-  margin:16px auto; max-width:1200px;
-  display:grid; grid-template-columns:1fr 1fr; gap:16px;
-}
-.results-col{background:var(--surface); border-radius:var(--radius); padding:12px}
-.results-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
-.results-head h2{margin:6px 0 10px; font-size:20px}
-.row-controls{display:flex; gap:10px}
+const paymentTrigger = document.getElementById('paymentTrigger');
+const paymentModal = document.getElementById('paymentModal');
+const pmLists = document.getElementById('pmLists');
+const donePM = document.getElementById('donePM');
+const clearPM = document.getElementById('clearPM');
 
-.card-list{
-  background:var(--surface-2); border:1px solid #2b3a4c; border-radius:12px; padding:12px; min-height:180px;
+const portalModal = document.getElementById('portalModal');
+const portalBody  = document.getElementById('portalBody');
+const portalTitle = document.getElementById('portalTitle');
+document.getElementById('closePortal').onclick = () => hideModal(portalModal);
+
+// Trip toggle behavior
+const tripRadios = Array.from(document.querySelectorAll('input[name="trip"]'));
+function currentTrip(){ return (tripRadios.find(r=>r.checked)?.value) || 'round-trip'; }
+function syncTripUI(){
+  const rt = currentTrip()==='round-trip';
+  returnInput.disabled = !rt;
+  returnInput.parentElement?.classList?.toggle?.('disabled', !rt);
 }
-.flight-card{
-  display:flex; justify-content:space-between; align-items:center;
-  border:1px solid #314256; border-radius:12px; padding:12px; margin-bottom:10px;
-}
-.flight-main{display:flex; gap:16px; align-items:center}
-.fname{font-weight:700}
-.fmeta{color:var(--muted); font-size:14px}
-.price{font-weight:800}
-.i-btn{
-  border-radius:999px; width:36px; height:36px; line-height:36px; text-align:center;
-  border:1px solid #314256; background:var(--surface); color:var(--text); cursor:pointer;
+tripRadios.forEach(r=>r.addEventListener('change', syncTripUI));
+syncTripUI();
+
+// ===== PAYMENT METHODS (from Mongo) =====
+let allPayment = {
+  creditCard: [], debitCard: [], wallet: [], upi: [], netBanking: [], emi: []
+};
+let selectedPayment = new Set(); // store "type::name" keys for stable dedupe
+
+function keyFor(type, name){ return `${type}::${name}`; }
+function labelForKey(k){ return k.split('::')[1]; }
+
+async function loadPaymentMethods(){
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/payment-methods`, {credentials:'omit'});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    // normalize categories we support
+    ['creditCard','debitCard','wallet','upi','netBanking','emi'].forEach(t=>{
+      allPayment[t] = Array.isArray(data[t]) ? data[t] : [];
+    });
+    renderPaymentModal('creditCard'); // default tab
+  } catch (e){
+    console.error('Failed to load payment methods:', e);
+    // fallback: minimal hardcoded if API down
+    allPayment.creditCard = ['ICICI Bank Credit Card','HDFC Bank Credit Card','Axis Bank Credit Card','SBI Credit Card'];
+    renderPaymentModal('creditCard');
+  }
 }
 
-/* Modals */
-.modal{position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.45); padding:16px; z-index:50}
-.modal.hidden{display:none}
-.modal-panel{max-width:760px; width:100%; background:var(--surface); border-radius:16px; border:1px solid #314256}
-.modal-header{padding:12px 14px; border-bottom:1px solid #2b3a4c}
-.modal-body{padding:14px}
-.modal-footer{padding:12px 14px; display:flex; gap:10px; justify-content:flex-end}
+function renderPaymentModal(activeTab){
+  // tabs activation
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.tab===activeTab);
+    btn.onclick = () => renderPaymentModal(btn.dataset.tab);
+  });
 
-.tabs{display:flex; gap:8px; flex-wrap:wrap}
-.tab{
-  padding:8px 12px; border-radius:10px; border:1px solid #2b3a4c;
-  background:var(--surface-2); color:var(--text); cursor:pointer; font-weight:600; font-size:14px;
+  // list
+  const names = allPayment[activeTab] || [];
+  pmLists.innerHTML = `
+    <div class="pm-group">
+      ${names.map(n=>{
+        const k = keyFor(activeTab, n);
+        const checked = selectedPayment.has(k) ? 'checked' : '';
+        return `
+          <label class="pm-item">
+            <input type="checkbox" data-k="${k}" ${checked}/>
+            <span>${n}</span>
+          </label>`;
+      }).join('') || `<div class="fmeta">No options</div>`}
+    </div>
+  `;
+
+  pmLists.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.onchange = (e)=>{
+      const k = e.target.dataset.k;
+      if (e.target.checked) selectedPayment.add(k);
+      else selectedPayment.delete(k);
+      updatePaymentTriggerLabel();
+    };
+  });
 }
-.tab.active{outline:2px solid var(--primary);}
 
-.pm-group{margin-bottom:12px}
-.pm-item{display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px}
-.pm-item:hover{background:#19222d}
-.pm-item input{transform:scale(1.2)}
-
-/* Responsive: keeps everything on-screen, no overflow */
-@media (max-width: 1080px){
-  .inputs-row{grid-template-columns: 1fr 1fr; }
-  .results-grid{grid-template-columns:1fr; }
-  .hero h1, .search-card, .results-grid{padding-left:12px; padding-right:12px}
+function updatePaymentTriggerLabel(){
+  const count = selectedPayment.size;
+  paymentTrigger.textContent = count ? `${count} selected ▾` : `Select payment methods ▾`;
 }
+
+paymentTrigger.onclick = () => showModal(paymentModal);
+donePM.onclick = () => hideModal(paymentModal);
+clearPM.onclick = () => { selectedPayment.clear(); updatePaymentTriggerLabel(); renderPaymentModal(document.querySelector('.tab.active')?.dataset.tab || 'creditCard'); };
+
+function showModal(m){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); }
+function hideModal(m){ m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); }
+
+// ===== FLIGHT SEARCH =====
+searchBtn.onclick = async () => {
+  await doSearch();
+};
+
+async function doSearch(){
+  // quick guards
+  const from = fromInput.value.trim().toUpperCase();
+  const to   = toInput.value.trim().toUpperCase();
+  const dep  = departInput.value;
+  const ret  = returnInput.value;
+  const tripType = currentTrip();
+
+  if (!from || !to || !dep){
+    alert('Please fill From, To and Departure date.');
+    return;
+  }
+  if (tripType === 'round-trip' && !ret){
+    alert('Please select a Return date for round-trip.');
+    return;
+  }
+
+  // render loading placeholders
+  outboundList.innerHTML = `<div class="fmeta">Loading outbound flights…</div>`;
+  returnList.innerHTML   = `<div class="fmeta">Loading return flights…</div>`;
+
+  try{
+    const body = {
+      from, to,
+      departureDate: dep,
+      returnDate: tripType==='round-trip' ? ret : '',
+      passengers: Number(passengersInput.value || 1),
+      travelClass: cabinInput.value || 'Economy',
+      tripType
+    };
+
+    const res = await fetch(`${BACKEND_BASE}/search`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    if(!res.ok) throw new Error(`Search failed: ${res.status}`);
+    const data = await res.json();
+
+    // Expecting: { outbound: [], inbound: [] } or { outboundFlights, returnFlights }
+    const outbound = data.outbound || data.outboundFlights || [];
+    const inbound  = data.inbound  || data.returnFlights   || [];
+    renderFlights(outboundList, outbound, `${from} → ${to}`);
+    renderFlights(returnList, inbound, `${to} → ${from}`);
+  }catch(e){
+    console.error(e);
+    outboundList.innerHTML = `<div class="fmeta">No flights (error fetching).</div>`;
+    returnList.innerHTML   = `<div class="fmeta">No flights (error fetching).</div>`;
+  }
+}
+
+function renderFlights(target, flights, routeTitle){
+  if(!flights || !flights.length){
+    target.innerHTML = `<div class="fmeta">No flights</div>`;
+    return;
+  }
+  target.innerHTML = flights.map(f=>{
+    const name = f.airline || f.flightName || 'Flight';
+    const flightNo = f.flightNumber || '';
+    const dep = f.departureTime || f.departure || '';
+    const arr = f.arrivalTime || f.arrival || '';
+    const stops = (f.stops==null)? '' : `${f.stops} stop${f.stops===1?'':'s'}`;
+    const price = f.price || f.total || f.basePrice || f.bestDeal?.price || '—';
+
+    // click = show simulated portal prices (+₹100 per portal)
+    const cardId = cryptoRandomId();
+    setTimeout(()=>{
+      const btn = document.getElementById(cardId);
+      if(btn) btn.onclick = () => openPortalPricing({name, flightNo, dep, arr, base: Number(price)||0});
+    },0);
+
+    return `
+      <div class="flight-card">
+        <div class="flight-main">
+          <div>
+            <div class="fname">${name}${flightNo?` ${flightNo}`:''}</div>
+            <div class="fmeta">${dep} → ${arr} ${stops?`• ${stops}`:''}</div>
+          </div>
+        </div>
+        <div class="flight-main">
+          <div class="price">₹${price}</div>
+          <button id="${cardId}" class="i-btn" title="Portal prices">i</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openPortalPricing({name, flightNo, dep, arr, base}){
+  portalTitle.textContent = `${name} ${flightNo || ''} — ${dep} → ${arr}`;
+  const portals = ['MakeMyTrip','Goibibo','Cleartrip','Yatra','EaseMyTrip'];
+  portalBody.innerHTML = portals.map(p=>{
+    const simulated = (Number(base)||0) + 100; // per requirement
+    return `
+      <div class="flight-card">
+        <div class="flight-main">
+          <div class="fname">${p}</div>
+          <div class="fmeta">Simulated price</div>
+        </div>
+        <div class="price">₹${simulated}</div>
+      </div>
+    `;
+  }).join('');
+  showModal(portalModal);
+}
+
+function cryptoRandomId(){
+  if (window.crypto?.randomUUID) return crypto.randomUUID();
+  return 'id-' + Math.random().toString(36).slice(2);
+}
+
+// ===== INIT =====
+(function init(){
+  // default dates today/today+2
+  const today = new Date();
+  const plus2 = new Date(Date.now()+2*86400000);
+  departInput.value = today.toISOString().slice(0,10);
+  returnInput.value = plus2.toISOString().slice(0,10);
+
+  loadPaymentMethods();
+})();
