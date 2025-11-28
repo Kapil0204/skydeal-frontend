@@ -123,6 +123,14 @@ function pickFirstValid(arr, type){
 
 // ====== NORMALIZE AIRLINE DISPLAY (v2) ======
 function normalizeAirlineDisplay(f) {
+    // NEW: trust backend values when present (FlightAPI path)
+  if (f && f.airlineName && f.flightNumber) {
+    return {
+      airlineName: String(f.airlineName),
+      flightNo: String(f.flightNumber)
+    };
+  }
+
   const CARRIER_NAME_BY_CODE = {
     "6E":"IndiGo","AI":"Air India","IX":"Air India Express","I5":"AIX Connect",
     "UK":"Vistara","SG":"SpiceJet","QP":"Akasa Air","G8":"Go First","9I":"Alliance Air",
