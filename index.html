@@ -2,106 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <div class="search-card">
+  <div class="wrap">
+    <header class="hero">
       <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-      <div class="search-row">
-        <input id="from" class="input" placeholder="From (e.g., BLR)" />
-        <input id="to" class="input" placeholder="To (e.g., BOM)" />
-        <input id="departDate" class="input" type="date" />
-        <input id="returnDate" class="input" type="date" />
+      <div class="toolbar">
+        <input id="from" class="txt" placeholder="From (IATA e.g. BLR)" maxlength="3" />
+        <input id="to" class="txt" placeholder="To (IATA e.g. BOM)" maxlength="3" />
 
-        <input id="passengers" class="input" type="number" min="1" value="1" />
+        <input id="depart" class="txt" type="date" />
+        <input id="return" class="txt" type="date" />
 
-        <select id="travelClass" class="select">
-          <option value="ECONOMY">Economy</option>
+        <input id="pax" class="txt num" type="number" min="1" value="1" />
+        <select id="cabin" class="txt">
+          <option value="ECONOMY" selected>Economy</option>
           <option value="PREMIUM_ECONOMY">Premium Economy</option>
           <option value="BUSINESS">Business</option>
           <option value="FIRST">First</option>
         </select>
 
-        <div class="trip-type">
-          <label><input type="radio" name="tripType" value="one-way"/> One Way</label>
-          <label><input type="radio" name="tripType" value="round-trip" checked/> Round Trip</label>
+        <div class="triptype">
+          <label><input type="radio" name="trip" value="one-way" id="oneWay" /> One Way</label>
+          <label><input type="radio" name="trip" value="round-trip" id="roundTrip" checked /> Round Trip</label>
         </div>
 
-        <!-- Payment Methods dropdown -->
-        <div class="dropdown" id="paymentDropdown">
-          <button id="paymentDropdownBtn" type="button" class="btn secondary">
-            Select Payment Methods ▾
-          </button>
-          <div id="paymentMenu" class="dropdown-menu">
-            <div id="paymentMenuBody" class="dropdown-body"></div>
-            <div class="dropdown-actions">
-              <button id="paymentClear" type="button" class="btn light">Clear</button>
-              <button id="paymentApply" type="button" class="btn primary">Done</button>
-            </div>
+        <button id="paymentBtn" type="button" class="btn ghost">Select Payment Methods ▾</button>
+        <button id="searchBtn" type="button" class="btn primary">Search</button>
+      </div>
+    </header>
+
+    <section class="columns">
+      <div class="col">
+        <div class="col-head">
+          <h2>Outbound Flights</h2>
+          <div class="filters">
+            <select id="outAirline" class="mini"></select>
+            <select id="outTime" class="mini">
+              <option value="">Any time</option>
+              <option value="morning">Morning (05–12)</option>
+              <option value="afternoon">Afternoon (12–17)</option>
+              <option value="evening">Evening (17–22)</option>
+              <option value="night">Night (22–05)</option>
+            </select>
+            <select id="outSort" class="mini">
+              <option value="price_asc">Sort: Price (asc)</option>
+              <option value="price_desc">Price (desc)</option>
+              <option value="dep_asc">Departure (asc)</option>
+              <option value="dep_desc">Departure (desc)</option>
+            </select>
           </div>
         </div>
-
-        <button id="searchBtn" class="btn primary">Search</button>
+        <div id="outboundResults" class="results"></div>
       </div>
+
+      <div class="col">
+        <div class="col-head">
+          <h2>Return Flights</h2>
+          <div class="filters">
+            <select id="retAirline" class="mini"></select>
+            <select id="retTime" class="mini">
+              <option value="">Any time</option>
+              <option value="morning">Morning (05–12)</option>
+              <option value="afternoon">Afternoon (12–17)</option>
+              <option value="evening">Evening (17–22)</option>
+              <option value="night">Night (22–05)</option>
+            </select>
+            <select id="retSort" class="mini">
+              <option value="price_asc">Sort: Price (asc)</option>
+              <option value="price_desc">Price (desc)</option>
+              <option value="dep_asc">Departure (asc)</option>
+              <option value="dep_desc">Departure (desc)</option>
+            </select>
+          </div>
+        </div>
+        <div id="returnResults" class="results"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Payment Methods Popover -->
+  <div id="paymentPopover" class="popover hidden" role="dialog" aria-label="Payment Methods">
+    <div class="pm-header">
+      <div id="pmTabs" class="tabs"></div>
     </div>
-
-    <div class="results">
-      <div class="results-col">
-        <h2>Outbound Flights</h2>
-        <div class="filters" id="outFilters">
-          <select id="outAirlineFilter" class="select small"><option value="">All Airlines</option></select>
-          <select id="outTimeFilter" class="select small">
-            <option value="">Any time</option>
-            <option value="morning">Morning (05–11)</option>
-            <option value="afternoon">Afternoon (11–17)</option>
-            <option value="evening">Evening (17–21)</option>
-            <option value="night">Night (21–05)</option>
-          </select>
-          <select id="outSort" class="select small">
-            <option value="price">Sort: Price (asc)</option>
-            <option value="depart">Sort: Depart (asc)</option>
-            <option value="arrive">Sort: Arrive (asc)</option>
-          </select>
-        </div>
-        <div id="outResults" class="cards"></div>
-      </div>
-
-      <div class="results-col">
-        <h2>Return Flights</h2>
-        <div class="filters" id="retFilters">
-          <select id="retAirlineFilter" class="select small"><option value="">All Airlines</option></select>
-          <select id="retTimeFilter" class="select small">
-            <option value="">Any time</option>
-            <option value="morning">Morning (05–11)</option>
-            <option value="afternoon">Afternoon (11–17)</option>
-            <option value="evening">Evening (17–21)</option>
-            <option value="night">Night (21–05)</option>
-          </select>
-          <select id="retSort" class="select small">
-            <option value="price">Sort: Price (asc)</option>
-            <option value="depart">Sort: Depart (asc)</option>
-            <option value="arrive">Sort: Arrive (asc)</option>
-          </select>
-        </div>
-        <div id="retResults" class="cards"></div>
-      </div>
+    <div id="pmLists" class="pm-lists"></div>
+    <div class="pm-actions">
+      <button id="pmClear" class="btn ghost" type="button">Clear</button>
+      <button id="pmDone" class="btn primary" type="button">Done</button>
     </div>
   </div>
 
-  <!-- Price comparison modal -->
-  <div id="modalBackdrop" class="modal-backdrop" hidden></div>
-  <div id="priceModal" class="modal" hidden>
-    <div class="modal-header">
-      <h3 id="modalTitle">Price Comparison</h3>
-      <button id="modalClose" class="btn light">&times;</button>
+  <!-- Compare Prices Modal -->
+  <div id="modal" class="modal hidden" role="dialog" aria-label="Portal Prices">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">Prices</h3>
+        <button id="modalClose" class="x">&times;</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
     </div>
-    <div id="modalBody" class="modal-body"></div>
   </div>
 
-  <script src="./script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
