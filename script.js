@@ -1,153 +1,290 @@
-// ==============================
-// SkyDeal Frontend Script
-// Backend: https://skydeal-backend.onrender.com
-// ==============================
+/************ CONFIG ************/
+const BACKEND_URL = "https://skydeal-backend.onrender.com/search";
+const PAYMENT_OPTIONS_URL = "https://skydeal-backend.onrender.com/payment-options";
 
-const backendURL = "https://skydeal-backend.onrender.com";
+/************ UTILS ************/
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
 
-// UI Elements
-const searchBtn = document.getElementById("searchBtn");
-const outboundDiv = document.getElementById("outboundResults");
-const returnDiv = document.getElementById("returnResults");
-const modal = document.getElementById("priceModal");
-const modalContent = document.getElementById("modalContent");
-const closeModalBtn = document.getElementById("closeModal");
+function fmtINR(n){
+  const v = Number(n||0);
+  return v.toLocaleString("en-IN",{maximumFractionDigits:2, minimumFractionDigits:0});
+}
+function pad2(n){ return String(n).padStart(2,"0"); }
+function hhmm(str){ // "11:05" etc
+  const m = /^(\d{2}):(\d{2})$/.exec(str||"");
+  return m ? {h:Number(m[1]), m:Number(m[2])} : null;
+}
+function timeBucket(t){
+  const m = hhmm(t); if(!m) return "";
+  const h = m.h;
+  if (h>=5 && h<11) return "morning";
+  if (h>=11 && h<17) return "afternoon";
+  if (h>=17 && h<21) return "evening";
+  return "night";
+}
 
-// Trip type logic
-const oneWayRadio = document.getElementById("oneWay");
-const roundTripRadio = document.getElementById("roundTrip");
-const returnDateInput = document.getElementById("returnDate");
+/************ PAYMENT DROPDOWN ************/
+const paymentState = { all: [], selected: new Set(), open:false };
 
-roundTripRadio.addEventListener("change", () => {
-  returnDateInput.style.display = "block";
-});
+async function loadPaymentOptions(){
+  try{
+    const res = await fetch(PAYMENT_OPTIONS_URL);
+    const data = await res.json();
+    const arr = Array.isArray(data) ? data : (Array.isArray(data.options)?data.options:[]);
+    paymentState.all = arr.length ? arr : null;
+  }catch(e){ paymentState.all = null; }
 
-oneWayRadio.addEventListener("change", () => {
-  returnDateInput.style.display = "none";
-});
+  if(!paymentState.all){
+    paymentState.all = [
+      "ICICI Bank Credit Card","HDFC Bank Credit Card","Axis Bank Credit Card","SBI Credit Card",
+      "UPI","NetBanking"
+    ];
+  }
+}
 
-// ==============================
-// Search Handler
-// ==============================
-searchBtn.addEventListener("click", async () => {
-  const from = document.getElementById("from").value.trim().toUpperCase();
-  const to = document.getElementById("to").value.trim().toUpperCase();
-  const departureDate = document.getElementById("departureDate").value;
-  const returnDate = document.getElementById("returnDate").value;
-  const travelClass = document.getElementById("travelClass").value;
-  const passengers = Number(document.getElementById("passengers").value) || 1;
+function renderPaymentMenu(){
+  const body = $("#paymentMenuBody");
+  body.innerHTML = "";
+  paymentState.all.forEach(label=>{
+    const id = "pay_" + label.toLowerCase().replace(/\W+/g,'_');
+    const row = document.createElement("label");
+    row.style.display="flex"; row.style.alignItems="center"; row.style.gap="10px"; row.style.cursor="pointer";
 
-  const tripType = roundTripRadio.checked ? "round-trip" : "one-way";
+    const cb = document.createElement("input");
+    cb.type="checkbox"; cb.id=id; cb.value=label; cb.checked=paymentState.selected.has(label);
+    cb.addEventListener("change",(e)=>{
+      if(e.target.checked) paymentState.selected.add(label);
+      else paymentState.selected.delete(label);
+      updatePaymentBtn();
+    });
 
-  if (!from || !to || !departureDate) {
-    alert("Please fill all required fields");
+    const span = document.createElement("span"); span.textContent = label;
+    row.appendChild(cb); row.appendChild(span);
+    body.appendChild(row);
+  });
+}
+function updatePaymentBtn(){
+  const btn = $("#paymentDropdownBtn");
+  const n = paymentState.selected.size;
+  btn.textContent = n ? `${n} selected ▾` : "Select Payment Methods ▾";
+}
+function openPay(){ if(paymentState.open) return; renderPaymentMenu(); $("#paymentMenu").style.display="block"; paymentState.open=true; }
+function closePay(){ if(!paymentState.open) return; $("#paymentMenu").style.display="none"; paymentState.open=false; }
+function togglePay(){ paymentState.open ? closePay() : openPay(); }
+function getSelectedPaymentMethods(){ return Array.from(paymentState.selected); }
+
+/************ STATE ************/
+let OUT = [];   // mapped outbound
+let RET = [];   // mapped return
+
+/************ MAPPING ************/
+/* We expect backend to return:
+  { outboundFlights: [{airlineName, flightNumber, departure, arrival, price, stops, carrierCode, stopCodes, portalPrices:[...] }], returnFlights: [...] }
+*/
+function mapForFilters(list){
+  const airlines = [...new Set(list.map(f=>f.airlineName).filter(Boolean))].sort();
+  return {airlines};
+}
+
+/************ RENDER ************/
+function flightCard(f){
+  const best = (f.portalPrices||[]).reduce((acc,p)=>{
+    if (p.finalPrice==null) return acc;
+    return (!acc || Number(p.finalPrice)<Number(acc.finalPrice)) ? p : acc;
+  }, null);
+
+  return `
+  <div class="card" data-airline="${f.airlineName||''}" data-depart="${f.departure||''}" data-arrive="${f.arrival||''}" data-price="${Number(f.price||0)}">
+    <div>
+      <div class="title">${f.airlineName||'Airline'} <span class="muted">#${f.flightNumber||''}</span></div>
+      <div class="muted">Stops: ${Number(f.stops||0)}</div>
+    </div>
+    <div>
+      <div><strong>${f.departure||'--:--'}</strong></div>
+      <div class="muted">Departs</div>
+    </div>
+    <div>
+      <div><strong>${f.arrival||'--:--'}</strong></div>
+      <div class="muted">Arrives</div>
+    </div>
+    <div>
+      <div class="price">₹${fmtINR(f.price||0)}</div>
+      <div class="muted">Base fare</div>
+    </div>
+    <div>
+      ${best ? `<span class="badge best">Best: ${best.portal} · ₹${fmtINR(best.finalPrice)}</span>` : `<span class="badge">No offer</span>`}
+    </div>
+    <div class="compare">
+      <button class="btn light js-compare">Compare</button>
+    </div>
+  </div>`;
+}
+
+function renderList(whereEl, list){
+  whereEl.innerHTML = list.map(flightCard).join("") || `<div class="muted">No flights</div>`;
+  // wire compare buttons
+  $$(".js-compare", whereEl).forEach((btn,idx)=>{
+    btn.addEventListener("click", ()=>showModal(list[idx]));
+  });
+}
+
+function fillAirlineSelect(selEl, airlines){
+  const old = selEl.value || "";
+  selEl.innerHTML = `<option value="">All Airlines</option>` + airlines.map(a=>`<option value="${a}">${a}</option>`).join("");
+  selEl.value = old;
+}
+
+/************ FILTERS ************/
+function applyFiltersAndSort(list, {airlineSel, timeSel, sortSel}){
+  let arr = [...list];
+  const airline = airlineSel.value;
+  const time = timeSel.value;
+  if (airline) arr = arr.filter(f=>f.airlineName===airline);
+  if (time)   arr = arr.filter(f=> timeBucket(f.departure)===time );
+
+  switch (sortSel.value){
+    case "price":  arr.sort((a,b)=>Number(a.price)-Number(b.price)); break;
+    case "depart": arr.sort((a,b)=> (a.departure||"").localeCompare(b.departure||"")); break;
+    case "arrive": arr.sort((a,b)=> (a.arrival||"").localeCompare(b.arrival||"")); break;
+  }
+  return arr;
+}
+
+function wireFilterGroup(prefix, list, renderTarget){
+  const airlineSel = $(`#${prefix}AirlineFilter`);
+  const timeSel    = $(`#${prefix}TimeFilter`);
+  const sortSel    = $(`#${prefix}Sort`);
+
+  const run = ()=> {
+    const filtered = applyFiltersAndSort(list(), {airlineSel,timeSel,sortSel});
+    renderList(renderTarget, filtered);
+  };
+
+  airlineSel.onchange = timeSel.onchange = sortSel.onchange = run;
+  run();
+}
+
+/************ MODAL ************/
+function showModal(f){
+  $("#modalTitle").textContent = `${f.airlineName||'Airline'} ${f.flightNumber||''} — price comparison`;
+  const body = $("#modalBody");
+  const rows = (f.portalPrices||[]).map(p=>{
+    const haveOffer = !!p.appliedOffer;
+    const offerBits = haveOffer ? `
+        <div class="pill">${p.appliedOffer.title||''}</div>
+        ${p.appliedOffer.couponCode ? `<div class="pill">Code: ${p.appliedOffer.couponCode}</div>`:''}
+      ` : `<div class="pill">No offer</div>`;
+    return `
+      <div class="modal-row">
+        <div class="portal">${p.portal||'-'}</div>
+        <div>Base: ₹${fmtINR(p.basePrice||0)}</div>
+        <div>With markup: ₹${fmtINR(p.markedUpPrice||0)}</div>
+        <div><strong>Final: ₹${fmtINR(p.finalPrice||p.markedUpPrice||p.basePrice||0)}</strong></div>
+        <div class="go" title="Go to portal (demo)">
+          🡥
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:6px; margin-top:6px;">${offerBits}</div>
+      </div>
+    `;
+  }).join("");
+  body.innerHTML = rows || `<div class="muted">No portal pricing available</div>`;
+
+  $("#modalBackdrop").hidden = false;
+  $("#priceModal").hidden = false;
+
+  // dummy click for go buttons
+  $$(".modal-row .go", body).forEach(el=>{
+    el.addEventListener("click", ()=> alert("Demo: would open OTA portal in new tab."));
+  });
+}
+
+function closeModal(){
+  $("#modalBackdrop").hidden = true;
+  $("#priceModal").hidden = true;
+}
+
+/************ SEARCH ************/
+async function doSearch(){
+  const from = $("#from").value.trim().toUpperCase();
+  const to = $("#to").value.trim().toUpperCase();
+  const departureDate = $("#departDate").value;
+  const returnDate = $("#returnDate").value;
+  const tripType = $$("input[name='tripType']:checked")[0]?.value || "one-way";
+  const passengers = Number($("#passengers").value||1);
+  const travelClass = $("#travelClass").value;
+
+  if (!from || !to || !departureDate){
+    alert("Please enter From, To and Departure Date");
     return;
   }
 
   const payload = {
-    from,
-    to,
-    departureDate,
-    returnDate: tripType === "round-trip" ? returnDate : null,
+    from, to, departureDate,
+    returnDate: tripType==="round-trip" ? returnDate : null,
     tripType,
     passengers,
-    travelClass
+    travelClass,
+    paymentMethods: getSelectedPaymentMethods()
   };
 
-  outboundDiv.innerHTML = "<p>Loading flights...</p>";
-  returnDiv.innerHTML = tripType === "round-trip" ? "<p>Loading return flights...</p>" : "";
-
-  try {
-    const response = await fetch(`${backendURL}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+  $("#searchBtn").disabled = true;
+  $("#searchBtn").textContent = "Searching…";
+  try{
+    const res = await fetch(BACKEND_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify(payload)
     });
+    if(!res.ok) throw new Error("Search failed");
+    const data = await res.json();
 
-    const data = await response.json();
+    OUT = Array.isArray(data.outboundFlights) ? data.outboundFlights : [];
+    RET = Array.isArray(data.returnFlights) ? data.returnFlights : [];
 
-    displayFlights(data.outboundFlights, outboundDiv, "Outbound");
-    if (tripType === "round-trip") {
-      displayFlights(data.returnFlights, returnDiv, "Return");
-    }
+    // populate airline filter lists
+    const outMap = mapForFilters(OUT);
+    const retMap = mapForFilters(RET);
+    fillAirlineSelect($("#outAirlineFilter"), outMap.airlines);
+    fillAirlineSelect($("#retAirlineFilter"), retMap.airlines);
 
-  } catch (err) {
-    console.error("Search error:", err);
-    outboundDiv.innerHTML = "<p>Error fetching results</p>";
-    returnDiv.innerHTML = "";
+    // wire and render groups
+    wireFilterGroup("out", ()=>OUT, $("#outResults"));
+    wireFilterGroup("ret", ()=>RET, $("#retResults"));
+  }catch(e){
+    alert("Search failed. Please try again.");
+    console.error(e);
+  }finally{
+    $("#searchBtn").disabled = false;
+    $("#searchBtn").textContent = "Search";
   }
-});
-
-// ==============================
-// Display Flights in UI
-// ==============================
-function displayFlights(flights, container, title) {
-  container.innerHTML = `<h3>${title} Flights</h3>`;
-
-  if (!flights || flights.length === 0) {
-    container.innerHTML += "<p>No flights found</p>";
-    return;
-  }
-
-  flights.forEach((f, index) => {
-    const card = document.createElement("div");
-    card.className = "flightCard";
-    card.innerHTML = `
-      <p><strong>${f.airlineName || "Airline"}</strong> — ${f.flightNumber || ""}</p>
-      <p>⏱ ${f.departure} → ${f.arrival}</p>
-      <p>🛑 Stops: ${f.stops}</p>
-      <p>💰 ₹${Number(f.price).toFixed(2)}</p>
-      <button class="priceBtn" data-index="${index}" data-type="${title}">
-        View OTA Prices
-      </button>
-    `;
-
-    container.appendChild(card);
-  });
-
-  // Add click listener for price modal
-  document.querySelectorAll(".priceBtn").forEach(btn =>
-    btn.addEventListener("click", (e) => {
-      const idx = e.target.getAttribute("data-index");
-      const t = e.target.getAttribute("data-type");
-
-      const flight = (t === "Outbound" ? flights : flights)[idx];
-      showPriceModal(flight);
-    })
-  );
 }
 
-// ==============================
-// Show Modal with OTA Prices
-// ==============================
-function showPriceModal(flight) {
-  modal.style.display = "flex";
+/************ INIT ************/
+(async function init(){
+  // default demo values to speed testing
+  $("#from").value = "BOM";
+  $("#to").value = "DEL";
+  const today = new Date();
+  const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate()+4);
+  const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate()+6);
+  $("#departDate").value = `${d1.getFullYear()}-${pad2(d1.getMonth()+1)}-${pad2(d1.getDate())}`;
+  $("#returnDate").value = `${d2.getFullYear()}-${pad2(d2.getMonth()+1)}-${pad2(d2.getDate())}`;
 
-  let html = `
-    <h2>OTA Prices</h2>
-    <p><strong>${flight.airlineName}</strong> — ₹${Number(flight.price).toFixed(2)}</p>
-    <hr/>
-  `;
+  await loadPaymentOptions();
+  updatePaymentBtn();
 
-  flight.portalPrices.forEach(p => {
-    html += `
-      <div class="otaRow">
-        <p><strong>${p.portal}</strong></p>
-        <p>Base: ₹${p.basePrice.toFixed(2)}</p>
-        <p>Final: <strong>₹${p.finalPrice.toFixed(2)}</strong></p>
-        <button onclick="alert('Redirect simulation for ${p.portal}')">Go →</button>
-      </div>
-      <hr/>
-    `;
-  });
+  // dropdown events
+  $("#paymentDropdownBtn").addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); togglePay(); });
+  $("#paymentApply").addEventListener("click", ()=> closePay());
+  $("#paymentClear").addEventListener("click", ()=>{ paymentState.selected.clear(); updatePaymentBtn(); renderPaymentMenu(); });
+  document.addEventListener("click", (e)=>{ if(!$("#paymentDropdown").contains(e.target)) closePay(); });
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closePay(); });
 
-  modalContent.innerHTML = html;
-}
+  // modal
+  $("#modalClose").addEventListener("click", closeModal);
+  $("#modalBackdrop").addEventListener("click", closeModal);
 
-closeModalBtn.addEventListener("click", () => {
-  modal.style.display = "none";
-});
-
-window.onclick = (e) => {
-  if (e.target === modal) modal.style.display = "none";
-};
+  // search
+  $("#searchBtn").addEventListener("click", doSearch);
+})();
