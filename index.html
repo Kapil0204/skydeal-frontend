@@ -43,8 +43,14 @@
     .pm-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #243049}
     .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
     .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
+    .banner{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:#b4232a;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:80}
     @media (max-width:900px){ .results{grid-template-columns:1fr} }
   </style>
+
+  <!-- Force the correct backend URL for this build -->
+  <script>
+    window.SKYDEAL_CONFIG = { BASE_URL: "https://skydeal-backend.onrender.com" };
+  </script>
 </head>
 <body>
   <div class="container">
@@ -101,7 +107,9 @@
     </div>
   </div>
 
-  <!-- Load external JS (cache-busted) -->
-  <script defer src="script.js?v=2025-11-30a"></script>
+  <div id="banner" class="banner hidden"></div>
+
+  <!-- External JS (cache-busted) -->
+  <script defer src="script.js?v=2025-11-30b"></script>
 </body>
 </html>
