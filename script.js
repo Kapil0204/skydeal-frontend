@@ -1,265 +1,251 @@
-/* SkyDeal frontend – full script
-   - Talks to deployed backend
-   - Loads payment options with logging
-   - Performs search and renders outbound + return
-   - Adds ₹250 markup per portal using carrier-price
-*/
+/* SkyDeal frontend — robust version with clear logs & visible errors */
+const log = (...a) => console.log("[SkyDeal]", ...a);
+const BASE_URL = (window.SKYDEAL_CONFIG && window.SKYDEAL_CONFIG.BASE_URL) || "https://skydeal-backend.onrender.com";
 
-const BACKEND = 'https://skydeal-backend.onrender.com';
-
-// ------- UI refs -------
-const fromInput      = document.getElementById('fromInput');
-const toInput        = document.getElementById('toInput');
-const departDate     = document.getElementById('departDate');
-const returnDate     = document.getElementById('returnDate');
-const paxSelect      = document.getElementById('paxSelect');
-const cabinSelect    = document.getElementById('cabinSelect');
-const tripOneWay     = document.getElementById('tripOneWay');
-const tripRound      = document.getElementById('tripRound');
-const searchBtn      = document.getElementById('searchBtn');
-
-const outboundList   = document.getElementById('outboundList');
-const returnList     = document.getElementById('returnList');
-
-// Payment modal bits
-const paymentBtn     = document.getElementById('paymentSelectBtn');
-const paymentLabel   = document.getElementById('paymentSelectBtnLabel');
-const overlay        = document.getElementById('paymentOverlay');
-const modal          = document.getElementById('paymentModal');
-
-const tabButtons = Array.from(document.querySelectorAll('.pm-tab'));
-const panels = {
-  creditCard:   document.getElementById('pm-list-credit'),
-  debitCard:    document.getElementById('pm-list-debit'),
-  wallet:       document.getElementById('pm-list-wallet'),
-  upi:          document.getElementById('pm-list-upi'),
-  netBanking:   document.getElementById('pm-list-netbanking'),
-  emi:          document.getElementById('pm-list-emi')
+const els = {
+  from:      null, to: null, depart: null, ret: null, pax: null, cabin: null,
+  one: null, round: null,
+  btnSearch: null, payBtn: null, payLabel: null,
+  outList: null, retList: null,
+  overlay: null, modal: null, tabs: null, lists: null, btnDone: null, btnClear: null,
+  banner: null
 };
-const clearBtn = document.getElementById('pmClearBtn');
-const doneBtn  = document.getElementById('pmDoneBtn');
 
-// ------- state -------
-let paymentOptions = null;     // backend /payment-options result
-let selectedPayments = [];     // [{bank, type}, ...]
+let selectedPayments = []; // {bank, type}
+let paymentOptions = null;
 
-// ------- helpers -------
-function show(el){ el.classList.remove('hidden'); }
-function hide(el){ el.classList.add('hidden'); }
-function setEmpty(el, text='No flights'){
-  el.innerHTML = `<div class="empty">${text}</div>`;
+/* helpers */
+function showBanner(msg, isError=true){
+  els.banner.textContent = msg;
+  els.banner.classList.remove("hidden");
+  els.banner.style.background = isError ? "#b4232a" : "#2563eb";
+  setTimeout(()=>els.banner.classList.add("hidden"), 6000);
 }
-
-function fmtRu(x){ return `₹${(+x).toLocaleString('en-IN')}`; }
-
-function activeTripType(){
-  return tripRound.checked ? 'round-trip' : 'one-way';
-}
-
-function pickedPaymentsLabel(){
-  if (!selectedPayments.length) return 'Select Payment Methods';
-  if (selectedPayments.length === 1) {
-    return `${selectedPayments[0].bank} (${selectedPayments[0].type})`;
-  }
-  return `${selectedPayments.length} selected`;
-}
-
-// Normalize backend keys -> panel keys
-function normalizeKey(k){
-  switch (k) {
-    case 'CreditCard': return 'creditCard';
-    case 'DebitCard' : return 'debitCard';
-    case 'Wallet'    : return 'wallet';
-    case 'UPI'       : return 'upi';
-    case 'NetBanking': return 'netBanking';
-    case 'EMI'       : return 'emi';
-    default: return k;
-  }
-}
-
-function humanizePanelKey(k){
-  return ({
-    creditCard:'Credit Cards',
-    debitCard:'Debit Cards',
-    wallet:'Wallets',
-    upi:'UPI',
-    netBanking:'NetBanking',
-    emi:'EMI'
-  })[k] || k;
-}
-
-// ------- payment modal -------
-paymentBtn.addEventListener('click', async () => {
-  try {
-    show(overlay); show(modal);
-
-    // fetch once per page-load
-    if (!paymentOptions) {
-      const r = await fetch(`${BACKEND}/payment-options`, { credentials: 'omit' });
-      const data = await r.json();
-      paymentOptions = data?.options || {};
-      console.log('Loaded payment-options', paymentOptions); // <-- LOOK HERE
-      buildPaymentLists(paymentOptions);
-    }
-    updatePaymentPanelVisibility('creditCard');
-  } catch (e) {
-    console.error('Error loading payment-options', e);
-    Object.values(panels).forEach(p => setEmpty(p, 'Failed to load options'));
-  }
-});
-
-overlay.addEventListener('click', () => { hide(overlay); hide(modal); });
-
-tabButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabButtons.forEach(b => b.classList.remove('pm-tab-active'));
-    btn.classList.add('pm-tab-active');
-    updatePaymentPanelVisibility(btn.dataset.pmTab);
-  });
-});
-
-clearBtn.addEventListener('click', () => {
-  selectedPayments = [];
-  paymentLabel.textContent = pickedPaymentsLabel();
-  // uncheck all
-  modal.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; });
-});
-
-doneBtn.addEventListener('click', () => {
-  paymentLabel.textContent = pickedPaymentsLabel();
-  hide(overlay); hide(modal);
-});
-
-function updatePaymentPanelVisibility(activeKey){
-  Object.entries(panels).forEach(([key, ul]) => {
-    if (key === activeKey) ul.classList.remove('hidden'); else ul.classList.add('hidden');
-  });
-  // If empty, show placeholder
-  const list = panels[activeKey];
-  if (!list.children.length) {
-    setEmpty(list, 'No options available.');
-  }
-}
-
-function buildPaymentLists(opts){
-  // opts: { CreditCard:[banks...], DebitCard:[...], ... }
-  Object.entries(opts).forEach(([rawKey, arr]) => {
-    const key = normalizeKey(rawKey);
-    const list = panels[key];
-    if (!list) return;
-    list.innerHTML = '';
-    if (!Array.isArray(arr) || arr.length === 0) {
-      setEmpty(list, 'No options available.');
-      return;
-    }
-    arr.forEach((bank, i) => {
-      const id = `cb-${key}-${i}`;
-      const li = document.createElement('li');
-      li.className = 'pm-item';
-      li.innerHTML = `
-        <input id="${id}" type="checkbox">
-        <label for="${id}">${bank}</label>
-      `;
-      const cb = li.querySelector('input');
-      cb.addEventListener('change', () => {
-        const type = humanizePanelKey(key).replace(' ', '').toLowerCase().includes('debit') ? 'debit'
-                   : humanizePanelKey(key).toLowerCase().includes('credit') ? 'credit'
-                   : humanizePanelKey(key).toLowerCase();
-        if (cb.checked) {
-          selectedPayments.push({ bank: String(bank), type });
-        } else {
-          selectedPayments = selectedPayments.filter(p => !(p.bank === bank && p.type === type));
-        }
-      });
-      list.appendChild(li);
-    });
-  });
-}
-
-// ------- search -------
-searchBtn.addEventListener('click', async () => {
-  const query = {
-    from: (fromInput.value || 'BOM').trim().toUpperCase(),
-    to:   (toInput.value   || 'DEL').trim().toUpperCase(),
-    departureDate: departDate.value,
-    returnDate:    returnDate.value,
-    passengers:    Number(paxSelect.value) || 1,
-    travelClass:   (cabinSelect.value || 'Economy'),
-    tripType:      activeTripType(),
-    paymentMethods: selectedPayments
+function byId(id){ return document.getElementById(id); }
+function fmtINR(n){ return "₹" + Number(n).toLocaleString("en-IN"); }
+function airlineNameFromCarrierCode(code){
+  const map = {
+    "32213": "IndiGo",
+    "32672": "Air India",
+    "31826": "SpiceJet",
+    "32103": "Vistara",
+    "32377": "Akasa Air",
+    "32845": "Air India Express"
   };
-
-  // UX: empty lists
-  setEmpty(outboundList, 'Searching…');
-  setEmpty(returnList,   query.tripType === 'round-trip' ? 'Searching…' : 'No flights');
-
-  try {
-    const r = await fetch(`${BACKEND}/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(query)
-    });
-    const data = await r.json();
-    console.log('search response', data); // <-- WATCH THIS
-
-    renderFlights(outboundList, data.outboundFlights || []);
-    if (query.tripType === 'round-trip') {
-      renderFlights(returnList, data.returnFlights || []);
-    } else {
-      setEmpty(returnList, 'No flights');
-    }
-  } catch (e) {
-    console.error('search failed', e);
-    setEmpty(outboundList, 'Search failed'); setEmpty(returnList, 'Search failed');
-  }
-});
-
-function portalRows(base){
-  const portals = ['MakeMyTrip','Goibibo','EaseMyTrip','Yatra','Cleartrip'];
-  return portals.map(p => {
-    const final = (Number(base)||0) + 250;
-    return { portal:p, basePrice:Number(base)||0, finalPrice:final, source:'carrier+markup' };
-  });
+  return map[String(code).replace(/\D/g,"")] || "Airline";
 }
 
-function renderFlights(targetEl, flights){
-  if (!flights || flights.length === 0) {
-    setEmpty(targetEl, 'No flights');
+function renderFlights(target, list){
+  if(!list || list.length===0){
+    target.classList.add("empty");
+    target.innerHTML = "No flights";
     return;
   }
-  targetEl.innerHTML = '';
-  flights.forEach(f => {
-    const card = document.createElement('div');
-    card.className = 'flight-card';
-    const portals = portalRows(f.price);
-    const portalHtml = portals.map(pp =>
-      `<div>• ${pp.portal}: ${fmtRu(pp.finalPrice)} <span style="opacity:.75">(₹250 markup)</span></div>`
-    ).join('');
-    const stops = (f.stops ?? 0);
-    card.innerHTML = `
-      <div class="fc-title">${f.airlineName} ${f.flightNumber || ''}</div>
-      <div class="fc-time">${f.departure} → ${f.arrival} · Stops: ${stops}</div>
-      <div class="fc-price">${fmtRu(f.price)}</div>
-      <details style="margin-top:6px">
-        <summary>Portal prices (+₹250 markup)</summary>
-        <div style="margin-top:6px">${portalHtml}</div>
-      </details>
+  target.classList.remove("empty");
+  target.innerHTML = list.map(f=>{
+    const price = fmtINR(f.price || f.basePrice || 0);
+    const title = `${f.airlineName || airlineNameFromCarrierCode(f.carrierCode)} ${f.flightNumber||""}`.trim();
+    const portalInfo = (f.portalPrices && f.portalPrices.length)
+      ? `<div class="fc-note">▶ Portal prices (+₹250 markup)</div>` : "";
+    return `
+      <div class="flight-card">
+        <div class="fc-title">${title}</div>
+        <div class="fc-time">${f.departure} → ${f.arrival} • Stops: ${f.stops ?? 0}</div>
+        <div class="fc-price">${price}</div>
+        ${portalInfo}
+      </div>
     `;
-    targetEl.appendChild(card);
+  }).join("");
+}
+
+function setBtnCount(){
+  const count = selectedPayments.length;
+  els.payLabel.textContent = count ? `Payment Methods (${count})` : "Select Payment Methods";
+}
+
+function showTab(key){
+  els.tabs.forEach(btn=>btn.classList.toggle("pm-tab-active", btn.getAttribute("data-pm-tab")===key));
+  els.lists.forEach(list=>{
+    const active = list.getAttribute("data-pm-panel")===key;
+    list.classList.toggle("hidden", !active);
   });
 }
 
-// ------- sensible defaults -------
-(function initDefaults(){
-  // default dates: today+2 and +4
-  const today = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  function dstr(d){
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function closeModal(){ els.overlay.classList.add("hidden"); els.modal.classList.add("hidden"); }
+function openModal(){
+  els.overlay.classList.remove("hidden");
+  els.modal.classList.remove("hidden");
+  // default to first tab
+  showTab("creditCard");
+}
+
+function renderPaymentLists(){
+  const kinds = [
+    { key:"CreditCard",  el: byId("pm-list-credit"),      type:"credit" },
+    { key:"DebitCard",   el: byId("pm-list-debit"),       type:"debit" },
+    { key:"Wallet",      el: byId("pm-list-wallet"),      type:"wallet" },
+    { key:"UPI",         el: byId("pm-list-upi"),         type:"upi" },
+    { key:"NetBanking",  el: byId("pm-list-netbanking"),  type:"netbanking" },
+    { key:"EMI",         el: byId("pm-list-emi"),         type:"emi" }
+  ];
+  kinds.forEach(({key,el,type})=>{
+    const items = (paymentOptions && paymentOptions[key]) || [];
+    if(!items || items.length===0){
+      el.innerHTML = `<div class="pm-empty">No options available.</div>`;
+      return;
+    }
+    el.innerHTML = items.map(name=>{
+      const id = `${type}-${name}`.toLowerCase().replace(/\s+/g,'-');
+      const checked = selectedPayments.some(p=>p.bank===name && p.type===type) ? 'checked' : '';
+      return `
+        <li class="pm-item">
+          <input type="checkbox" id="${id}" data-bank="${name}" data-type="${type}" ${checked}/>
+          <label for="${id}">${name}</label>
+        </li>`;
+    }).join("");
+    // bind change
+    el.querySelectorAll("input[type=checkbox]").forEach(chk=>{
+      chk.addEventListener("change", e=>{
+        const bank = e.target.getAttribute("data-bank");
+        const type = e.target.getAttribute("data-type");
+        if(e.target.checked){
+          selectedPayments.push({bank,type});
+        }else{
+          selectedPayments = selectedPayments.filter(p=>!(p.bank===bank && p.type===type));
+        }
+        setBtnCount();
+      });
+    });
+  });
+}
+
+async function fetchJSON(path, bodyObj){
+  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+  const controller = new AbortController();
+  const t = setTimeout(()=>controller.abort(), 20000);
+  const opt = bodyObj ? {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(bodyObj),
+    signal: controller.signal
+  } : { method:"GET", signal: controller.signal };
+  try{
+    const res = await fetch(url, opt);
+    clearTimeout(t);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }catch(e){
+    clearTimeout(t);
+    throw e;
   }
-  const d1 = new Date(today); d1.setDate(d1.getDate()+2);
-  const d2 = new Date(today); d2.setDate(d2.getDate()+4);
-  if (!departDate.value) departDate.value = dstr(d1);
-  if (!returnDate.value) returnDate.value = dstr(d2);
-  paymentLabel.textContent = pickedPaymentsLabel();
-})();
+}
+
+async function loadPaymentOptions(){
+  log("Loading payment options from", BASE_URL);
+  try{
+    const data = await fetchJSON("/payment-options");
+    log("payment-options", data);
+    paymentOptions = data.options || data; // handle {options:{...}} or plain
+    renderPaymentLists();
+  }catch(err){
+    log("payment-options ERROR", err);
+    showBanner("Could not load payment methods (check backend /payment-options).");
+    paymentOptions = {CreditCard:[], DebitCard:[], Wallet:[], UPI:[], NetBanking:[], EMI:[]};
+    renderPaymentLists();
+  }
+}
+
+async function doSearch(){
+  const from = els.from.value.trim().toUpperCase();
+  const to   = els.to.value.trim().toUpperCase();
+  const departureDate = els.depart.value;
+  const returnDate    = els.round.checked ? els.ret.value : "";
+  const passengers    = Number(els.pax.value||1);
+  const travelClass   = els.cabin.value;
+  const tripType      = els.round.checked ? "round-trip" : "one-way";
+
+  if(!from || !to || !departureDate){
+    showBanner("Please fill From, To, and Departure date.");
+    return;
+  }
+  if(tripType==="round-trip" && !returnDate){
+    showBanner("Please select a Return date (Round Trip).");
+    return;
+  }
+
+  const payload = { from, to, departureDate, returnDate, passengers, travelClass, tripType, paymentMethods: selectedPayments };
+  log("search payload", payload);
+
+  els.btnSearch.disabled = true;
+  try{
+    const resp = await fetchJSON("/search", payload);
+    log("search response", resp);
+    els.outList && renderFlights(els.outList, resp.outboundFlights || []);
+    els.retList && renderFlights(els.retList, resp.returnFlights   || []);
+    if((resp.outboundFlights||[]).length===0 && (resp.returnFlights||[]).length===0){
+      const reason = (resp.meta && resp.meta.reason) || "no results";
+      showBanner(`No flights found (${reason})`, false);
+    }
+  }catch(err){
+    log("search ERROR", err);
+    showBanner("Search failed. Check backend /search logs.");
+  }finally{
+    els.btnSearch.disabled = false;
+  }
+}
+
+/* Init after DOM is ready */
+document.addEventListener("DOMContentLoaded", ()=>{
+  // map elements
+  els.from  = byId("fromInput");
+  els.to    = byId("toInput");
+  els.depart= byId("departDate");
+  els.ret   = byId("returnDate");
+  els.pax   = byId("paxSelect");
+  els.cabin = byId("cabinSelect");
+  els.one   = byId("tripOneWay");
+  els.round = byId("tripRound");
+  els.btnSearch = byId("searchBtn");
+  els.payBtn   = byId("paymentSelectBtn");
+  els.payLabel = byId("paymentSelectBtnLabel");
+  els.outList  = byId("outboundList");
+  els.retList  = byId("returnList");
+  els.overlay  = byId("paymentOverlay");
+  els.modal    = byId("paymentModal");
+  els.btnDone  = byId("pmDoneBtn");
+  els.btnClear = byId("pmClearBtn");
+  els.tabs     = Array.from(document.querySelectorAll(".pm-tab"));
+  els.lists    = Array.from(document.querySelectorAll(".pm-panel"));
+  els.banner   = byId("banner");
+
+  // bind
+  els.payBtn.addEventListener("click", openModal);
+  els.overlay.addEventListener("click", closeModal);
+  els.btnDone.addEventListener("click", ()=>{ setBtnCount(); closeModal(); });
+  els.btnClear.addEventListener("click", ()=>{
+    selectedPayments = [];
+    setBtnCount();
+    renderPaymentLists();
+  });
+  els.tabs.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const key = btn.getAttribute("data-pm-tab");
+      showTab(key);
+    });
+  });
+  els.one.addEventListener("change", ()=>{
+    if(els.one.checked){ els.ret.closest(".field").style.opacity=.45; }
+  });
+  els.round.addEventListener("change", ()=>{
+    if(els.round.checked){ els.ret.closest(".field").style.opacity=1; }
+  });
+  els.btnSearch.addEventListener("click", doSearch);
+
+  // defaults
+  setBtnCount();
+  if(els.one.checked) els.ret.closest(".field").style.opacity=.45;
+
+  // kick off
+  loadPaymentOptions();
+  log("BOOT ok. BASE_URL:", BASE_URL);
+});
