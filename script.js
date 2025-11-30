@@ -1,109 +1,319 @@
-<!-- script.js — payment modal + search wiring -->
+<!-- Make sure this is included at the end of <body> or with defer -->
 <script>
-const BACKEND = "https://skydeal-backend.onrender.com"; // your Render URL
+(() => {
+  // ========= CONFIG =========
+  const BACKEND = 'https://skydeal-backend.onrender.com';
+  const MARKUP_AMOUNT = 250; // already applied by backend, we still label it
 
-// Inputs (adjust IDs only if yours differ)
-const fromEl   = document.getElementById("fromInput");
-const toEl     = document.getElementById("toInput");
-const depEl    = document.getElementById("departureDateInput");
-const retEl    = document.getElementById("returnDateInput");
-const paxEl    = document.getElementById("passengersSelect");
-const clsEl    = document.getElementById("classSelect");
-const tripRoundEl = document.getElementById("tripTypeRound"); // radio
-const tripOneEl   = document.getElementById("tripTypeOne");   // radio
+  // ========= ELEMENTS =========
+  const els = {
+    // search form
+    from: document.getElementById('from'),
+    to: document.getElementById('to'),
+    depart: document.getElementById('departureDate'),
+    ret: document.getElementById('returnDate'),
+    tripType: document.getElementById('tripType'),      // 'one-way' | 'round-trip'
+    travelClass: document.getElementById('travelClass'),// 'economy'|'business'...
+    passengers: document.getElementById('passengers'),
+    searchBtn: document.getElementById('searchBtn'),
 
-// Buttons
-const btnPM   = document.getElementById("btnOpenPaymentModal");
-const btnSearch = document.getElementById("btnSearch");
+    // results
+    outboundWrap: document.getElementById('outboundResults'),
+    returnWrap: document.getElementById('returnResults'),
 
-// Modal bits
-const modal      = document.getElementById("paymentModal");
-const backdrop   = document.getElementById("paymentModalBackdrop");
-const pmTabs     = document.getElementById("pmTabs");
-const pmBody     = document.getElementById("pmBody");
-const pmClose    = document.getElementById("pmClose");
-const pmCancel   = document.getElementById("pmCancel");
-const pmApply    = document.getElementById("pmApply");
-const pmCount    = document.getElementById("pmCount");
+    // payment picker
+    paymentBtn: document.getElementById('paymentBtn'),  // main button "Select Payment Methods"
+    paymentCount: document.getElementById('paymentCount'), // small badge text
+    pmModal: document.getElementById('paymentModal'),
+    pmClose: document.getElementById('pmClose'),
+    typeList: document.getElementById('pmTypeList'),    // left column (types)
+    subtypeList: document.getElementById('pmSubtypeList'),// right column (banks under that type)
+    clearSel: document.getElementById('pmClear'),
+    applySel: document.getElementById('pmApply'),
+  };
 
-// Results containers (fill later)
-const outboundBox = document.getElementById("outboundBox");
-const returnBox   = document.getElementById("returnBox");
+  // Fail fast if some IDs aren’t present (prevents silent break)
+  for (const [k, v] of Object.entries(els)) {
+    if (!v) console.warn('Missing element for', k);
+  }
 
-// State
-let paymentOptions = {
-  "Credit Card": [],
-  "Debit Card": [],
-  "Wallet": [],
-  "UPI": [],
-  "NetBanking": [],
-  "EMI": [],
-};
-let selectedKeys = new Set(); // e.g. "Credit Card::ICICI Bank"
+  // ========= STATE =========
+  let paymentOptions = { CreditCard:[], DebitCard:[], EMI:[], NetBanking:[], Wallet:[], UPI:[] };
+  let selectedPayments = []; // array of {bank, type}
+  let currentType = null;    // which type tab is active in the modal
 
-// ---- modal helpers
-function openModal(){ modal.classList.remove("hidden"); backdrop.classList.remove("hidden"); }
-function closeModal(){ modal.classList.add("hidden"); backdrop.classList.add("hidden"); }
-function setPMLabel(){
-  const n = selectedKeys.size;
-  pmCount.textContent = n ? `${n} selected` : "Select Payment Methods";
-}
+  // ========= HELPERS =========
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-const TYPE_ORDER = ["Credit Card","Debit Card","Wallet","UPI","NetBanking","EMI"];
+  function normTypeKey(x) {
+    const s = (x||'').toLowerCase();
+    if (s.includes('credit')) return 'credit';
+    if (s.includes('debit')) return 'debit';
+    if (s.includes('emi')) return 'emi';
+    if (s.includes('net')) return 'netbanking';
+    if (s.includes('wallet')) return 'wallet';
+    if (s.includes('upi')) return 'upi';
+    return null;
+  }
+  function uiToApiType(ui) {
+    // UI headings -> API type
+    const m = {
+      'Credit Card':'credit',
+      'Debit Card':'debit',
+      'EMI':'emi',
+      'NetBanking':'netbanking',
+      'Wallet':'wallet',
+      'UPI':'upi'
+    };
+    return m[ui] || null;
+  }
+  function apiToUiType(api) {
+    const m = {
+      credit: 'Credit Card',
+      debit: 'Debit Card',
+      emi: 'EMI',
+      netbanking: 'NetBanking',
+      wallet: 'Wallet',
+      upi: 'UPI'
+    };
+    return m[api] || api;
+  }
 
-function renderTabs(active=TYPE_ORDER[0]){
-  pmTabs.innerHTML = "";
-  TYPE_ORDER.forEach(type => {
-    const b = document.createElement("button");
-    b.className =
-      "px-3 py-1 rounded-md text-sm font-medium " +
-      (type===active ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200 hover:bg-gray-600");
-    b.textContent = type;
-    b.addEventListener("click", () => { renderTabs(type); renderOptions(type); });
-    pmTabs.appendChild(b);
-  });
-}
+  function setPaymentCount() {
+    if (els.paymentCount) {
+      els.paymentCount.textContent = selectedPayments.length ? `${selectedPayments.length} selected` : 'None';
+    }
+    if (els.paymentBtn) {
+      els.paymentBtn.textContent = selectedPayments.length ? `Payment Methods • ${selectedPayments.length} selected` : 'Select Payment Methods';
+    }
+  }
 
-function renderOptions(type){
-  const list = paymentOptions[type] || [];
-  pmBody.innerHTML = "";
-  if (!list.length) { pmBody.innerHTML = `<div class="text-gray-300 text-sm">No options</div>`; return; }
+  function openModal() {
+    if (!els.pmModal) return;
+    els.pmModal.style.display = 'block';
+    els.pmModal.removeAttribute('aria-hidden');
+  }
+  function closeModal() {
+    if (!els.pmModal) return;
+    els.pmModal.style.display = 'none';
+    els.pmModal.setAttribute('aria-hidden','true');
+  }
 
-  const grid = document.createElement("div");
-  grid.className = "grid grid-cols-2 md:grid-cols-3 gap-3";
-  list.forEach(label => {
-    const key = `${type}::${label}`;
-    const wrap = document.createElement("label");
-    wrap.className = "flex items-center gap-2 px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 cursor-pointer";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "h-4 w-4";
-    cb.checked = selectedKeys.has(key);
-    cb.addEventListener("change", () => {
-      if (cb.checked) selectedKeys.add(key); else selectedKeys.delete(key);
-      setPMLabel();
+  function renderTypeTabs() {
+    if (!els.typeList) return;
+    els.typeList.innerHTML = '';
+    const types = Object.keys(paymentOptions); // ['CreditCard','DebitCard',...]
+    // We want display labels consistent (Credit Card etc.)
+    const displayOrder = ['CreditCard','DebitCard','EMI','NetBanking','Wallet','UPI'];
+    for (const key of displayOrder) {
+      if (!(key in paymentOptions)) continue;
+      const count = paymentOptions[key]?.length || 0;
+      const btn = document.createElement('button');
+      btn.className = `pm-type ${currentType===key ? 'active':''}`;
+      btn.textContent = `${key.replace(/Card$/,' Card')} (${count})`;
+      btn.dataset.type = key;
+      btn.onclick = () => {
+        currentType = key;
+        renderTypeTabs();
+        renderSubtypeList();
+      };
+      els.typeList.appendChild(btn);
+    }
+    if (!currentType) {
+      currentType = displayOrder.find(t => (paymentOptions[t]||[]).length) || 'CreditCard';
+    }
+  }
+
+  function isSelected(bank, uiType) {
+    const typeApi = uiToApiType(uiType);
+    return selectedPayments.some(p => p.bank === bank && p.type === typeApi);
+  }
+
+  function toggleSelect(bank, uiType) {
+    const typeApi = uiToApiType(uiType);
+    const idx = selectedPayments.findIndex(p => p.bank === bank && p.type === typeApi);
+    if (idx >= 0) selectedPayments.splice(idx,1);
+    else selectedPayments.push({ bank, type: typeApi });
+    renderSubtypeList();
+    setPaymentCount();
+  }
+
+  function renderSubtypeList() {
+    if (!els.subtypeList) return;
+    els.subtypeList.innerHTML = '';
+    const uiType = currentType || 'CreditCard';
+    const banks = paymentOptions[uiType] || [];
+    if (!banks.length) {
+      const p = document.createElement('p');
+      p.className = 'pm-empty';
+      p.textContent = 'No options available for this type.';
+      els.subtypeList.appendChild(p);
+      return;
+    }
+    banks.forEach(bank => {
+      const row = document.createElement('label');
+      row.className = 'pm-bank';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = isSelected(bank, uiType);
+      cb.onchange = () => toggleSelect(bank, uiType);
+      const span = document.createElement('span');
+      span.textContent = bank;
+      row.appendChild(cb);
+      row.appendChild(span);
+      els.subtypeList.appendChild(row);
     });
-    const span = document.createElement("span");
-    span.className = "text-gray-100 text-sm";
-    span.textContent = label;
-    wrap.appendChild(cb); wrap.appendChild(span);
-    grid.appendChild(wrap);
-  });
-  pmBody.appendChild(grid);
-}
+  }
 
-async function loadPaymentOptions(){
-  const r = await fetch(`${BACKEND}/payment-options`);
-  const j = await r.json();
-  paymentOptions = j?.options || paymentOptions;
-}
+  function card(html) {
+    const div = document.createElement('div');
+    div.className = 'flight-card';
+    div.innerHTML = html;
+    return div;
+  }
 
-// -> structure backend expects: [{ bank:"ICICI Bank", type:"credit" }, ...]
-function getSelectedPaymentMethods(){
-  const out = [];
-  selectedKeys.forEach(key => {
-    const [typeHuman, bank] = key.split("::");
-    let typeKey = null;
-    if (typeHuman === "Credit Card") typeKey = "credit";
-    else if (typeHuman === "Debit Card") typeKey = "debit";
-    else if (typeHuman === "NetBanking") typeKey =
+  function renderFlights(list, mount) {
+    if (!mount) return;
+    mount.innerHTML = '';
+    if (!Array.isArray(list) || !list.length) {
+      mount.textContent = 'No flights found.';
+      return;
+    }
+    list.forEach(f => {
+      const portals = (f.portalPrices || []).map(p => {
+        const price = p.finalPrice ?? p.basePrice ?? 0;
+        return `<li><strong>${p.portal}</strong> — ₹${price} <small>(${p.source || 'carrier+markup'})</small></li>`;
+      }).join('');
+      const html = `
+        <div class="fc-row">
+          <div class="fc-main">
+            <div class="fc-airline">${f.airlineName || ''} <span class="fc-fn">${f.flightNumber || ''}</span></div>
+            <div class="fc-times"><span>${f.departure}</span> → <span>${f.arrival}</span> • Stops: ${f.stops}</div>
+          </div>
+          <div class="fc-price">₹${f.price}</div>
+        </div>
+        <details class="fc-portals">
+          <summary>Portal prices (+₹${MARKUP_AMOUNT} markup)</summary>
+          <ul>${portals}</ul>
+        </details>
+      `;
+      mount.appendChild(card(html));
+    });
+  }
+
+  async function fetchJSON(url, opts={}) {
+    const res = await fetch(url, opts);
+    // /payment-options might double-write; keep first JSON chunk
+    const text = await res.text();
+    // Try to parse the first valid JSON in the string
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    const chunk = (firstBrace >= 0 && lastBrace >= 0) ? text.slice(firstBrace, lastBrace+1) : text;
+    try { return JSON.parse(chunk); }
+    catch { throw new Error('Bad JSON from ' + url + ' :: ' + chunk.slice(0,200)); }
+  }
+
+  async function loadPaymentOptions() {
+    try {
+      const data = await fetchJSON(`${BACKEND}/payment-options`, { method:'GET' });
+      // Normalize keys to our UI buckets
+      const norm = { CreditCard:[], DebitCard:[], EMI:[], NetBanking:[], Wallet:[], UPI:[] };
+      const src = data?.options || {};
+      // Keys might be like "CreditCard" or "Credit Card" — map both.
+      const mapKey = (k) => {
+        const s = (k||'').toLowerCase().replace(/\s+/g,'');
+        if (s.includes('credit')) return 'CreditCard';
+        if (s.includes('debit')) return 'DebitCard';
+        if (s.includes('net')) return 'NetBanking';
+        if (s.includes('wallet')) return 'Wallet';
+        if (s.includes('upi')) return 'UPI';
+        if (s.includes('emi')) return 'EMI';
+        return null;
+      };
+      Object.keys(src).forEach(k => {
+        const bucket = mapKey(k);
+        if (!bucket) return;
+        const arr = Array.isArray(src[k]) ? src[k] : [];
+        norm[bucket] = [...new Set(arr)].sort((a,b)=>a.localeCompare(b));
+      });
+      paymentOptions = norm;
+    } catch (e) {
+      console.error('loadPaymentOptions failed:', e);
+      paymentOptions = { CreditCard:[], DebitCard:[], EMI:[], NetBanking:[], Wallet:[], UPI:[] };
+    }
+    renderTypeTabs();
+    renderSubtypeList();
+    setPaymentCount();
+  }
+
+  async function doSearch() {
+    // Build request payload
+    const body = {
+      from: (els.from?.value||'').trim().toUpperCase(),
+      to: (els.to?.value||'').trim().toUpperCase(),
+      departureDate: (els.depart?.value||'').trim(),
+      returnDate: (els.tripType?.value === 'round-trip') ? (els.ret?.value||'').trim() : '',
+      passengers: Number(els.passengers?.value||1),
+      travelClass: (els.travelClass?.value||'economy').trim(),
+      tripType: els.tripType?.value || 'one-way',
+      paymentMethods: selectedPayments // [{bank:"HDFC Bank", type:"credit"}, ...]
+    };
+    // basic guard
+    if (!body.from || !body.to || !body.departureDate) {
+      alert('Please fill From, To and Departure Date.');
+      return;
+    }
+
+    try {
+      els.searchBtn && (els.searchBtn.disabled = true);
+      const data = await fetchJSON(`${BACKEND}/search`, {
+        method:'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      // Could be meta or error
+      renderFlights(data?.outboundFlights || [], els.outboundWrap);
+      renderFlights(data?.returnFlights || [], els.returnWrap);
+    } catch (e) {
+      console.error('Search failed:', e);
+      if (els.outboundWrap) els.outboundWrap.textContent = 'Search failed. Check console.';
+      if (els.returnWrap) els.returnWrap.textContent = '';
+    } finally {
+      els.searchBtn && (els.searchBtn.disabled = false);
+    }
+  }
+
+  // ========= WIRE UI =========
+  if (els.paymentBtn) {
+    els.paymentBtn.addEventListener('click', () => {
+      openModal();
+    });
+  }
+  if (els.pmClose) els.pmClose.onclick = closeModal;
+  if (els.clearSel) els.clearSel.onclick = () => {
+    selectedPayments = [];
+    setPaymentCount();
+    renderSubtypeList();
+  };
+  if (els.applySel) els.applySel.onclick = () => {
+    setPaymentCount();
+    closeModal();
+  };
+
+  if (els.searchBtn) els.searchBtn.addEventListener('click', doSearch);
+
+  // Hide return date when one-way is chosen (optional if your HTML already handles)
+  if (els.tripType && els.ret) {
+    const toggleRet = () => {
+      const show = els.tripType.value === 'round-trip';
+      els.ret.closest('.field')?.classList.toggle('hidden', !show);
+    };
+    els.tripType.addEventListener('change', toggleRet);
+    toggleRet();
+  }
+
+  // ========= INIT =========
+  loadPaymentOptions(); // load Mongo-driven payment options into modal
+  setPaymentCount();
+})();
+</script>
