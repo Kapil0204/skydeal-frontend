@@ -1,128 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyDeal: Find the Best Flight Offers</title>
-  <link rel="stylesheet" href="./style.css" />
+  <style>
+    /* --- Minimal styling so modal + layout work everywhere --- */
+    :root { --bg:#0f1623; --card:#182234; --muted:#263249; --txt:#e6eefc; --dim:#9fb1cc; --accent:#6aa6ff; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}
+    .container{max-width:1080px;margin:40px auto;padding:0 16px}
+    h1{font-size:32px;margin:0 0 20px}
+    .search-bar{background:var(--card);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .field{background:var(--muted);border-radius:12px;padding:12px 14px;color:var(--txt);border:1px solid transparent;min-width:140px}
+    .field input,.field select{background:transparent;border:0;color:var(--txt);width:100%;outline:none}
+    .btn{background:#4d7cff;color:#fff;border:0;border-radius:12px;padding:10px 18px;font-weight:600;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:8px;background:var(--muted);border-radius:12px;padding:10px 14px;cursor:pointer;border:1px solid transparent}
+    .results{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+    .panel{background:var(--card);border-radius:14px;padding:14px;min-height:200px}
+    .panel h3{margin:0 0 10px}
+    .empty{opacity:.75}
+    .flight-card{background:var(--muted);border-radius:12px;padding:10px;margin:10px 0}
+    .fc-title{font-weight:700}
+    .fc-time{opacity:.85}
+    .fc-price{font-weight:700;margin-top:4px}
+
+    /* --- Payment Modal --- */
+    .hidden{display:none !important}
+    .pm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:50}
+    .pm-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:min(820px,92vw);background:#111929;border:1px solid #243049;border-radius:14px;z-index:60;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+    .pm-header{padding:14px 16px;border-bottom:1px solid #243049}
+    .pm-header h3{margin:0}
+    .pm-tabs{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid #243049;flex-wrap:wrap}
+    .pm-tab{background:#1a2335;border:1px solid #263249;border-radius:10px;color:#cfe0ff;padding:8px 12px;cursor:pointer}
+    .pm-tab-active{background:#24324a;border-color:#44608a}
+    .pm-body{max-height:46vh;overflow:auto;padding:4px 8px 12px}
+    .pm-panel{list-style:none;margin:0;padding:8px}
+    .pm-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+    .pm-item:hover{background:#1a2335}
+    .pm-item input{transform:scale(1.2)}
+    .pm-empty{opacity:.7;padding:12px}
+    .pm-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #243049}
+    .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
+    .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
+
+    /* small screens */
+    @media (max-width:900px){ .results{grid-template-columns:1fr} }
+  </style>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="hero">
-      <h1>SkyDeal: Find the Best Flight Offers</h1>
-    </header>
+  <div class="container">
+    <h1>SkyDeal: Find the Best Flight Offers</h1>
 
-    <section class="search-card">
-      <div class="inputs-row">
-        <input id="fromInput" class="input" placeholder="BOM" />
-        <input id="toInput" class="input" placeholder="DEL" />
-        <input id="departInput" class="input" type="date" />
-        <input id="returnInput" class="input" type="date" />
-        <select id="passengersInput" class="input">
-          <option value="1">1</option><option value="2">2</option>
-          <option value="3">3</option><option value="4">4</option>
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <div class="field" style="width:110px">
+        <input id="fromInput" placeholder="From (BOM)" maxlength="3" />
+      </div>
+      <div class="field" style="width:110px">
+        <input id="toInput" placeholder="To (DEL)" maxlength="3" />
+      </div>
+      <div class="field">
+        <input id="departDate" type="date" />
+      </div>
+      <div class="field">
+        <input id="returnDate" type="date" />
+      </div>
+      <div class="field" style="width:90px">
+        <select id="paxSelect">
+          <option value="1" selected>1</option>
+          <option value="2">2</option><option value="3">3</option><option value="4">4</option>
         </select>
-        <select id="cabinInput" class="input">
-          <option>Economy</option><option>Premium Economy</option>
+      </div>
+      <div class="field" style="width:140px">
+        <select id="cabinSelect">
+          <option>Economy</option>
+          <option>Premium_Economy</option>
           <option>Business</option>
+          <option>First</option>
         </select>
-        <div class="trip-type">
-          <label><input type="radio" name="trip" value="one-way" /> One Way</label>
-          <label><input type="radio" name="trip" value="round-trip" checked /> Round Trip</label>
-        </div>
-
-        <!-- Payment Selector Trigger -->
-        <button id="paymentTrigger" class="button ghost">2 selected ▾</button>
-        <button id="searchBtn" class="button primary">Search</button>
       </div>
 
-      <!-- Payment Selector Modal -->
-      <div id="paymentModal" class="modal hidden" aria-hidden="true">
-        <div class="modal-panel">
-          <div class="modal-header">
-            <div class="tabs">
-              <button data-tab="creditCard" class="tab active">Credit Cards</button>
-              <button data-tab="debitCard" class="tab">Debit Cards</button>
-              <button data-tab="wallet" class="tab">Wallets</button>
-              <button data-tab="upi" class="tab">UPI</button>
-              <button data-tab="netBanking" class="tab">NetBanking</button>
-              <button data-tab="emi" class="tab">EMI</button>
-            </div>
-          </div>
+      <!-- Trip type -->
+      <label class="pill">
+        <input id="tripOneWay" type="radio" name="trip" />
+        One Way
+      </label>
+      <label class="pill">
+        <input id="tripRound" type="radio" name="trip" checked />
+        Round Trip
+      </label>
 
-          <div class="modal-body">
-            <!-- Each tab’s list will be injected here -->
-            <div id="pmLists"></div>
-          </div>
+      <!-- Payment Methods trigger -->
+      <button id="paymentSelectBtn" class="pill" style="margin-left:auto">
+        <span id="paymentSelectBtnLabel">Select Payment Methods</span>
+      </button>
 
-          <div class="modal-footer">
-            <button id="clearPM" class="button ghost">Clear</button>
-            <button id="donePM" class="button primary">Done</button>
-          </div>
-        </div>
+      <button id="searchBtn" class="btn">Search</button>
+    </div>
+
+    <!-- Results -->
+    <div class="results">
+      <div class="panel">
+        <h3>Outbound Flights</h3>
+        <div id="outboundList" class="empty">No flights</div>
       </div>
-    </section>
-
-    <section class="results-grid">
-      <div class="results-col">
-        <div class="results-head">
-          <h2>Outbound Flights</h2>
-          <div class="row-controls">
-            <select id="outboundTimeFilter" class="input small">
-              <option value="any">Any time</option>
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="evening">Evening</option>
-              <option value="night">Night</option>
-            </select>
-            <select id="sortOutbound" class="input small">
-              <option value="price-asc">Sort: Price (asc)</option>
-              <option value="price-desc">Sort: Price (desc)</option>
-              <option value="dep-asc">Sort: Departure (asc)</option>
-              <option value="dep-desc">Sort: Departure (desc)</option>
-            </select>
-          </div>
-        </div>
-        <div id="outboundList" class="card-list" aria-live="polite">No flights</div>
-      </div>
-
-      <div class="results-col">
-        <div class="results-head">
-          <h2>Return Flights</h2>
-          <div class="row-controls">
-            <select id="returnTimeFilter" class="input small">
-              <option value="any">Any time</option>
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="evening">Evening</option>
-              <option value="night">Night</option>
-            </select>
-            <select id="sortReturn" class="input small">
-              <option value="price-asc">Sort: Price (asc)</option>
-              <option value="price-desc">Sort: Price (desc)</option>
-              <option value="dep-asc">Sort: Departure (asc)</option>
-              <option value="dep-desc">Sort: Departure (desc)</option>
-            </select>
-          </div>
-        </div>
-        <div id="returnList" class="card-list" aria-live="polite">No flights</div>
-      </div>
-    </section>
-
-    <!-- Modal for portal prices (kept as-is behavior) -->
-    <div id="portalModal" class="modal hidden" aria-hidden="true">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3 id="portalTitle">Prices across portals</h3>
-        </div>
-        <div id="portalBody" class="modal-body"></div>
-        <div class="modal-footer">
-          <button id="closePortal" class="button primary">Close</button>
-        </div>
+      <div class="panel">
+        <h3>Return Flights</h3>
+        <div id="returnList" class="empty">No flights</div>
       </div>
     </div>
   </div>
 
-  <script src="./script.js"></script>
+  <!-- Payment Modal / Overlay -->
+  <div id="paymentOverlay" class="pm-overlay hidden"></div>
+
+  <div id="paymentModal" class="pm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+    <div class="pm-header">
+      <h3 id="pmTitle">Payment Methods</h3>
+    </div>
+
+    <div class="pm-tabs">
+      <button type="button" data-pm-tab="creditCard"   class="pm-tab pm-tab-active">Credit Cards</button>
+      <button type="button" data-pm-tab="debitCard"    class="pm-tab">Debit Cards</button>
+      <button type="button" data-pm-tab="wallet"       class="pm-tab">Wallets</button>
+      <button type="button" data-pm-tab="upi"          class="pm-tab">UPI</button>
+      <button type="button" data-pm-tab="netBanking"   class="pm-tab">NetBanking</button>
+      <button type="button" data-pm-tab="emi"          class="pm-tab">EMI</button>
+    </div>
+
+    <div class="pm-body">
+      <ul data-pm-panel="creditCard"   id="pm-list-credit"      class="pm-panel"></ul>
+      <ul data-pm-panel="debitCard"    id="pm-list-debit"       class="pm-panel hidden"></ul>
+      <ul data-pm-panel="wallet"       id="pm-list-wallet"      class="pm-panel hidden"></ul>
+      <ul data-pm-panel="upi"          id="pm-list-upi"         class="pm-panel hidden"></ul>
+      <ul data-pm-panel="netBanking"   id="pm-list-netbanking"  class="pm-panel hidden"></ul>
+      <ul data-pm-panel="emi"          id="pm-list-emi"         class="pm-panel hidden"></ul>
+    </div>
+
+    <div class="pm-footer">
+      <button id="pmClearBtn" type="button" class="pm-clear">Clear</button>
+      <button id="pmDoneBtn"  type="button" class="pm-done">Done</button>
+    </div>
+  </div>
+
+  <!-- Your frontend logic (the full file I gave earlier) -->
+  <script src="script.js"></script>
 </body>
 </html>
