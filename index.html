@@ -42,9 +42,13 @@
     .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
     .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
     .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a3751;color:#cfe0ff;border:1px solid #435a83;padding:10px 14px;border-radius:10px;z-index:80}
+    .diag{margin-top:12px; background:#2f8843}
+    .diag-box{white-space:pre-wrap;background:#0e1522;border:1px solid #31425f;border-radius:10px;padding:10px;margin-top:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;color:#cfe0ff;max-height:220px;overflow:auto}
     @media (max-width:900px){.results{grid-template-columns:1fr}}
   </style>
 </head>
+
+<!-- Point the frontend at your backend here -->
 <body data-api="https://skydeal-backend.onrender.com">
   <div class="container">
     <h1>SkyDeal: Find the Best Flight Offers</h1>
@@ -67,7 +71,10 @@
 
       <button id="paymentSelectBtn" class="pill" style="margin-left:auto"><span id="paymentSelectBtnLabel">Select Payment Methods</span></button>
       <button id="searchBtn" class="btn">Search</button>
+      <button id="diagBtn" class="btn diag">Diagnostics</button>
     </div>
+
+    <div id="diagOut" class="diag-box hidden"></div>
 
     <div class="results">
       <div class="panel"><h3>Outbound Flights</h3><div id="outboundList" class="empty">No flights</div></div>
@@ -101,11 +108,11 @@
   </div>
 
   <script>
-  // ===== Config =====
-  const API = document.body.dataset.api || 'https://skydeal-backend.onrender.com';
+  // ========= Config =========
+  const API = document.body.dataset.api || location.origin;
   const CARRIER_MARKUP = 250;
 
-  // ===== Elements =====
+  // ========= Elements =========
   const els = {
     from: document.getElementById('fromInput'),
     to: document.getElementById('toInput'),
@@ -118,7 +125,6 @@
     search: document.getElementById('searchBtn'),
     outbound: document.getElementById('outboundList'),
     retlist: document.getElementById('returnList'),
-
     payBtn: document.getElementById('paymentSelectBtn'),
     payLabel: document.getElementById('paymentSelectBtnLabel'),
     overlay: document.getElementById('paymentOverlay'),
@@ -127,20 +133,21 @@
     panels: Array.from(document.querySelectorAll('.pm-panel')),
     pmClear: document.getElementById('pmClearBtn'),
     pmDone: document.getElementById('pmDoneBtn'),
-
     pmCredit: document.getElementById('pm-list-credit'),
     pmDebit: document.getElementById('pm-list-debit'),
     pmWallet: document.getElementById('pm-list-wallet'),
     pmUPI: document.getElementById('pm-list-upi'),
     pmNet: document.getElementById('pm-list-net'),
     pmEMI: document.getElementById('pm-list-emi'),
+    diagBtn: document.getElementById('diagBtn'),
+    diagOut: document.getElementById('diagOut'),
   };
 
-  // ===== State =====
-  let paymentOptions = null;      // from backend
-  let selectedPayments = [];      // [{type:'CreditCard', value:'Hdfc Bank'}, ...]
+  // ========= State =========
+  let paymentOptions = null;
+  let selectedPayments = [];  // [{type:'CreditCard', value:'Hdfc Bank'}, ...]
 
-  // ===== Helpers =====
+  // ========= Helpers =========
   const toast = (msg) => {
     const t = document.createElement('div');
     t.className = 'toast';
@@ -148,21 +155,15 @@
     document.body.appendChild(t);
     setTimeout(()=>{ t.remove(); }, 3500);
   };
-
   const fmtINR = (n) => new Intl.NumberFormat('en-IN').format(n);
-
-  // Modal controls
   const openModal = () => { els.overlay.classList.remove('hidden'); els.modal.classList.remove('hidden'); };
   const closeModal = () => { els.overlay.classList.add('hidden'); els.modal.classList.add('hidden'); };
-
   const showTab = (key) => {
     els.tabs.forEach(b => b.classList.toggle('pm-tab-active', b.dataset.pmTab === key));
     els.panels.forEach(p => p.classList.toggle('hidden', p.getAttribute('data-pm-panel') !== key));
   };
-
   const setBtnCount = () => {
-    const c = selectedPayments.length;
-    els.payLabel.textContent = c ? \`\${c} selected\` : 'Select Payment Methods';
+    els.payLabel.textContent = selectedPayments.length ? `${selectedPayments.length} selected` : 'Select Payment Methods';
   };
 
   const renderList = (ul, arr, typeKey) => {
@@ -177,25 +178,18 @@
     arr.forEach(v => {
       const li = document.createElement('li');
       li.className = 'pm-item';
-      const id = \`\${typeKey}-\${v}\`.replace(/\\s+/g,'_');
-      li.innerHTML = \`
-        <input type="checkbox" id="\${id}">
-        <label for="\${id}">\${v}</label>
-      \`;
+      const id = `${typeKey}-${v}`.replace(/\s+/g,'_');
+      li.innerHTML = `<input type="checkbox" id="${id}"><label for="${id}">${v}</label>`;
       const cb = li.querySelector('input');
       cb.checked = selectedPayments.some(p => p.type === typeKey && p.value === v);
       cb.addEventListener('change', () => {
-        if (cb.checked) {
-          selectedPayments.push({ type: typeKey, value: v });
-        } else {
-          selectedPayments = selectedPayments.filter(p => !(p.type === typeKey && p.value === v));
-        }
+        if (cb.checked) selectedPayments.push({ type: typeKey, value: v });
+        else selectedPayments = selectedPayments.filter(p => !(p.type === typeKey && p.value === v));
         setBtnCount();
       });
       ul.appendChild(li);
     });
   };
-
   const renderPaymentLists = () => {
     if (!paymentOptions) return;
     renderList(els.pmCredit, paymentOptions.CreditCard, 'CreditCard');
@@ -206,17 +200,23 @@
     renderList(els.pmEMI,    paymentOptions.EMI,        'EMI');
   };
 
-  // ===== Load payment options =====
+  // ========= API calls =========
+  async function fetchJSON(url, opts={}) {
+    const r = await fetch(url, { cache:'no-store', ...opts });
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      const txt = await r.text();
+      throw new Error(`Non-JSON response (${r.status}): ${txt.slice(0,200)}`);
+    }
+    return r.json();
+  }
+
   async function loadPaymentOptions() {
-    console.log('[payment-options] fetching…', \`\${API}/payment-options\`);
     try {
-      const r = await fetch(\`\${API}/payment-options\`, { cache: 'no-store' });
-      const j = await r.json();
-      console.log('[payment-options] response:', j);
-      if (j && j.options) {
-        paymentOptions = j.options;
-      } else {
-        // graceful fallback so you always see *something*
+      const j = await fetchJSON(`${API}/payment-options`);
+      if (j && j.options) paymentOptions = j.options;
+      if (!paymentOptions || Object.values(paymentOptions).every(a => !a || a.length===0)) {
+        // Fallback so the modal is NEVER empty
         paymentOptions = {
           CreditCard: ['Hdfc Bank','Icici Bank','Axis Bank','Kotak'],
           DebitCard:  ['Hdfc Bank','Icici Bank'],
@@ -225,22 +225,19 @@
           NetBanking: ['Icici Bank','Hdfc Bank'],
           EMI:        ['Hdfc Bank EMI']
         };
-        console.warn('[payment-options] backend empty, using fallback');
       }
       renderPaymentLists();
     } catch (e) {
-      console.error('[payment-options] error:', e);
-      toast('Could not load payment methods');
-      // fallback
+      // Fallback on error
       paymentOptions = {
         UPI: ['Mobikwik'],
         CreditCard: [], DebitCard: [], Wallet: [], NetBanking: [], EMI: []
       };
       renderPaymentLists();
+      toast('Could not load payment methods');
     }
   }
 
-  // ===== Search =====
   function buildPayload() {
     const tripType = els.one.checked ? 'one-way' : 'round-trip';
     return {
@@ -262,76 +259,92 @@
       const card = document.createElement('div');
       card.className = 'flight-card';
       const portals = (f.portalPrices||[])
-        .map(p => \`\${p.portal}: ₹\${new Intl.NumberFormat('en-IN').format(p.finalPrice)}\`).join(' • ');
-      card.innerHTML = \`
-        <div class="fc-title">\${f.airlineName} \${f.flightNumber}</div>
-        <div class="fc-time">\${f.departure} → \${f.arrival} • Stops: \${f.stops||0}</div>
-        <div class="fc-price">₹\${new Intl.NumberFormat('en-IN').format(Number(f.price||0))}</div>
-        <div style="margin-top:6px;opacity:.9">▶ Portal prices (+₹${CARRIER_MARKUP} markup): \${portals || '—'}</div>
-      \`;
+        .map(p => `${p.portal}: ₹${fmtINR(p.finalPrice)}`).join(' • ');
+      card.innerHTML = `
+        <div class="fc-title">${f.airlineName} ${f.flightNumber}</div>
+        <div class="fc-time">${f.departure} → ${f.arrival} • Stops: ${f.stops||0}</div>
+        <div class="fc-price">₹${fmtINR(Number(f.price||0))}</div>
+        <div style="margin-top:6px;opacity:.9">▶ Portal prices (+₹${CARRIER_MARKUP} markup): ${portals || '—'}</div>
+      `;
       where.appendChild(card);
     });
   }
 
   async function doSearch() {
-    const body = buildPayload();
-    console.log('[search] POST', \`\${API}/search\`, body);
+    const payload = buildPayload();
     try {
-      const r = await fetch(\`\${API}/search\`, {
+      const j = await fetchJSON(`${API}/search`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       });
-      const j = await r.json();
-      console.log('[search] response', j);
-
-      if (j.error && j.error.includes('timeout')) {
-        toast('Backend timeout. Try again.');
-        return;
-      }
-      if (j.meta && j.meta.reason) {
-        toast(\`No flights found (\${j.meta.reason})\`);
-      }
+      if (j.error && j.error.includes('timeout')) { toast('Backend timeout. Try again.'); return; }
+      if (j.meta && j.meta.reason) { toast(`No flights found (${j.meta.reason})`); }
       renderFlights(els.outbound, j.outboundFlights || []);
       renderFlights(els.retlist, j.returnFlights || []);
     } catch (e) {
-      console.error('[search] error', e);
-      toast('Search failed. Check console.');
+      toast(`Search failed: ${e.message}`);
     }
   }
 
-  // ===== Wire up =====
+  async function runDiagnostics() {
+    els.diagOut.classList.remove('hidden');
+    const lines = [];
+    const push = (h, v) => lines.push(`\n=== ${h} ===\n${(typeof v==='string')?v:JSON.stringify(v,null,2)}`);
+    push('API Base', API);
+
+    try { const h = await fetchJSON(`${API}/health`); push('GET /health', h); }
+    catch(e){ push('GET /health (error)', String(e)); }
+
+    try { const p = await fetchJSON(`${API}/payment-options`); push('GET /payment-options', p); }
+    catch(e){ push('GET /payment-options (error)', String(e)); }
+
+    try {
+      const d = await fetchJSON(`${API}/debug-flightapi?dry=1`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          from:'BOM',to:'DEL',
+          departureDate: els.dep.value,
+          returnDate: els.ret.value,
+          passengers:1,travelClass:'economy',tripType:'round-trip'
+        })
+      });
+      push('POST /debug-flightapi?dry=1', d);
+    } catch(e){ push('POST /debug-flightapi?dry=1 (error)', String(e)); }
+
+    els.diagOut.textContent = lines.join('\n');
+  }
+
+  // ========= Wire Up & Init =========
   (function init(){
-    // default demo dates to avoid empty inputs
-    const today = new Date();
-    const pad = n => String(n).padStart(2,'0');
-    const d1 = new Date(today); d1.setDate(d1.getDate()+3);
-    const d2 = new Date(today); d2.setDate(d2.getDate()+5);
-    const iso = d => \`\${d.getFullYear()}-\${pad(d.getMonth()+1)}-\${pad(d.getDate())}\`;
+    // default demo dates
+    const today = new Date(); const pad=n=>String(n).padStart(2,'0');
+    const d1 = new Date(today); d1.setDate(d1.getDate()+8);
+    const d2 = new Date(today); d2.setDate(d2.getDate()+11);
+    const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     if (!els.dep.value) els.dep.value = iso(d1);
     if (!els.ret.value) els.ret.value = iso(d2);
 
-    els.payBtn.addEventListener('click', openModal);
+    // modal open -> (re)load options so it never shows empty
+    els.payBtn.addEventListener('click', async ()=>{
+      openModal();
+      await loadPaymentOptions();
+      setBtnCount();
+      showTab('CreditCard');
+    });
     els.overlay.addEventListener('click', closeModal);
     els.pmDone.addEventListener('click', ()=>{ setBtnCount(); closeModal(); });
     els.pmClear.addEventListener('click', ()=>{ selectedPayments=[]; setBtnCount(); renderPaymentLists(); });
 
-    els.tabs.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        showTab(btn.getAttribute('data-pm-tab'));
-      });
-    });
-
+    els.tabs.forEach(btn=>btn.addEventListener('click', ()=>showTab(btn.getAttribute('data-pm-tab'))));
     els.one.addEventListener('change', ()=>{ if (els.one.checked) els.ret.closest('.field').style.opacity=.45; });
     els.rtrip.addEventListener('change', ()=>{ if (els.rtrip.checked) els.ret.closest('.field').style.opacity=1; });
-
     els.search.addEventListener('click', doSearch);
+    els.diagBtn.addEventListener('click', runDiagnostics);
 
-    loadPaymentOptions();
-    setBtnCount();
+    // visual state
     if (els.one.checked) els.ret.closest('.field').style.opacity=.45;
-
-    console.log('[init] API base:', API);
   })();
   </script>
 </body>
