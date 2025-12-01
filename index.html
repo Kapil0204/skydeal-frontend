@@ -5,29 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyDeal: Find the Best Flight Offers</title>
   <style>
-    :root { --bg:#0f1623; --card:#182234; --muted:#263249; --txt:#e6eefc; --dim:#9fb1cc; --accent:#6aa6ff; }
-    *{box-sizing:border-box} html,body{height:100%}
+    :root{--bg:#0f1623;--card:#182234;--muted:#263249;--txt:#e6eefc;--dim:#9fb1cc}
+    *{box-sizing:border-box}html,body{height:100%}
     body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .container{max-width:1080px;margin:40px auto;padding:0 16px}
     h1{font-size:32px;margin:0 0 20px}
-    .search-bar{background:var(--card);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .field{background:var(--muted);border-radius:12px;padding:12px 14px;color:var(--txt);border:1px solid transparent;min-width:140px}
+    .search-bar{background:#182234;border-radius:14px;padding:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .field{background:#263249;border-radius:12px;padding:12px 14px;color:var(--txt);border:1px solid transparent;min-width:140px}
     .field input,.field select{background:transparent;border:0;color:var(--txt);width:100%;outline:none}
     .btn{background:#4d7cff;color:#fff;border:0;border-radius:12px;padding:10px 18px;font-weight:600;cursor:pointer}
     .btn:disabled{opacity:.6;cursor:not-allowed}
-    .pill{display:inline-flex;align-items:center;gap:8px;background:var(--muted);border-radius:12px;padding:10px 14px;cursor:pointer;border:1px solid transparent}
+    .pill{display:inline-flex;align-items:center;gap:8px;background:#263249;border-radius:12px;padding:10px 14px;cursor:pointer;border:1px solid transparent}
     .results{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
-    .panel{background:var(--card);border-radius:14px;padding:14px;min-height:200px}
+    .panel{background:#182234;border-radius:14px;padding:14px;min-height:200px}
     .panel h3{margin:0 0 10px}
     .empty{opacity:.75}
-    .flight-card{background:var(--muted);border-radius:12px;padding:10px;margin:10px 0}
+    .flight-card{background:#263249;border-radius:12px;padding:10px;margin:10px 0}
     .fc-title{font-weight:700}
     .fc-time{opacity:.85}
     .fc-price{font-weight:700;margin-top:4px}
-    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a3751;border:1px solid #435a83;color:#d9e6ff;padding:10px 14px;border-radius:10px;z-index:70}
-    .hidden{display:none !important}
-
-    /* Payment Modal */
+    .hidden{display:none!important}
     .pm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:50}
     .pm-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
       width:min(820px,92vw);background:#111929;border:1px solid #243049;border-radius:14px;z-index:60;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -40,23 +37,23 @@
     .pm-panel{list-style:none;margin:0;padding:8px}
     .pm-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
     .pm-item:hover{background:#1a2335}
-    .pm-item input{transform:scale(1.2)}
     .pm-empty{opacity:.7;padding:12px}
     .pm-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #243049}
     .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
     .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
-    @media (max-width:900px){ .results{grid-template-columns:1fr} }
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a3751;color:#cfe0ff;border:1px solid #435a83;padding:10px 14px;border-radius:10px;z-index:80}
+    @media (max-width:900px){.results{grid-template-columns:1fr}}
   </style>
 </head>
-<body>
+<body data-api="https://skydeal-backend.onrender.com">
   <div class="container">
     <h1>SkyDeal: Find the Best Flight Offers</h1>
 
     <div class="search-bar">
-      <div class="field" style="width:110px"><input id="fromInput" placeholder="From (BOM)" maxlength="3" /></div>
-      <div class="field" style="width:110px"><input id="toInput" placeholder="To (DEL)" maxlength="3" /></div>
-      <div class="field"><input id="departDate" type="date" /></div>
-      <div class="field"><input id="returnDate" type="date" /></div>
+      <div class="field" style="width:110px"><input id="fromInput" placeholder="From (BOM)" maxlength="3"/></div>
+      <div class="field" style="width:110px"><input id="toInput" placeholder="To (DEL)" maxlength="3"/></div>
+      <div class="field"><input id="departDate" type="date"/></div>
+      <div class="field"><input id="returnDate" type="date"/></div>
       <div class="field" style="width:90px">
         <select id="paxSelect"><option value="1" selected>1</option><option>2</option><option>3</option><option>4</option></select>
       </div>
@@ -65,9 +62,8 @@
           <option>Economy</option><option>Premium_Economy</option><option>Business</option><option>First</option>
         </select>
       </div>
-
-      <label class="pill"><input id="tripOneWay" type="radio" name="trip" /> One Way</label>
-      <label class="pill"><input id="tripRound" type="radio" name="trip" checked /> Round Trip</label>
+      <label class="pill"><input id="tripOneWay" type="radio" name="trip"/> One Way</label>
+      <label class="pill"><input id="tripRound" type="radio" name="trip" checked/> Round Trip</label>
 
       <button id="paymentSelectBtn" class="pill" style="margin-left:auto"><span id="paymentSelectBtnLabel">Select Payment Methods</span></button>
       <button id="searchBtn" class="btn">Search</button>
@@ -83,28 +79,28 @@
   <div id="paymentModal" class="pm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
     <div class="pm-header"><h3 id="pmTitle">Payment Methods</h3></div>
     <div class="pm-tabs">
-      <button type="button" data-pm-tab="credit" class="pm-tab pm-tab-active">Credit Cards</button>
-      <button type="button" data-pm-tab="debit" class="pm-tab">Debit Cards</button>
-      <button type="button" data-pm-tab="wallet" class="pm-tab">Wallets</button>
-      <button type="button" data-pm-tab="upi" class="pm-tab">UPI</button>
-      <button type="button" data-pm-tab="netbanking" class="pm-tab">NetBanking</button>
-      <button type="button" data-pm-tab="emi" class="pm-tab">EMI</button>
+      <button type="button" data-pm-tab="CreditCard" class="pm-tab pm-tab-active">Credit Cards</button>
+      <button type="button" data-pm-tab="DebitCard" class="pm-tab">Debit Cards</button>
+      <button type="button" data-pm-tab="Wallet" class="pm-tab">Wallets</button>
+      <button type="button" data-pm-tab="UPI" class="pm-tab">UPI</button>
+      <button type="button" data-pm-tab="NetBanking" class="pm-tab">NetBanking</button>
+      <button type="button" data-pm-tab="EMI" class="pm-tab">EMI</button>
     </div>
     <div class="pm-body">
-      <ul data-pm-panel="credit" id="pm-list-credit" class="pm-panel"></ul>
-      <ul data-pm-panel="debit" id="pm-list-debit" class="pm-panel hidden"></ul>
-      <ul data-pm-panel="wallet" id="pm-list-wallet" class="pm-panel hidden"></ul>
-      <ul data-pm-panel="upi" id="pm-list-upi" class="pm-panel hidden"></ul>
-      <ul data-pm-panel="netbanking" id="pm-list-netbanking" class="pm-panel hidden"></ul>
-      <ul data-pm-panel="emi" id="pm-list-emi" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="CreditCard"   id="pm-list-credit" class="pm-panel"></ul>
+      <ul data-pm-panel="DebitCard"    id="pm-list-debit"  class="pm-panel hidden"></ul>
+      <ul data-pm-panel="Wallet"       id="pm-list-wallet" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="UPI"          id="pm-list-upi"    class="pm-panel hidden"></ul>
+      <ul data-pm-panel="NetBanking"   id="pm-list-net"    class="pm-panel hidden"></ul>
+      <ul data-pm-panel="EMI"          id="pm-list-emi"    class="pm-panel hidden"></ul>
     </div>
     <div class="pm-footer">
       <button id="pmClearBtn" type="button" class="pm-clear">Clear</button>
-      <button id="pmDoneBtn" type="button" class="pm-done">Done</button>
+      <button id="pmDoneBtn"  type="button" class="pm-done">Done</button>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
-  <script defer src="script.js"></script>
+  <!-- IMPORTANT: cache-bust with ?v=... -->
+  <script src="script.js?v=20251201"></script>
 </body>
 </html>
