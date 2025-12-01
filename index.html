@@ -7,11 +7,11 @@
   <style>
     :root { --bg:#0f1623; --card:#182234; --muted:#263249; --txt:#e6eefc; --dim:#9fb1cc; --accent:#6aa6ff; }
     *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .container{max-width:1080px;margin:40px auto;padding:0 16px}
     h1{font-size:32px;margin:0 0 20px}
     .search-bar{background:var(--card);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .field{background:var(--muted);border-radius:12px;padding:12px 14px;color:var(--txt);border:1px solid transparent;min-width:110px}
+    .field{background:var(--muted);border-radius:12px;padding:12px 14px;color:var(--txt);border:1px solid transparent;min-width:140px}
     .field input,.field select{background:transparent;border:0;color:var(--txt);width:100%;outline:none}
     .btn{background:#4d7cff;color:#fff;border:0;border-radius:12px;padding:10px 18px;font-weight:600;cursor:pointer}
     .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -24,8 +24,10 @@
     .fc-title{font-weight:700}
     .fc-time{opacity:.85}
     .fc-price{font-weight:700;margin-top:4px}
-
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a3751;border:1px solid #435a83;color:#d9e6ff;padding:10px 14px;border-radius:10px;z-index:70}
     .hidden{display:none !important}
+
+    /* Payment Modal */
     .pm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:50}
     .pm-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
       width:min(820px,92vw);background:#111929;border:1px solid #243049;border-radius:14px;z-index:60;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -43,14 +45,8 @@
     .pm-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #243049}
     .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
     .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
-    .banner{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:#b4232a;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:80}
     @media (max-width:900px){ .results{grid-template-columns:1fr} }
   </style>
-
-  <!-- Force the correct backend URL for this build -->
-  <script>
-    window.SKYDEAL_CONFIG = { BASE_URL: "https://skydeal-backend.onrender.com" };
-  </script>
 </head>
 <body>
   <div class="container">
@@ -65,7 +61,9 @@
         <select id="paxSelect"><option value="1" selected>1</option><option>2</option><option>3</option><option>4</option></select>
       </div>
       <div class="field" style="width:140px">
-        <select id="cabinSelect"><option>Economy</option><option>Premium_Economy</option><option>Business</option><option>First</option></select>
+        <select id="cabinSelect">
+          <option>Economy</option><option>Premium_Economy</option><option>Business</option><option>First</option>
+        </select>
       </div>
 
       <label class="pill"><input id="tripOneWay" type="radio" name="trip" /> One Way</label>
@@ -82,34 +80,31 @@
   </div>
 
   <div id="paymentOverlay" class="pm-overlay hidden"></div>
-
   <div id="paymentModal" class="pm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
     <div class="pm-header"><h3 id="pmTitle">Payment Methods</h3></div>
     <div class="pm-tabs">
-      <button type="button" data-pm-tab="creditCard" class="pm-tab pm-tab-active">Credit Cards</button>
-      <button type="button" data-pm-tab="debitCard"  class="pm-tab">Debit Cards</button>
-      <button type="button" data-pm-tab="wallet"     class="pm-tab">Wallets</button>
-      <button type="button" data-pm-tab="upi"        class="pm-tab">UPI</button>
-      <button type="button" data-pm-tab="netBanking" class="pm-tab">NetBanking</button>
-      <button type="button" data-pm-tab="emi"        class="pm-tab">EMI</button>
+      <button type="button" data-pm-tab="credit" class="pm-tab pm-tab-active">Credit Cards</button>
+      <button type="button" data-pm-tab="debit" class="pm-tab">Debit Cards</button>
+      <button type="button" data-pm-tab="wallet" class="pm-tab">Wallets</button>
+      <button type="button" data-pm-tab="upi" class="pm-tab">UPI</button>
+      <button type="button" data-pm-tab="netbanking" class="pm-tab">NetBanking</button>
+      <button type="button" data-pm-tab="emi" class="pm-tab">EMI</button>
     </div>
     <div class="pm-body">
-      <ul data-pm-panel="creditCard"  id="pm-list-credit"      class="pm-panel"></ul>
-      <ul data-pm-panel="debitCard"   id="pm-list-debit"       class="pm-panel hidden"></ul>
-      <ul data-pm-panel="wallet"      id="pm-list-wallet"      class="pm-panel hidden"></ul>
-      <ul data-pm-panel="upi"         id="pm-list-upi"         class="pm-panel hidden"></ul>
-      <ul data-pm-panel="netBanking"  id="pm-list-netbanking"  class="pm-panel hidden"></ul>
-      <ul data-pm-panel="emi"         id="pm-list-emi"         class="pm-panel hidden"></ul>
+      <ul data-pm-panel="credit" id="pm-list-credit" class="pm-panel"></ul>
+      <ul data-pm-panel="debit" id="pm-list-debit" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="wallet" id="pm-list-wallet" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="upi" id="pm-list-upi" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="netbanking" id="pm-list-netbanking" class="pm-panel hidden"></ul>
+      <ul data-pm-panel="emi" id="pm-list-emi" class="pm-panel hidden"></ul>
     </div>
     <div class="pm-footer">
       <button id="pmClearBtn" type="button" class="pm-clear">Clear</button>
-      <button id="pmDoneBtn"  type="button" class="pm-done">Done</button>
+      <button id="pmDoneBtn" type="button" class="pm-done">Done</button>
     </div>
   </div>
 
-  <div id="banner" class="banner hidden"></div>
-
-  <!-- External JS (cache-busted) -->
-  <script defer src="script.js?v=2025-11-30b"></script>
+  <div id="toast" class="toast hidden"></div>
+  <script defer src="script.js"></script>
 </body>
 </html>
