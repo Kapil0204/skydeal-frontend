@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyDeal: Find the Best Flight Offers</title>
+  <link rel="icon" href="data:,">
   <style>
     :root{--bg:#0f1623;--card:#182234;--muted:#263249;--txt:#e6eefc;--dim:#9fb1cc}
     *{box-sizing:border-box}html,body{height:100%}
@@ -37,13 +38,14 @@
     .pm-panel{list-style:none;margin:0;padding:8px}
     .pm-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
     .pm-item:hover{background:#1a2335}
+    .pm-item input{transform:scale(1.2)}
     .pm-empty{opacity:.7;padding:12px}
     .pm-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #243049}
     .pm-clear{background:#2a3751;border:1px solid #435a83;color:#d9e6ff;border-radius:10px;padding:8px 14px;cursor:pointer}
     .pm-done{background:#4d7cff;border:0;color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
     .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a3751;color:#cfe0ff;border:1px solid #435a83;padding:10px 14px;border-radius:10px;z-index:80}
-    .diag{margin-top:12px; background:#2f8843}
-    .diag-box{white-space:pre-wrap;background:#0e1522;border:1px solid #31425f;border-radius:10px;padding:10px;margin-top:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12px;color:#cfe0ff;max-height:220px;overflow:auto}
+    .diag{margin-top:12px;background:#2f8843}
+    .diag-box{white-space:pre-wrap;background:#0e1522;border:1px solid #31425f;border-radius:10px;padding:10px;margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;color:#cfe0ff;max-height:220px;overflow:auto}
     @media (max-width:900px){.results{grid-template-columns:1fr}}
   </style>
 </head>
@@ -107,245 +109,7 @@
     </div>
   </div>
 
-  <script>
-  // ========= Config =========
-  const API = document.body.dataset.api || location.origin;
-  const CARRIER_MARKUP = 250;
-
-  // ========= Elements =========
-  const els = {
-    from: document.getElementById('fromInput'),
-    to: document.getElementById('toInput'),
-    dep: document.getElementById('departDate'),
-    ret: document.getElementById('returnDate'),
-    pax: document.getElementById('paxSelect'),
-    cabin: document.getElementById('cabinSelect'),
-    one: document.getElementById('tripOneWay'),
-    rtrip: document.getElementById('tripRound'),
-    search: document.getElementById('searchBtn'),
-    outbound: document.getElementById('outboundList'),
-    retlist: document.getElementById('returnList'),
-    payBtn: document.getElementById('paymentSelectBtn'),
-    payLabel: document.getElementById('paymentSelectBtnLabel'),
-    overlay: document.getElementById('paymentOverlay'),
-    modal: document.getElementById('paymentModal'),
-    tabs: Array.from(document.querySelectorAll('.pm-tab')),
-    panels: Array.from(document.querySelectorAll('.pm-panel')),
-    pmClear: document.getElementById('pmClearBtn'),
-    pmDone: document.getElementById('pmDoneBtn'),
-    pmCredit: document.getElementById('pm-list-credit'),
-    pmDebit: document.getElementById('pm-list-debit'),
-    pmWallet: document.getElementById('pm-list-wallet'),
-    pmUPI: document.getElementById('pm-list-upi'),
-    pmNet: document.getElementById('pm-list-net'),
-    pmEMI: document.getElementById('pm-list-emi'),
-    diagBtn: document.getElementById('diagBtn'),
-    diagOut: document.getElementById('diagOut'),
-  };
-
-  // ========= State =========
-  let paymentOptions = null;
-  let selectedPayments = [];  // [{type:'CreditCard', value:'Hdfc Bank'}, ...]
-
-  // ========= Helpers =========
-  const toast = (msg) => {
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(()=>{ t.remove(); }, 3500);
-  };
-  const fmtINR = (n) => new Intl.NumberFormat('en-IN').format(n);
-  const openModal = () => { els.overlay.classList.remove('hidden'); els.modal.classList.remove('hidden'); };
-  const closeModal = () => { els.overlay.classList.add('hidden'); els.modal.classList.add('hidden'); };
-  const showTab = (key) => {
-    els.tabs.forEach(b => b.classList.toggle('pm-tab-active', b.dataset.pmTab === key));
-    els.panels.forEach(p => p.classList.toggle('hidden', p.getAttribute('data-pm-panel') !== key));
-  };
-  const setBtnCount = () => {
-    els.payLabel.textContent = selectedPayments.length ? `${selectedPayments.length} selected` : 'Select Payment Methods';
-  };
-
-  const renderList = (ul, arr, typeKey) => {
-    ul.innerHTML = '';
-    if (!arr || !arr.length) {
-      const li = document.createElement('li');
-      li.className = 'pm-empty';
-      li.textContent = 'No options available.';
-      ul.appendChild(li);
-      return;
-    }
-    arr.forEach(v => {
-      const li = document.createElement('li');
-      li.className = 'pm-item';
-      const id = `${typeKey}-${v}`.replace(/\s+/g,'_');
-      li.innerHTML = `<input type="checkbox" id="${id}"><label for="${id}">${v}</label>`;
-      const cb = li.querySelector('input');
-      cb.checked = selectedPayments.some(p => p.type === typeKey && p.value === v);
-      cb.addEventListener('change', () => {
-        if (cb.checked) selectedPayments.push({ type: typeKey, value: v });
-        else selectedPayments = selectedPayments.filter(p => !(p.type === typeKey && p.value === v));
-        setBtnCount();
-      });
-      ul.appendChild(li);
-    });
-  };
-  const renderPaymentLists = () => {
-    if (!paymentOptions) return;
-    renderList(els.pmCredit, paymentOptions.CreditCard, 'CreditCard');
-    renderList(els.pmDebit,  paymentOptions.DebitCard,  'DebitCard');
-    renderList(els.pmWallet, paymentOptions.Wallet,     'Wallet');
-    renderList(els.pmUPI,    paymentOptions.UPI,        'UPI');
-    renderList(els.pmNet,    paymentOptions.NetBanking, 'NetBanking');
-    renderList(els.pmEMI,    paymentOptions.EMI,        'EMI');
-  };
-
-  // ========= API calls =========
-  async function fetchJSON(url, opts={}) {
-    const r = await fetch(url, { cache:'no-store', ...opts });
-    const ct = r.headers.get('content-type') || '';
-    if (!ct.includes('application/json')) {
-      const txt = await r.text();
-      throw new Error(`Non-JSON response (${r.status}): ${txt.slice(0,200)}`);
-    }
-    return r.json();
-  }
-
-  async function loadPaymentOptions() {
-    try {
-      const j = await fetchJSON(`${API}/payment-options`);
-      if (j && j.options) paymentOptions = j.options;
-      if (!paymentOptions || Object.values(paymentOptions).every(a => !a || a.length===0)) {
-        // Fallback so the modal is NEVER empty
-        paymentOptions = {
-          CreditCard: ['Hdfc Bank','Icici Bank','Axis Bank','Kotak'],
-          DebitCard:  ['Hdfc Bank','Icici Bank'],
-          Wallet:     ['Amazon Pay','Paytm'],
-          UPI:        ['PhonePe','Google Pay','Mobikwik'],
-          NetBanking: ['Icici Bank','Hdfc Bank'],
-          EMI:        ['Hdfc Bank EMI']
-        };
-      }
-      renderPaymentLists();
-    } catch (e) {
-      // Fallback on error
-      paymentOptions = {
-        UPI: ['Mobikwik'],
-        CreditCard: [], DebitCard: [], Wallet: [], NetBanking: [], EMI: []
-      };
-      renderPaymentLists();
-      toast('Could not load payment methods');
-    }
-  }
-
-  function buildPayload() {
-    const tripType = els.one.checked ? 'one-way' : 'round-trip';
-    return {
-      from: (els.from.value || 'BOM').toUpperCase(),
-      to: (els.to.value || 'DEL').toUpperCase(),
-      departureDate: els.dep.value,
-      returnDate: tripType === 'round-trip' ? els.ret.value : '',
-      passengers: Number(els.pax.value || 1),
-      travelClass: (els.cabin.value || 'Economy').toLowerCase(),
-      tripType,
-      paymentMethods: selectedPayments.map(p => ({ bank: p.value, type: p.type }))
-    };
-  }
-
-  function renderFlights(where, list) {
-    if (!list || !list.length) { where.className='empty'; where.textContent='No flights'; return; }
-    where.className=''; where.innerHTML='';
-    list.forEach(f => {
-      const card = document.createElement('div');
-      card.className = 'flight-card';
-      const portals = (f.portalPrices||[])
-        .map(p => `${p.portal}: ₹${fmtINR(p.finalPrice)}`).join(' • ');
-      card.innerHTML = `
-        <div class="fc-title">${f.airlineName} ${f.flightNumber}</div>
-        <div class="fc-time">${f.departure} → ${f.arrival} • Stops: ${f.stops||0}</div>
-        <div class="fc-price">₹${fmtINR(Number(f.price||0))}</div>
-        <div style="margin-top:6px;opacity:.9">▶ Portal prices (+₹${CARRIER_MARKUP} markup): ${portals || '—'}</div>
-      `;
-      where.appendChild(card);
-    });
-  }
-
-  async function doSearch() {
-    const payload = buildPayload();
-    try {
-      const j = await fetchJSON(`${API}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (j.error && j.error.includes('timeout')) { toast('Backend timeout. Try again.'); return; }
-      if (j.meta && j.meta.reason) { toast(`No flights found (${j.meta.reason})`); }
-      renderFlights(els.outbound, j.outboundFlights || []);
-      renderFlights(els.retlist, j.returnFlights || []);
-    } catch (e) {
-      toast(`Search failed: ${e.message}`);
-    }
-  }
-
-  async function runDiagnostics() {
-    els.diagOut.classList.remove('hidden');
-    const lines = [];
-    const push = (h, v) => lines.push(`\n=== ${h} ===\n${(typeof v==='string')?v:JSON.stringify(v,null,2)}`);
-    push('API Base', API);
-
-    try { const h = await fetchJSON(`${API}/health`); push('GET /health', h); }
-    catch(e){ push('GET /health (error)', String(e)); }
-
-    try { const p = await fetchJSON(`${API}/payment-options`); push('GET /payment-options', p); }
-    catch(e){ push('GET /payment-options (error)', String(e)); }
-
-    try {
-      const d = await fetchJSON(`${API}/debug-flightapi?dry=1`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          from:'BOM',to:'DEL',
-          departureDate: els.dep.value,
-          returnDate: els.ret.value,
-          passengers:1,travelClass:'economy',tripType:'round-trip'
-        })
-      });
-      push('POST /debug-flightapi?dry=1', d);
-    } catch(e){ push('POST /debug-flightapi?dry=1 (error)', String(e)); }
-
-    els.diagOut.textContent = lines.join('\n');
-  }
-
-  // ========= Wire Up & Init =========
-  (function init(){
-    // default demo dates
-    const today = new Date(); const pad=n=>String(n).padStart(2,'0');
-    const d1 = new Date(today); d1.setDate(d1.getDate()+8);
-    const d2 = new Date(today); d2.setDate(d2.getDate()+11);
-    const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    if (!els.dep.value) els.dep.value = iso(d1);
-    if (!els.ret.value) els.ret.value = iso(d2);
-
-    // modal open -> (re)load options so it never shows empty
-    els.payBtn.addEventListener('click', async ()=>{
-      openModal();
-      await loadPaymentOptions();
-      setBtnCount();
-      showTab('CreditCard');
-    });
-    els.overlay.addEventListener('click', closeModal);
-    els.pmDone.addEventListener('click', ()=>{ setBtnCount(); closeModal(); });
-    els.pmClear.addEventListener('click', ()=>{ selectedPayments=[]; setBtnCount(); renderPaymentLists(); });
-
-    els.tabs.forEach(btn=>btn.addEventListener('click', ()=>showTab(btn.getAttribute('data-pm-tab'))));
-    els.one.addEventListener('change', ()=>{ if (els.one.checked) els.ret.closest('.field').style.opacity=.45; });
-    els.rtrip.addEventListener('change', ()=>{ if (els.rtrip.checked) els.ret.closest('.field').style.opacity=1; });
-    els.search.addEventListener('click', doSearch);
-    els.diagBtn.addEventListener('click', runDiagnostics);
-
-    // visual state
-    if (els.one.checked) els.ret.closest('.field').style.opacity=.45;
-  })();
-  </script>
+  <!-- External JS: avoids inline <script> parsing issues -->
+  <script src="script.js"></script>
 </body>
 </html>
