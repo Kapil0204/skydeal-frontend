@@ -2,167 +2,299 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SkyDeal</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="wrap">
-    <h1>SkyDeal</h1>
-    <p class="sub">Real flights + real OTA offers</p>
-  </header>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyDeal – Real flights + real OTA offers</title>
 
-  <main class="wrap">
-    <!-- Search row -->
-    <section class="search-grid">
-      <div class="field">
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      font-size: 32px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+
+    #searchBtn {
+      background: black;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 15px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-top: 30px;
+    }
+
+    .flight-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .best {
+      color: green;
+      font-weight: 600;
+      margin: 10px 0;
+    }
+
+    .btn-break {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: white;
+      cursor: pointer;
+    }
+
+    .pager {
+      margin: 10px 0 15px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .pager button {
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.45);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .modal-box {
+      background: white;
+      width: 600px;
+      max-width: 95%;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .close-btn {
+      cursor: pointer;
+      font-size: 22px;
+      padding: 4px 10px;
+    }
+
+    /* Payment modal */
+    #paymentModal .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tab {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: white;
+      font-size: 14px;
+    }
+    .tab.active {
+      background: black;
+      color: white;
+      border-color: black;
+    }
+
+    .checkbox-list {
+      margin-top: 10px;
+    }
+    .checkbox-list label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .btn-small {
+      padding: 8px 14px;
+      background: black;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>SkyDeal</h1>
+  <p>Real flights + real OTA offers</p>
+
+  <!-- ================= SEARCH FORM ================= -->
+  <div class="search-block">
+
+    <div style="display:flex; gap:20px;">
+      <div style="flex:1;">
         <label>From</label>
-        <input id="fromInput" placeholder="BOM" maxlength="3" />
+        <input id="fromInput" placeholder="BOM" />
       </div>
-      <div class="field">
+
+      <div style="flex:1;">
         <label>To</label>
-        <input id="toInput" placeholder="DEL" maxlength="3" />
+        <input id="toInput" placeholder="DEL" />
       </div>
-      <div class="field">
+
+      <div style="flex:1;">
         <label>Departure</label>
-        <input id="departDate" type="date" />
+        <input id="departureDate" type="date" />
       </div>
-      <div class="field">
+
+      <div style="flex:1;">
         <label>Return</label>
         <input id="returnDate" type="date" />
       </div>
-      <div class="field">
+    </div>
+
+    <div style="display:flex; gap:20px; margin-top:15px;">
+      <div style="flex:1;">
         <label>Passengers</label>
-        <select id="paxSelect">
-          <option value="1" selected>1</option>
-          <option value="2">2</option><option value="3">3</option>
-          <option value="4">4</option>
-        </select>
+        <input id="passengers" type="number" value="1" min="1" />
       </div>
-      <div class="field">
+
+      <div style="flex:1;">
         <label>Cabin</label>
-        <select id="cabinSelect">
-          <option value="economy" selected>Economy</option>
-          <option value="premium_economy">Premium Economy</option>
-          <option value="business">Business</option>
+        <select id="travelClass">
+          <option>Economy</option>
+          <option>Premium Economy</option>
+          <option>Business</option>
         </select>
       </div>
 
-      <div class="field trip">
+      <div style="flex:1;">
         <label>Trip</label>
-        <div class="radio-row">
-          <label><input id="tripOneWay" type="radio" name="trip" checked /> One-way</label>
-          <label><input id="tripRound"  type="radio" name="trip" /> Round-trip</label>
+        <div>
+          <input type="radio" name="tripType" value="one-way" checked /> One-way
+          <input type="radio" name="tripType" value="round-trip" /> Round-trip
         </div>
       </div>
 
-      <div class="field pm">
+      <div style="flex:1;">
         <label>Payment methods</label>
-        <button id="paymentSelectBtn" class="btn-outline">
-          <span id="paymentSelectBtnLabel">Select Payment Methods</span>
-        </button>
+        <input id="paymentDisplay" placeholder="Select methods" readonly style="cursor:pointer;" />
       </div>
-
-      <div class="field searchbtn">
-        <button id="searchBtn" class="btn-primary">Search</button>
-      </div>
-    </section>
-
-    <!-- Sort + pagination -->
-    <section class="toolbar">
-      <div class="left">
-        <span id="resultSummary">Results</span>
-      </div>
-      <div class="right">
-        <label class="sortlabel">
-          Sort:
-          <select id="sortSelect">
-            <option value="cheapest" selected>Cheapest first</option>
-            <option value="depart">Earlier departure</option>
-          </select>
-        </label>
-        <div id="paginationControls" class="pager hidden">
-          <button id="prevPage" class="btn" disabled>Prev</button>
-          <span id="pageInfo">Page 1</span>
-          <button id="nextPage" class="btn">Next</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Results -->
-    <section class="results-grid">
-      <div>
-        <h3>Outbound</h3>
-        <div id="outboundList" class="results-list empty">No flights</div>
-      </div>
-      <div>
-        <h3>Return</h3>
-        <div id="returnList" class="results-list empty">—</div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Payment modal (existing) -->
-  <div id="paymentOverlay" class="overlay hidden"></div>
-  <div id="paymentModal" class="modal hidden">
-    <div class="modal-head">
-      <h3>Select payment methods</h3>
-      <button class="iconbtn" id="pmCloseX">✕</button>
     </div>
-    <div class="pm-tabs">
-      <button class="pm-tab pm-tab-active" data-pm-tab="creditCard">Credit Card</button>
-      <button class="pm-tab" data-pm-tab="debitCard">Debit Card</button>
-      <button class="pm-tab" data-pm-tab="netBanking">Net Banking</button>
-      <button class="pm-tab" data-pm-tab="upi">UPI</button>
-      <button class="pm-tab" data-pm-tab="wallet">Wallet</button>
-      <button class="pm-tab" data-pm-tab="emi">EMI</button>
-    </div>
-    <div class="pm-panels">
-      <div class="pm-panel" data-pm-panel="creditCard"><ul id="pm-list-credit"></ul></div>
-      <div class="pm-panel hidden" data-pm-panel="debitCard"><ul id="pm-list-debit"></ul></div>
-      <div class="pm-panel hidden" data-pm-panel="wallet"><ul id="pm-list-wallet"></ul></div>
-      <div class="pm-panel hidden" data-pm-panel="upi"><ul id="pm-list-upi"></ul></div>
-      <div class="pm-panel hidden" data-pm-panel="netBanking"><ul id="pm-list-netbanking"></ul></div>
-      <div class="pm-panel hidden" data-pm-panel="emi"><ul id="pm-list-emi"></ul></div>
-    </div>
-    <div class="modal-foot">
-      <button id="pmClearBtn" class="btn-outline">Clear</button>
-      <button id="pmDoneBtn" class="btn-primary">Done</button>
-    </div>
+
+    <button id="searchBtn">Search</button>
   </div>
 
-  <!-- NEW: Prices & breakdown modal -->
-  <div id="pricesOverlay" class="overlay hidden"></div>
-  <div id="pricesModal" class="modal hidden prices-modal">
-    <div class="modal-head">
-      <h3 id="pricesTitle">Prices & breakdown</h3>
-      <button class="iconbtn" id="pricesCloseX">✕</button>
-    </div>
-    <div class="prices-body">
-      <!-- flight summary -->
-      <div id="flightSummary" class="flight-summary"></div>
 
-      <!-- portal table -->
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
-          </thead>
-          <tbody id="portalTbody"></tbody>
-        </table>
+  <!-- ================= RESULTS GRID ================= -->
+  <div class="results-grid">
+
+    <!-- ********** OUTBOUND COLUMN ********** -->
+    <div>
+      <h3>Outbound</h3>
+
+      <div class="pager">
+        <button data-role="prev-out">Prev</button>
+        <span id="outPageLabel">Page 1 / 1</span>
+        <button data-role="next-out">Next</button>
       </div>
 
-      <!-- reason/debug (from meta.offerDebug – global for this search) -->
-      <details class="reasons">
-        <summary>Why offers applied / skipped</summary>
-        <pre id="reasonPre"></pre>
-      </details>
+      <div id="outboundResults"></div>
     </div>
-    <div class="modal-foot">
-      <button id="pricesCloseBtn" class="btn-primary">Close</button>
-    </div>
-  </div>
 
-  <script src="script.js"></script>
+
+    <!-- ********** RETURN COLUMN ********** -->
+    <div>
+      <h3>Return</h3>
+
+      <div class="pager">
+        <button data-role="prev-ret">Prev</button>
+        <span id="retPageLabel">Page 1 / 1</span>
+        <button data-role="next-ret">Next</button>
+      </div>
+
+      <div id="returnResults"></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ================= PRICE BREAKDOWN MODAL ================= -->
+<div id="priceModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Prices & breakdown</span>
+      <span class="close-btn" onclick="closePriceModal()">×</span>
+    </div>
+    <div id="priceModalContent"></div>
+  </div>
+</div>
+
+
+<!-- ================= PAYMENT METHOD MODAL ================= -->
+<div id="paymentModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Select payment methods</span>
+      <span class="close-btn" onclick="closePaymentModal()">×</span>
+    </div>
+
+    <div class="tabs" id="paymentTabs"></div>
+    <div id="paymentOptions"></div>
+
+    <button class="btn-small" onclick="applyPaymentSelection()">Done</button>
+  </div>
+</div>
+
+
+<script src="script.js"></script>
+
 </body>
 </html>
