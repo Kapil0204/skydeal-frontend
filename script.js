@@ -59,6 +59,15 @@ let outAll = [];   // all outbound results (raw from API, decorated)
 let outPaged = []; // current page subset
 let outPage = 1;   // current page index (1-based)
 let outPages = 1;
+// === paging state ===
+const PAGE_SIZE = 40;
+let state = {
+  pageOut: 1,
+  pageRet: 1,
+  outSorted: [],
+  retSorted: []
+};
+
 
 function setEmpty(el, msg="No flights") {
   el.classList.add("empty");
@@ -68,6 +77,22 @@ function clearNode(el) {
   el.classList.remove("empty");
   el.innerHTML = "";
 }
+function paginate(arr, page, size) {
+  const start = (page - 1) * size;
+  return arr.slice(start, start + size);
+}
+
+function renderPagedList(listEl, arr, pageLabelEl, page, total, side) {
+  clearNode(listEl);
+  paginate(arr, page, PAGE_SIZE).forEach(f => listEl.appendChild(cardForFlight(f)));
+  if (pageLabelEl) pageLabelEl.textContent = `Page ${page} / ${Math.max(1, Math.ceil(total / PAGE_SIZE))}`;
+  // next/prev buttons: expected elements with data-role
+  const prevBtn = document.querySelector(`[data-role="prev-${side}"]`);
+  const nextBtn = document.querySelector(`[data-role="next-${side}"]`);
+  if (prevBtn) prevBtn.disabled = page <= 1;
+  if (nextBtn) nextBtn.disabled = page >= Math.ceil(total / PAGE_SIZE);
+}
+
 
 // ---- payment options ----
 async function loadPaymentOptions() {
@@ -229,10 +254,14 @@ function updatePagerUI(pg) {
 
 // --------- render pipelines ----------
 function renderOutbound(list) {
-  if (!list.length) { setEmpty(els.outboundList, "No outbound flights"); return; }
-  clearNode(els.outboundList);
-  list.forEach(f => els.outboundList.appendChild(cardForFlight(f)));
-}
+  // Sort cheapest first
+state.outSorted = [...out].sort((a,b) => (Number(a.bestDeal?.finalPrice || a.price) - Number(b.bestDeal?.finalPrice || b.price)));
+state.pageOut = 1;
+
+const outPageLabel = document.getElementById("outPageLabel"); // add a span in HTML near the pager
+if (!state.outSorted.length) setEmpty(els.outboundList, "No outbound flights");
+else renderPagedList(els.outboundList, state.outSorted, outPageLabel, state.pageOut, state.outSorted.length, "out");
+
 function renderReturn(list) {
   if (!list.length) { setEmpty(els.returnList, "No return flights"); return; }
   clearNode(els.returnList);
@@ -290,13 +319,17 @@ async function doSearch() {
 
   // return list (no paging for now; can add later)
   if (body.tripType === "round-trip") {
-    renderReturn(sortFlights(ret, els.sortSelect.value));
-  } else {
-    setEmpty(els.returnList, "—");
-  }
+  state.retSorted = [...ret].sort((a,b) => (Number(a.bestDeal?.finalPrice || a.price) - Number(b.bestDeal?.finalPrice || b.price)));
+  state.pageRet = 1;
 
-  els.searchBtn.disabled = false;
+  const retPageLabel = document.getElementById("retPageLabel"); // add a span in HTML near the pager
+  if (!state.retSorted.length) setEmpty(els.returnList, "No return flights");
+  else renderPagedList(els.returnList, state.retSorted, retPageLabel, state.pageRet, state.retSorted.length, "ret");
+} else {
+  state.retSorted = [];
+  setEmpty(els.returnList, "—");
 }
+
 
 // ---------- init ----------
 (function init() {
@@ -341,4 +374,32 @@ async function doSearch() {
   // load & search
   loadPaymentOptions().catch(()=>{});
   els.searchBtn.addEventListener("click", doSearch);
+  // Expect buttons in HTML with data-role="prev-out", "next-out", "prev-ret", "next-ret"
+const wirePager = (side) => {
+  const prev = document.querySelector(`[data-role="prev-${side}"]`);
+  const next = document.querySelector(`[data-role="next-${side}"]`);
+  const label = document.getElementById(side === "out" ? "outPageLabel" : "retPageLabel");
+  const listEl = side === "out" ? els.outboundList : els.returnList;
+  const arr = () => (side === "out" ? state.outSorted : state.retSorted);
+  const pageRef = () => (side === "out" ? "pageOut" : "pageRet");
+
+  if (prev) prev.addEventListener("click", () => {
+    if (state[pageRef()] > 1) {
+      state[pageRef()]--;
+      renderPagedList(listEl, arr(), label, state[pageRef()], arr().length, side);
+    }
+  });
+  if (next) next.addEventListener("click", () => {
+    const totalPages = Math.max(1, Math.ceil(arr().length / PAGE_SIZE));
+    if (state[pageRef()] < totalPages) {
+      state[pageRef()]++;
+      renderPagedList(listEl, arr(), label, state[pageRef()], arr().length, side);
+    }
+  });
+};
+
+wirePager("out");
+wirePager("ret");
+
+  
 })();
