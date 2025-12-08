@@ -1,393 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SkyDeal: Find the Best Flight Offers</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <style>
-    /* minimal styles (your existing CSS can override) */
-    :root { --bg:#0f172a; --panel:#1e293b; --muted:#94a3b8; --text:#e2e8f0; --brand:#4f46e5; }
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto;}
-    .wrap{max-width:1040px;margin:40px auto;padding:0 16px;}
-    h1{font-size:32px;margin:0 0 24px;}
-    .bar{background:var(--panel);padding:18px;border-radius:12px;display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:center}
-    .field{position:relative}
-    .field>label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-    .in, select{width:100%;background:#0b1220;border:1px solid #263248;color:var(--text);border-radius:10px;padding:12px 12px}
-    .btn{background:#334155;color:#cbd5e1;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
-    .btn.brand{background:var(--brand);color:#fff}
-    .pill{background:#0b1220;border:1px solid #263248;color:#cbd5e1;border-radius:999px;padding:8px 12px;cursor:pointer}
-    .radio{display:inline-flex;gap:8px;align-items:center}
-    .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
-    .panel{background:var(--panel);border-radius:12px;padding:14px 16px;min-height:160px}
-    .title{font-weight:700;margin-bottom:8px}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#1f2937;color:#fff;padding:10px 14px;border-radius:10px}
-    .diag{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0b1220;border:1px solid #263248;border-radius:12px;padding:12px;max-height:260px;overflow:auto}
-    /* modal */
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.15s}
-    .overlay.show{opacity:1;pointer-events:auto}
-    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.98);background:var(--panel);width:min(880px,94vw);border-radius:16px;opacity:0;pointer-events:none;transition:.15s}
-    .modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-    .modal-h{padding:18px 20px;border-bottom:1px solid #263248;font-size:20px;font-weight:700}
-    .modal-b{padding:16px 20px}
-    .tabs{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-    .tab{background:#0b1220;border:1px solid #263248;color:#cbd5e1;border-radius:999px;padding:8px 12px;cursor:pointer}
-    .tab.active{background:#1f2a44;color:#fff;border-color:#3b82f6}
-    .pm-list{border-top:1px solid #263248;padding-top:14px;min-height:160px}
-    .pm-row{display:flex;align-items:center;gap:12px;padding:8px 4px}
-    .modal-f{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid #263248}
-    .price-row{font-size:13px;color:#cbd5e1;margin-top:8px}
-    .card{background:#0b1220;border:1px solid #263248;border-radius:12px;padding:12px 12px;margin-bottom:12px}
-  </style>
+  <meta charset="UTF-8" />
+  <title>SkyDeal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="wrap">
-    <h1>SkyDeal: Find the Best Flight Offers</h1>
+  <header class="wrap">
+    <h1>SkyDeal</h1>
+    <p class="sub">Real flights + real OTA offers</p>
+  </header>
 
-    <div class="bar">
-      <div class="field" style="grid-column: span 2;">
+  <main class="wrap">
+    <!-- Search row -->
+    <section class="search-grid">
+      <div class="field">
         <label>From</label>
-        <input id="from" class="in" value="BOM" maxlength="3" />
+        <input id="fromInput" placeholder="BOM" maxlength="3" />
       </div>
-      <div class="field" style="grid-column: span 2;">
+      <div class="field">
         <label>To</label>
-        <input id="to" class="in" value="DEL" maxlength="3" />
+        <input id="toInput" placeholder="DEL" maxlength="3" />
       </div>
-
-      <div class="field" style="grid-column: span 2;">
+      <div class="field">
         <label>Departure</label>
-        <input id="dep" class="in" type="date" />
+        <input id="departDate" type="date" />
       </div>
-
-      <div class="field" style="grid-column: span 2;">
+      <div class="field">
         <label>Return</label>
-        <input id="ret" class="in" type="date" />
+        <input id="returnDate" type="date" />
       </div>
-
       <div class="field">
         <label>Passengers</label>
-        <select id="pax" class="in">
-          <option>1</option><option>2</option><option>3</option><option>4</option>
+        <select id="paxSelect">
+          <option value="1" selected>1</option>
+          <option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option>
         </select>
       </div>
-
       <div class="field">
         <label>Cabin</label>
-        <select id="cabin" class="in">
+        <select id="cabinSelect">
           <option value="economy" selected>Economy</option>
           <option value="premium_economy">Premium Economy</option>
           <option value="business">Business</option>
         </select>
       </div>
 
-      <div class="field" style="grid-column: span 6;">
-        <label>&nbsp;</label>
-        <span class="radio"><input id="rOne" type="radio" name="trip" /> One Way</span>
-        <span class="radio" style="margin-left:14px"><input id="rRound" type="radio" name="trip" checked /> Round Trip</span>
+      <div class="field trip">
+        <label>Trip</label>
+        <div class="radio-row">
+          <label><input id="tripOneWay" type="radio" name="trip" checked /> One-way</label>
+          <label><input id="tripRound"  type="radio" name="trip" /> Round-trip</label>
+        </div>
       </div>
 
-      <div class="field" style="grid-column: span 3;">
-        <label>&nbsp;</label>
-        <button id="payBtn" class="btn">Select Payment Methods <span id="payCount" style="opacity:.7;margin-left:6px"></span></button>
+      <div class="field pm">
+        <label>Payment methods</label>
+        <button id="paymentSelectBtn" class="btn-outline">
+          <span id="paymentSelectBtnLabel">Select Payment Methods</span>
+        </button>
       </div>
 
-      <div class="field" style="grid-column: span 1; text-align:right">
-        <label>&nbsp;</label>
-        <button id="searchBtn" class="btn brand">Search</button>
+      <div class="field searchbtn">
+        <button id="searchBtn" class="btn-primary">Search</button>
       </div>
+    </section>
 
-      <div class="field" style="grid-column: span 2; text-align:right">
-        <label>&nbsp;</label>
-        <button id="diagBtn" class="btn">Diagnostics</button>
+    <!-- Sort + pagination -->
+    <section class="toolbar">
+      <div class="left">
+        <span id="resultSummary">Results</span>
       </div>
+      <div class="right">
+        <label class="sortlabel">
+          Sort:
+          <select id="sortSelect">
+            <option value="cheapest" selected>Cheapest first</option>
+            <option value="depart">Earlier departure</option>
+          </select>
+        </label>
+        <div id="paginationControls" class="pager hidden">
+          <button id="prevPage" class="btn" disabled>Prev</button>
+          <span id="pageInfo">Page 1</span>
+          <button id="nextPage" class="btn">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="results-grid">
+      <div>
+        <h3>Outbound</h3>
+        <div id="outboundList" class="results-list empty">No flights</div>
+      </div>
+      <div>
+        <h3>Return</h3>
+        <div id="returnList" class="results-list empty">—</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Payment modal (existing) -->
+  <div id="paymentOverlay" class="overlay hidden"></div>
+  <div id="paymentModal" class="modal hidden">
+    <div class="modal-head">
+      <h3>Select payment methods</h3>
+      <button class="iconbtn" id="pmCloseX">✕</button>
     </div>
-
-    <div id="diag" class="diag" style="display:none;margin-top:16px"></div>
-
-    <div class="cols" style="margin-top:16px">
-      <div class="panel">
-        <div class="title">Outbound Flights</div>
-        <div id="outList" class="list">No flights</div>
-      </div>
-      <div class="panel">
-        <div class="title">Return Flights</div>
-        <div id="retList" class="list">No flights</div>
-      </div>
+    <div class="pm-tabs">
+      <button class="pm-tab pm-tab-active" data-pm-tab="creditCard">Credit Card</button>
+      <button class="pm-tab" data-pm-tab="debitCard">Debit Card</button>
+      <button class="pm-tab" data-pm-tab="netBanking">Net Banking</button>
+      <button class="pm-tab" data-pm-tab="upi">UPI</button>
+      <button class="pm-tab" data-pm-tab="wallet">Wallet</button>
+      <button class="pm-tab" data-pm-tab="emi">EMI</button>
+    </div>
+    <div class="pm-panels">
+      <div class="pm-panel" data-pm-panel="creditCard"><ul id="pm-list-credit"></ul></div>
+      <div class="pm-panel hidden" data-pm-panel="debitCard"><ul id="pm-list-debit"></ul></div>
+      <div class="pm-panel hidden" data-pm-panel="wallet"><ul id="pm-list-wallet"></ul></div>
+      <div class="pm-panel hidden" data-pm-panel="upi"><ul id="pm-list-upi"></ul></div>
+      <div class="pm-panel hidden" data-pm-panel="netBanking"><ul id="pm-list-netbanking"></ul></div>
+      <div class="pm-panel hidden" data-pm-panel="emi"><ul id="pm-list-emi"></ul></div>
+    </div>
+    <div class="modal-foot">
+      <button id="pmClearBtn" class="btn-outline">Clear</button>
+      <button id="pmDoneBtn" class="btn-primary">Done</button>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div id="overlay" class="overlay"></div>
-  <div id="modal" class="modal" aria-modal="true" role="dialog">
-    <div class="modal-h">Payment Methods</div>
-    <div class="modal-b">
-      <div class="tabs" id="tabs"></div>
-      <div class="pm-list" id="pmList">No options available.</div>
+  <!-- NEW: Prices & breakdown modal -->
+  <div id="pricesOverlay" class="overlay hidden"></div>
+  <div id="pricesModal" class="modal hidden prices-modal">
+    <div class="modal-head">
+      <h3 id="pricesTitle">Prices & breakdown</h3>
+      <button class="iconbtn" id="pricesCloseX">✕</button>
     </div>
-    <div class="modal-f">
-      <button id="btnClear" class="btn">Clear</button>
-      <button id="btnDone" class="btn brand">Done</button>
+    <div class="prices-body">
+      <!-- flight summary -->
+      <div id="flightSummary" class="flight-summary"></div>
+
+      <!-- portal table -->
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
+          </thead>
+          <tbody id="portalTbody"></tbody>
+        </table>
+      </div>
+
+      <!-- reason/debug (from meta.offerDebug – global for this search) -->
+      <details class="reasons">
+        <summary>Why offers applied / skipped</summary>
+        <pre id="reasonPre"></pre>
+      </details>
+    </div>
+    <div class="modal-foot">
+      <button id="pricesCloseBtn" class="btn-primary">Close</button>
     </div>
   </div>
 
-  <div id="toast" class="toast" style="display:none"></div>
-
-<script>
-(() => {
-  const API_BASE = 'https://skydeal-backend.onrender.com';
-
-  const els = {
-    from: document.getElementById('from'),
-    to: document.getElementById('to'),
-    dep: document.getElementById('dep'),
-    ret: document.getElementById('ret'),
-    pax: document.getElementById('pax'),
-    cabin: document.getElementById('cabin'),
-    rOne: document.getElementById('rOne'),
-    rRound: document.getElementById('rRound'),
-    payBtn: document.getElementById('payBtn'),
-    payCount: document.getElementById('payCount'),
-    searchBtn: document.getElementById('searchBtn'),
-    diagBtn: document.getElementById('diagBtn'),
-    diag: document.getElementById('diag'),
-    outList: document.getElementById('outList'),
-    retList: document.getElementById('retList'),
-    // modal
-    overlay: document.getElementById('overlay'),
-    modal: document.getElementById('modal'),
-    tabs: document.getElementById('tabs'),
-    pmList: document.getElementById('pmList'),
-    btnClear: document.getElementById('btnClear'),
-    btnDone: document.getElementById('btnDone'),
-    toast: document.getElementById('toast'),
-  };
-
-  function todayPlus(days){
-    const d=new Date(); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10);
-  }
-  // Set default dates
-  els.dep.value = todayPlus(7);
-  els.ret.value = todayPlus(10);
-
-  // Toast helper
-  let toastTimer;
-  function toast(msg){
-    els.toast.textContent = msg;
-    els.toast.style.display='block';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=> els.toast.style.display='none', 2500);
-  }
-
-  // Diagnostics log
-  function logDiag(text){
-    els.diag.style.display='block';
-    els.diag.textContent = (els.diag.textContent ? els.diag.textContent + '\n' : '') + text;
-  }
-
-  // Toggle diagnostics panel
-  els.diagBtn.addEventListener('click', ()=>{
-    const vis = els.diag.style.display !== 'none';
-    els.diag.style.display = vis ? 'none' : 'block';
-  });
-
-  // Payment methods
-  const PM_TABS = ['CreditCard','DebitCard','Wallet','UPI','NetBanking','EMI'];
-  let paymentOptions = {}; // { CreditCard:[...], ... } from backend
-  let activeTab = 'CreditCard';
-  let selectedPayments = []; // e.g. ["CreditCard:HDFC Bank", "UPI:Mobikwik"]
-
-  function openModal(){ els.overlay.classList.add('show'); els.modal.classList.add('show'); }
-  function closeModal(){ els.overlay.classList.remove('show'); els.modal.classList.remove('show'); }
-
-  function setBtnCount(){ els.payCount.textContent = selectedPayments.length ? `(${selectedPayments.length})` : ''; }
-
-  function renderTabs(){
-    els.tabs.innerHTML = '';
-    PM_TABS.forEach(key=>{
-      const b = document.createElement('button');
-      b.className = 'tab' + (key===activeTab?' active':'');
-      b.textContent = key.replace(/([A-Z])/g, ' $1').trim();
-      b.dataset.pmTab = key;
-      b.addEventListener('click', ()=>{ showTab(key); });
-      els.tabs.appendChild(b);
-    });
-  }
-
-  function renderPaymentList(key){
-    const items = paymentOptions[key] || [];
-    if (!items.length){
-      els.pmList.innerHTML = `<div style="color:#94a3b8">No options available.</div>`;
-      return;
-    }
-    const frag = document.createDocumentFragment();
-    items.forEach(name=>{
-      const row = document.createElement('div');
-      row.className = 'pm-row';
-      const id = `pm_${key}_${name.replace(/\W+/g,'_')}`;
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.id = id;
-      const token = `${key}:${name}`;
-      cb.checked = selectedPayments.includes(token);
-      cb.addEventListener('change', ()=>{
-        if (cb.checked){
-          if (!selectedPayments.includes(token)) selectedPayments.push(token);
-        } else {
-          selectedPayments = selectedPayments.filter(x => x !== token);
-        }
-        setBtnCount();
-      });
-
-      const label = document.createElement('label');
-      label.htmlFor = id;
-      label.textContent = name;
-
-      row.appendChild(cb);
-      row.appendChild(label);
-      frag.appendChild(row);
-    });
-    els.pmList.innerHTML = '';
-    els.pmList.appendChild(frag);
-  }
-
-  function showTab(key){
-    activeTab = key;
-    renderTabs();
-    renderPaymentList(key);
-  }
-
-  async function loadPaymentOptions(){
-    try{
-      const res = await fetch(`${API_BASE}/payment-options`);
-      const data = await res.json();
-      paymentOptions = data.options || {};
-      logDiag(`=== API Base ===\n${API_BASE}\n\n=== GET /health ===`);
-      const h = await fetch(`${API_BASE}/health`).then(r=>r.json()).catch(()=>({}));
-      logDiag(JSON.stringify(h,null,2) + `\n\n=== GET /payment-options ===\n` + JSON.stringify(data,null,2));
-      renderTabs();
-      showTab(activeTab);
-    }catch(err){
-      logDiag('Failed to load payment options: ' + err.message);
-    }
-  }
-
-  // Flights render
-  function priceRow(portalPrices){
-    if (!portalPrices?.length) return '';
-    const parts = portalPrices.map(p => `${p.portal}: ₹${p.finalPrice}`).join(' · ');
-    return `<div class="price-row">► Portal prices (+₹250 markup): ${parts}</div>`;
-  }
-
-  function renderFlights(which, list){
-    const box = which === 'out' ? els.outList : els.retList;
-    if (!list || !list.length){
-      box.innerHTML = 'No flights';
-      return;
-    }
-    const html = list.map(f => `
-      <div class="card">
-        <div style="font-weight:700">${f.airlineName} <span style="opacity:.7">-${f.carrierCode}</span></div>
-        <div style="margin-top:4px">${f.departure} → ${f.arrival} · Stops: ${f.stops || 0}</div>
-        <div style="margin-top:6px;font-size:15px">₹${f.price}</div>
-        ${priceRow(f.portalPrices)}
-      </div>
-    `).join('');
-    box.innerHTML = html;
-  }
-
-  // Radio behaviours: hide/clear return for one-way, show for round-trip
-  els.rOne.addEventListener('change', ()=>{
-    if (els.rOne.checked){
-      els.ret.closest('.field').style.opacity = .45;
-      els.ret.value = ''; // avoid sending empty returnDate by mistake
-    }
-  });
-  els.rRound.addEventListener('change', ()=>{
-    if (els.rRound.checked){
-      els.ret.closest('.field').style.opacity = 1;
-      if (!els.ret.value){
-        // keep UX friendly: default to dep+3
-        const d = new Date(els.dep.value || todayPlus(7));
-        d.setDate(d.getDate()+3);
-        els.ret.value = d.toISOString().slice(0,10);
-      }
-    }
-  });
-
-  // Search flow with strict payload cleaning
-  async function doSearch(){
-    const from = (els.from.value || '').trim().toUpperCase();
-    const to   = (els.to.value || '').trim().toUpperCase();
-
-    const depRaw = (els.dep.value || '').trim();     // yyyy-mm-dd from <input type="date">
-    const retRaw = (els.ret.value || '').trim();
-
-    const tripType = els.rRound.checked ? 'round-trip' : 'one-way';
-    const passengers = parseInt(els.pax.value || '1', 10);
-    const travelClass = (els.cabin.value || 'economy').toLowerCase();
-
-    if (!from || !to) return toast('Please enter valid From/To (IATA codes).');
-    if (!depRaw) return toast('Please pick a departure date.');
-    if (tripType === 'round-trip' && !retRaw) return toast('Please pick a return date for round-trip.');
-
-    const body = {
-      from, to,
-      departureDate: depRaw,
-      passengers,
-      travelClass,
-      tripType,
-      paymentMethods: selectedPayments.slice(0)
-    };
-    if (tripType === 'round-trip') body.returnDate = retRaw;
-
-    logDiag('=== POST /search payload ===\n' + JSON.stringify(body,null,2));
-
-    try{
-      els.searchBtn.disabled = true;
-      els.searchBtn.textContent = 'Searching…';
-
-      const res = await fetch(`${API_BASE}/search`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok){
-        const text = await res.text().catch(()=> '');
-        logDiag(`SEARCH ERROR ${res.status}\n${text}`);
-        toast(`Search failed (${res.status}). See Diagnostics.`);
-        return;
-      }
-
-      const data = await res.json();
-      renderFlights('out', data.outboundFlights || []);
-      renderFlights('ret', data.returnFlights || []);
-      if (data.meta) logDiag('=== /search meta ===\n' + JSON.stringify(data.meta,null,2));
-    }catch(err){
-      console.error(err);
-      logDiag('Client error: ' + (err?.message || err));
-      toast('Network error. Please try again.');
-    }finally{
-      els.searchBtn.disabled = false;
-      els.searchBtn.textContent = 'Search';
-    }
-  }
-
-  // Wire up
-  els.payBtn.addEventListener('click', openModal);
-  els.overlay.addEventListener('click', closeModal);
-  els.btnClear.addEventListener('click', ()=>{ selectedPayments = []; setBtnCount(); renderPaymentList(activeTab); });
-  els.btnDone.addEventListener('click', ()=>{ setBtnCount(); closeModal(); });
-
-  els.searchBtn.addEventListener('click', doSearch);
-
-  // Init
-  loadPaymentOptions();
-  setBtnCount();
-  if (els.rOne.checked) els.ret.closest('.field').style.opacity = .45;
-})();
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
