@@ -1,92 +1,152 @@
-:root{
-  --bg:#f5f6f7;
-  --card:#ffffff;
-  --text:#111;
-  --muted:#6b7280;
-  --primary:#0f172a;
-  --primary-contrast:#fff;
-  --chip:#eef0f2;
-  --border:#e5e7eb;
-  --shadow:0 8px 24px rgba(0,0,0,.06);
-  --radius:12px;
-}
-*{box-sizing:border-box}
-body{
-  margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-  color:var(--text); background:var(--bg);
-}
-.container{max-width:1100px;margin:32px auto;padding:0 16px}
-.header h1{margin:0;font-size:32px}
-.sub{margin:4px 0 24px;color:var(--muted)}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyDeal</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>SkyDeal</h1>
+      <p class="sub">Real flights + real OTA offers</p>
+    </header>
 
-.search-card{
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px 16px 20px; box-shadow:var(--shadow);
-}
-.grid{
-  display:grid; grid-template-columns:repeat(8,1fr); gap:12px;
-}
-.field{display:flex; flex-direction:column}
-.field label{font-size:12px; color:var(--muted); margin-bottom:6px}
-.field input[type="text"], .field input[type="date"], .field select{
-  height:40px; border:1px solid var(--border); border-radius:10px; padding:0 10px; background:#fff;
-}
-.trip-field .radio-row{display:flex; gap:14px; align-items:center; height:40px}
-.btn{height:40px; border-radius:10px; border:1px solid var(--border); padding:0 14px; cursor:pointer; background:#fff}
-.btn.primary{background:var(--primary); color:var(--primary-contrast); border-color:var(--primary)}
-.btn.primary[disabled]{opacity:.7; cursor:not-allowed}
-.btn.secondary{background:#fff}
-.btn.ghost{background:transparent}
-.btn.wide{width:100%; margin-top:14px}
+    <!-- Search bar (kept layout) -->
+    <section class="search-card">
+      <div class="grid">
+        <div class="field">
+          <label for="from">From</label>
+          <input id="from" type="text" placeholder="BOM" />
+        </div>
 
-.results{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px}
-.col-header{display:flex; justify-content:space-between; align-items:center}
-.col-header h2{margin:0 0 8px}
-.pager{display:flex; gap:10px; align-items:center}
-.chip{border:0; background:var(--chip); padding:6px 10px; border-radius:999px; cursor:pointer}
-.muted{color:var(--muted); font-size:12px}
+        <div class="field">
+          <label for="to">To</label>
+          <input id="to" type="text" placeholder="DEL" />
+        </div>
 
-.list{display:flex; flex-direction:column; gap:12px}
-.result-card{
-  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
-  box-shadow:var(--shadow);
-}
-.result-title{margin:0 0 2px; font-weight:600}
-.result-sub{margin:0 0 8px; color:var(--muted); font-size:12px}
-.best{margin:0 0 8px; color:#0a7a20; font-weight:600}
-.row-actions{display:flex; gap:8px}
+        <div class="field">
+          <label for="departure">Departure</label>
+          <input id="departure" type="date" />
+        </div>
 
-.modal{
-  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.45); padding:24px; z-index:50;
-}
-.hidden{display:none}
-.modal-content{
-  background:#fff; width:min(860px,92vw); border-radius:16px; border:1px solid var(--border); box-shadow:var(--shadow);
-}
-.modal-content.large{width:min(920px,94vw)}
-.modal-head{
-  display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border)
-}
-.modal-foot{display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid var(--border)}
-.icon-close{border:0; background:var(--chip); width:32px; height:32px; border-radius:8px; cursor:pointer}
+        <div class="field">
+          <label for="return">Return</label>
+          <input id="return" type="date" />
+        </div>
 
-.tabs{display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border)}
-.tab{border:1px solid var(--border); background:#fff; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px}
-.tab.active{background:var(--primary); color:#fff; border-color:var(--primary)}
+        <div class="field">
+          <label for="passengers">Passengers</label>
+          <select id="passengers">
+            <option value="1" selected>1</option>
+            <option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option>
+          </select>
+        </div>
 
-.options{padding:10px 16px 6px; max-height:50vh; overflow:auto}
-.option-row{
-  display:grid; grid-template-columns:24px 1fr auto; align-items:center;
-  gap:10px; padding:10px 6px; border-bottom:1px dashed var(--border)
-}
-.option-row label{cursor:pointer}
-.option-row .small{font-size:12px; color:var(--muted)}
+        <div class="field">
+          <label for="cabin">Cabin</label>
+          <select id="cabin">
+            <option value="economy" selected>Economy</option>
+            <option value="premium_economy">Premium Economy</option>
+            <option value="business">Business</option>
+            <option value="first">First</option>
+          </select>
+        </div>
 
-.prices-title{padding:0 18px 10px; color:var(--muted)}
-table.prices{width:100%; border-collapse:collapse}
-table.prices th, table.prices td{border-top:1px solid var(--border); padding:12px 18px; text-align:left}
-table.prices thead th{background:#fafafa}
+        <div class="field trip-field">
+          <label>Trip</label>
+          <div class="radio-row">
+            <label><input type="radio" name="trip" id="tripOne" /> One-way</label>
+            <label><input type="radio" name="trip" id="tripRound" checked /> Round-trip</label>
+          </div>
+        </div>
 
-.reasons{margin:16px 18px}
-pre{white-space:pre-wrap; word-break:break-word; background:#fafafa; padding:12px; border-radius:10px; border:1px solid var(--border); max-height:180px; overflow:auto}
+        <div class="field">
+          <label>Payment methods</label>
+          <button id="openPaymentsBtn" class="btn secondary">Select Payment Methods</button>
+        </div>
+      </div>
+
+      <button id="searchBtn" class="btn primary wide">Search</button>
+    </section>
+
+    <!-- Results (kept two-columns layout) -->
+    <section class="results">
+      <div class="col">
+        <div class="col-header">
+          <h2>Outbound</h2>
+          <div class="pager">
+            <button id="outboundPrev" class="chip">Prev</button>
+            <span id="outboundPageLabel" class="muted">Page 1 / 1</span>
+            <button id="outboundNext" class="chip">Next</button>
+          </div>
+        </div>
+        <div id="outboundList" class="list"></div>
+      </div>
+
+      <div class="col">
+        <div class="col-header">
+          <h2>Return</h2>
+          <div class="pager">
+            <button id="returnPrev" class="chip">Prev</button>
+            <span id="returnPageLabel" class="muted">Page 1 / 1</span>
+            <button id="returnNext" class="chip">Next</button>
+          </div>
+        </div>
+        <div id="returnList" class="list"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Payments modal -->
+  <div id="paymentsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h3>Select payment methods</h3>
+        <button id="closePaymentsBtn" class="icon-close" aria-label="Close">×</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="Credit Card">Credit Card</button>
+        <button class="tab" data-tab="Debit Card">Debit Card</button>
+        <button class="tab" data-tab="Net Banking">Net Banking</button>
+        <button class="tab" data-tab="UPI">UPI</button>
+        <button class="tab" data-tab="Wallet">Wallet</button>
+        <button class="tab" data-tab="EMI">EMI</button>
+      </div>
+      <div id="paymentOptionsContainer" class="options"></div>
+      <div class="modal-foot">
+        <button id="clearPaymentsBtn" class="btn ghost">Clear</button>
+        <button id="donePaymentsBtn" class="btn primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prices modal -->
+  <div id="pricesModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content large">
+      <div class="modal-head">
+        <h3>Prices &amp; breakdown</h3>
+        <button id="closePricesBtn" class="icon-close" aria-label="Close">×</button>
+      </div>
+      <div class="prices-title" id="pricesTitle"></div>
+      <table class="prices">
+        <thead>
+          <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
+        </thead>
+        <tbody id="pricesTableBody"></tbody>
+      </table>
+      <details class="reasons">
+        <summary>Why offers applied / skipped</summary>
+        <pre id="offerReasons">{}</pre>
+      </details>
+      <div class="modal-foot">
+        <button id="closePricesBtn2" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
