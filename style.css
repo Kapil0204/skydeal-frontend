@@ -55,7 +55,7 @@ input, select { width:100%; padding:10px 12px; border:1px solid var(--border); b
 
 .pm-list { max-height: 420px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; }
 
-/* FIX: alignment — simple left-aligned row with gap */
+/* Alignment fix */
 .pm-row { display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border); }
 .pm-row input[type="checkbox"] { width:16px; height:16px; }
 .pm-row label { flex:0 1 auto; text-align:left; color:var(--text); }
