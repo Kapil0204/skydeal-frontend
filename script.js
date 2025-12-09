@@ -2,8 +2,8 @@
 const BACKEND = "https://skydeal-backend.onrender.com"; // your Render URL
 
 // form nodes
-const $from = document.getElementById("from");
-const $to   = document.getElementById("to");
+const $from   = document.getElementById("from");
+const $to     = document.getElementById("to");
 const $depart = document.getElementById("depart");
 const $ret    = document.getElementById("ret");
 const $pax    = document.getElementById("pax");
@@ -11,33 +11,57 @@ const $cabin  = document.getElementById("cabin");
 const $one    = document.getElementById("one");
 const $rt     = document.getElementById("rt");
 
-const $btnSearch = document.getElementById("btnSearch");
+const $btnSearch   = document.getElementById("btnSearch");
 const $btnPayments = document.getElementById("btnPayments");
-const $pmCount = document.getElementById("pmCount");
+const $pmCount     = document.getElementById("pmCount");
 
 // lists
 const $outList = document.getElementById("outboundList");
 const $retList = document.getElementById("returnList");
 
 // prices modal
-const $prices = document.getElementById("pricesModal");
+const $prices     = document.getElementById("pricesModal");
 const $pricesMeta = document.getElementById("pricesMeta");
 const $pricesBody = document.getElementById("pricesBody");
-const $whyDump = document.getElementById("whyDump");
-document.getElementById("closePrices").onclick = ()=> $prices.close();
-document.getElementById("closePrices2").onclick = ()=> $prices.close();
+const $whyDump    = document.getElementById("whyDump");
+document.getElementById("closePrices").onclick  = () => $prices.close();
+document.getElementById("closePrices2").onclick = () => $prices.close();
 
 // payments modal
-const $pm = document.getElementById("paymentsModal");
-const $pmTabs = document.getElementById("pmTabs");
-const $pmOptions = document.getElementById("pmOptions");
-document.getElementById("pmClose").onclick = ()=> $pm.close();
-document.getElementById("pmDone").onclick = ()=> $pm.close();
-document.getElementById("pmClear").onclick = ()=>{
-  selected.clear();
-  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
-  updatePmCount();
-};
+const $pm         = document.getElementById("paymentsModal");
+const $pmTabs     = document.getElementById("pmTabs");
+const $pmOptions  = document.getElementById("pmOptions");
+const $pmCloseBtn = document.getElementById("pmClose");
+const $pmDoneBtn  = document.getElementById("pmDone");
+const $pmClearBtn = document.getElementById("pmClear");
+
+// --- NEW: payments modal focus management (prevents console warning) ---
+let pmLastActive = null;
+function openPaymentsModal() {
+  pmLastActive = document.activeElement;
+  if (typeof $pm.showModal === "function") {
+    $pm.showModal();
+  } else {
+    $pm.setAttribute("open", "");
+  }
+}
+function closePaymentsModal() {
+  if ($pm.contains(document.activeElement)) document.activeElement.blur();
+  if (typeof $pm.close === "function") {
+    $pm.close();
+  } else {
+    $pm.removeAttribute("open");
+  }
+  // return focus to opener
+  if (pmLastActive && typeof pmLastActive.focus === "function") {
+    pmLastActive.focus();
+  } else {
+    $btnPayments.focus();
+  }
+}
+// wire close buttons to the new close function
+$pmCloseBtn?.addEventListener("click", (e) => { e.preventDefault(); closePaymentsModal(); });
+$pmDoneBtn?.addEventListener("click",  (e) => { e.preventDefault(); closePaymentsModal(); });
 
 // state
 let paymentCatalog = {};             // { "Credit Card": ["HDFC Bank", ...], ...}
@@ -48,7 +72,6 @@ const norm = s => String(s||"").toLowerCase().replace(/\s+/g,"").replace(/bank$/
 
 // defaults
 (function initDates(){
-  const d = new Date();
   const toISO = (x)=> new Date(Date.now()+x*86400000).toISOString().slice(0,10);
   $depart.value = toISO(1);
   $ret.value    = toISO(3);
@@ -125,9 +148,17 @@ async function loadPaymentOptions() {
   }
 }
 
+// Open payments: use focus-safe open
 $btnPayments.onclick = async () => {
   if (!Object.keys(paymentCatalog).length) await loadPaymentOptions();
-  $pm.showModal();
+  openPaymentsModal();
+};
+
+// Clear selections
+$pmClearBtn.onclick = () => {
+  selected.clear();
+  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
+  updatePmCount();
 };
 
 // ---------- Search ----------
@@ -217,7 +248,7 @@ $btnSearch.onclick = doSearch;
 
 // Hide/show return date based on trip
 $one.addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
-$rt.addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
+$rt .addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
 
 // first paint
 updatePmCount();
