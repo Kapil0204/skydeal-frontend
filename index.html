@@ -2,131 +2,151 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SkyDeal</title>
-  <link rel="stylesheet" href="./style.css" />
+  <title>SkyDeal — Real Flights + Real Offers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="./style.css" rel="stylesheet" />
 </head>
 <body>
-  <main class="container">
-    <h1 class="brand">SkyDeal</h1>
-    <p class="tagline">Real flights + real OTA offers</p>
+  <div class="page">
+    <header class="header">
+      <h1>SkyDeal</h1>
+      <p class="subtitle">Real flight prices + OTA offers</p>
+    </header>
 
-    <!-- Search bar -->
-    <section class="search-card">
-      <div class="row">
+    <!-- Search panel -->
+    <section class="panel">
+      <div class="row inputs">
         <div class="field">
-          <label for="from">From</label>
-          <input id="from" type="text" placeholder="BOM" />
+          <label for="fromInput">From</label>
+          <input id="fromInput" type="text" placeholder="BOM" maxlength="3" />
         </div>
-
         <div class="field">
-          <label for="to">To</label>
-          <input id="to" type="text" placeholder="DEL" />
+          <label for="toInput">To</label>
+          <input id="toInput" type="text" placeholder="DEL" maxlength="3" />
         </div>
-
         <div class="field">
-          <label for="departure">Departure</label>
-          <input id="departure" type="date" />
+          <label for="departDate">Depart</label>
+          <input id="departDate" type="date" />
         </div>
-
         <div class="field">
-          <label for="return">Return</label>
-          <input id="return" type="date" />
+          <label><input id="tripOneWay" name="trip" type="radio" checked /> One-way</label>
+          <label class="ml"><input id="tripRound" name="trip" type="radio" /> Round-trip</label>
         </div>
-
-        <div class="field small">
-          <label for="passengers">Passengers</label>
-          <select id="passengers">
-            <option value="1" selected>1</option>
-            <option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option>
+        <div class="field" id="returnField">
+          <label for="returnDate">Return</label>
+          <input id="returnDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="paxSelect">Passengers</label>
+          <select id="paxSelect">
+            <option value="1" selected>1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
           </select>
         </div>
-
         <div class="field">
-          <label for="cabin">Cabin</label>
-          <select id="cabin">
+          <label for="cabinSelect">Class</label>
+          <select id="cabinSelect">
             <option value="economy" selected>Economy</option>
             <option value="premium_economy">Premium Economy</option>
             <option value="business">Business</option>
           </select>
         </div>
-
-        <div class="field tiny">
-          <label>Trip</label>
-          <div class="trip">
-            <label class="radio">
-              <input type="radio" name="tripType" value="one-way" />
-              <span>One-way</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="tripType" value="round-trip" checked />
-              <span>Round-trip</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="field payments">
-          <label>Payment methods</label>
-          <button id="paymentsBtn" class="btn light">Select Payment Methods</button>
-          <div id="paymentsBadge" class="badge" aria-hidden="true"></div>
-        </div>
       </div>
 
-      <button id="searchBtn" class="btn primary block">Search</button>
-    </section>
+      <div class="row actions">
+        <button id="paymentSelectBtn" class="btn">
+          <span id="paymentSelectBtnLabel">Select Payment Methods</span>
+        </button>
 
-    <!-- Results -->
-    <section class="results">
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Outbound</h2>
-          <div class="pager">
-            <button id="outPrev" class="chip">Prev</button>
-            <span id="outPage" class="muted">Page 1 / 1</span>
-            <button id="outNext" class="chip">Next</button>
-          </div>
-        </div>
-        <div id="outboundList" class="list"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Return</h2>
-          <div class="pager">
-            <button id="retPrev" class="chip">Prev</button>
-            <span id="retPage" class="muted">Page 1 / 1</span>
-            <button id="retNext" class="chip">Next</button>
-          </div>
-        </div>
-        <div id="returnList" class="list"></div>
+        <button id="searchBtn" class="btn btn-primary">
+          <span class="btn-label">Search</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
       </div>
     </section>
-  </main>
 
-  <!-- Payments modal (your working UI kept; minimal markup) -->
-  <div id="paymentsModal" class="modal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
-      <div class="modal-head">
-        <h3 id="pmTitle">Select payment methods</h3>
-        <button id="pmClose" class="icon-btn" aria-label="Close">×</button>
+    <!-- Results: two columns -->
+    <section class="panel">
+      <div class="cols">
+        <div class="col">
+          <div class="col-head">
+            <h3>Outbound</h3>
+            <div class="pager" id="outPager">
+              <button class="pg-btn" data-which="out" data-dir="-1">‹</button>
+              <span class="pg-label" id="outPageLabel">1</span>
+              <button class="pg-btn" data-which="out" data-dir="1">›</button>
+            </div>
+          </div>
+          <div id="outboundList" class="list empty">No flights</div>
+        </div>
+
+        <div class="col">
+          <div class="col-head">
+            <h3>Return</h3>
+            <div class="pager" id="retPager">
+              <button class="pg-btn" data-which="ret" data-dir="-1">‹</button>
+              <span class="pg-label" id="retPageLabel">1</span>
+              <button class="pg-btn" data-which="ret" data-dir="1">›</button>
+            </div>
+          </div>
+          <div id="returnList" class="list empty">—</div>
+        </div>
       </div>
-      <div class="pm-tabs">
-        <button data-tab="Credit Card" class="tab active">Credit Card</button>
-        <button data-tab="Debit Card" class="tab">Debit Card</button>
-        <button data-tab="Net Banking" class="tab">Net Banking</button>
-        <button data-tab="UPI" class="tab">UPI</button>
-        <button data-tab="Wallet" class="tab">Wallet</button>
-        <button data-tab="EMI" class="tab">EMI</button>
-      </div>
-      <div id="pmList" class="pm-list">
-        <!-- options injected by JS -->
-      </div>
-      <div class="modal-foot">
-        <button id="pmClear" class="btn light">Clear</button>
-        <button id="pmDone" class="btn primary">Done</button>
+    </section>
+  </div>
+
+  <!-- Payment Methods Modal -->
+  <div id="paymentOverlay" class="overlay hidden"></div>
+  <div id="paymentModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+    <div class="modal-head">
+      <h3 id="pmTitle">Select Payment Methods</h3>
+      <div class="modal-actions">
+        <button id="pmClearBtn" class="btn btn-ghost">Clear</button>
+        <button id="pmDoneBtn" class="btn btn-primary">Done</button>
       </div>
     </div>
+
+    <div class="pm-tabs">
+      <button class="pm-tab pm-tab-active" data-pm-tab="creditCard">Credit Cards</button>
+      <button class="pm-tab" data-pm-tab="debitCard">Debit Cards</button>
+      <button class="pm-tab" data-pm-tab="netBanking">NetBanking</button>
+      <button class="pm-tab" data-pm-tab="upi">UPI</button>
+      <button class="pm-tab" data-pm-tab="wallet">Wallets</button>
+      <button class="pm-tab" data-pm-tab="emi">EMI</button>
+    </div>
+
+    <div class="pm-panels">
+      <div class="pm-panel" data-pm-panel="creditCard">
+        <ul id="pm-list-credit" class="pm-list"></ul>
+      </div>
+      <div class="pm-panel hidden" data-pm-panel="debitCard">
+        <ul id="pm-list-debit" class="pm-list"></ul>
+      </div>
+      <div class="pm-panel hidden" data-pm-panel="netBanking">
+        <ul id="pm-list-netbanking" class="pm-list"></ul>
+      </div>
+      <div class="pm-panel hidden" data-pm-panel="upi">
+        <ul id="pm-list-upi" class="pm-list"></ul>
+      </div>
+      <div class="pm-panel hidden" data-pm-panel="wallet">
+        <ul id="pm-list-wallet" class="pm-list"></ul>
+      </div>
+      <div class="pm-panel hidden" data-pm-panel="emi">
+        <ul id="pm-list-emi" class="pm-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Prices Modal -->
+  <div id="pricesOverlay" class="overlay hidden"></div>
+  <div id="pricesModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="vpTitle">
+    <div class="modal-head">
+      <h3 id="vpTitle">Prices Across Portals</h3>
+      <div class="modal-actions">
+        <button id="vpCloseBtn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+    <div id="pricesBody" class="prices-body"></div>
   </div>
 
   <script src="./script.js"></script>
