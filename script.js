@@ -1,264 +1,219 @@
-(() => {
-  // ---------------- CONFIG ----------------
-  const API_BASE = 'https://skydeal-backend.onrender.com';
+// ===== Config =====
+const API_BASE = 'https://skydeal-backend.onrender.com'; // your Render backend
 
-  // ---------------- DOM ----------------
-  const els = {
-    from: document.getElementById('from'),
-    to: document.getElementById('to'),
-    dep: document.getElementById('departure'),
-    ret: document.getElementById('return'),
-    pax: document.getElementById('passengers'),
-    cabin: document.getElementById('cabin'),
-    tripOne: document.getElementById('trip-oneway'),
-    tripRound: document.getElementById('trip-round'),
+// ===== State =====
+const selectedMethods = new Set();
+let currentTab = 'Credit Card';
 
-    pmBtn: document.getElementById('openPaymentModal'),
-    pmBadge: document.getElementById('paymentSelectedBadge'),
+// ===== Elements =====
+const el = (id) => document.getElementById(id);
+const fromEl = el('from');
+const toEl = el('to');
+const depEl = el('departure');
+const retEl = el('return');
+const paxEl = el('passengers');
+const cabinEl = el('cabin');
+const tripRadios = () => document.querySelector('input[name="tripType"]:checked');
 
-    search: document.getElementById('searchBtn'),
+const searchBtn = el('searchBtn');
+const outList = el('outboundList');
+const retList = el('returnList');
 
-    outList: document.getElementById('outboundList'),
-    retList: document.getElementById('returnList'),
-    outPrev: document.getElementById('outPrev'),
-    outNext: document.getElementById('outNext'),
-    outPage: document.getElementById('outPage'),
-    retPrev: document.getElementById('retPrev'),
-    retNext: document.getElementById('retNext'),
-    retPage: document.getElementById('retPage'),
+const pmBtn = el('paymentsBtn');
+const pmBadge = el('paymentsBadge');
+const pmModal = el('paymentsModal');
+const pmClose = el('pmClose');
+const pmDone = el('pmDone');
+const pmClear = el('pmClear');
+const pmTabs = document.querySelectorAll('.pm-tabs .tab');
+const pmList = el('pmList');
 
-    pmModal: document.getElementById('paymentsModal'),
-    pmClose: document.getElementById('pmClose'),
-    pmDone: document.getElementById('pmDone'),
-    pmClear: document.getElementById('pmClear'),
-    pmTabs: document.querySelectorAll('[data-pm-tab]'),
-    pmLists: document.querySelectorAll('[data-pm-list]'),
+// ===== Utilities =====
+function setListMessage(listId, msg) {
+  const target = el(listId);
+  if (!target) return;
+  target.innerHTML = msg ? `<div class="empty">${msg}</div>` : '';
+}
+function clearList(id) { setListMessage(id, ''); }
 
-    loadingBar: document.getElementById('loadingBar'),
-  };
+function setLoading(on) {
+  if (!searchBtn) return;
+  searchBtn.disabled = on;
+  searchBtn.textContent = on ? 'Searching…' : 'Search';
+}
 
-  // ---------------- STATE ----------------
-  const state = {
-    paymentSelections: {
-      'Credit Card': new Set(),
-      'Debit Card': new Set(),
-      'Net Banking': new Set(),
-      'UPI': new Set(),
-      'Wallet': new Set(),
-      'EMI': new Set(),
-    },
-    outFlights: [],
-    retFlights: [],
-    outPage: 1,
-    retPage: 1,
-    PAGE_SIZE: 10
-  };
+function updateBadge() {
+  const n = selectedMethods.size;
+  pmBadge.textContent = n ? `Selected (${n})` : '';
+  pmBadge.setAttribute('aria-hidden', n ? 'false' : 'true');
+}
 
-  // ---------------- HELPERS ----------------
-  function showLoading(on) {
-    if (els.loadingBar) els.loadingBar.style.opacity = on ? '1' : '0';
-    els.search.disabled = !!on;
-    els.search.textContent = on ? 'Searching…' : 'Search';
-  }
+function optionRow(key, label) {
+  const id = `pm_${key}`;
+  const checked = selectedMethods.has(label) ? 'checked' : '';
+  return `
+    <div class="pm-row">
+      <label for="${id}">
+        <input id="${id}" type="checkbox" data-value="${label}" ${checked}/>
+        <span>${label}</span>
+      </label>
+    </div>`;
+}
 
-  function flattenPaymentMethods() {
-    const picked = [];
-    Object.values(state.paymentSelections).forEach(set => set.forEach(b => picked.push(b)));
-    return picked;
-  }
+// Simple catalog; your backend decides applicability at /search
+const CATALOG = {
+  'Credit Card': ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Yes Bank', 'Kotak Bank', 'RBL Bank', 'Federal Bank', 'SBI Card', 'HSBC Bank', 'AU Bank'],
+  'Debit Card':  ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI', 'Kotak Bank'],
+  'Net Banking': ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI', 'Kotak Bank'],
+  'UPI':         ['UPI'],
+  'Wallet':      ['Paytm Wallet', 'Amazon Pay'],
+  'EMI':         ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Yes Bank', 'RBL Bank', 'Federal Bank'],
+};
 
-  function updatePmBadge() {
-    const n = flattenPaymentMethods().length;
-    els.pmBadge.textContent = n ? `Selected (${n})` : 'Select Payment Methods';
-  }
+function renderPmList(tab) {
+  const items = CATALOG[tab] || [];
+  pmList.innerHTML = items.length
+    ? items.map((name, i) => optionRow(`${tab}_${i}`, name)).join('')
+    : `<div class="empty">No options</div>`;
 
-  function openModal(){ els.pmModal.classList.add('open'); els.pmModal.setAttribute('aria-hidden','false'); }
-  function closeModal(){ els.pmModal.classList.remove('open'); els.pmModal.setAttribute('aria-hidden','true'); }
-
-  function clearPayments() {
-    Object.keys(state.paymentSelections).forEach(k => state.paymentSelections[k].clear());
-    document.querySelectorAll('[data-pm-list] input[type=checkbox]').forEach(cb => cb.checked = false);
-    updatePmBadge();
-  }
-
-  // ---------------- PAYMENT MODAL WIRES ----------------
-  els.pmBtn.addEventListener('click', openModal);
-  els.pmClose.addEventListener('click', closeModal);
-  els.pmDone.addEventListener('click', () => { updatePmBadge(); closeModal(); });
-  els.pmClear.addEventListener('click', clearPayments);
-
-  els.pmTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const key = tab.getAttribute('data-pm-tab');
-      document.querySelectorAll('[data-pm-tab]').forEach(t => t.classList.toggle('active', t===tab));
-      els.pmLists.forEach(list => {
-        list.style.display = (list.getAttribute('data-pm-list') === key) ? 'block' : 'none';
-      });
+  // wire up
+  pmList.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+    chk.addEventListener('change', (e) => {
+      const v = e.target.dataset.value;
+      if (!v) return;
+      if (e.target.checked) selectedMethods.add(v);
+      else selectedMethods.delete(v);
+      updateBadge();
     });
   });
+}
 
-  // capture (un)checks
-  els.pmLists.forEach(list => {
-    list.addEventListener('change', (e) => {
-      const type = list.getAttribute('data-pm-list');
-      const bank = e.target.getAttribute('data-bank');
-      if (!bank) return;
-      if (e.target.checked) state.paymentSelections[type].add(bank);
-      else state.paymentSelections[type].delete(bank);
-    });
-  });
+function setActiveTab(btn) {
+  pmTabs.forEach(t => t.classList.toggle('active', t === btn));
+  currentTab = btn.dataset.tab;
+  renderPmList(currentTab);
+}
 
-  // ---------------- RENDER ----------------
-  function emptyMessage(el, msg) {
-    el.innerHTML = `<div class="empty">${msg}</div>`;
+// ===== Payments modal wiring =====
+pmBtn.addEventListener('click', () => {
+  pmModal.setAttribute('aria-hidden', 'false');
+  renderPmList(currentTab);
+});
+pmClose.addEventListener('click', () => {
+  pmModal.setAttribute('aria-hidden', 'true');
+});
+pmDone.addEventListener('click', () => {
+  pmModal.setAttribute('aria-hidden', 'true');
+});
+pmClear.addEventListener('click', () => {
+  selectedMethods.clear();
+  renderPmList(currentTab);
+  updateBadge();
+});
+pmTabs.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn)));
+updateBadge(); // initial
+
+// ===== Rendering flights (kept minimal; no layout change) =====
+function renderFlights(listId, flights) {
+  const list = el(listId);
+  if (!list) return;
+  if (!Array.isArray(flights) || flights.length === 0) {
+    list.innerHTML = '';
+    return;
   }
 
-  function renderSide(side) {
-    const isOut = side === 'out';
-    const list = isOut ? state.outFlights : state.retFlights;
-    const listEl = isOut ? els.outList : els.retList;
-    const page = isOut ? state.outPage : state.retPage;
-    const prev = isOut ? els.outPrev : els.retPrev;
-    const next = isOut ? els.outNext : els.retNext;
-    const pageEl = isOut ? els.outPage : els.retPage;
-
-    if (!list || list.length === 0) {
-      listEl.innerHTML = '';
-      emptyMessage(listEl, 'No flights found for your search.');
-      pageEl.textContent = 'Page 1 / 1';
-      prev.disabled = true; next.disabled = true;
-      return;
-    }
-
-    const totalPages = Math.max(1, Math.ceil(list.length / state.PAGE_SIZE));
-    const start = (page - 1) * state.PAGE_SIZE;
-    const end = Math.min(start + state.PAGE_SIZE, list.length);
-
-    listEl.innerHTML = list.slice(start, end).map((f, i) => {
-      const best = f.bestDeal ? `Best: ₹${(f.bestDeal.finalPrice||0).toLocaleString('en-IN')} on ${f.bestDeal.portal}` : '';
-      const why  = f.bestDeal?.note || 'Best price after applicable offers (if any)';
-      return `
-        <div class="card">
-          <div class="title">${f.title || `${f.airlineName||''} • ${f.carrierCode||''} ${f.flightNumber||''}`}</div>
-          <div class="meta">${f.subTitle || f.stopsText || 'Non-stop'}</div>
-          <div class="best">${best}</div>
-          <div class="why">${why}</div>
-          <button class="btn-outline" data-side="${side}" data-idx="${start+i}">Prices & breakdown</button>
+  list.innerHTML = flights.map(f => {
+    const title = f.title || `${f.airlineName || 'Airline'} • ${f.flightNumber || ''}`.trim();
+    const sub = f.sub || `${(f.stops === 0 || f.nonStop) ? 'Non-stop' : (f.stops ? `${f.stops} stop` : '')}`;
+    const best = f.bestDeal ? `Best: ₹${f.bestDeal.finalPrice?.toLocaleString?.('en-IN') || f.bestDeal.finalPrice} on ${f.bestDeal.portal}` : '';
+    return `
+      <div class="card">
+        <div class="title">${title}</div>
+        <div class="sub">${sub}</div>
+        <div class="row">
+          <div class="muted">${best || ''}</div>
+          <button class="btn light" data-prices='${JSON.stringify(f.portalPrices || [])}'>Prices & breakdown</button>
         </div>
-      `;
-    }).join('');
+      </div>
+    `;
+  }).join('');
 
-    pageEl.textContent = `Page ${page} / ${totalPages}`;
-    prev.disabled = page <= 1;
-    next.disabled = page >= totalPages;
-
-    listEl.querySelectorAll('[data-idx]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.getAttribute('data-idx'));
-        const arr = isOut ? state.outFlights : state.retFlights;
-        const f = arr[idx];
-        if (!f) return;
-
-        const rows = (f.portalPrices||[]).map(p => `
-          <tr><td>${p.portal}</td><td>₹${(p.finalPrice||0).toLocaleString('en-IN')}</td><td>${p.source||''}</td></tr>
-        `).join('');
-        const whyBlock = f.offerReasons ? `<details><summary>Why offers applied / skipped</summary><pre>${JSON.stringify(f.offerReasons,null,2)}</pre></details>` : '';
-
-        const wrap = document.createElement('div');
-        wrap.className = 'sheet-wrap';
-        wrap.innerHTML = `
-          <div class="sheet">
-            <div class="sheet-head">
-              <div class="sheet-title">Prices & breakdown</div>
-              <button id="x-sheet" class="btn-icon">✕</button>
-            </div>
-            <div class="sheet-sub">${f.title || ''} • Base ₹${(f.base||0).toLocaleString('en-IN')}</div>
-            <table class="tbl">
-              <thead><tr><th>Portal</th><th>Final</th><th>Source</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-            ${whyBlock}
-            <div class="sheet-actions"><button id="closeSheet" class="btn">Close</button></div>
-          </div>`;
-        document.body.appendChild(wrap);
-        wrap.querySelector('#x-sheet').onclick = () => wrap.remove();
-        wrap.querySelector('#closeSheet').onclick = () => wrap.remove();
-      });
+  // wire "Prices & breakdown" (simple alert for now to avoid UI changes)
+  list.querySelectorAll('button[data-prices]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const prices = JSON.parse(btn.dataset.prices || '[]');
+      const text = prices.map(p => `${p.portal}: ₹${p.finalPrice} (${p.source})`).join('\n') || 'No data';
+      alert(text);
     });
+  });
+}
+
+// ===== Search handler (robust, with loading state & clear messages) =====
+async function doSearch() {
+  const from = fromEl.value.trim();
+  const to = toEl.value.trim();
+  const departureDate = depEl.value;
+  const returnDate = retEl.value;
+  const passengers = Number(paxEl.value || 1);
+  const travelClass = cabinEl.value || 'economy';
+  const tripType = tripRadios()?.value || 'round-trip';
+
+  if (!from || !to || !departureDate) {
+    alert('Please fill From, To, and Departure.');
+    return;
   }
 
-  function renderBoth(){ renderSide('out'); renderSide('ret'); }
+  setLoading(true);
+  setListMessage('outboundList', 'Loading…');
+  if (tripType === 'round-trip') setListMessage('returnList', 'Loading…'); else clearList('returnList');
 
-  // pagination
-  els.outPrev.onclick = () => { if (state.outPage>1){ state.outPage--; renderSide('out'); } };
-  els.outNext.onclick = () => {
-    const total = Math.max(1, Math.ceil(state.outFlights.length/state.PAGE_SIZE));
-    if (state.outPage<total){ state.outPage++; renderSide('out'); }
+  const payload = {
+    from, to, departureDate,
+    returnDate: tripType === 'round-trip' ? returnDate : '',
+    tripType, passengers, travelClass,
+    paymentMethods: Array.from(selectedMethods)
   };
-  els.retPrev.onclick = () => { if (state.retPage>1){ state.retPage--; renderSide('ret'); } };
-  els.retNext.onclick = () => {
-    const total = Math.max(1, Math.ceil(state.retFlights.length/state.PAGE_SIZE));
-    if (state.retPage<total){ state.retPage++; renderSide('ret'); }
-  };
+  console.log('[SkyDeal] /search payload →', payload);
 
-  // trip toggle
-  function refreshTripControls(){
-    const round = els.tripRound.checked;
-    els.ret.disabled = !round;
+  try {
+    const res = await fetch(`${API_BASE}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      mode: 'cors',
+      cache: 'no-store',
+    });
+
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+
+    const data = await res.json();
+    console.log('[SkyDeal] /search response meta ←', {
+      source: data?.meta?.source,
+      outStatus: res.status, outCount: data?.outboundFlights?.length ?? 0,
+      retStatus: res.status, retCount: data?.returnFlights?.length ?? 0,
+    });
+
+    renderFlights('outboundList', data.outboundFlights || []);
+    if (tripType === 'round-trip') renderFlights('returnList', data.returnFlights || []);
+    if ((data.outboundFlights || []).length === 0) setListMessage('outboundList', 'No flights found for your search.');
+    if (tripType === 'round-trip' && (data.returnFlights || []).length === 0) setListMessage('returnList', 'No flights found for your search.');
+  } catch (err) {
+    console.error(err);
+    setListMessage('outboundList', 'Failed to fetch flights.');
+    if (tripType === 'round-trip') setListMessage('returnList', 'Failed to fetch flights.');
+  } finally {
+    setLoading(false);
   }
-  els.tripOne.addEventListener('change', refreshTripControls);
-  els.tripRound.addEventListener('change', refreshTripControls);
-  refreshTripControls();
+}
 
-  // ---------------- SEARCH ----------------
-  async function doSearch(){
-    const payload = {
-      from: (els.from.value||'').trim().toUpperCase(),
-      to: (els.to.value||'').trim().toUpperCase(),
-      departureDate: els.dep.value,
-      returnDate: els.tripRound.checked ? els.ret.value : '',
-      passengers: Number(els.pax.value||1),
-      travelClass: (els.cabin.value||'economy').toLowerCase(),
-      tripType: els.tripRound.checked ? 'round-trip' : 'one-way',
-      paymentMethods: flattenPaymentMethods()
-    };
+searchBtn.addEventListener('click', doSearch);
 
-    if (!payload.from || !payload.to || !payload.departureDate) {
-      alert('Please fill From, To, and Departure.');
-      return;
-    }
-
-    state.outPage = 1; state.retPage = 1;
-    showLoading(true);
-
-    try{
-      const r = await fetch(`${API_BASE}/search`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-
-      state.outFlights = Array.isArray(data?.outboundFlights) ? data.outboundFlights : [];
-      state.retFlights = Array.isArray(data?.returnFlights) ? data.returnFlights : [];
-
-      if (state.outFlights.length===0 && state.retFlights.length===0) {
-        emptyMessage(els.outList,'No flights found for your search.');
-        emptyMessage(els.retList,'No flights found for your search.');
-      } else {
-        renderBoth();
-      }
-    } catch(err){
-      console.error('Search failed', err);
-      emptyMessage(els.outList,'Failed to fetch flights.');
-      emptyMessage(els.retList,'Failed to fetch flights.');
-    } finally {
-      showLoading(false);
-    }
-  }
-
-  els.search.addEventListener('click', doSearch);
-
-  // initial paint
-  renderBoth();
+// ===== Defaults to help quick testing =====
+(function initializeDates() {
+  const today = new Date();
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+  const r = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 4);
+  const toISO = (dt) => dt.toISOString().slice(0,10);
+  depEl.value ||= toISO(d);
+  retEl.value ||= toISO(r);
 })();
