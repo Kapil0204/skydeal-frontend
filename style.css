@@ -69,3 +69,7 @@ input, select { height:40px; border:1px solid var(--border); border-radius:10px;
 .pm-list { padding: 8px 12px; }
 .pm-row { display:flex; align-items:center; gap:.6rem; padding:.5rem .75rem; border-bottom: 1px solid #f0f0f0; }
 .pm-empty { padding:.75rem; color:#777; }
+/* optional; safe to skip */
+.offer-line { color: #6b7280; font-size: 12px; margin-top: 4px; }
+.applied { color: #16a34a; }
+
