@@ -3,8 +3,8 @@ const API_BASE = 'https://skydeal-backend.onrender.com';
 
 // ======= STATE =======
 const state = {
-  selectedMethods: [],         // array of strings like ["HDFC Bank","ICICI Bank", ...]
-  paymentOptions: null,        // fetched from /payment-options { options:{CreditCard:[...], ...} }
+  selectedMethods: [],
+  paymentOptions: null,
   pageSize: 12,
   outPage: 1,
   retPage: 1,
@@ -12,304 +12,257 @@ const state = {
   retFlights: [],
 };
 
-// ======= DOM HELPERS =======
-const $ = (id) => document.getElementById(id);
-const bySel = (sel) => document.querySelector(sel);
-function fmtINR(n) { try { return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(Number(n)); } catch { return `₹${n}`; } }
-function safeText(x){ return (x==null?'':String(x)); }
+// ======= DOM =======
+const $  = id => document.getElementById(id);
+const $$ = sel => document.querySelector(sel);
+
+const inpFrom  = $('from');
+const inpTo    = $('to');
+const inpDep   = $('departure');
+const inpRet   = $('return');
+const selPax   = $('passengers');
+const selCabin = $('cabin');
+const r1       = $('tripOneWay');
+const r2       = $('tripRoundTrip');
+
+const btnSearch   = $('searchBtn');
+const btnPayOpen  = $('openPaymentBtn');
+
+const outList     = $('outboundList');
+const retList     = $('returnList');
+const outPrev     = $('outPrev');
+const outNext     = $('outNext');
+const outPageText = $('outPageText');
+const retPrev     = $('retPrev');
+const retNext     = $('retNext');
+const retPageText = $('retPageText');
+
+// Payment modal
+const payModal  = $('paymentModal');
+const payClose  = $('paymentClose');
+const payTabs   = $('paymentTabs');
+const payList   = $('paymentList');
+const payDone   = $('paymentDone');
+const payClear  = $('paymentClear');
+const payCount  = $('paymentCount');
+
+// Price modal
+const priceModal  = $('priceModal');
+const priceClose  = $('priceClose');
+const priceTitle  = $('priceTitle');
+const priceTBody  = $('priceTableBody');
+const priceWhy    = $('priceWhy');
+
+// ======= UTIL =======
+function fmtINR(n){ try{return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n))}catch{return `₹${n}`}}
 function ensureArray(x){ return Array.isArray(x)?x:[]; }
+function setOpen(el,open){ if(!el) return; open? el.classList.add('open') : el.classList.remove('open'); }
+function todayYYYYMMDD(){ const d=new Date(); return d.toISOString().slice(0,10); }
 
-// Try to attach to either "openPaymentBtn" or the old button if it has data-role
-const btnPayment = $('openPaymentBtn') || bySel('[data-role="open-payment"]') || bySel('#paymentBtn');
-const btnSearch  = $('searchBtn') || bySel('#search');
-
-// Inputs (keep your existing IDs)
-const inpFrom    = $('from');
-const inpTo      = $('to');
-const inpDep     = $('departure');
-const inpRet     = $('return');
-const selPax     = $('passengers');
-const selCabin   = $('cabin');
-const rOneWay    = $('tripOneWay');
-const rRoundTrip = $('tripRoundTrip');
-
-const outList    = $('outboundList');
-const retList    = $('returnList');
-
-// Payment modal bits
-const dlgPay       = $('paymentModal');
-const payTabs      = $('paymentTabs');     // container with category tabs
-const payList      = $('paymentList');     // container where we render checkboxes
-const payDone      = $('paymentDone');
-const payClear     = $('paymentClear');
-const payClose     = $('paymentClose');
-const payCount     = $('paymentCount');
-
-// Price modal bits
-const dlgPrice     = $('priceModal');
-const priceClose   = $('priceClose');
-const priceTitle   = $('priceTitle');
-const priceTBody   = $('priceTableBody');
-const priceWhy     = $('priceWhy');
-
-// ======= PAYMENT OPTIONS =======
-async function loadPaymentOptions() {
-  if (state.paymentOptions) return state.paymentOptions;
-  const res = await fetch(`${API_BASE}/payment-options`, { method:'GET' });
-  const json = await res.json();
-  state.paymentOptions = json; // { options: { CreditCard:[...], DebitCard:[...], ... } }
-  return json;
+// ======= PAYMENT =======
+async function loadPaymentOptions(){
+  if(state.paymentOptions) return state.paymentOptions;
+  const r = await fetch(`${API_BASE}/payment-options`);
+  const j = await r.json();
+  state.paymentOptions = j; // { options: { CreditCard:[...], DebitCard:[...], NetBanking:[...], UPI:[...], Wallet:[...], EMI:[...] } }
+  return j;
 }
 
-function renderPaymentCategory(catName, items) {
-  // items: array of strings (bank names)
+function renderPaymentCategory(label, list){
   payList.innerHTML = '';
   const frag = document.createDocumentFragment();
-  ensureArray(items).forEach((name, idx) => {
-    const id = `pay_${catName}_${idx}`;
-    const wrap = document.createElement('label');
-    wrap.className = 'pay-row';
+  ensureArray(list).forEach((name, i)=>{
+    const row = document.createElement('label');
+    row.className = 'pay-row';
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
-    cb.id = id;
     cb.value = name;
     cb.checked = state.selectedMethods.includes(name);
-    cb.addEventListener('change', () => {
-      if (cb.checked) {
-        if (!state.selectedMethods.includes(name)) state.selectedMethods.push(name);
-      } else {
-        state.selectedMethods = state.selectedMethods.filter(v => v !== name);
-      }
-      updatePaymentCount();
+    cb.addEventListener('change',()=>{
+      if(cb.checked){ if(!state.selectedMethods.includes(name)) state.selectedMethods.push(name); }
+      else { state.selectedMethods = state.selectedMethods.filter(v=>v!==name); }
+      updatePayCount();
     });
 
     const span = document.createElement('span');
     span.textContent = name;
 
-    wrap.appendChild(cb);
-    wrap.appendChild(span);
-    frag.appendChild(wrap);
+    row.appendChild(cb); row.appendChild(span);
+    frag.appendChild(row);
   });
   payList.appendChild(frag);
 }
 
-function updatePaymentCount() {
-  if (payCount) payCount.textContent = `Selected (${state.selectedMethods.length})`;
-}
+function updatePayCount(){ payCount.textContent = `Selected (${state.selectedMethods.length})`; }
 
-// Build tabs (Credit Card, Debit Card, Net Banking, UPI, Wallet, EMI)
-function buildPaymentTabs(opts) {
-  // opts.options = { CreditCard:[...], DebitCard:[...], NetBanking:[...], UPI:[...], Wallet:[...], EMI:[...] }
-  if (!payTabs) return;
-  payTabs.innerHTML = '';
-
+function buildPayTabs(opts){
   const cats = [
     ['Credit Card','CreditCard'],
     ['Debit Card','DebitCard'],
     ['Net Banking','NetBanking'],
     ['UPI','UPI'],
     ['Wallet','Wallet'],
-    ['EMI','EMI']
+    ['EMI','EMI'],
   ];
 
-  cats.forEach(([label, key], i) => {
+  payTabs.innerHTML = '';
+  cats.forEach(([label,key], idx)=>{
     const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pill' + (i===0 ? ' active' : '');
+    b.type='button';
+    b.className = 'pill' + (idx===0?' active':'');
     b.textContent = label;
-    b.addEventListener('click', () => {
-      // toggle active
+    b.addEventListener('click',()=>{
       [...payTabs.querySelectorAll('.pill')].forEach(p=>p.classList.remove('active'));
       b.classList.add('active');
-      renderPaymentCategory(label, ensureArray(opts.options?.[key]));
+      renderPaymentCategory(label, opts.options?.[key]||[]);
     });
     payTabs.appendChild(b);
   });
 
-  // initial render
-  renderPaymentCategory('Credit Card', ensureArray(opts.options?.CreditCard));
-  updatePaymentCount();
+  renderPaymentCategory('Credit Card', opts.options?.CreditCard||[]);
+  updatePayCount();
 }
 
-async function openPaymentModal() {
-  try {
-    await loadPaymentOptions();
-    buildPaymentTabs(state.paymentOptions);
-    dlgPay?.classList.add('open');
-  } catch (e) {
-    console.error('payment modal failed', e);
-    alert('Could not load payment options.');
-  }
+async function openPay(){
+  const opts = await loadPaymentOptions();
+  buildPayTabs(opts);
+  setOpen(payModal,true);
 }
-function closePaymentModal(){ dlgPay?.classList.remove('open'); }
-function clearPaymentSelection(){ state.selectedMethods = []; updatePaymentCount(); // re-render current tab to clear checks
-  const active = payTabs?.querySelector('.pill.active');
-  if (active) active.click();
+function closePay(){ setOpen(payModal,false); }
+function clearPay(){
+  state.selectedMethods = [];
+  updatePayCount();
+  const active = payTabs.querySelector('.pill.active'); if(active) active.click();
 }
 
 // ======= SEARCH =======
-function buildSearchBody() {
-  const from = safeText(inpFrom?.value).trim().toUpperCase();
-  const to   = safeText(inpTo?.value).trim().toUpperCase();
-  const departureDate = safeText(inpDep?.value).trim();
-  const returnDate    = safeText(inpRet?.value).trim();
-  const adults = Number(selPax?.value || 1);
-  const cabin  = safeText(selCabin?.value || 'Economy');
-
-  const tripType = rOneWay?.checked ? 'one-way' : 'round-trip';
-
+function buildBody(){
+  const tripType = r1.checked ? 'one-way' : 'round-trip';
   return {
-    from, to,
-    departureDate,
-    returnDate: tripType === 'round-trip' ? returnDate : '',
+    from: (inpFrom.value||'').trim().toUpperCase(),
+    to: (inpTo.value||'').trim().toUpperCase(),
+    departureDate: inpDep.value,
+    returnDate: tripType==='round-trip' ? inpRet.value : '',
     tripType,
-    passengers: adults,
-    travelClass: cabin.toLowerCase(),
-    paymentMethods: [...state.selectedMethods], // send only names; backend maps to offers
+    passengers: Number(selPax.value||1),
+    travelClass: (selCabin.value||'Economy').toLowerCase(),
+    paymentMethods: [...state.selectedMethods],
   };
 }
 
-async function doSearch() {
-  // basic guard
-  if (!inpFrom?.value || !inpTo?.value || !inpDep?.value) {
+async function doSearch(){
+  const b = buildBody();
+  if(!b.from || !b.to || !b.departureDate){
     alert('Please fill From, To, and Departure.');
     return;
   }
 
-  const body = buildSearchBody();
+  outList.innerHTML = ''; retList.innerHTML = '';
+  state.outPage = 1; state.retPage = 1;
 
-  // reset paging
-  state.outPage = 1;
-  state.retPage = 1;
-
-  // UI clear
-  outList && (outList.innerHTML = '');
-  retList && (retList.innerHTML = '');
-
-  // call backend
-  let res, json;
-  try {
-    res = await fetch(`${API_BASE}/search`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(body),
+  let json;
+  try{
+    const r = await fetch(`${API_BASE}/search`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(b)
     });
-    json = await res.json();
-  } catch (e) {
-    console.error('search failed', e);
-    alert('Search failed. Please try again.');
-    return;
+    json = await r.json();
+  }catch(e){
+    console.error(e); alert('Search failed.'); return;
   }
 
   state.outFlights = ensureArray(json.outboundFlights);
   state.retFlights = ensureArray(json.returnFlights);
-
-  // render first pages
   renderFlights();
 }
 
-function renderFlights() {
-  renderList(outList, state.outFlights, state.outPage, 'Outbound');
-  renderList(retList, state.retFlights, state.retPage, 'Return');
+function paginate(arr, page, size){ const s=(page-1)*size; return arr.slice(s,s+size); }
+function renderFlights(){
+  renderList(outList, state.outFlights, state.outPage, outPageText);
+  renderList(retList, state.retFlights, state.retPage, retPageText);
 }
-
-function paginate(arr, page, size) {
-  const start = (page-1)*size;
-  return arr.slice(start, start+size);
-}
-
-function renderList(container, flights, page, label) {
-  if (!container) return;
+function renderList(container, flights, page, pageLabelEl){
   container.innerHTML = '';
+  const items = paginate(flights, page, state.pageSize);
 
-  const pageItems = paginate(flights, page, state.pageSize);
-
-  pageItems.forEach(f => {
+  items.forEach(f=>{
     const card = document.createElement('div');
-    card.className = 'flight-card';
+    card.className='flight-card';
 
-    const title = document.createElement('div');
-    // Simple title: Airline • times • stops
-    const airline = safeText(f.airlineName || f.carrier || 'Carrier');
-    const times = `${safeText(f.departureTime || '')} → ${safeText(f.arrivalTime || '')}`.replace(/^ → $/,'');
-    const stops = (f.stops == null || Number(f.stops)===0) ? 'Non-stop' : `${f.stops} stop${Number(f.stops)>1?'s':''}`;
-    title.className = 'flight-title';
-    title.textContent = `${airline} • ${times || (safeText(f.flightNumber||'').trim())} • ${stops}`;
+    const t = document.createElement('div');
+    t.className='flight-title';
+    const airline = f.airlineName || f.carrier || 'Carrier';
+    const times = `${f.departureTime||''} → ${f.arrivalTime||''}`.replace(/^ → $/,'');
+    const stops = (f.stops==null || Number(f.stops)===0) ? 'Non-stop' : `${f.stops} stop${Number(f.stops)>1?'s':''}`;
+    t.textContent = `${airline}${times?` • ${times}`:''} • ${stops}`;
 
     const best = document.createElement('div');
-    best.className = 'best-line';
-    const bestDeal = f.bestDeal;
-    if (bestDeal?.portal && bestDeal?.finalPrice != null) {
-      best.innerHTML = `Best: <strong>${fmtINR(bestDeal.finalPrice)}</strong> on <strong>${bestDeal.portal}</strong><br/><span class="best-note">Best price after applicable offers (if any)</span>`;
+    best.className='best-line';
+    if(f.bestDeal?.portal && f.bestDeal?.finalPrice!=null){
+      best.innerHTML = `Best: <strong>${fmtINR(f.bestDeal.finalPrice)}</strong> on <strong>${f.bestDeal.portal}</strong><br><span class="best-note">Best price after applicable offers (if any)</span>`;
     } else {
       best.textContent = `Best: ${fmtINR(f.price || f.basePrice || 0)}`;
     }
 
     const btn = document.createElement('button');
-    btn.className = 'btn-secondary';
-    btn.textContent = 'Prices & breakdown';
-    btn.addEventListener('click', () => openPriceModal(f, label));
+    btn.className='btn-secondary';
+    btn.textContent='Prices & breakdown';
+    btn.addEventListener('click',()=>openPrice(f));
 
-    card.appendChild(title);
-    card.appendChild(best);
-    card.appendChild(btn);
+    card.appendChild(t); card.appendChild(best); card.appendChild(btn);
     container.appendChild(card);
   });
 
-  // Footer pager (keep existing pager outside in your HTML)
+  const totalPages = Math.max(1, Math.ceil(flights.length / state.pageSize));
+  pageLabelEl.textContent = `Page ${page} / ${totalPages}`;
 }
 
 // ======= PRICE MODAL =======
-function openPriceModal(f, listLabel) {
-  // Title: Airline + times + Base ₹X
-  const airline = safeText(f.airlineName || f.carrier || 'Carrier');
-  const times = `${safeText(f.departureTime || '')} → ${safeText(f.arrivalTime || '')}`.replace(/^ → $/,'');
+function openPrice(f){
+  const airline = f.airlineName || f.carrier || 'Carrier';
+  const times = `${f.departureTime||''} → ${f.arrivalTime||''}`.replace(/^ → $/,'');
   const base = f.price || f.basePrice;
-  priceTitle.textContent = `${airline}${times ? ' • ' + times : ''} • Base ${fmtINR(base)}`;
+  priceTitle.textContent = `${airline}${times?` • ${times}`:''} • Base ${fmtINR(base)}`;
 
-  // table rows
-  priceTBody.innerHTML = '';
-  const rows = ensureArray(f.portalPrices).map(p => {
-    const tr = document.createElement('tr');
-    const td1 = document.createElement('td'); td1.textContent = p.portal;
-    const td2 = document.createElement('td'); td2.textContent = fmtINR(p.finalPrice);
-    const td3 = document.createElement('td'); td3.textContent = p.source || '';
-    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
-    return tr;
+  priceTBody.innerHTML='';
+  ensureArray(f.portalPrices).forEach(p=>{
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td'); td1.textContent=p.portal;
+    const td2=document.createElement('td'); td2.textContent=fmtINR(p.finalPrice);
+    const td3=document.createElement('td'); td3.textContent=p.source||'';
+    tr.append(td1,td2,td3);
+    priceTBody.appendChild(tr);
   });
-  rows.forEach(r => priceTBody.appendChild(r));
 
-  // why (from backend per-flight debug, if attached)
-  // If your backend attaches a per-flight offerDebug, show it; else show empty object.
+  // if backend attaches per-flight explanation to `offerWhy`, show it; else empty object
   priceWhy.textContent = JSON.stringify(f.offerWhy || {}, null, 2);
 
-  dlgPrice?.classList.add('open');
+  setOpen(priceModal,true);
 }
-function closePriceModal(){ dlgPrice?.classList.remove('open'); }
+function closePrice(){ setOpen(priceModal,false); }
 
-// ======= WIRE EVENTS =======
-function wire() {
-  // Payment modal buttons
-  btnPayment?.addEventListener('click', openPaymentModal);
-  payDone?.addEventListener('click', closePaymentModal);
-  payClose?.addEventListener('click', closePaymentModal);
-  payClear?.addEventListener('click', clearPaymentSelection);
+// ======= PAGERS =======
+outPrev.addEventListener('click',()=>{ if(state.outPage>1){ state.outPage--; renderFlights(); }});
+outNext.addEventListener('click',()=>{ const max=Math.max(1,Math.ceil(state.outFlights.length/state.pageSize)); if(state.outPage<max){ state.outPage++; renderFlights(); }});
+retPrev.addEventListener('click',()=>{ if(state.retPage>1){ state.retPage--; renderFlights(); }});
+retNext.addEventListener('click',()=>{ const max=Math.max(1,Math.ceil(state.retFlights.length/state.pageSize)); if(state.retPage<max){ state.retPage++; renderFlights(); }});
 
-  // Search
-  btnSearch?.addEventListener('click', doSearch);
+// ======= WIRE =======
+document.addEventListener('DOMContentLoaded',()=>{
+  // set default dates so validation passes
+  if(!inpDep.value){ inpDep.value = todayYYYYMMDD(); }
+  if(!inpRet.value){ inpRet.value = todayYYYYMMDD(); }
 
-  // Price modal close
-  priceClose?.addEventListener('click', closePriceModal);
+  btnPayOpen.addEventListener('click', openPay);
+  payClose.addEventListener('click', closePay);
+  payDone.addEventListener('click', closePay);
+  payClear.addEventListener('click', clearPay);
 
-  // One-way toggle to disable/enable return date
-  rOneWay?.addEventListener('change', () => {
-    if (rOneWay.checked) { if (inpRet) { inpRet.disabled = true; inpRet.value = ''; } }
-  });
-  rRoundTrip?.addEventListener('change', () => {
-    if (rRoundTrip.checked) { if (inpRet) { inpRet.disabled = false; } }
-  });
-}
+  btnSearch.addEventListener('click', doSearch);
 
-// ======= INIT =======
-document.addEventListener('DOMContentLoaded', wire);
+  priceClose.addEventListener('click', closePrice);
+
+  r1.addEventListener('change',()=>{ inpRet.disabled = r1.checked; if(r1.checked) inpRet.value=''; });
+  r2.addEventListener('change',()=>{ inpRet.disabled = !r2.checked; });
+});
