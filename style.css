@@ -1,64 +1,268 @@
-:root { --bg:#f5f5f5; --card:#fff; --muted:#6b7280; --text:#0f172a; --green:#0ea5a4; --border:#e5e7eb; }
-* { box-sizing: border-box; }
-body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:var(--text); background:var(--bg); }
-h1 { margin: 24px 0 4px; }
-.subtitle { margin:0 0 20px; color:var(--muted); }
-.container { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; }
+// ======= CONFIG =======
+const API_BASE = 'https://skydeal-backend.onrender.com';
 
-/* top form */
-.form-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; background:var(--card); border:1px solid var(--border); padding:16px; border-radius:14px; }
-.field label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-input, select, button { font-size:14px; }
-input, select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; }
-.radios { display:flex; gap:14px; align-items:center; padding-top:6px; }
+// ======= STATE =======
+const state = {
+  selectedMethods: [],
+  paymentOptions: null,
+  pageSize: 12,
+  outPage: 1,
+  retPage: 1,
+  outFlights: [],
+  retFlights: [],
+};
 
-.btn { padding:8px 14px; border:1px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; }
-.btn.secondary { background:#fff; }
-.btn.primary { background:#0f172a; color:#fff; border-color:#0f172a; }
-.btn.full { width:100%; margin:16px 0 10px; height:40px; border-radius:12px; }
-.small { padding:6px 10px; }
+// ======= DOM =======
+const $  = id => document.getElementById(id);
+const $$ = sel => document.querySelector(sel);
 
-/* results */
-.results-grid { display:grid; grid-template-columns: 1fr 1fr; gap:22px; margin-top:12px; }
-.section-head { display:flex; justify-content:space-between; align-items:center; }
-.section-head h2 { margin:16px 0 10px; }
-.pager { display:flex; align-items:center; gap:10px; color:var(--muted); }
+const inpFrom  = $('from');
+const inpTo    = $('to');
+const inpDep   = $('departure');
+const inpRet   = $('return');
+const selPax   = $('passengers');
+const selCabin = $('cabin');
+const r1       = $('tripOneWay');
+const r2       = $('tripRoundTrip');
 
-.card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:14px; }
-.card h4 { margin:0 0 6px; font-weight:600; }
-.route-muted { color:var(--muted); font-size:12px; margin-bottom:6px; }
-.best { color:#10b981; font-weight:700; margin-top:8px; }
-.best-reason { color:var(--muted); font-size:12px; margin-top:2px; }
-.muted { color:var(--muted); }
-.card .row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
-.card .row .btn { margin-left:8px; }
+const btnSearch   = $('searchBtn');
+const btnPayOpen  = $('openPaymentBtn');
 
-/* modal (prices + payment) */
-.modal { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:50; }
-.modal.hidden { display:none; }
-.modal-card { width: min(820px, 92vw); background:#fff; border-radius:16px; padding:16px; border:1px solid var(--border); }
-.modal-card.large { width: min(900px, 96vw); }
-.modal-head { display:flex; justify-content:space-between; align-items:center; }
-.modal-head h3 { margin:0; }
-.icon { border:none; background:#eee; width:32px; height:32px; border-radius:8px; cursor:pointer; }
+const outList     = $('outboundList');
+const retList     = $('returnList');
+const outPrev     = $('outPrev');
+const outNext     = $('outNext');
+const outPageText = $('outPageText');
+const retPrev     = $('retPrev');
+const retNext     = $('retNext');
+const retPageText = $('retPageText');
 
-/* price table */
-.prices { width:100%; border-collapse:collapse; margin-top:12px; }
-.prices th, .prices td { padding:10px 8px; border-bottom:1px solid var(--border); text-align:left; }
-.prices td:nth-child(2) { font-weight:600; }
-.why { margin-top:10px; }
+// Payment modal
+const payModal  = $('paymentModal');
+const payClose  = $('paymentClose');
+const payTabs   = $('paymentTabs');
+const payList   = $('paymentList');
+const payDone   = $('paymentDone');
+const payClear  = $('paymentClear');
+const payCount  = $('paymentCount');
 
-/* payment modal */
-.tabs { display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; }
-.tabs button { padding:6px 10px; border-radius:20px; border:1px solid var(--border); background:#fff; cursor:pointer; }
-.tabs button.active { background:#0f172a; color:#fff; border-color:#0f172a; }
+// Price modal
+const priceModal  = $('priceModal');
+const priceClose  = $('priceClose');
+const priceTitle  = $('priceTitle');
+const priceTBody  = $('priceTableBody');
+const priceWhy    = $('priceWhy');
 
-.pm-list { max-height: 420px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; }
+// ======= UTIL =======
+function fmtINR(n){ try{return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n))}catch{return `₹${n}`}}
+function ensureArray(x){ return Array.isArray(x)?x:[]; }
+function setOpen(el,open){ if(!el) return; open? el.classList.add('open') : el.classList.remove('open'); }
+function todayYYYYMMDD(){ const d=new Date(); return d.toISOString().slice(0,10); }
 
-/* Alignment fix */
-.pm-row { display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border); }
-.pm-row input[type="checkbox"] { width:16px; height:16px; }
-.pm-row label { flex:0 1 auto; text-align:left; color:var(--text); }
+// ======= PAYMENT =======
+async function loadPaymentOptions(){
+  if(state.paymentOptions) return state.paymentOptions;
+  const r = await fetch(`${API_BASE}/payment-options`);
+  const j = await r.json();
+  state.paymentOptions = j; // { options: { CreditCard:[...], DebitCard:[...], NetBanking:[...], UPI:[...], Wallet:[...], EMI:[...] } }
+  return j;
+}
 
-/* footer buttons in modals */
-.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+function renderPaymentCategory(label, list){
+  payList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  ensureArray(list).forEach((name, i)=>{
+    const row = document.createElement('label');
+    row.className = 'pay-row';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = name;
+    cb.checked = state.selectedMethods.includes(name);
+    cb.addEventListener('change',()=>{
+      if(cb.checked){ if(!state.selectedMethods.includes(name)) state.selectedMethods.push(name); }
+      else { state.selectedMethods = state.selectedMethods.filter(v=>v!==name); }
+      updatePayCount();
+    });
+
+    const span = document.createElement('span');
+    span.textContent = name;
+
+    row.appendChild(cb); row.appendChild(span);
+    frag.appendChild(row);
+  });
+  payList.appendChild(frag);
+}
+
+function updatePayCount(){ payCount.textContent = `Selected (${state.selectedMethods.length})`; }
+
+function buildPayTabs(opts){
+  const cats = [
+    ['Credit Card','CreditCard'],
+    ['Debit Card','DebitCard'],
+    ['Net Banking','NetBanking'],
+    ['UPI','UPI'],
+    ['Wallet','Wallet'],
+    ['EMI','EMI'],
+  ];
+
+  payTabs.innerHTML = '';
+  cats.forEach(([label,key], idx)=>{
+    const b = document.createElement('button');
+    b.type='button';
+    b.className = 'pill' + (idx===0?' active':'');
+    b.textContent = label;
+    b.addEventListener('click',()=>{
+      [...payTabs.querySelectorAll('.pill')].forEach(p=>p.classList.remove('active'));
+      b.classList.add('active');
+      renderPaymentCategory(label, opts.options?.[key]||[]);
+    });
+    payTabs.appendChild(b);
+  });
+
+  renderPaymentCategory('Credit Card', opts.options?.CreditCard||[]);
+  updatePayCount();
+}
+
+async function openPay(){
+  const opts = await loadPaymentOptions();
+  buildPayTabs(opts);
+  setOpen(payModal,true);
+}
+function closePay(){ setOpen(payModal,false); }
+function clearPay(){
+  state.selectedMethods = [];
+  updatePayCount();
+  const active = payTabs.querySelector('.pill.active'); if(active) active.click();
+}
+
+// ======= SEARCH =======
+function buildBody(){
+  const tripType = r1.checked ? 'one-way' : 'round-trip';
+  return {
+    from: (inpFrom.value||'').trim().toUpperCase(),
+    to: (inpTo.value||'').trim().toUpperCase(),
+    departureDate: inpDep.value,
+    returnDate: tripType==='round-trip' ? inpRet.value : '',
+    tripType,
+    passengers: Number(selPax.value||1),
+    travelClass: (selCabin.value||'Economy').toLowerCase(),
+    paymentMethods: [...state.selectedMethods],
+  };
+}
+
+async function doSearch(){
+  const b = buildBody();
+  if(!b.from || !b.to || !b.departureDate){
+    alert('Please fill From, To, and Departure.');
+    return;
+  }
+
+  outList.innerHTML = ''; retList.innerHTML = '';
+  state.outPage = 1; state.retPage = 1;
+
+  let json;
+  try{
+    const r = await fetch(`${API_BASE}/search`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(b)
+    });
+    json = await r.json();
+  }catch(e){
+    console.error(e); alert('Search failed.'); return;
+  }
+
+  state.outFlights = ensureArray(json.outboundFlights);
+  state.retFlights = ensureArray(json.returnFlights);
+  renderFlights();
+}
+
+function paginate(arr, page, size){ const s=(page-1)*size; return arr.slice(s,s+size); }
+function renderFlights(){
+  renderList(outList, state.outFlights, state.outPage, outPageText);
+  renderList(retList, state.retFlights, state.retPage, retPageText);
+}
+function renderList(container, flights, page, pageLabelEl){
+  container.innerHTML = '';
+  const items = paginate(flights, page, state.pageSize);
+
+  items.forEach(f=>{
+    const card = document.createElement('div');
+    card.className='flight-card';
+
+    const t = document.createElement('div');
+    t.className='flight-title';
+    const airline = f.airlineName || f.carrier || 'Carrier';
+    const times = `${f.departureTime||''} → ${f.arrivalTime||''}`.replace(/^ → $/,'');
+    const stops = (f.stops==null || Number(f.stops)===0) ? 'Non-stop' : `${f.stops} stop${Number(f.stops)>1?'s':''}`;
+    t.textContent = `${airline}${times?` • ${times}`:''} • ${stops}`;
+
+    const best = document.createElement('div');
+    best.className='best-line';
+    if(f.bestDeal?.portal && f.bestDeal?.finalPrice!=null){
+      best.innerHTML = `Best: <strong>${fmtINR(f.bestDeal.finalPrice)}</strong> on <strong>${f.bestDeal.portal}</strong><br><span class="best-note">Best price after applicable offers (if any)</span>`;
+    } else {
+      best.textContent = `Best: ${fmtINR(f.price || f.basePrice || 0)}`;
+    }
+
+    const btn = document.createElement('button');
+    btn.className='btn-secondary';
+    btn.textContent='Prices & breakdown';
+    btn.addEventListener('click',()=>openPrice(f));
+
+    card.appendChild(t); card.appendChild(best); card.appendChild(btn);
+    container.appendChild(card);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(flights.length / state.pageSize));
+  pageLabelEl.textContent = `Page ${page} / ${totalPages}`;
+}
+
+// ======= PRICE MODAL =======
+function openPrice(f){
+  const airline = f.airlineName || f.carrier || 'Carrier';
+  const times = `${f.departureTime||''} → ${f.arrivalTime||''}`.replace(/^ → $/,'');
+  const base = f.price || f.basePrice;
+  priceTitle.textContent = `${airline}${times?` • ${times}`:''} • Base ${fmtINR(base)}`;
+
+  priceTBody.innerHTML='';
+  ensureArray(f.portalPrices).forEach(p=>{
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td'); td1.textContent=p.portal;
+    const td2=document.createElement('td'); td2.textContent=fmtINR(p.finalPrice);
+    const td3=document.createElement('td'); td3.textContent=p.source||'';
+    tr.append(td1,td2,td3);
+    priceTBody.appendChild(tr);
+  });
+
+  // if backend attaches per-flight explanation to `offerWhy`, show it; else empty object
+  priceWhy.textContent = JSON.stringify(f.offerWhy || {}, null, 2);
+
+  setOpen(priceModal,true);
+}
+function closePrice(){ setOpen(priceModal,false); }
+
+// ======= PAGERS =======
+outPrev.addEventListener('click',()=>{ if(state.outPage>1){ state.outPage--; renderFlights(); }});
+outNext.addEventListener('click',()=>{ const max=Math.max(1,Math.ceil(state.outFlights.length/state.pageSize)); if(state.outPage<max){ state.outPage++; renderFlights(); }});
+retPrev.addEventListener('click',()=>{ if(state.retPage>1){ state.retPage--; renderFlights(); }});
+retNext.addEventListener('click',()=>{ const max=Math.max(1,Math.ceil(state.retFlights.length/state.pageSize)); if(state.retPage<max){ state.retPage++; renderFlights(); }});
+
+// ======= WIRE =======
+document.addEventListener('DOMContentLoaded',()=>{
+  // set default dates so validation passes
+  if(!inpDep.value){ inpDep.value = todayYYYYMMDD(); }
+  if(!inpRet.value){ inpRet.value = todayYYYYMMDD(); }
+
+  btnPayOpen.addEventListener('click', openPay);
+  payClose.addEventListener('click', closePay);
+  payDone.addEventListener('click', closePay);
+  payClear.addEventListener('click', clearPay);
+
+  btnSearch.addEventListener('click', doSearch);
+
+  priceClose.addEventListener('click', closePrice);
+
+  r1.addEventListener('change',()=>{ inpRet.disabled = r1.checked; if(r1.checked) inpRet.value=''; });
+  r2.addEventListener('change',()=>{ inpRet.disabled = !r2.checked; });
+});
