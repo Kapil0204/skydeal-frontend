@@ -14,8 +14,12 @@ const state = {
 window.selectedPaymentMethods = []; // set by modal
 
 // ===== Utilities =====
-const rs = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
-const ￥ = (n) => rs.format(Number(n || 0));
+const inrFmt = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0,
+});
+function formatINR(n) { return inrFmt.format(Number(n || 0)); }
 
 function el(id){ return document.getElementById(id); }
 
@@ -33,12 +37,10 @@ function setPageLabels() {
 
 // ===== Rendering =====
 function flightTitle(f) {
-  // Prefer clean title fields if present
   if (f.airlineName && f.flightNumber && f.departureTime && f.arrivalTime) {
     return `${f.airlineName} • ${f.flightNumber}  •  ${f.departureTime} → ${f.arrivalTime}`;
   }
   if (f.title) return f.title;
-  // fallback to minimal
   return `${f.airlineName || 'Flight'}${f.flightNumber ? ' • ' + f.flightNumber : ''}`;
 }
 
@@ -55,7 +57,9 @@ function renderList(which) {
     const card = document.createElement('div');
     card.className = 'result-card';
 
-    const best = f.bestDeal ? `Best: ${￥(f.bestDeal.finalPrice)} on ${f.bestDeal.portal}` : 'Best price after applicable offers (if any)';
+    const best = f.bestDeal
+      ? `Best: ${formatINR(f.bestDeal.finalPrice)} on ${f.bestDeal.portal}`
+      : 'Best price after applicable offers (if any)';
 
     card.innerHTML = `
       <p class="result-title">${flightTitle(f)}</p>
@@ -69,7 +73,9 @@ function renderList(which) {
     card.querySelector('button').addEventListener('click', (e) => {
       const i = Number(e.currentTarget.dataset.idx);
       const w = e.currentTarget.dataset.which;
-      const item = (w === 'out' ? paginate(state.outbound, state.outboundPage) : paginate(state.return, state.returnPage))[i];
+      const item = (w === 'out'
+        ? paginate(state.outbound, state.outboundPage)
+        : paginate(state.return, state.returnPage))[i];
       openPricesModal(item, state.meta?.offerDebug || {});
     });
 
@@ -85,12 +91,19 @@ function renderAll() {
 }
 
 // ===== Modals =====
-function openModal(id){ const m = el(id); m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); }
-function closeModal(id){ const m = el(id); m.classList.add('hidden'); m.setAttribute('aria-hidden','true'); }
+function openModal(id){
+  const m = el(id);
+  m.classList.remove('hidden');
+  m.setAttribute('aria-hidden','false');
+}
+function closeModal(id){
+  const m = el(id);
+  m.classList.add('hidden');
+  m.setAttribute('aria-hidden','true');
+}
 
 // Payment Methods modal
 async function loadPaymentOptions() {
-  // try backend; fallback to a concise static list
   try {
     const r = await fetch(`${API_BASE}/payment-options`, { method: 'GET' });
     const json = await r.json();
@@ -113,7 +126,6 @@ async function showPaymentModal() {
 
   const opts = await loadPaymentOptions();
 
-  // Tab logic
   const tabs = document.querySelectorAll('.tab');
   tabs.forEach(t => t.classList.remove('active'));
   tabs[0].classList.add('active');
@@ -130,9 +142,7 @@ async function showPaymentModal() {
         <label for="${id}">${name}</label>
         <div class="small muted">${cat}</div>
       `;
-      // sync checked state
-      const key = name; // we store raw names in selectedPaymentMethods
-      if (window.selectedPaymentMethods.includes(key)) {
+      if (window.selectedPaymentMethods.includes(name)) {
         row.querySelector('input').checked = true;
       }
       container.appendChild(row);
@@ -149,7 +159,6 @@ async function showPaymentModal() {
     };
   });
 
-  // Clear / Done
   el('clearPaymentsBtn').onclick = () => {
     window.selectedPaymentMethods = [];
     container.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
@@ -157,9 +166,7 @@ async function showPaymentModal() {
   el('donePaymentsBtn').onclick = () => {
     const checked = container.querySelectorAll('input[type="checkbox"]:checked');
     const picked  = Array.from(checked).map(c => c.nextElementSibling.textContent.trim());
-    // include previously selected from other tabs:
     const currentTab = document.querySelector('.tab.active')?.dataset.tab;
-    // merge: keep existing from other tabs + picked from current tab
     const others = window.selectedPaymentMethods.filter(x => !(opts[currentTab]||[]).includes(x));
     window.selectedPaymentMethods = Array.from(new Set([...others, ...picked]));
     closeModal('paymentsModal');
@@ -169,12 +176,13 @@ async function showPaymentModal() {
 }
 
 function openPricesModal(item, debug) {
-  el('pricesTitle').textContent = `${flightTitle(item)}  •  Base ${￥(item.price || item.basePrice || 0)}`;
+  el('pricesTitle').textContent =
+    `${flightTitle(item)}  •  Base ${formatINR(item.price || item.basePrice || 0)}`;
   const tb = el('pricesTableBody');
   tb.innerHTML = '';
   (item.portalPrices || []).forEach(p => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.portal}</td><td>${￥(p.finalPrice)}</td><td>${p.source}</td>`;
+    tr.innerHTML = `<td>${p.portal}</td><td>${formatINR(p.finalPrice)}</td><td>${p.source}</td>`;
     tb.appendChild(tr);
   });
   el('offerReasons').textContent = JSON.stringify(debug || {}, null, 2);
@@ -210,7 +218,6 @@ async function doSearch({ from, to, departureDate, returnDate, tripType, passeng
   state.outbound = Array.isArray(json.outboundFlights) ? json.outboundFlights : [];
   state.return   = Array.isArray(json.returnFlights)   ? json.returnFlights   : [];
 
-  // reset pages
   state.outboundPage = 1;
   state.returnPage   = 1;
 
@@ -219,13 +226,11 @@ async function doSearch({ from, to, departureDate, returnDate, tripType, passeng
 
 // ===== Wireup =====
 document.addEventListener('DOMContentLoaded', () => {
-  // Open/close modals
   el('openPaymentsBtn').addEventListener('click', (e) => { e.preventDefault(); showPaymentModal(); });
   el('closePaymentsBtn').addEventListener('click', () => closeModal('paymentsModal'));
   el('closePricesBtn').addEventListener('click', () => closeModal('pricesModal'));
   el('closePricesBtn2').addEventListener('click', () => closeModal('pricesModal'));
 
-  // Search button
   el('searchBtn').addEventListener('click', async (e) => {
     e.preventDefault();
 
@@ -248,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Pagination
   el('outboundPrev').onclick = () => { if (state.outboundPage > 1) { state.outboundPage--; renderList('out'); } };
   el('outboundNext').onclick = () => {
     const pages = Math.max(1, Math.ceil(state.outbound.length / PAGE_SIZE));
@@ -260,6 +264,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.returnPage < pages) { state.returnPage++; renderList('ret'); }
   };
 
-  // Initial labels
   setPageLabels();
-}); // <— important: closes DOMContentLoaded properly
+}); // end DOMContentLoaded
