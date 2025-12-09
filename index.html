@@ -1,152 +1,195 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <h1>SkyDeal</h1>
-      <p class="sub">Real flights + real OTA offers</p>
-    </header>
+  <!-- tiny loading bar -->
+  <div id="loadingBar"></div>
 
-    <!-- Search bar (kept layout) -->
-    <section class="search-card">
-      <div class="grid">
-        <div class="field">
-          <label for="from">From</label>
-          <input id="from" type="text" placeholder="BOM" />
-        </div>
+  <div class="wrap">
+    <h1 class="brand">SkyDeal</h1>
+    <p class="tag">Real flights + real OTA offers</p>
 
-        <div class="field">
-          <label for="to">To</label>
-          <input id="to" type="text" placeholder="DEL" />
-        </div>
+    <div class="panel">
+      <div class="row">
+        <label class="field">
+          <span class="label">From</span>
+          <input id="from" class="input" placeholder="BOM" value="BOM" />
+        </label>
 
-        <div class="field">
-          <label for="departure">Departure</label>
-          <input id="departure" type="date" />
-        </div>
+        <label class="field">
+          <span class="label">To</span>
+          <input id="to" class="input" placeholder="DEL" value="DEL" />
+        </label>
 
-        <div class="field">
-          <label for="return">Return</label>
-          <input id="return" type="date" />
-        </div>
+        <label class="field">
+          <span class="label">Departure</span>
+          <input id="departure" class="input" type="date" />
+        </label>
 
-        <div class="field">
-          <label for="passengers">Passengers</label>
-          <select id="passengers">
-            <option value="1" selected>1</option>
-            <option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option>
+        <label class="field">
+          <span class="label">Return</span>
+          <input id="return" class="input" type="date" />
+        </label>
+
+        <label class="field small">
+          <span class="label">Passengers</span>
+          <select id="passengers" class="input">
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
           </select>
-        </div>
+        </label>
 
-        <div class="field">
-          <label for="cabin">Cabin</label>
-          <select id="cabin">
+        <label class="field">
+          <span class="label">Cabin</span>
+          <select id="cabin" class="input">
             <option value="economy" selected>Economy</option>
             <option value="premium_economy">Premium Economy</option>
             <option value="business">Business</option>
-            <option value="first">First</option>
           </select>
-        </div>
+        </label>
 
-        <div class="field trip-field">
-          <label>Trip</label>
-          <div class="radio-row">
-            <label><input type="radio" name="trip" id="tripOne" /> One-way</label>
-            <label><input type="radio" name="trip" id="tripRound" checked /> Round-trip</label>
+        <div class="field trip">
+          <span class="label">Trip</span>
+          <div class="trip-options">
+            <label class="radio"><input id="trip-oneway" type="radio" name="trip" /> <span>One-way</span></label>
+            <label class="radio"><input id="trip-round" type="radio" name="trip" checked /> <span>Round-trip</span></label>
           </div>
         </div>
 
-        <div class="field">
-          <label>Payment methods</label>
-          <button id="openPaymentsBtn" class="btn secondary">Select Payment Methods</button>
+        <div class="field pm-field">
+          <span class="label">Payment methods</span>
+          <button id="openPaymentModal" class="btn light">
+            <span id="paymentSelectedBadge">Select Payment Methods</span>
+          </button>
         </div>
       </div>
 
-      <button id="searchBtn" class="btn primary wide">Search</button>
-    </section>
+      <button id="searchBtn" class="btn primary block">Search</button>
+    </div>
 
-    <!-- Results (kept two-columns layout) -->
-    <section class="results">
-      <div class="col">
-        <div class="col-header">
+    <div class="lists">
+      <section class="col">
+        <div class="heading">
           <h2>Outbound</h2>
           <div class="pager">
-            <button id="outboundPrev" class="chip">Prev</button>
-            <span id="outboundPageLabel" class="muted">Page 1 / 1</span>
-            <button id="outboundNext" class="chip">Next</button>
+            <button id="outPrev" class="pill">Prev</button>
+            <span id="outPage" class="page">Page 1 / 1</span>
+            <button id="outNext" class="pill">Next</button>
           </div>
         </div>
         <div id="outboundList" class="list"></div>
-      </div>
+      </section>
 
-      <div class="col">
-        <div class="col-header">
+      <section class="col">
+        <div class="heading">
           <h2>Return</h2>
           <div class="pager">
-            <button id="returnPrev" class="chip">Prev</button>
-            <span id="returnPageLabel" class="muted">Page 1 / 1</span>
-            <button id="returnNext" class="chip">Next</button>
+            <button id="retPrev" class="pill">Prev</button>
+            <span id="retPage" class="page">Page 1 / 1</span>
+            <button id="retNext" class="pill">Next</button>
           </div>
         </div>
         <div id="returnList" class="list"></div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 
-  <!-- Payments modal -->
-  <div id="paymentsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal-content">
+  <!-- Payments modal: same structure, just clean markup -->
+  <div id="paymentsModal" class="modal" aria-hidden="true">
+    <div class="modal-box">
       <div class="modal-head">
-        <h3>Select payment methods</h3>
-        <button id="closePaymentsBtn" class="icon-close" aria-label="Close">×</button>
+        <div class="modal-title">Select payment methods</div>
+        <button id="pmClose" class="btn-icon" aria-label="Close">✕</button>
       </div>
-      <div class="tabs">
-        <button class="tab active" data-tab="Credit Card">Credit Card</button>
-        <button class="tab" data-tab="Debit Card">Debit Card</button>
-        <button class="tab" data-tab="Net Banking">Net Banking</button>
-        <button class="tab" data-tab="UPI">UPI</button>
-        <button class="tab" data-tab="Wallet">Wallet</button>
-        <button class="tab" data-tab="EMI">EMI</button>
+
+      <div class="pm-tabs">
+        <button class="chip active" data-pm-tab="Credit Card">Credit Card</button>
+        <button class="chip" data-pm-tab="Debit Card">Debit Card</button>
+        <button class="chip" data-pm-tab="Net Banking">Net Banking</button>
+        <button class="chip" data-pm-tab="UPI">UPI</button>
+        <button class="chip" data-pm-tab="Wallet">Wallet</button>
+        <button class="chip" data-pm-tab="EMI">EMI</button>
       </div>
-      <div id="paymentOptionsContainer" class="options"></div>
-      <div class="modal-foot">
-        <button id="clearPaymentsBtn" class="btn ghost">Clear</button>
-        <button id="donePaymentsBtn" class="btn primary">Done</button>
+
+      <!-- Credit Card -->
+      <div class="pm-list" data-pm-list="Credit Card" style="display:block">
+        <ul class="checklist">
+          <!-- Add/trim banks here as you like; these are the ones you’ve been using -->
+          <li><label><input type="checkbox" data-bank="Axis Bank"> Axis Bank</label></li>
+          <li><label><input type="checkbox" data-bank="HDFC Bank"> HDFC Bank</label></li>
+          <li><label><input type="checkbox" data-bank="ICICI Bank"> ICICI Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Kotak Bank"> Kotak Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Yes Bank"> Yes Bank</label></li>
+          <li><label><input type="checkbox" data-bank="RBL Bank"> RBL Bank</label></li>
+          <li><label><input type="checkbox" data-bank="IDFC First Bank"> IDFC First Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Federal Bank"> Federal Bank</label></li>
+          <li><label><input type="checkbox" data-bank="HSBC Bank"> HSBC Bank</label></li>
+        </ul>
+      </div>
+
+      <!-- Debit Card -->
+      <div class="pm-list" data-pm-list="Debit Card">
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-bank="HDFC Bank"> HDFC Bank</label></li>
+          <li><label><input type="checkbox" data-bank="ICICI Bank"> ICICI Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Axis Bank"> Axis Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Kotak Bank"> Kotak Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Federal Bank"> Federal Bank</label></li>
+          <li><label><input type="checkbox" data-bank="IDFC First Bank"> IDFC First Bank</label></li>
+        </ul>
+      </div>
+
+      <!-- Net Banking -->
+      <div class="pm-list" data-pm-list="Net Banking">
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-bank="HDFC Bank"> HDFC Bank</label></li>
+          <li><label><input type="checkbox" data-bank="ICICI Bank"> ICICI Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Axis Bank"> Axis Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Yes Bank"> Yes Bank</label></li>
+        </ul>
+      </div>
+
+      <!-- UPI -->
+      <div class="pm-list" data-pm-list="UPI">
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-bank="UPI Generic"> UPI (Any)</label></li>
+          <li><label><input type="checkbox" data-bank="PhonePe"> PhonePe</label></li>
+          <li><label><input type="checkbox" data-bank="GPay"> GPay</label></li>
+          <li><label><input type="checkbox" data-bank="Paytm UPI"> Paytm UPI</label></li>
+        </ul>
+      </div>
+
+      <!-- Wallet -->
+      <div class="pm-list" data-pm-list="Wallet">
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-bank="Paytm Wallet"> Paytm Wallet</label></li>
+          <li><label><input type="checkbox" data-bank="Mobikwik"> Mobikwik</label></li>
+          <li><label><input type="checkbox" data-bank="Amazon Pay"> Amazon Pay</label></li>
+        </ul>
+      </div>
+
+      <!-- EMI -->
+      <div class="pm-list" data-pm-list="EMI">
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-bank="HDFC Bank"> HDFC Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Axis Bank"> Axis Bank</label></li>
+          <li><label><input type="checkbox" data-bank="Yes Bank"> Yes Bank</label></li>
+          <li><label><input type="checkbox" data-bank="RBL Bank"> RBL Bank</label></li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button id="pmClear" class="btn light">Clear</button>
+        <button id="pmDone" class="btn primary">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- Prices modal -->
-  <div id="pricesModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal-content large">
-      <div class="modal-head">
-        <h3>Prices &amp; breakdown</h3>
-        <button id="closePricesBtn" class="icon-close" aria-label="Close">×</button>
-      </div>
-      <div class="prices-title" id="pricesTitle"></div>
-      <table class="prices">
-        <thead>
-          <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
-        </thead>
-        <tbody id="pricesTableBody"></tbody>
-      </table>
-      <details class="reasons">
-        <summary>Why offers applied / skipped</summary>
-        <pre id="offerReasons">{}</pre>
-      </details>
-      <div class="modal-foot">
-        <button id="closePricesBtn2" class="btn">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
