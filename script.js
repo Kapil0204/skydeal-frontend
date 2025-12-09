@@ -1,9 +1,9 @@
-// script.js — FULL FILE (layout unchanged)
+// script.js — FULL FILE (no layout changes)
 const backend = (location.hostname.includes("vercel.app"))
   ? "https://skydeal-backend.onrender.com"
   : "http://localhost:10000";
 
-// elements
+/* elements */
 const el = {
   from: document.getElementById("from"),
   to: document.getElementById("to"),
@@ -39,15 +39,17 @@ const el = {
   pmList: document.getElementById("pmList"),
 };
 
+/* default dates */
 function todayPlus(d=0){ const t=new Date(); t.setDate(t.getDate()+d); return t.toISOString().slice(0,10); }
-el.dep.value = todayPlus(1);
-el.ret.value = todayPlus(4);
+if (el.dep && !el.dep.value) el.dep.value = todayPlus(1);
+if (el.ret && !el.ret.value) el.ret.value = todayPlus(4);
 
+/* state */
 let paymentOptions = null;
-let selectedPayments = []; // flat list of strings user picked
+let selectedPayments = [];     // user-selected banks (strings)
 let lastMeta = null;
 
-// Payment modal
+/* payment modal */
 async function loadPaymentOptions() {
   const r = await fetch(`${backend}/payment-options`);
   paymentOptions = await r.json();
@@ -58,6 +60,7 @@ function buildPmUI() {
   el.pmTabs.innerHTML = "";
   tabs.forEach((t,i)=>{
     const b=document.createElement("button");
+    b.type = "button";
     b.textContent = t.replace(/([A-Z])/g,' $1').trim();
     b.className = "tab-btn" + (i===0 ? " active":"");
     b.addEventListener("click", ()=>{
@@ -71,9 +74,11 @@ function buildPmUI() {
 }
 function renderPmList(tab){
   el.pmList.innerHTML = "";
-  (paymentOptions?.options?.[tab] || []).forEach(name=>{
+  const list = paymentOptions?.options?.[tab] || [];
+  list.forEach(name=>{
     const row = document.createElement("div");
     row.className = "pm-row";
+
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = selectedPayments.includes(name);
@@ -81,33 +86,37 @@ function renderPmList(tab){
       if(cb.checked){ if(!selectedPayments.includes(name)) selectedPayments.push(name); }
       else { selectedPayments = selectedPayments.filter(x => x!==name); }
     });
+
     const lab = document.createElement("label");
     lab.textContent = name;
+
+    // order: checkbox then label — left aligned
     row.append(cb, lab);
     el.pmList.appendChild(row);
   });
 }
-el.pmBtn.addEventListener("click", async ()=>{
+el.pmBtn?.addEventListener("click", async ()=>{
   if(!paymentOptions) await loadPaymentOptions();
   el.pmModal.classList.remove("hidden");
 });
-el.pmClose.addEventListener("click", ()=> el.pmModal.classList.add("hidden"));
-el.pmDone.addEventListener("click", ()=> el.pmModal.classList.add("hidden"));
-el.pmClear.addEventListener("click", ()=> { selectedPayments=[]; buildPmUI(); });
+el.pmClose?.addEventListener("click", ()=> el.pmModal.classList.add("hidden"));
+el.pmDone?.addEventListener("click", ()=> el.pmModal.classList.add("hidden"));
+el.pmClear?.addEventListener("click", ()=> { selectedPayments=[]; buildPmUI(); });
 
-// Search & render
+/* results rendering + paging */
 let OUT_PAGE = 1, RET_PAGE = 1;
-const PAGE_SIZE = 10; // unchanged page size
+const PAGE_SIZE = 10;
 
 function paged(arr, page){ const a = arr||[]; const start=(page-1)*PAGE_SIZE; return a.slice(start,start+PAGE_SIZE); }
 function setPager(labelEl, page, total){ const pages = Math.max(1, Math.ceil((total||0)/PAGE_SIZE)); labelEl.textContent = `Page ${Math.min(page,pages)} / ${pages}`; return pages; }
 function fmt(n){ return Number(n).toLocaleString("en-IN"); }
 
 function cardHTML(f) {
-  // Title (unchanged style)
   const title = `${f.airlineName || ""} • ${f.flightNumber || f.itin || ""}`.trim();
   const best = f.bestDeal || { portal:"", finalPrice: f.price };
-  const appliedLine = (best.reason && best.reason.summary) ? `<div class="best-reason">Applied: ${best.reason.summary}</div>` : "";
+  const appliedLine = (best?.reason?.summary)
+    ? `<div class="best-reason">Applied: ${best.reason.summary}</div>`
+    : "";
 
   return `
     <div class="card">
@@ -117,16 +126,17 @@ function cardHTML(f) {
       ${appliedLine}
       <div class="row">
         <span class="muted">Best price after applicable offers (if any)</span>
-        <button class="btn" data-action="prices">Prices & breakdown</button>
+        <button class="btn" data-action="prices" type="button">Prices & breakdown</button>
       </div>
     </div>
   `;
 }
 
 function bindCardButtons(scopeEl, list, meta) {
-  scopeEl.querySelectorAll("[data-action='prices']").forEach((btn, idx)=>{
+  const btns = scopeEl.querySelectorAll("[data-action='prices']");
+  btns.forEach((btn, i)=>{
     btn.addEventListener("click", ()=>{
-      const f = list[idx];
+      const f = list[i];
       openPricesModal(f, meta);
     });
   });
@@ -143,34 +153,42 @@ function openPricesModal(f, meta){
   el.whyJson.textContent = JSON.stringify(meta?.offerDebug || {}, null, 2);
   el.modal.classList.remove("hidden");
 }
-el.modalClose.addEventListener("click", ()=> el.modal.classList.add("hidden"));
-el.modalClose2.addEventListener("click", ()=> el.modal.classList.add("hidden"));
+el.modalClose?.addEventListener("click", ()=> el.modal.classList.add("hidden"));
+el.modalClose2?.addEventListener("click", ()=> el.modal.classList.add("hidden"));
 
 async function doSearch(){
-  const body = {
-    from: el.from.value.trim().toUpperCase(),
-    to: el.to.value.trim().toUpperCase(),
-    departureDate: el.dep.value,
-    returnDate: el.roundtrip.checked ? el.ret.value : "",
-    tripType: el.roundtrip.checked ? "round-trip" : "one-way",
-    passengers: Number(el.pax.value || 1),
-    travelClass: el.cabin.value,
-    paymentMethods: selectedPayments.slice(0, 20) // cap just in case
-  };
-  const r = await fetch(`${backend}/search`, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body)
-  });
-  const data = await r.json();
-  lastMeta = data.meta || {};
+  try {
+    // if payment modal is open, close it to avoid overlay blocking clicks
+    el.pmModal.classList.add("hidden");
 
-  // Store lists
-  window._outbound = Array.isArray(data.outboundFlights) ? data.outboundFlights : [];
-  window._return = Array.isArray(data.returnFlights) ? data.returnFlights : [];
+    const body = {
+      from: el.from.value.trim().toUpperCase(),
+      to: el.to.value.trim().toUpperCase(),
+      departureDate: el.dep.value,
+      returnDate: el.roundtrip.checked ? el.ret.value : "",
+      tripType: el.roundtrip.checked ? "round-trip" : "one-way",
+      passengers: Number(el.pax.value || 1),
+      travelClass: el.cabin.value,
+      paymentMethods: selectedPayments.slice(0, 20)
+    };
 
-  OUT_PAGE = 1; RET_PAGE = 1;
-  renderLists();
+    const r = await fetch(`${backend}/search`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    lastMeta = data.meta || {};
+
+    window._outbound = Array.isArray(data.outboundFlights) ? data.outboundFlights : [];
+    window._return = Array.isArray(data.returnFlights) ? data.returnFlights : [];
+
+    OUT_PAGE = 1; RET_PAGE = 1;
+    renderLists();
+  } catch (e) {
+    console.error("search failed:", e);
+    alert("Search failed. Please try again.");
+  }
 }
 
 function renderLists(){
@@ -194,7 +212,8 @@ function renderLists(){
   el.retNext.onclick = ()=>{ if(RET_PAGE<maxRet){ RET_PAGE++; renderLists(); } };
 }
 
-el.searchBtn.addEventListener("click", doSearch);
+/* ensure Search works even if DOM loaded earlier */
+el.searchBtn?.addEventListener("click", (e)=>{ e.preventDefault(); doSearch(); });
 
-// init
+/* init */
 loadPaymentOptions().catch(()=>{});
