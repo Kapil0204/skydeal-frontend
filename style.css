@@ -4,20 +4,26 @@ body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvet
 h1 { margin: 24px 0 4px; }
 .subtitle { margin:0 0 20px; color:var(--muted); }
 .container { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; }
+
+/* top form */
 .form-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; background:var(--card); border:1px solid var(--border); padding:16px; border-radius:14px; }
 .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
 input, select, button { font-size:14px; }
 input, select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; }
 .radios { display:flex; gap:14px; align-items:center; padding-top:6px; }
+
 .btn { padding:8px 14px; border:1px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; }
 .btn.secondary { background:#fff; }
 .btn.primary { background:#0f172a; color:#fff; border-color:#0f172a; }
 .btn.full { width:100%; margin:16px 0 10px; height:40px; border-radius:12px; }
 .small { padding:6px 10px; }
+
+/* results */
 .results-grid { display:grid; grid-template-columns: 1fr 1fr; gap:22px; margin-top:12px; }
 .section-head { display:flex; justify-content:space-between; align-items:center; }
 .section-head h2 { margin:16px 0 10px; }
 .pager { display:flex; align-items:center; gap:10px; color:var(--muted); }
+
 .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:14px; }
 .card h4 { margin:0 0 6px; font-weight:600; }
 .route-muted { color:var(--muted); font-size:12px; margin-bottom:6px; }
@@ -27,20 +33,32 @@ input, select { width:100%; padding:10px 12px; border:1px solid var(--border); b
 .card .row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
 .card .row .btn { margin-left:8px; }
 
-.modal { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; }
+/* modal (prices + payment) */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:50; }
 .modal.hidden { display:none; }
 .modal-card { width: min(820px, 92vw); background:#fff; border-radius:16px; padding:16px; border:1px solid var(--border); }
 .modal-card.large { width: min(900px, 96vw); }
 .modal-head { display:flex; justify-content:space-between; align-items:center; }
 .modal-head h3 { margin:0; }
 .icon { border:none; background:#eee; width:32px; height:32px; border-radius:8px; cursor:pointer; }
+
+/* price table */
 .prices { width:100%; border-collapse:collapse; margin-top:12px; }
 .prices th, .prices td { padding:10px 8px; border-bottom:1px solid var(--border); text-align:left; }
 .prices td:nth-child(2) { font-weight:600; }
 .why { margin-top:10px; }
+
+/* payment modal */
 .tabs { display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; }
 .tabs button { padding:6px 10px; border-radius:20px; border:1px solid var(--border); background:#fff; cursor:pointer; }
 .tabs button.active { background:#0f172a; color:#fff; border-color:#0f172a; }
-.pm-list { max-height: 420px; overflow:auto; border:1px solid var(--border); border-radius:12px; }
-.pm-row { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); }
-.pm-row label { flex:1; }
+
+.pm-list { max-height: 420px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; }
+
+/* FIX: alignment — simple left-aligned row with gap */
+.pm-row { display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border); }
+.pm-row input[type="checkbox"] { width:16px; height:16px; }
+.pm-row label { flex:0 1 auto; text-align:left; color:var(--text); }
+
+/* footer buttons in modals */
+.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
