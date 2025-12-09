@@ -91,7 +91,6 @@ function closeModal(id){
 }
 
 // ---------------- Payment options ----------------
-// Flatten any payload into strings
 function collectStrings(val, out){
   if (!val) return;
   const t = typeof val;
@@ -102,13 +101,11 @@ function collectStrings(val, out){
   }
   if (Array.isArray(val)) { val.forEach(v => collectStrings(v, out)); return; }
   if (t === 'object') {
-    // common name holders
     ['name','bank','title','label'].forEach(k => { if (val[k]) collectStrings(val[k], out); });
     Object.values(val).forEach(v => collectStrings(v, out));
   }
 }
 
-// Normalize categories, handling many spellings and shapes
 function normalizeCategories(raw){
   const want = ['Credit Card','Debit Card','Net Banking','UPI','Wallet','EMI'];
   const keyVariants = (k) => [
@@ -116,20 +113,13 @@ function normalizeCategories(raw){
     k.toLowerCase(), k.toUpperCase(),
     k.replace(' ','').toLowerCase(), k.replace(' ','').toUpperCase()
   ];
-  // bucket by detection (fallback)
   const buckets = Object.fromEntries(want.map(k => [k, []]));
-
-  // Helper: add array-like to a bucket, safely
   const addItems = (bucket, val) => {
     const temp = [];
     collectStrings(val, temp);
-    const cleaned = temp
-      .map(s => s.trim())
-      .filter(Boolean);
+    const cleaned = temp.map(s => s.trim()).filter(Boolean);
     buckets[bucket].push(...cleaned);
   };
-
-  // 1) Exact category pulls via variants from raw and raw.options
   want.forEach(cat => {
     const variants = keyVariants(cat);
     for (const v of variants) {
@@ -137,8 +127,6 @@ function normalizeCategories(raw){
       if (raw?.options && raw.options[v]) addItems(cat, raw.options[v]);
     }
   });
-
-  // 2) Generic scan of all keys: try to infer category from key words
   const scanObj = (obj) => {
     if (!obj || typeof obj !== 'object') return;
     for (const [k, v] of Object.entries(obj)) {
@@ -153,8 +141,6 @@ function normalizeCategories(raw){
     }
   };
   scanObj(raw);
-
-  // 3) De-duplicate + sort
   for (const cat of want) {
     const uniq = Array.from(new Set(buckets[cat])).filter(Boolean).sort((a,b)=>a.localeCompare(b));
     buckets[cat] = uniq;
@@ -164,11 +150,10 @@ function normalizeCategories(raw){
 
 async function fetchPaymentOptions(){
   try{
-    const r = await fetch(`${API_BASE}/payment-options`, { method: 'GET' });
+    const r = await fetch(`${API_BASE}/payment-options`, { method: 'GET', mode:'cors' });
     const json = await r.json();
     return normalizeCategories(json);
   }catch(e){
-    // Safe fallback
     return {
       'Credit Card': ['Axis Bank','Federal Bank','HDFC Bank','ICICI Bank','Kotak Bank','RBL Bank','Yes Bank'],
       'Debit Card':  ['Axis Bank','HDFC Bank','ICICI Bank'],
@@ -186,7 +171,6 @@ async function openPayments(){
 
   const data = await fetchPaymentOptions();
 
-  // Ensure first tab active
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector('.tab[data-tab="Credit Card"]').classList.add('active');
 
@@ -230,11 +214,9 @@ async function openPayments(){
   };
 
   el('donePaymentsBtn').onclick = () => {
+    // gather all checked across the visible tab only; keep existing from other tabs
     const boxes = container.querySelectorAll('input[type="checkbox"]:checked');
     const picked = Array.from(boxes).map(b => b.nextElementSibling.textContent.trim());
-
-    // Keep previous selections from other tabs too:
-    // merge & dedupe
     window.selectedPaymentMethods = Array.from(new Set([...(window.selectedPaymentMethods||[]), ...picked]));
     updatePaymentsButtonLabel();
     closeModal('paymentsModal');
@@ -264,27 +246,39 @@ function openPricesModal(item, debug){
 
 // ---------------- Search ----------------
 async function doSearch(payload){
-  const r = await fetch(`${API_BASE}/search`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-  if (!r.ok) throw new Error('Search failed');
-  return await r.json();
+  // 35s hard timeout to avoid stuck button
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 35000);
+
+  try {
+    const r = await fetch(`${API_BASE}/search`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      mode: 'cors',
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    if (!r.ok) {
+      const text = await r.text().catch(()=> '');
+      throw new Error(`HTTP ${r.status} ${r.statusText} — ${text}`);
+    }
+    return await r.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function onSearch(){
   const btn = el('searchBtn');
-  // Loading state
   const prevHtml = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = 'Searching…';
 
   try{
-    const from = el('from').value.trim();
-    const to   = el('to').value.trim();
-    const departureDate = el('departure').value;
-    const returnDate    = el('return').value;
+    const from = el('from').value.trim().toUpperCase();
+    const to   = el('to').value.trim().toUpperCase();
+    const departureDate = el('departure').value;   // yyyy-mm-dd
+    const returnDate    = el('return').value;      // yyyy-mm-dd
     const passengers    = parseInt(el('passengers').value || '1', 10);
     const travelClass   = (el('cabin').value || 'economy').toLowerCase();
     const tripType      = el('tripRound').checked ? 'round-trip' : 'one-way';
@@ -301,7 +295,10 @@ async function onSearch(){
       paymentMethods: window.selectedPaymentMethods || []
     };
 
+    console.log('[SkyDeal] /search payload →', payload);
+
     const json = await doSearch(payload);
+    console.log('[SkyDeal] /search response meta →', json?.meta);
 
     state.meta = json.meta || null;
     state.outbound = Array.isArray(json.outboundFlights) ? json.outboundFlights : [];
@@ -311,10 +308,9 @@ async function onSearch(){
 
     renderAll();
   }catch(err){
-    console.error(err);
-    alert('Something went wrong while searching. Please try again.');
+    console.error('[SkyDeal] search error:', err);
+    alert(`Search failed.\n\n${err.message || err}`);
   }finally{
-    // restore button
     btn.disabled = false;
     btn.innerHTML = prevHtml || 'Search';
   }
@@ -322,7 +318,6 @@ async function onSearch(){
 
 // ---------------- Wire up ----------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Buttons
   el('openPaymentsBtn').addEventListener('click', (e)=>{ e.preventDefault(); openPayments(); });
   el('closePaymentsBtn').addEventListener('click', ()=> closeModal('paymentsModal'));
 
@@ -331,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   el('searchBtn').addEventListener('click', (e)=>{ e.preventDefault(); onSearch(); });
 
-  // Pagination
   el('outboundPrev').onclick = () => { if (state.outboundPage > 1) { state.outboundPage--; renderList('out'); } };
   el('outboundNext').onclick = () => {
     const pages = Math.max(1, Math.ceil(state.outbound.length / PAGE_SIZE));
@@ -343,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.returnPage < pages) { state.returnPage++; renderList('ret'); }
   };
 
-  // First paint
   setPageLabels();
   updatePaymentsButtonLabel();
 });
