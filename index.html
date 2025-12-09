@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -7,134 +7,153 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1 class="brand">SkyDeal</h1>
-    <p class="tag">Real flights + real OTA offers</p>
+    <p class="tagline">Real flights + real OTA offers</p>
 
-    <!-- Controls row -->
-    <div class="controls">
-      <div class="field">
-        <label for="from">From</label>
-        <input id="from" type="text" value="BOM" autocomplete="off" />
+    <!-- Search bar -->
+    <section class="searchbar card">
+      <div class="grid">
+        <label>
+          <span>From</span>
+          <input id="from" type="text" placeholder="BOM" />
+        </label>
+
+        <label>
+          <span>To</span>
+          <input id="to" type="text" placeholder="DEL" />
+        </label>
+
+        <label>
+          <span>Departure</span>
+          <input id="departure" type="date" />
+        </label>
+
+        <label>
+          <span>Return</span>
+          <input id="return" type="date" />
+        </label>
+
+        <label>
+          <span>Passengers</span>
+          <select id="passengers">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Cabin</span>
+          <select id="cabin">
+            <option value="economy" selected>Economy</option>
+            <option value="premium_economy">Premium economy</option>
+            <option value="business">Business</option>
+          </select>
+        </label>
+
+        <fieldset class="trip">
+          <legend>Trip</legend>
+          <label class="radio"><input type="radio" id="tripOne"   name="trip" /> <span>One-way</span></label>
+          <label class="radio"><input type="radio" id="tripRound" name="trip" checked /> <span>Round-trip</span></label>
+        </fieldset>
+
+        <label>
+          <span>Payment methods</span>
+          <button id="openPaymentsBtn" class="btn outline">Select Payment Methods</button>
+        </label>
       </div>
 
-      <div class="field">
-        <label for="to">To</label>
-        <input id="to" type="text" value="DEL" autocomplete="off" />
-      </div>
-
-      <div class="field">
-        <label for="departure">Departure</label>
-        <input id="departure" type="date" />
-      </div>
-
-      <div class="field">
-        <label for="return">Return</label>
-        <input id="return" type="date" />
-      </div>
-
-      <div class="field">
-        <label for="passengers">Passengers</label>
-        <select id="passengers">
-          <option value="1" selected>1</option>
-          <option value="2">2</option><option value="3">3</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="cabin">Cabin</label>
-        <select id="cabin">
-          <option value="Economy" selected>Economy</option>
-          <option value="Premium_Economy">Premium Economy</option>
-          <option value="Business">Business</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Trip</label>
-        <div class="radio-row">
-          <label><input id="tripOneWay" type="radio" name="trip" /> One-way</label>
-          <label><input id="tripRoundTrip" type="radio" name="trip" checked /> Round-trip</label>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Payment methods</label>
-        <button id="openPaymentBtn" class="btn-secondary">Select Payment Methods</button>
-      </div>
-
-      <div class="field full">
-        <button id="searchBtn" class="btn-primary">Search</button>
-      </div>
-    </div>
+      <button id="searchBtn" class="btn primary block">Search</button>
+    </section>
 
     <!-- Results -->
-    <div class="lists">
-      <div class="col">
-        <div class="col-head">
+    <section class="results-grid">
+      <div class="results-col">
+        <div class="results-header">
           <h2>Outbound</h2>
           <div class="pager">
-            <button id="outPrev" class="btn-pager">Prev</button>
-            <span id="outPageText">Page 1 / 1</span>
-            <button id="outNext" class="btn-pager">Next</button>
+            <button id="outboundPrev" class="chip">Prev</button>
+            <span id="outboundPageLabel" class="muted">Page 1 / 1</span>
+            <button id="outboundNext" class="chip">Next</button>
           </div>
         </div>
-        <div id="outboundList" class="list"></div>
+        <div id="outboundList" class="result-list"></div>
       </div>
 
-      <div class="col">
-        <div class="col-head">
+      <div class="results-col">
+        <div class="results-header">
           <h2>Return</h2>
           <div class="pager">
-            <button id="retPrev" class="btn-pager">Prev</button>
-            <span id="retPageText">Page 1 / 1</span>
-            <button id="retNext" class="btn-pager">Next</button>
+            <button id="returnPrev" class="chip">Prev</button>
+            <span id="returnPageLabel" class="muted">Page 1 / 1</span>
+            <button id="returnNext" class="chip">Next</button>
           </div>
         </div>
-        <div id="returnList" class="list"></div>
+        <div id="returnList" class="result-list"></div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- Payment modal -->
-  <div id="paymentModal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head">
+  <!-- Payment methods modal -->
+  <div id="paymentsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__dialog">
+      <div class="modal__head">
         <h3>Select payment methods</h3>
-        <button id="paymentClose" class="icon-x">×</button>
+        <button id="closePaymentsBtn" class="icon-btn" aria-label="Close">✕</button>
       </div>
-      <div id="paymentTabs" class="pill-row"></div>
-      <div id="paymentList" class="pay-list"></div>
 
-      <div class="modal-foot">
-        <button id="paymentClear" class="btn-secondary">Clear</button>
-        <span id="paymentCount" class="muted">Selected (0)</span>
-        <button id="paymentDone" class="btn-primary">Done</button>
+      <div class="tabs">
+        <button class="tab active" data-tab="Credit Card">Credit Card</button>
+        <button class="tab" data-tab="Debit Card">Debit Card</button>
+        <button class="tab" data-tab="Net Banking">Net Banking</button>
+        <button class="tab" data-tab="UPI">UPI</button>
+        <button class="tab" data-tab="Wallet">Wallet</button>
+        <button class="tab" data-tab="EMI">EMI</button>
+      </div>
+
+      <div class="options">
+        <!-- dynamic rows go here -->
+        <div id="paymentOptionsContainer"></div>
+      </div>
+
+      <div class="modal__foot">
+        <button id="clearPaymentsBtn" class="btn outline">Clear</button>
+        <button id="donePaymentsBtn" class="btn primary">Done</button>
       </div>
     </div>
   </div>
 
   <!-- Prices modal -->
-  <div id="priceModal" class="modal">
-    <div class="modal-card wide">
-      <div class="modal-head">
+  <div id="pricesModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__dialog wide">
+      <div class="modal__head">
         <h3>Prices &amp; breakdown</h3>
-        <button id="priceClose" class="icon-x">×</button>
+        <button id="closePricesBtn" class="icon-btn" aria-label="Close">✕</button>
       </div>
-      <div id="priceTitle" class="price-title"></div>
-      <table class="table">
-        <thead>
-          <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
-        </thead>
-        <tbody id="priceTableBody"></tbody>
-      </table>
-      <details class="why">
-        <summary>Why offers applied / skipped</summary>
-        <pre id="priceWhy">{}</pre>
-      </details>
+
+      <div class="modal__body">
+        <p id="pricesTitle" class="muted"></p>
+        <table class="table">
+          <thead>
+            <tr><th>Portal</th><th>Final</th><th>Source</th></tr>
+          </thead>
+          <tbody id="pricesTableBody"></tbody>
+        </table>
+
+        <details class="reasons">
+          <summary>Why offers applied / skipped</summary>
+          <pre id="offerReasons">{}</pre>
+        </details>
+      </div>
+
+      <div class="modal__foot">
+        <button id="closePricesBtn2" class="btn">Close</button>
+      </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
