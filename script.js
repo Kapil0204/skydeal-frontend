@@ -1,289 +1,253 @@
-// ===== Config =====
+// script.js — SkyDeal frontend (no layout change)
+
 const API_BASE = 'https://skydeal-backend.onrender.com';
-const PAGE_SIZE = 40; // keep a single definition
 
-// ===== Global state =====
-let outFlights = [];
-let retFlights = [];
-let outPage = 1;
-let retPage = 1;
-let outPages = 1;
-let retPages = 1;
-window.__selectedPaymentBanks = [];   // banks only, as strings
-window.__paymentOptions = null;       // cache /payment-options
-window.__paymentByTab = null;
+const els = {
+  from: document.getElementById('from'),
+  to: document.getElementById('to'),
+  dep: document.getElementById('departure'),
+  ret: document.getElementById('return'),
+  pax: document.getElementById('passengers'),
+  cabin: document.getElementById('cabin'),
+  oneWay: document.getElementById('oneWay'),
+  roundTrip: document.getElementById('roundTrip'),
+  paymentBtn: document.getElementById('paymentBtn'),
+  search: document.getElementById('searchBtn'),
 
-// ===== Utilities =====
-const qs = (sel, root=document) => root.querySelector(sel);
-const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-const inr = n => `₹${Number(n).toLocaleString('en-IN')}`;
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  outList: document.getElementById('outboundList'),
+  retList: document.getElementById('returnList'),
 
-function sliceByPage(list, page) {
-  const start = (page-1) * PAGE_SIZE;
-  return list.slice(start, start + PAGE_SIZE);
-}
+  outPrev: document.getElementById('outPrev'),
+  outNext: document.getElementById('outNext'),
+  outPage: document.getElementById('outPage'),
+  retPrev: document.getElementById('retPrev'),
+  retNext: document.getElementById('retNext'),
+  retPage: document.getElementById('retPage'),
 
-// ===== Payment modal helpers =====
-const TAB_KEYS = {
-  'Credit Card': 'Credit Card',
-  'Debit Card': 'Debit Card',
-  'Net Banking': 'Net Banking',
-  'UPI': 'UPI',
-  'Wallet': 'Wallet',
-  'EMI': 'EMI',
+  // modal elements are queried on open
 };
 
-function groupOptionsByTab(payload) {
-  const src = payload?.options ?? payload ?? {};
-  const out = {
-    'Credit Card': [],
-    'Debit Card': [],
-    'Net Banking': [],
-    'UPI': [],
-    'Wallet': [],
-    'EMI': [],
-  };
-  const keyAliases = new Map([
-    ['CreditCard', 'Credit Card'],
-    ['Credit Cards', 'Credit Card'],
-    ['credit', 'Credit Card'],
-    ['DebitCard', 'Debit Card'],
-    ['debit', 'Debit Card'],
-    ['NetBanking', 'Net Banking'],
-    ['netbanking', 'Net Banking'],
-    ['upi', 'UPI'],
-    ['wallets', 'Wallet'],
-    ['emi', 'EMI'],
-  ]);
+let selectedPayments = []; // plain strings (banks)
+let outFlights = [];
+let retFlights = [];
+let outPageIndex = 0;
+let retPageIndex = 0;
+const PAGE_SIZE = 20;
 
-  for (const [k, v] of Object.entries(src)) {
-    let tab = TAB_KEYS[k] || keyAliases.get(k) || TAB_KEYS[k?.trim?.()] || null;
-    if (!tab) continue;
-    const arr = Array.isArray(v) ? v : [];
-    for (const raw of arr) {
-      const name = (typeof raw === 'string') ? raw.trim() : (raw?.bank || raw?.name || '').trim();
-      if (name) out[tab].push({ name });
-    }
-  }
+// -------- Payment Modal
+async function loadPaymentOptions() {
+  const r = await fetch(`${API_BASE}/payment-options`);
+  const j = await r.json();
+  return j.options || {};
+}
 
-  for (const tab of Object.keys(out)) {
-    const seen = new Set();
-    out[tab] = out[tab].filter(({ name }) => {
-      if (seen.has(name)) return false;
-      seen.add(name);
-      return true;
+function openPaymentModal(options) {
+  // expects a modal in HTML with id="paymentModal" and content containers per tab
+  const modal = document.getElementById('paymentModal');
+  const body = modal.querySelector('.pm-body');
+  const doneBtn = modal.querySelector('.pm-done');
+  const clearBtn = modal.querySelector('.pm-clear');
+
+  // build simple checklists; reuse current styles
+  body.innerHTML = '';
+  const groups = ['CreditCard','DebitCard','NetBanking','UPI','Wallet','EMI'];
+  const wrap = document.createElement('div');
+
+  const tabs = document.createElement('div');
+  tabs.className = 'pm-tabs';
+  groups.forEach((g, idx) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pm-tab' + (idx === 0 ? ' active':'');
+    b.textContent = g.replace(/([A-Z])/g, ' $1').trim();
+    b.dataset.tab = g;
+    tabs.appendChild(b);
+  });
+  wrap.appendChild(tabs);
+
+  const panes = document.createElement('div');
+  panes.className = 'pm-panes';
+  groups.forEach((g, idx) => {
+    const pane = document.createElement('div');
+    pane.className = 'pm-pane' + (idx === 0 ? ' show':'');
+    (options[g] || []).forEach((label) => {
+      const id = `pm-${g}-${label}`.replace(/\s+/g,'-');
+      const row = document.createElement('label');
+      row.className = 'pm-row';
+      row.innerHTML = `
+        <input type="checkbox" id="${id}">
+        <span>${label}</span>
+      `;
+      const box = row.querySelector('input');
+      box.checked = selectedPayments.includes(label);
+      box.addEventListener('change', () => {
+        if (box.checked) {
+          if (!selectedPayments.includes(label)) selectedPayments.push(label);
+        } else {
+          selectedPayments = selectedPayments.filter(x => x !== label);
+        }
+      });
+      pane.appendChild(row);
     });
-  }
-  return out;
-}
+    panes.appendChild(pane);
+  });
+  wrap.appendChild(panes);
 
-function renderPaymentList(tabKey, containerEl, selectedSet) {
-  const list = window.__paymentByTab?.[tabKey] ?? [];
-  containerEl.innerHTML = list.map(({ name }) => {
-    const id = `pm_${tabKey}_${name.replace(/\s+/g, '_')}`;
-    const checked = selectedSet.has(name) ? 'checked' : '';
-    return `
-      <label class="pm-row">
-        <input type="checkbox" id="${id}" data-name="${name}" ${checked} />
-        <span>${name}</span>
-      </label>
-    `;
-  }).join('') || `<div class="pm-empty">No options</div>`;
-}
+  body.appendChild(wrap);
 
-// ===== Payment modal wiring =====
-function closePaymentModal() {
-  qs('#paymentModal').classList.remove('open');
-}
-async function openPaymentModal() {
-  if (!window.__paymentOptions) {
-    const res = await fetch(`${API_BASE}/payment-options`);
-    window.__paymentOptions = await res.json();
-    window.__paymentByTab = groupOptionsByTab(window.__paymentOptions);
-  }
-
-  const modal = qs('#paymentModal');
-  const tabs = qsa('[data-tab]', modal);
-  const listWrap = qs('.pm-list', modal);
-  const doneBtn = qs('#pmDone', modal);
-  const clearBtn = qs('#pmClear', modal);
-
-  const selected = new Set(window.__selectedPaymentBanks || []);
-
-  function activateTab(tabKey) {
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabKey));
-    renderPaymentList(tabKey, listWrap, selected);
-  }
-  tabs.forEach(t => t.addEventListener('click', () => activateTab(t.dataset.tab)));
-
-  listWrap.addEventListener('change', (e) => {
-    const it = e.target.closest('input[type="checkbox"][data-name]');
-    if (!it) return;
-    const name = it.dataset.name;
-    if (it.checked) selected.add(name);
-    else selected.delete(name);
+  // tabs behavior
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button.pm-tab');
+    if (!btn) return;
+    tabs.querySelectorAll('.pm-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.tab;
+    const idx = groups.indexOf(target);
+    panes.querySelectorAll('.pm-pane').forEach((p, i) => {
+      p.classList.toggle('show', i === idx);
+    });
   });
 
-  clearBtn.addEventListener('click', () => {
-    selected.clear();
-    const active = modal.querySelector('[data-tab].active')?.dataset.tab || 'Credit Card';
-    renderPaymentList(active, listWrap, selected);
-  });
+  clearBtn.onclick = () => {
+    selectedPayments = [];
+    body.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+  };
+  doneBtn.onclick = () => {
+    const c = document.getElementById('paymentBtnLabel');
+    if (c) c.textContent = selectedPayments.length ? `Selected (${selectedPayments.length})` : 'Select Payment Methods';
+    modal.close();
+  };
 
-  doneBtn.addEventListener('click', () => {
-    window.__selectedPaymentBanks = Array.from(selected);
-    const btn = qs('#openPaymentModalBtn');
-    if (btn) {
-      const n = selected.size;
-      btn.textContent = n > 0 ? `Selected (${n})` : 'Select Payment Methods';
-    }
-    closePaymentModal();
-  });
-
-  qs('#pmClose').onclick = closePaymentModal;
-
-  modal.classList.add('open');
-  activateTab('Credit Card');
+  modal.showModal();
 }
 
-// ===== Breakdown modal =====
-function openBreakdownModal(flight) {
-  const m = qs('#breakdownModal');
-  const hd = qs('#bdHeader');
-  const body = qs('#bdBody');
-  const why = qs('#bdWhy');
-
-  const dep = flight.departureTime || flight.departure || '';
-  const arr = flight.arrivalTime || flight.arrival || '';
-  const base = flight.price ? inr(flight.price) : '-';
-  hd.textContent = `${flight.airlineName || flight.airline || ''} • ${dep} → ${arr} • Base ${base}`;
-
-  const rows = (flight.portalPrices || []).map(p => {
-    const final = typeof p.finalPrice === 'number' ? inr(p.finalPrice) : (typeof p.finalPrice === 'string' ? `₹${p.finalPrice}` : '-');
-    const src = p.source || '';
-    const status = (src && src.includes('offer')) ? 'offer applied' : (src || '');
-    return `<tr><td>${p.portal}</td><td>${final}</td><td>${src ? src.replace('+', '+') : ''} ${status ? '' : ''}</td></tr>`;
-  }).join('');
-  body.innerHTML = rows || '<tr><td colspan="3">No data</td></tr>';
-
-  // Optional debug (if backend returns meta.offerDebug)
-  why.textContent = JSON.stringify(window.__lastOfferDebug || {}, null, 2);
-
-  m.classList.add('open');
-}
-function closeBreakdownModal() {
-  qs('#breakdownModal').classList.remove('open');
-}
-
-// ===== Render cards =====
-function renderFlightCard(flight) {
-  const dep = flight.departureTime || flight.departure || '';
-  const arr = flight.arrivalTime || flight.arrival || '';
-  const stops = (flight.stops ?? flight.numStops ?? 0);
-  const best = flight.bestDeal
-    ? `Best: ${inr(flight.bestDeal.finalPrice)} on ${flight.bestDeal.portal}`
-    : null;
-
-  const btn = `<div class="actions"><button class="btn" data-breakdown>Prices &amp; breakdown</button></div>`;
-  const bestLine = best ? `<div class="best">${best}</div>` : '';
-
-  return `
-    <div class="card" data-flight='${JSON.stringify(flight).replace(/'/g,"&#39;")}'>
-      <div class="row">
-        <div>
-          <div class="airline">${flight.airlineName || flight.airline}</div>
-          <div class="meta">${dep} → ${arr} • ${stops === 0 ? 'Non-stop' : (stops===1?'1 stop':`${stops} stops`)}</div>
-        </div>
-        <div class="right">
-          ${bestLine}
-          ${btn}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderList(which) {
-  if (which === 'out') {
-    const el = qs('#outList');
-    const pageList = sliceByPage(outFlights, outPage);
-    el.innerHTML = pageList.map(renderFlightCard).join('');
-    qs('#outPage').textContent = `Page ${outPage} / ${outPages}`;
-  } else {
-    const el = qs('#retList');
-    const pageList = sliceByPage(retFlights, retPage);
-    el.innerHTML = pageList.map(renderFlightCard).join('');
-    qs('#retPage').textContent = `Page ${retPage} / ${retPages}`;
-  }
-
-  // bind breakdown buttons
-  qsa('[data-breakdown]').forEach(btn => {
-    btn.onclick = (e) => {
-      const card = e.target.closest('.card');
-      const flight = JSON.parse(card.getAttribute('data-flight'));
-      openBreakdownModal(flight);
-    };
-  });
-}
-
-// ===== Search =====
+// -------- Search / Render
 async function doSearch() {
   const payload = {
-    from: qs('#from').value.trim().toUpperCase(),
-    to: qs('#to').value.trim().toUpperCase(),
-    departureDate: qs('#departure').value,
-    returnDate: (qs('input[name="tripType"]:checked')?.value === 'round-trip') ? qs('#return').value : undefined,
-    tripType: qs('input[name="tripType"]:checked')?.value || 'one-way',
-    passengers: Number(qs('#pax').value) || 1,
-    travelClass: qs('#cabin').value || 'economy',
-    paymentMethods: Array.from(window.__selectedPaymentBanks || []),
+    from: els.from.value.trim(),
+    to: els.to.value.trim(),
+    departureDate: els.dep.value,
+    returnDate: els.roundTrip.checked ? els.ret.value : undefined,
+    tripType: els.roundTrip.checked ? 'round-trip':'one-way',
+    passengers: Number(els.pax.value || 1),
+    travelClass: (els.cabin.value || 'economy').toLowerCase(),
+    paymentMethods: selectedPayments.slice(0),
   };
 
-  const res = await fetch(`${API_BASE}/search`, {
+  const r = await fetch(`${API_BASE}/search`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
   });
-  const data = await res.json();
+  const j = await r.json();
 
-  // keep offer debug for modal "why"
-  window.__lastOfferDebug = data?.meta?.offerDebug || {};
+  outFlights = Array.isArray(j.outboundFlights) ? j.outboundFlights : [];
+  retFlights = Array.isArray(j.returnFlights) ? j.returnFlights : [];
+  outPageIndex = 0;
+  retPageIndex = 0;
 
-  outFlights = Array.isArray(data?.outboundFlights) ? data.outboundFlights : [];
-  retFlights = Array.isArray(data?.returnFlights) ? data.returnFlights : [];
-
-  outPages = Math.max(1, Math.ceil(outFlights.length / PAGE_SIZE));
-  retPages = Math.max(1, Math.ceil(retFlights.length / PAGE_SIZE));
-  outPage = 1;
-  retPage = 1;
-
-  renderList('out');
-  renderList('ret');
+  renderLists();
 }
 
-// ===== Wire up =====
-window.addEventListener('DOMContentLoaded', () => {
-  // Default dates: today/today+3
-  const today = new Date();
-  const plus3 = new Date(Date.now() + 3*86400000);
-  const fmt = d => d.toISOString().slice(0,10);
-  qs('#departure').value = fmt(today);
-  qs('#return').value = fmt(plus3);
+function fmtMoney(n) {
+  const v = Number(n || 0);
+  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(v);
+}
 
-  // Buttons
-  qs('#openPaymentModalBtn').addEventListener('click', openPaymentModal);
-  qs('#pmClose').addEventListener('click', closePaymentModal);
+function buildCard(f) {
+  const el = document.createElement('div');
+  el.className = 'flight-card';
 
-  qs('#searchBtn').addEventListener('click', doSearch);
+  const best = f.bestDeal || null;
+  const bestLine = best ? `Best: ${fmtMoney(best.finalPrice)} on ${best.portal}` : '';
+  const offerLine = (best && best.offerTag) ? `<div class="offer-line">Offer: ${best.offerTag}</div>` : '';
 
-  // Breakdown modal close
-  qs('#bdClose').onclick = closeBreakdownModal;
-  qs('#bdCloseBtm').onclick = closeBreakdownModal;
+  el.innerHTML = `
+    <div class="flight-main">
+      <div class="airline">${f.airlineName} ${f.flightNumber ? '• '+f.flightNumber : ''}</div>
+      <div class="sub">${f.departure && f.arrival ? `${f.departure} → ${f.arrival}` : ''} ${f.stops ? `• ${f.stops} stop${f.stops>1?'s':''}`:''}</div>
+      <div class="best">${bestLine}</div>
+      ${offerLine}
+    </div>
+    <div>
+      <button class="btn-outline prices">Prices & breakdown</button>
+    </div>
+  `;
 
-  // Pagination
-  qs('#outPrev').onclick = () => { outPage = clamp(outPage-1, 1, outPages); renderList('out'); };
-  qs('#outNext').onclick = () => { outPage = clamp(outPage+1, 1, outPages); renderList('out'); };
-  qs('#retPrev').onclick = () => { retPage = clamp(retPage-1, 1, retPages); renderList('ret'); };
-  qs('#retNext').onclick = () => { retPage = clamp(retPage+1, 1, retPages); renderList('ret'); };
+  el.querySelector('.prices').addEventListener('click', () => openPricesModal(f));
+  return el;
+}
+
+function renderPage(list, container, pageIndex) {
+  container.innerHTML = '';
+  const start = pageIndex * PAGE_SIZE;
+  const slice = list.slice(start, start + PAGE_SIZE);
+  slice.forEach((f) => container.appendChild(buildCard(f)));
+}
+
+function renderLists() {
+  renderPage(outFlights, els.outList, outPageIndex);
+  renderPage(retFlights, els.retList, retPageIndex);
+
+  const outPages = Math.max(1, Math.ceil(outFlights.length / PAGE_SIZE));
+  const retPages = Math.max(1, Math.ceil(retFlights.length / PAGE_SIZE));
+
+  els.outPage.textContent = `Page ${Math.min(outPageIndex+1, outPages)} / ${outPages}`;
+  els.retPage.textContent = `Page ${Math.min(retPageIndex+1, retPages)} / ${retPages}`;
+
+  els.outPrev.disabled = outPageIndex <= 0;
+  els.outNext.disabled = outPageIndex >= outPages - 1;
+  els.retPrev.disabled = retPageIndex <= 0;
+  els.retNext.disabled = retPageIndex >= retPages - 1;
+}
+
+// -------- Prices modal
+function openPricesModal(f) {
+  const modal = document.getElementById('pricesModal');
+  const title = modal.querySelector('.pm-title');
+  const table = modal.querySelector('tbody');
+  const why = modal.querySelector('.pm-why');
+
+  title.textContent = `${f.airlineName} ${f.flightNumber ? '• '+f.flightNumber : ''}`;
+  table.innerHTML = '';
+  (f.portalPrices || []).forEach((p) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.portal}</td>
+      <td>${fmtMoney(p.finalPrice)}</td>
+      <td>${p.source}${p.offerTag ? ` • <span class="applied">offer applied</span>`:''}</td>
+    `;
+    table.appendChild(tr);
+  });
+
+  // simple reasons list from f.offersUsed
+  why.innerHTML = '';
+  if (Array.isArray(f.offersUsed) && f.offersUsed.length) {
+    const d = document.createElement('div');
+    d.className = 'why-body';
+    d.innerHTML = `<b>Why offers applied:</b><ul>${f.offersUsed.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    why.appendChild(d);
+  }
+
+  modal.showModal();
+  modal.querySelector('.pm-close').onclick = () => modal.close();
+}
+
+// -------- Wire-up
+els.paymentBtn.addEventListener('click', async () => {
+  const opts = await loadPaymentOptions();
+  openPaymentModal(opts);
+});
+els.search.addEventListener('click', doSearch);
+
+// Pagination
+els.outPrev.addEventListener('click', () => { if (outPageIndex>0) { outPageIndex--; renderLists(); }});
+els.outNext.addEventListener('click', () => {
+  const max = Math.max(1, Math.ceil(outFlights.length / PAGE_SIZE)) - 1;
+  if (outPageIndex < max) { outPageIndex++; renderLists(); }
+});
+els.retPrev.addEventListener('click', () => { if (retPageIndex>0) { retPageIndex--; renderLists(); }});
+els.retNext.addEventListener('click', () => {
+  const max = Math.max(1, Math.ceil(retFlights.length / PAGE_SIZE)) - 1;
+  if (retPageIndex < max) { retPageIndex++; renderLists(); }
 });
