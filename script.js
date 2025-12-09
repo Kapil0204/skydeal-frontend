@@ -1,9 +1,8 @@
-<script>
 (() => {
-  // ---- CONFIG ----
+  // ---------------- CONFIG ----------------
   const API_BASE = 'https://skydeal-backend.onrender.com';
 
-  // ---- DOM ----
+  // ---------------- DOM ----------------
   const els = {
     from: document.getElementById('from'),
     to: document.getElementById('to'),
@@ -13,8 +12,10 @@
     cabin: document.getElementById('cabin'),
     tripOne: document.getElementById('trip-oneway'),
     tripRound: document.getElementById('trip-round'),
+
     pmBtn: document.getElementById('openPaymentModal'),
     pmBadge: document.getElementById('paymentSelectedBadge'),
+
     search: document.getElementById('searchBtn'),
 
     outList: document.getElementById('outboundList'),
@@ -26,7 +27,6 @@
     retNext: document.getElementById('retNext'),
     retPage: document.getElementById('retPage'),
 
-    // modal
     pmModal: document.getElementById('paymentsModal'),
     pmClose: document.getElementById('pmClose'),
     pmDone: document.getElementById('pmDone'),
@@ -34,11 +34,10 @@
     pmTabs: document.querySelectorAll('[data-pm-tab]'),
     pmLists: document.querySelectorAll('[data-pm-list]'),
 
-    // loading + empty
     loadingBar: document.getElementById('loadingBar'),
   };
 
-  // ---- STATE ----
+  // ---------------- STATE ----------------
   const state = {
     paymentSelections: {
       'Credit Card': new Set(),
@@ -48,61 +47,58 @@
       'Wallet': new Set(),
       'EMI': new Set(),
     },
-    // pagination
-    outPage: 1, retPage: 1,
-    PAGE_SIZE: 10,
     outFlights: [],
     retFlights: [],
+    outPage: 1,
+    retPage: 1,
+    PAGE_SIZE: 10
   };
 
-  // ---- Helpers ----
+  // ---------------- HELPERS ----------------
   function showLoading(on) {
-    if (!els.loadingBar) return;
-    els.loadingBar.style.opacity = on ? '1' : '0';
+    if (els.loadingBar) els.loadingBar.style.opacity = on ? '1' : '0';
     els.search.disabled = !!on;
     els.search.textContent = on ? 'Searching…' : 'Search';
   }
 
   function flattenPaymentMethods() {
-    // We send only bank names; the backend already knows types
     const picked = [];
-    Object.values(state.paymentSelections).forEach(set => {
-      set.forEach(b => picked.push(b));
-    });
+    Object.values(state.paymentSelections).forEach(set => set.forEach(b => picked.push(b)));
     return picked;
   }
 
   function updatePmBadge() {
-    const count = flattenPaymentMethods().length;
-    els.pmBadge.textContent = count > 0 ? `Selected (${count})` : 'Select Payment Methods';
+    const n = flattenPaymentMethods().length;
+    els.pmBadge.textContent = n ? `Selected (${n})` : 'Select Payment Methods';
   }
 
-  function openModal()   { els.pmModal.classList.add('open'); }
-  function closeModal()  { els.pmModal.classList.remove('open'); }
+  function openModal(){ els.pmModal.classList.add('open'); els.pmModal.setAttribute('aria-hidden','false'); }
+  function closeModal(){ els.pmModal.classList.remove('open'); els.pmModal.setAttribute('aria-hidden','true'); }
 
   function clearPayments() {
     Object.keys(state.paymentSelections).forEach(k => state.paymentSelections[k].clear());
-    // uncheck all inputs
     document.querySelectorAll('[data-pm-list] input[type=checkbox]').forEach(cb => cb.checked = false);
     updatePmBadge();
   }
 
-  // ---- Payment modal wiring (no layout change) ----
-  els.pmBtn.addEventListener('click', () => openModal());
-  els.pmClose.addEventListener('click', () => closeModal());
+  // ---------------- PAYMENT MODAL WIRES ----------------
+  els.pmBtn.addEventListener('click', openModal);
+  els.pmClose.addEventListener('click', closeModal);
   els.pmDone.addEventListener('click', () => { updatePmBadge(); closeModal(); });
-  els.pmClear.addEventListener('click', () => clearPayments());
+  els.pmClear.addEventListener('click', clearPayments);
+
   els.pmTabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      const k = tab.getAttribute('data-pm-tab');
+      const key = tab.getAttribute('data-pm-tab');
       document.querySelectorAll('[data-pm-tab]').forEach(t => t.classList.toggle('active', t===tab));
-      document.querySelectorAll('[data-pm-list]').forEach(list => {
-        list.style.display = (list.getAttribute('data-pm-list') === k) ? 'block' : 'none';
+      els.pmLists.forEach(list => {
+        list.style.display = (list.getAttribute('data-pm-list') === key) ? 'block' : 'none';
       });
     });
   });
-  // checkbox capture
-  document.querySelectorAll('[data-pm-list]').forEach(list => {
+
+  // capture (un)checks
+  els.pmLists.forEach(list => {
     list.addEventListener('change', (e) => {
       const type = list.getAttribute('data-pm-list');
       const bank = e.target.getAttribute('data-bank');
@@ -112,68 +108,65 @@
     });
   });
 
-  // ---- Renderers (cards kept as you have them) ----
-  function emptyMessage(side, msg) {
-    const target = side === 'out' ? els.outList : els.retList;
-    target.innerHTML = `<div class="empty">${msg}</div>`;
+  // ---------------- RENDER ----------------
+  function emptyMessage(el, msg) {
+    el.innerHTML = `<div class="empty">${msg}</div>`;
   }
 
-  function renderFlightsSide(side) {
-    const listEl = side === 'out' ? els.outList : els.retList;
-    const pageEl = side === 'out' ? els.outPage : els.retPage;
-    const prevEl = side === 'out' ? els.outPrev : els.retPrev;
-    const nextEl = side === 'out' ? els.outNext : els.retNext;
+  function renderSide(side) {
+    const isOut = side === 'out';
+    const list = isOut ? state.outFlights : state.retFlights;
+    const listEl = isOut ? els.outList : els.retList;
+    const page = isOut ? state.outPage : state.retPage;
+    const prev = isOut ? els.outPrev : els.retPrev;
+    const next = isOut ? els.outNext : els.retNext;
+    const pageEl = isOut ? els.outPage : els.retPage;
 
-    const flights = side === 'out' ? state.outFlights : state.retFlights;
-    const page = side === 'out' ? state.outPage : state.retPage;
-
-    if (!flights || flights.length === 0) {
+    if (!list || list.length === 0) {
       listEl.innerHTML = '';
-      emptyMessage(side, 'No flights found for your search.');
+      emptyMessage(listEl, 'No flights found for your search.');
       pageEl.textContent = 'Page 1 / 1';
-      prevEl.disabled = true;
-      nextEl.disabled = true;
+      prev.disabled = true; next.disabled = true;
       return;
     }
 
+    const totalPages = Math.max(1, Math.ceil(list.length / state.PAGE_SIZE));
     const start = (page - 1) * state.PAGE_SIZE;
-    const end = Math.min(start + state.PAGE_SIZE, flights.length);
-    const totalPages = Math.max(1, Math.ceil(flights.length / state.PAGE_SIZE));
+    const end = Math.min(start + state.PAGE_SIZE, list.length);
 
-    listEl.innerHTML = flights.slice(start, end).map((f, idx) => {
-      const i = start + idx;
-      const best = f.bestDeal ? `Best: ₹${f.bestDeal.finalPrice.toLocaleString('en-IN')} on ${f.bestDeal.portal}` : '';
-      const why = f.bestDeal && f.bestDeal.note ? f.bestDeal.note : 'Best price after applicable offers (if any)';
+    listEl.innerHTML = list.slice(start, end).map((f, i) => {
+      const best = f.bestDeal ? `Best: ₹${(f.bestDeal.finalPrice||0).toLocaleString('en-IN')} on ${f.bestDeal.portal}` : '';
+      const why  = f.bestDeal?.note || 'Best price after applicable offers (if any)';
       return `
         <div class="card">
-          <div class="title">${f.title || `${f.airlineName || ''} • ${f.carrierCode || ''} ${f.flightNumber || ''}`}</div>
-          <div class="meta">${f.subTitle || `${f.stopsText || 'Non-stop'}`}</div>
+          <div class="title">${f.title || `${f.airlineName||''} • ${f.carrierCode||''} ${f.flightNumber||''}`}</div>
+          <div class="meta">${f.subTitle || f.stopsText || 'Non-stop'}</div>
           <div class="best">${best}</div>
           <div class="why">${why}</div>
-          <button class="btn-outline" data-breakdown="${i}" data-side="${side}">Prices & breakdown</button>
+          <button class="btn-outline" data-side="${side}" data-idx="${start+i}">Prices & breakdown</button>
         </div>
       `;
     }).join('');
 
     pageEl.textContent = `Page ${page} / ${totalPages}`;
-    prevEl.disabled = page <= 1;
-    nextEl.disabled = page >= totalPages;
+    prev.disabled = page <= 1;
+    next.disabled = page >= totalPages;
 
-    // wire breakdown buttons
-    listEl.querySelectorAll('[data-breakdown]').forEach(btn => {
+    listEl.querySelectorAll('[data-idx]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = Number(btn.getAttribute('data-breakdown'));
-        const s = btn.getAttribute('data-side');
-        const list = s === 'out' ? state.outFlights : state.retFlights;
-        const f = list[idx];
+        const idx = Number(btn.getAttribute('data-idx'));
+        const arr = isOut ? state.outFlights : state.retFlights;
+        const f = arr[idx];
         if (!f) return;
 
-        // very simple modal replacement kept from your version
-        const rows = (f.portalPrices || []).map(p => `
+        const rows = (f.portalPrices||[]).map(p => `
           <tr><td>${p.portal}</td><td>₹${(p.finalPrice||0).toLocaleString('en-IN')}</td><td>${p.source||''}</td></tr>
         `).join('');
-        const why = f.offerReasons ? `<details><summary>Why offers applied / skipped</summary><pre>${JSON.stringify(f.offerReasons, null, 2)}</pre></details>` : '';
-        const html = `
+        const whyBlock = f.offerReasons ? `<details><summary>Why offers applied / skipped</summary><pre>${JSON.stringify(f.offerReasons,null,2)}</pre></details>` : '';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'sheet-wrap';
+        wrap.innerHTML = `
           <div class="sheet">
             <div class="sheet-head">
               <div class="sheet-title">Prices & breakdown</div>
@@ -184,13 +177,9 @@
               <thead><tr><th>Portal</th><th>Final</th><th>Source</th></tr></thead>
               <tbody>${rows}</tbody>
             </table>
-            ${why}
+            ${whyBlock}
             <div class="sheet-actions"><button id="closeSheet" class="btn">Close</button></div>
-          </div>
-        `;
-        const wrap = document.createElement('div');
-        wrap.className = 'sheet-wrap';
-        wrap.innerHTML = html;
+          </div>`;
         document.body.appendChild(wrap);
         wrap.querySelector('#x-sheet').onclick = () => wrap.remove();
         wrap.querySelector('#closeSheet').onclick = () => wrap.remove();
@@ -198,75 +187,22 @@
     });
   }
 
-  function renderBoth() {
-    renderFlightsSide('out');
-    renderFlightsSide('ret');
-  }
+  function renderBoth(){ renderSide('out'); renderSide('ret'); }
 
-  // pagination buttons
-  els.outPrev.onclick = () => { if (state.outPage > 1) { state.outPage--; renderFlightsSide('out'); } };
+  // pagination
+  els.outPrev.onclick = () => { if (state.outPage>1){ state.outPage--; renderSide('out'); } };
   els.outNext.onclick = () => {
-    const total = Math.max(1, Math.ceil(state.outFlights.length / state.PAGE_SIZE));
-    if (state.outPage < total) { state.outPage++; renderFlightsSide('out'); }
+    const total = Math.max(1, Math.ceil(state.outFlights.length/state.PAGE_SIZE));
+    if (state.outPage<total){ state.outPage++; renderSide('out'); }
   };
-  els.retPrev.onclick = () => { if (state.retPage > 1) { state.retPage--; renderFlightsSide('ret'); } };
+  els.retPrev.onclick = () => { if (state.retPage>1){ state.retPage--; renderSide('ret'); } };
   els.retNext.onclick = () => {
-    const total = Math.max(1, Math.ceil(state.retFlights.length / state.PAGE_SIZE));
-    if (state.retPage < total) { state.retPage++; renderFlightsSide('ret'); }
+    const total = Math.max(1, Math.ceil(state.retFlights.length/state.PAGE_SIZE));
+    if (state.retPage<total){ state.retPage++; renderSide('ret'); }
   };
 
-  // ---- SEARCH ----
-  async function doSearch() {
-    const from = (els.from.value || '').trim().toUpperCase();
-    const to = (els.to.value || '').trim().toUpperCase();
-    const departureDate = els.dep.value;   // yyyy-mm-dd from <input type="date">
-    const returnDate = els.tripRound.checked ? els.ret.value : '';
-    const passengers = Number(els.pax.value || 1);
-    const travelClass = (els.cabin.value || 'economy').toLowerCase();
-    const tripType = els.tripRound.checked ? 'round-trip' : 'one-way';
-    const paymentMethods = flattenPaymentMethods(); // array of selected
-
-    if (!from || !to || !departureDate) {
-      alert('Please fill From, To, and Departure.');
-      return;
-    }
-    showLoading(true);
-    state.outPage = 1; state.retPage = 1;
-
-    const payload = { from, to, departureDate, returnDate, tripType, passengers, travelClass, paymentMethods };
-    try {
-      console.log('[SkyDeal] /search payload →', payload);
-      const res = await fetch(`${API_BASE}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      console.log('[SkyDeal] /search response meta →', json?.meta);
-
-      // take flights (or [])
-      state.outFlights = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
-      state.retFlights = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
-
-      if (state.outFlights.length === 0 && state.retFlights.length === 0) {
-        emptyMessage('out', 'No flights found for your search.');
-        emptyMessage('ret', 'No flights found for your search.');
-      } else {
-        renderBoth();
-      }
-    } catch (e) {
-      console.error('Search failed', e);
-      emptyMessage('out', 'Failed to fetch flights.');
-      emptyMessage('ret', 'Failed to fetch flights.');
-    } finally {
-      showLoading(false);
-    }
-  }
-
-  els.search.addEventListener('click', doSearch);
-
-  // Trip toggle disables/enables return date only; no layout change.
-  function refreshTripControls() {
+  // trip toggle
+  function refreshTripControls(){
     const round = els.tripRound.checked;
     els.ret.disabled = !round;
   }
@@ -274,7 +210,55 @@
   els.tripRound.addEventListener('change', refreshTripControls);
   refreshTripControls();
 
-  // initial render empty lists
+  // ---------------- SEARCH ----------------
+  async function doSearch(){
+    const payload = {
+      from: (els.from.value||'').trim().toUpperCase(),
+      to: (els.to.value||'').trim().toUpperCase(),
+      departureDate: els.dep.value,
+      returnDate: els.tripRound.checked ? els.ret.value : '',
+      passengers: Number(els.pax.value||1),
+      travelClass: (els.cabin.value||'economy').toLowerCase(),
+      tripType: els.tripRound.checked ? 'round-trip' : 'one-way',
+      paymentMethods: flattenPaymentMethods()
+    };
+
+    if (!payload.from || !payload.to || !payload.departureDate) {
+      alert('Please fill From, To, and Departure.');
+      return;
+    }
+
+    state.outPage = 1; state.retPage = 1;
+    showLoading(true);
+
+    try{
+      const r = await fetch(`${API_BASE}/search`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+
+      state.outFlights = Array.isArray(data?.outboundFlights) ? data.outboundFlights : [];
+      state.retFlights = Array.isArray(data?.returnFlights) ? data.returnFlights : [];
+
+      if (state.outFlights.length===0 && state.retFlights.length===0) {
+        emptyMessage(els.outList,'No flights found for your search.');
+        emptyMessage(els.retList,'No flights found for your search.');
+      } else {
+        renderBoth();
+      }
+    } catch(err){
+      console.error('Search failed', err);
+      emptyMessage(els.outList,'Failed to fetch flights.');
+      emptyMessage(els.retList,'Failed to fetch flights.');
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  els.search.addEventListener('click', doSearch);
+
+  // initial paint
   renderBoth();
 })();
-</script>
