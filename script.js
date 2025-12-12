@@ -1,4 +1,4 @@
-// SkyDeal frontend script
+// script.js — stable, connects to real backend
 const BACKEND = "https://skydeal-backend.onrender.com";
 
 // form nodes
@@ -31,50 +31,41 @@ document.getElementById("closePrices2").onclick = () => $prices.close();
 const $pm         = document.getElementById("paymentsModal");
 const $pmTabs     = document.getElementById("pmTabs");
 const $pmOptions  = document.getElementById("pmOptions");
-const $pmCloseBtn = document.getElementById("pmClose");
-const $pmDoneBtn  = document.getElementById("pmDone");
-const $pmClearBtn = document.getElementById("pmClear");
+document.getElementById("pmClose").onclick = ()=> $pm.close();
+document.getElementById("pmDone").onclick  = ()=> $pm.close();
+document.getElementById("pmClear").onclick = ()=>{
+  selected.clear();
+  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
+  updatePmCount();
+};
 
-// modal focus mgmt
-let pmLastActive = null;
-function openPaymentsModal() {
-  pmLastActive = document.activeElement;
-  $pm.showModal ? $pm.showModal() : $pm.setAttribute("open", "");
-}
-function closePaymentsModal() {
-  if ($pm.contains(document.activeElement)) document.activeElement.blur();
-  $pm.close ? $pm.close() : $pm.removeAttribute("open");
-  (pmLastActive?.focus ? pmLastActive : $btnPayments).focus();
-}
-$pmCloseBtn?.addEventListener("click", (e) => { e.preventDefault(); closePaymentsModal(); });
-$pmDoneBtn ?.addEventListener("click", (e) => { e.preventDefault(); closePaymentsModal(); });
-
-let paymentCatalog = {};          // { "Credit Card": ["HDFC Bank", ...], ...}
-let selectedCats = new Set();     // normalized category tokens
-let selectedBanks = new Set();    // normalized bank tokens
+// state
+let paymentCatalog = {};  // { "Credit Card": [...banks] }
+let selected = new Set();
 let activeTab = "Credit Card";
 
 const norm = s => String(s||"").toLowerCase().replace(/\s+/g,"").replace(/bank$/,"");
 
-// defaults (dates)
+// defaults
 (function initDates(){
   const toISO = (x)=> new Date(Date.now()+x*86400000).toISOString().slice(0,10);
   $depart.value = toISO(1);
   $ret.value    = toISO(3);
 })();
 
-// ---- Payment Methods UI ----
+// ---------- Payment Methods ----------
 function renderTabs() {
   $pmTabs.innerHTML = "";
   const labels = Object.keys(paymentCatalog).length
     ? Object.keys(paymentCatalog)
     : ["Credit Card","Debit Card","Net Banking","UPI","Wallet","EMI"];
-  if (!labels.includes(activeTab)) activeTab = labels[0];
+  if (!paymentCatalog[activeTab] && labels.length) activeTab = labels[0];
+
   for (const label of labels) {
     const b = document.createElement("button");
     b.className = "tab" + (label===activeTab ? " active" : "");
     b.textContent = label;
-    b.onclick = () => { activeTab = label; renderTabs(); renderOptions(); };
+    b.onclick = () => { activeTab = label; renderOptions(); renderTabs(); };
     $pmTabs.appendChild(b);
   }
 }
@@ -88,7 +79,7 @@ function renderOptions() {
   const catToken = norm(activeTab);
   const html = list.map(name => {
     const id = `pm_${catToken}_${norm(name)}`;
-    const checked = selectedCats.has(catToken) && selectedBanks.has(norm(name)) ? "checked" : "";
+    const checked = selected.has(catToken) && selected.has(norm(name)) ? "checked" : "";
     return `
       <div class="pm-opt">
         <label for="${id}">${name}</label>
@@ -98,26 +89,26 @@ function renderOptions() {
   }).join("");
   $pmOptions.innerHTML = html;
 
-  [...$pmOptions.querySelectorAll('input[type="checkbox"]')].forEach(cb => {
+  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
     cb.addEventListener("change", (e)=>{
       const c = e.target.getAttribute("data-cat");
       const b = e.target.getAttribute("data-bank");
-      if (e.target.checked) { selectedCats.add(c); selectedBanks.add(b); }
-      else { selectedBanks.delete(b); }
+      if (e.target.checked) { selected.add(c); selected.add(b); }
+      else { selected.delete(b); }
       updatePmCount();
     });
   });
 }
 
 function updatePmCount() {
-  let count = 0;
+  const banks = [];
   for (const [cat, arr] of Object.entries(paymentCatalog)) {
     const c = norm(cat);
     for (const bank of arr) {
-      if (selectedCats.has(c) && selectedBanks.has(norm(bank))) count++;
+      if (selected.has(norm(bank)) && selected.has(c)) banks.push(bank);
     }
   }
-  $pmCount.textContent = count;
+  $pmCount.textContent = banks.length;
 }
 
 async function loadPaymentOptions() {
@@ -126,7 +117,7 @@ async function loadPaymentOptions() {
     const j = await r.json();
     paymentCatalog = j.options || {};
   } catch {
-    paymentCatalog = {}; // show empty gracefully
+    paymentCatalog = {}; // if backend returns empty, show empty gracefully
   }
   renderTabs();
   renderOptions();
@@ -134,23 +125,32 @@ async function loadPaymentOptions() {
 
 $btnPayments.onclick = async () => {
   if (!Object.keys(paymentCatalog).length) await loadPaymentOptions();
-  openPaymentsModal();
+  $pm.showModal();
 };
 
-$pmClearBtn.onclick = () => {
-  selectedCats.clear();
-  selectedBanks.clear();
-  const cbs = $pmOptions.querySelectorAll('input[type="checkbox"]');
-  cbs.forEach((cb) => (cb.checked = false));
-  updatePmCount();
-};
+// helper: return human bank names (and also include categories) to backend
+function getSelectedValues() {
+  const values = [];
+  for (const [cat, arr] of Object.entries(paymentCatalog)) {
+    const c = norm(cat);
+    let any = false;
+    for (const bank of arr) {
+      if (selected.has(c) && selected.has(norm(bank))) {
+        values.push(bank);   // push bank human name
+        any = true;
+      }
+    }
+    if (any) values.push(cat); // also push the category human label
+  }
+  return values;
+}
 
-// ---- Search ----
+// ---------- Search ----------
 function cardHTML(f) {
   const hdr = `${f.airlineName} • ${f.flightNumber || f.airlineName}`;
   const meta = `${f.departure} → ${f.arrival} • ${f.stops ? f.stops + " stop" : "Non-stop"}`;
-  const best = `Best: ₹${f.bestDeal.finalPrice.toLocaleString("en-IN")} on ${f.bestDeal.portal}`;
-  const why  = f.bestDeal.note || "";
+  const best = `Best: ₹${(f.bestDeal?.finalPrice ?? f.basePrice).toLocaleString("en-IN")} on ${f.bestDeal?.portal ?? "-"}`;
+  const why  = f.bestDeal?.note || "";
   return `
     <div class="card">
       <div class="top">
@@ -169,15 +169,15 @@ function cardHTML(f) {
 }
 
 function bindPriceButtons(flights) {
-  [...document.querySelectorAll('button[data-id]')].forEach(btn => {
+  Array.from(document.querySelectorAll('button[data-id]')).forEach(btn => {
     const id = btn.getAttribute("data-id");
     const f = flights.find(x => x.id === id);
     btn.onclick = () => {
-      $pricesMeta.textContent = `${f.airlineName} • ${f.flightNumber} • Base ₹${f.basePrice.toLocaleString("en-IN")}`;
+      $pricesMeta.textContent = `${f.airlineName} • ${f.flightNumber || ""} • Base ₹${(f.basePrice||0).toLocaleString("en-IN")}`;
       $pricesBody.innerHTML = (f.portalPrices || []).map(p => `
         <tr><td>${p.portal}</td><td>₹${p.finalPrice.toLocaleString("en-IN")}</td><td>${p.source}</td></tr>
       `).join("");
-      $whyDump.textContent = JSON.stringify(f.bestDeal, null, 2);
+      $whyDump.textContent = JSON.stringify(f.bestDeal || {}, null, 2);
       $prices.showModal();
     };
   });
@@ -194,9 +194,7 @@ async function doSearch() {
     tripType,
     passengers: Number($pax.value || 1),
     travelClass: $cabin.value,
-    // send both categories and banks
-    paymentCategories: Array.from(selectedCats),
-    paymentBanks: Array.from(selectedBanks)
+    paymentMethods: getSelectedValues()
   };
 
   $btnSearch.disabled = true;
@@ -218,15 +216,11 @@ async function doSearch() {
     bindPriceButtons(out.concat(ret));
 
     console.log("[SkyDeal] /search meta ->", json.meta);
-    } catch (e) {
-    try {
-      const txt = await e.response?.text?.();
-      console.error("search failed:", e, txt || "");
-    } catch (_) { console.error("search failed:", e); }
+  } catch (e) {
+    console.error(e);
     $outList.innerHTML = `<div class="card meta">Failed to fetch flights.</div>`;
     $retList.innerHTML = `<div class="card meta">Failed to fetch flights.</div>`;
   } finally {
-
     $btnSearch.disabled = false;
     $btnSearch.textContent = oldText;
   }
@@ -234,8 +228,9 @@ async function doSearch() {
 
 $btnSearch.onclick = doSearch;
 
-// toggle return field opacity only (keeping DOM simple)
-document.getElementById("one").addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
-document.getElementById("rt").addEventListener("change",  ()=> document.getElementById("returnWrap").style.opacity = 1);
+// Hide/show return date based on trip
+$one.addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
+$rt .addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
 
+// first paint
 updatePmCount();
