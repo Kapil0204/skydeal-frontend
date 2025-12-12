@@ -1,4 +1,4 @@
-// script.js — stable, connects to real backend
+// script.js — stable UI, 5 payment tabs, no duplicates
 const BACKEND = "https://skydeal-backend.onrender.com";
 
 // form nodes
@@ -28,23 +28,23 @@ document.getElementById("closePrices").onclick  = () => $prices.close();
 document.getElementById("closePrices2").onclick = () => $prices.close();
 
 // payments modal
-const $pm         = document.getElementById("paymentsModal");
-const $pmTabs     = document.getElementById("pmTabs");
-const $pmOptions  = document.getElementById("pmOptions");
-document.getElementById("pmClose").onclick = ()=> $pm.close();
-document.getElementById("pmDone").onclick  = ()=> $pm.close();
-document.getElementById("pmClear").onclick = ()=>{
+const $pm        = document.getElementById("paymentsModal");
+const $pmTabs    = document.getElementById("pmTabs");
+const $pmOptions = document.getElementById("pmOptions");
+document.getElementById("pmClose").onclick = () => $pm.close();
+document.getElementById("pmDone").onclick  = () => $pm.close();
+document.getElementById("pmClear").onclick = () => {
   selected.clear();
   Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
   updatePmCount();
 };
 
 // state
-let paymentCatalog = {};  // { "Credit Card": [...banks] }
-let selected = new Set();
+let paymentCatalog = {};   // { "Credit Card": [...], "Debit Card": [...], "Net Banking": [...], "UPI":[...], "Wallet":[...] }
+let selected = new Set();  // normalized bank names
 let activeTab = "Credit Card";
 
-const norm = s => String(s||"").toLowerCase().replace(/\s+/g,"").replace(/bank$/,"");
+const norm = s => String(s||"").trim().toLowerCase();
 
 // defaults
 (function initDates(){
@@ -55,12 +55,8 @@ const norm = s => String(s||"").toLowerCase().replace(/\s+/g,"").replace(/bank$/
 
 // ---------- Payment Methods ----------
 function renderTabs() {
+  const labels = ["Credit Card","Debit Card","Net Banking","UPI","Wallet"];
   $pmTabs.innerHTML = "";
-  const labels = Object.keys(paymentCatalog).length
-    ? Object.keys(paymentCatalog)
-    : ["Credit Card","Debit Card","Net Banking","UPI","Wallet","EMI"];
-  if (!paymentCatalog[activeTab] && labels.length) activeTab = labels[0];
-
   for (const label of labels) {
     const b = document.createElement("button");
     b.className = "tab" + (label===activeTab ? " active" : "");
@@ -76,81 +72,64 @@ function renderOptions() {
     $pmOptions.innerHTML = `<div class="muted" style="padding:10px">No options</div>`;
     return;
   }
-  const catToken = norm(activeTab);
   const html = list.map(name => {
-    const id = `pm_${catToken}_${norm(name)}`;
-    const checked = selected.has(catToken) && selected.has(norm(name)) ? "checked" : "";
+    const id = `pm_${activeTab.replace(/\s+/g,"_")}_${name.replace(/\s+/g,"_")}`;
+    const checked = selected.has(norm(name)) ? "checked" : "";
     return `
       <div class="pm-opt">
         <label for="${id}">${name}</label>
-        <input id="${id}" type="checkbox" ${checked}
-          data-cat="${catToken}" data-bank="${norm(name)}" />
+        <input id="${id}" type="checkbox" ${checked} data-bank="${name}" />
       </div>`;
   }).join("");
   $pmOptions.innerHTML = html;
 
   Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
     cb.addEventListener("change", (e)=>{
-      const c = e.target.getAttribute("data-cat");
-      const b = e.target.getAttribute("data-bank");
-      if (e.target.checked) { selected.add(c); selected.add(b); }
-      else { selected.delete(b); }
+      const bank = e.target.getAttribute("data-bank");
+      if (e.target.checked) selected.add(norm(bank));
+      else selected.delete(norm(bank));
       updatePmCount();
     });
   });
 }
 
 function updatePmCount() {
-  const banks = [];
-  for (const [cat, arr] of Object.entries(paymentCatalog)) {
-    const c = norm(cat);
-    for (const bank of arr) {
-      if (selected.has(norm(bank)) && selected.has(c)) banks.push(bank);
-    }
-  }
-  $pmCount.textContent = banks.length;
+  $pmCount.textContent = selected.size;
 }
 
 async function loadPaymentOptions() {
-  try {
-    const r = await fetch(`${BACKEND}/payment-options`);
-    const j = await r.json();
-    paymentCatalog = j.options || {};
-  } catch {
-    paymentCatalog = {}; // if backend returns empty, show empty gracefully
-  }
+  const r = await fetch(`${BACKEND}/payment-options`);
+  const j = await r.json();
+  // j.options already in 5 clean tabs, deduped
+  paymentCatalog = j.options || {};
   renderTabs();
   renderOptions();
 }
 
 $btnPayments.onclick = async () => {
-  if (!Object.keys(paymentCatalog).length) await loadPaymentOptions();
+  if (!Object.keys(paymentCatalog).length) {
+    try { await loadPaymentOptions(); } catch { /* keep empty */ }
+  }
   $pm.showModal();
 };
 
-// helper: return human bank names (and also include categories) to backend
-function getSelectedValues() {
-  const values = [];
-  for (const [cat, arr] of Object.entries(paymentCatalog)) {
-    const c = norm(cat);
-    let any = false;
+// helper: selected bank names (human names)
+function getSelectedBanks() {
+  const banks = [];
+  for (const arr of Object.values(paymentCatalog)) {
     for (const bank of arr) {
-      if (selected.has(c) && selected.has(norm(bank))) {
-        values.push(bank);   // push bank human name
-        any = true;
-      }
+      if (selected.has(norm(bank))) banks.push(bank);
     }
-    if (any) values.push(cat); // also push the category human label
   }
-  return values;
+  return banks;
 }
 
-// ---------- Search ----------
+// ---------- Cards ----------
 function cardHTML(f) {
-  const hdr = `${f.airlineName} • ${f.flightNumber || f.airlineName}`;
-  const meta = `${f.departure} → ${f.arrival} • ${f.stops ? f.stops + " stop" : "Non-stop"}`;
-  const best = `Best: ₹${(f.bestDeal?.finalPrice ?? f.basePrice).toLocaleString("en-IN")} on ${f.bestDeal?.portal ?? "-"}`;
-  const why  = f.bestDeal?.note || "";
+  const hdr = `${f.airlineName} • ${f.flightNumber}`;
+  const meta = `${f.departure}  •  ${f.arrival}`;
+  const best = `Best: ₹${f.bestDeal.finalPrice.toLocaleString("en-IN")} on ${f.bestDeal.portal}`;
+  const why  = f.bestDeal.note || "";
   return `
     <div class="card">
       <div class="top">
@@ -173,16 +152,17 @@ function bindPriceButtons(flights) {
     const id = btn.getAttribute("data-id");
     const f = flights.find(x => x.id === id);
     btn.onclick = () => {
-      $pricesMeta.textContent = `${f.airlineName} • ${f.flightNumber || ""} • Base ₹${(f.basePrice||0).toLocaleString("en-IN")}`;
+      $pricesMeta.textContent = `${f.airlineName} • ${f.flightNumber} • Base ₹${f.basePrice.toLocaleString("en-IN")}`;
       $pricesBody.innerHTML = (f.portalPrices || []).map(p => `
         <tr><td>${p.portal}</td><td>₹${p.finalPrice.toLocaleString("en-IN")}</td><td>${p.source}</td></tr>
       `).join("");
-      $whyDump.textContent = JSON.stringify(f.bestDeal || {}, null, 2);
+      $whyDump.textContent = JSON.stringify(f.bestDeal, null, 2);
       $prices.showModal();
     };
   });
 }
 
+// ---------- Search ----------
 async function doSearch() {
   const tripType = $rt.checked ? "round-trip" : "one-way";
 
@@ -194,9 +174,10 @@ async function doSearch() {
     tripType,
     passengers: Number($pax.value || 1),
     travelClass: $cabin.value,
-    paymentMethods: getSelectedValues()
+    paymentMethods: getSelectedBanks() // array of bank names
   };
 
+  // loading
   $btnSearch.disabled = true;
   const oldText = $btnSearch.textContent;
   $btnSearch.textContent = "Searching…";
@@ -214,7 +195,6 @@ async function doSearch() {
     $outList.innerHTML = out.length ? out.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     $retList.innerHTML = ret.length ? ret.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     bindPriceButtons(out.concat(ret));
-
     console.log("[SkyDeal] /search meta ->", json.meta);
   } catch (e) {
     console.error(e);
