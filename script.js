@@ -1,5 +1,5 @@
-// script.js — minimal, stable, no layout changes
-const BACKEND = "https://skydeal-backend.onrender.com"; // your Render URL
+// script.js — stable UI, real backend, no layout changes
+const BACKEND = "https://skydeal-backend.onrender.com";
 
 // form nodes
 const $from   = document.getElementById("from");
@@ -27,7 +27,7 @@ const $whyDump    = document.getElementById("whyDump");
 document.getElementById("closePrices").onclick  = () => $prices.close();
 document.getElementById("closePrices2").onclick = () => $prices.close();
 
-// payments modal
+// payments modal + focus safety (prevents console warning)
 const $pm         = document.getElementById("paymentsModal");
 const $pmTabs     = document.getElementById("pmTabs");
 const $pmOptions  = document.getElementById("pmOptions");
@@ -35,38 +35,25 @@ const $pmCloseBtn = document.getElementById("pmClose");
 const $pmDoneBtn  = document.getElementById("pmDone");
 const $pmClearBtn = document.getElementById("pmClear");
 
-// --- NEW: payments modal focus management (prevents console warning) ---
 let pmLastActive = null;
 function openPaymentsModal() {
   pmLastActive = document.activeElement;
-  if (typeof $pm.showModal === "function") {
-    $pm.showModal();
-  } else {
-    $pm.setAttribute("open", "");
-  }
+  if (typeof $pm.showModal === "function") $pm.showModal();
+  else $pm.setAttribute("open", "");
 }
 function closePaymentsModal() {
   if ($pm.contains(document.activeElement)) document.activeElement.blur();
-  if (typeof $pm.close === "function") {
-    $pm.close();
-  } else {
-    $pm.removeAttribute("open");
-  }
-  // return focus to opener
-  if (pmLastActive && typeof pmLastActive.focus === "function") {
-    pmLastActive.focus();
-  } else {
-    $btnPayments.focus();
-  }
+  if (typeof $pm.close === "function") $pm.close();
+  else $pm.removeAttribute("open");
+  (pmLastActive?.focus ? pmLastActive : $btnPayments).focus();
 }
-// wire close buttons to the new close function
 $pmCloseBtn?.addEventListener("click", (e) => { e.preventDefault(); closePaymentsModal(); });
-$pmDoneBtn?.addEventListener("click",  (e) => { e.preventDefault(); closePaymentsModal(); });
+$pmDoneBtn ?.addEventListener("click", (e) => { e.preventDefault(); closePaymentsModal(); });
 
 // state
-let paymentCatalog = {};             // { "Credit Card": ["HDFC Bank", ...], ...}
-let selected = new Set();            // normalized tokens (category and/or bank)
-let activeTab = "Credit Card";       // tab label
+let paymentCatalog = {}; // { "Credit Card": ["HDFC Bank", ...], ...}
+let selected = new Set(); // normalized tokens for category+bank
+let activeTab = "Credit Card";
 
 const norm = s => String(s||"").toLowerCase().replace(/\s+/g,"").replace(/bank$/,"");
 
@@ -113,14 +100,13 @@ function renderOptions() {
       const c = e.target.getAttribute("data-cat");
       const b = e.target.getAttribute("data-bank");
       if (e.target.checked) { selected.add(c); selected.add(b); }
-      else { selected.delete(b); /* keep category if other banks remain */ }
+      else { selected.delete(b); }
       updatePmCount();
     });
   });
 }
 
 function updatePmCount() {
-  // Count banks, not category tokens
   const banks = [];
   for (const [cat, arr] of Object.entries(paymentCatalog)) {
     const c = norm(cat);
@@ -130,19 +116,17 @@ function updatePmCount() {
   }
   $pmCount.textContent = banks.length;
 }
-// ---- helper: return human bank names the backend expects ----
+
 function getSelectedBanks() {
   const banks = [];
   for (const [cat, arr] of Object.entries(paymentCatalog)) {
     const c = norm(cat);
     for (const bank of arr) {
-      // only count a bank if its category AND the bank were selected
       if (selected.has(c) && selected.has(norm(bank))) banks.push(bank);
     }
   }
   return banks;
 }
-
 
 async function loadPaymentOptions() {
   try {
@@ -152,22 +136,18 @@ async function loadPaymentOptions() {
     renderTabs();
     renderOptions();
   } catch (e) {
-    paymentCatalog = {
-      "UPI": ["Any UPI"], "Credit Card": ["HDFC Bank","ICICI Bank","Axis Bank"],
-      "Debit Card": ["HDFC Bank"], "Net Banking": ["HDFC Bank"], "Wallet": ["Paytm"], "EMI": ["HDFC Bank"]
-    };
+    console.error("payment-options failed:", e.message);
+    paymentCatalog = {}; // no fallback here
     renderTabs();
     renderOptions();
   }
 }
 
-// Open payments: use focus-safe open
 $btnPayments.onclick = async () => {
   if (!Object.keys(paymentCatalog).length) await loadPaymentOptions();
   openPaymentsModal();
 };
 
-// Clear selections
 $pmClearBtn.onclick = () => {
   selected.clear();
   Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
@@ -176,7 +156,7 @@ $pmClearBtn.onclick = () => {
 
 // ---------- Search ----------
 function cardHTML(f) {
-  const hdr = `${f.airlineName} • ${f.airlineName}`;
+  const hdr  = `${f.airlineName} • ${f.airlineName}`;
   const meta = `${f.departure} → ${f.arrival} • ${f.stops ? f.stops + " stop" : "Non-stop"}`;
   const best = `Best: ₹${f.bestDeal.finalPrice.toLocaleString("en-IN")} on ${f.bestDeal.portal}`;
   const why  = f.bestDeal.note || "";
@@ -214,7 +194,6 @@ function bindPriceButtons(flights) {
 
 async function doSearch() {
   const tripType = $rt.checked ? "round-trip" : "one-way";
-
   const payload = {
     from: $from.value.trim().toUpperCase(),
     to: $to.value.trim().toUpperCase(),
@@ -226,26 +205,24 @@ async function doSearch() {
     paymentMethods: getSelectedBanks()
   };
 
-  // loading
   $btnSearch.disabled = true;
   const oldText = $btnSearch.textContent;
   $btnSearch.textContent = "Searching…";
 
   try {
     const resp = await fetch(`${BACKEND}/search`, {
-      method:"POST",
+      method: "POST",
       headers: { "Content-Type":"application/json" },
       body: JSON.stringify(payload)
     });
     const json = await resp.json();
 
-    // render
-    const out = json.outboundFlights || [];
-    const ret = json.returnFlights || [];
+    const out = (json.outboundFlights || []).slice(0,25);
+    const ret = (json.returnFlights || []).slice(0,25);
     $outList.innerHTML = out.length ? out.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     $retList.innerHTML = ret.length ? ret.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     bindPriceButtons(out.concat(ret));
-    // console meta (useful to debug)
+
     console.log("[SkyDeal] /search meta ->", json.meta);
   } catch (e) {
     console.error(e);
@@ -259,7 +236,7 @@ async function doSearch() {
 
 $btnSearch.onclick = doSearch;
 
-// Hide/show return date based on trip
+// trip toggle
 $one.addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
 $rt .addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
 
