@@ -218,11 +218,15 @@ async function doSearch() {
     bindPriceButtons(out.concat(ret));
 
     console.log("[SkyDeal] /search meta ->", json.meta);
-  } catch (e) {
-    console.error(e);
+    } catch (e) {
+    try {
+      const txt = await e.response?.text?.();
+      console.error("search failed:", e, txt || "");
+    } catch (_) { console.error("search failed:", e); }
     $outList.innerHTML = `<div class="card meta">Failed to fetch flights.</div>`;
     $retList.innerHTML = `<div class="card meta">Failed to fetch flights.</div>`;
   } finally {
+
     $btnSearch.disabled = false;
     $btnSearch.textContent = oldText;
   }
