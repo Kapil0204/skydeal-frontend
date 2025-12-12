@@ -130,6 +130,19 @@ function updatePmCount() {
   }
   $pmCount.textContent = banks.length;
 }
+// ---- helper: return human bank names the backend expects ----
+function getSelectedBanks() {
+  const banks = [];
+  for (const [cat, arr] of Object.entries(paymentCatalog)) {
+    const c = norm(cat);
+    for (const bank of arr) {
+      // only count a bank if its category AND the bank were selected
+      if (selected.has(c) && selected.has(norm(bank))) banks.push(bank);
+    }
+  }
+  return banks;
+}
+
 
 async function loadPaymentOptions() {
   try {
@@ -210,7 +223,7 @@ async function doSearch() {
     tripType,
     passengers: Number($pax.value || 1),
     travelClass: $cabin.value,
-    paymentMethods: Array.from(selected)
+    paymentMethods: getSelectedBanks()
   };
 
   // loading
