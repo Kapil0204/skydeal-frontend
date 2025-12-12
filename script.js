@@ -1,4 +1,4 @@
-// script.js — stable UI, 5 payment tabs, no duplicates
+// script.js — SkyDeal frontend
 const BACKEND = "https://skydeal-backend.onrender.com";
 
 // form nodes
@@ -28,108 +28,102 @@ document.getElementById("closePrices").onclick  = () => $prices.close();
 document.getElementById("closePrices2").onclick = () => $prices.close();
 
 // payments modal
-const $pm        = document.getElementById("paymentsModal");
-const $pmTabs    = document.getElementById("pmTabs");
-const $pmOptions = document.getElementById("pmOptions");
-document.getElementById("pmClose").onclick = () => $pm.close();
-document.getElementById("pmDone").onclick  = () => $pm.close();
-document.getElementById("pmClear").onclick = () => {
-  selected.clear();
-  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => cb.checked = false);
-  updatePmCount();
-};
+const $pm         = document.getElementById("paymentsModal");
+const $pmTabs     = document.getElementById("pmTabs");
+const $pmOptions  = document.getElementById("pmOptions");
+const $pmCloseBtn = document.getElementById("pmClose");
+const $pmDoneBtn  = document.getElementById("pmDone");
+const $pmClearBtn = document.getElementById("pmClear");
 
 // state
-let paymentCatalog = {};   // { "Credit Card": [...], "Debit Card": [...], "Net Banking": [...], "UPI":[...], "Wallet":[...] }
-let selected = new Set();  // normalized bank names
+let paymentCatalog = {}; // { "Credit Card": [...banks], ... }
+let selectedBanks = new Set(); // bank names as-is (human, not normalized)
 let activeTab = "Credit Card";
 
-const norm = s => String(s||"").trim().toLowerCase();
+function openPm() { $pm.showModal(); }
+function closePm(){ $pm.close(); }
 
-// defaults
-(function initDates(){
-  const toISO = (x)=> new Date(Date.now()+x*86400000).toISOString().slice(0,10);
-  $depart.value = toISO(1);
-  $ret.value    = toISO(3);
-})();
+$pmCloseBtn.addEventListener("click", e=>{e.preventDefault(); closePm();});
+$pmDoneBtn .addEventListener("click", e=>{e.preventDefault(); closePm();});
+$pmClearBtn.addEventListener("click", ()=>{
+  selectedBanks.clear();
+  updatePmCount();
+  renderOptions();
+});
 
-// ---------- Payment Methods ----------
+const tabs = ["Credit Card","Debit Card","Net Banking","UPI","Wallet"];
+
 function renderTabs() {
-  const labels = ["Credit Card","Debit Card","Net Banking","UPI","Wallet"];
   $pmTabs.innerHTML = "";
-  for (const label of labels) {
+  for (const t of tabs) {
     const b = document.createElement("button");
-    b.className = "tab" + (label===activeTab ? " active" : "");
-    b.textContent = label;
-    b.onclick = () => { activeTab = label; renderOptions(); renderTabs(); };
+    b.className = "tab" + (t===activeTab ? " active":"");
+    b.textContent = t;
+    b.onclick = () => { activeTab = t; renderTabs(); renderOptions(); };
     $pmTabs.appendChild(b);
   }
 }
 
 function renderOptions() {
-  const list = paymentCatalog[activeTab] || [];
-  if (!list.length) {
+  const banks = paymentCatalog[activeTab] || [];
+  if (!banks.length) {
     $pmOptions.innerHTML = `<div class="muted" style="padding:10px">No options</div>`;
     return;
   }
-  const html = list.map(name => {
-    const id = `pm_${activeTab.replace(/\s+/g,"_")}_${name.replace(/\s+/g,"_")}`;
-    const checked = selected.has(norm(name)) ? "checked" : "";
+  const html = banks.map(b => {
+    const id = `pm_${activeTab.replace(/\s+/g,"").toLowerCase()}_${b.replace(/\s+/g,"").toLowerCase()}`;
+    const checked = selectedBanks.has(b) ? "checked" : "";
     return `
       <div class="pm-opt">
-        <label for="${id}">${name}</label>
-        <input id="${id}" type="checkbox" ${checked} data-bank="${name}" />
+        <label for="${id}">${b}</label>
+        <input id="${id}" type="checkbox" ${checked} data-bank="${b}" />
       </div>`;
   }).join("");
   $pmOptions.innerHTML = html;
 
-  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
-    cb.addEventListener("change", (e)=>{
+  Array.from($pmOptions.querySelectorAll('input[type="checkbox"]')).forEach(cb=>{
+    cb.addEventListener("change", e=>{
       const bank = e.target.getAttribute("data-bank");
-      if (e.target.checked) selected.add(norm(bank));
-      else selected.delete(norm(bank));
+      if (e.target.checked) selectedBanks.add(bank);
+      else selectedBanks.delete(bank);
       updatePmCount();
     });
   });
 }
 
-function updatePmCount() {
-  $pmCount.textContent = selected.size;
-}
+function updatePmCount() { $pmCount.textContent = selectedBanks.size; }
 
 async function loadPaymentOptions() {
   const r = await fetch(`${BACKEND}/payment-options`);
   const j = await r.json();
-  // j.options already in 5 clean tabs, deduped
   paymentCatalog = j.options || {};
+  // Guarantee presence of 5 categories
+  for (const t of tabs) if (!paymentCatalog[t]) paymentCatalog[t] = [];
   renderTabs();
   renderOptions();
 }
 
-$btnPayments.onclick = async () => {
-  if (!Object.keys(paymentCatalog).length) {
-    try { await loadPaymentOptions(); } catch { /* keep empty */ }
-  }
-  $pm.showModal();
+$btnPayments.onclick = async ()=>{
+  if (!Object.keys(paymentCatalog).length) await loadPaymentOptions();
+  openPm();
 };
 
-// helper: selected bank names (human names)
-function getSelectedBanks() {
-  const banks = [];
-  for (const arr of Object.values(paymentCatalog)) {
-    for (const bank of arr) {
-      if (selected.has(norm(bank))) banks.push(bank);
-    }
-  }
-  return banks;
-}
+// defaults: tomorrow & +2 days
+(function setDates(){
+  const toISO = d => d.toISOString().slice(0,10);
+  const today = new Date();
+  const dep = new Date(today.getFullYear(), today.getMonth(), today.getDate()+1);
+  const ret = new Date(today.getFullYear(), today.getMonth(), today.getDate()+3);
+  $depart.value = toISO(dep);
+  $ret.value    = toISO(ret);
+})();
 
-// ---------- Cards ----------
+// card
 function cardHTML(f) {
-  const hdr = `${f.airlineName} • ${f.flightNumber}`;
-  const meta = `${f.departure}  •  ${f.arrival}`;
-  const best = `Best: ₹${f.bestDeal.finalPrice.toLocaleString("en-IN")} on ${f.bestDeal.portal}`;
-  const why  = f.bestDeal.note || "";
+  const hdr  = `${f.airlineName} • ${f.flightNumber}`;
+  const meta = `${f.departure} → ${f.arrival} • ${f.stops ? f.stops + " stop" : "Non-stop"}`;
+  const best = `Best: ₹${(f.bestDeal?.finalPrice||f.basePrice).toLocaleString("en-IN")} on ${f.bestDeal?.portal||"—"}`;
+  const why  = f.bestDeal?.note || "";
   return `
     <div class="card">
       <div class="top">
@@ -148,12 +142,12 @@ function cardHTML(f) {
 }
 
 function bindPriceButtons(flights) {
-  Array.from(document.querySelectorAll('button[data-id]')).forEach(btn => {
+  Array.from(document.querySelectorAll('button[data-id]')).forEach(btn=>{
     const id = btn.getAttribute("data-id");
     const f = flights.find(x => x.id === id);
     btn.onclick = () => {
       $pricesMeta.textContent = `${f.airlineName} • ${f.flightNumber} • Base ₹${f.basePrice.toLocaleString("en-IN")}`;
-      $pricesBody.innerHTML = (f.portalPrices || []).map(p => `
+      $pricesBody.innerHTML = (f.portalPrices||[]).map(p => `
         <tr><td>${p.portal}</td><td>₹${p.finalPrice.toLocaleString("en-IN")}</td><td>${p.source}</td></tr>
       `).join("");
       $whyDump.textContent = JSON.stringify(f.bestDeal, null, 2);
@@ -162,7 +156,6 @@ function bindPriceButtons(flights) {
   });
 }
 
-// ---------- Search ----------
 async function doSearch() {
   const tripType = $rt.checked ? "round-trip" : "one-way";
 
@@ -174,27 +167,29 @@ async function doSearch() {
     tripType,
     passengers: Number($pax.value || 1),
     travelClass: $cabin.value,
-    paymentMethods: getSelectedBanks() // array of bank names
+    paymentMethods: Array.from(selectedBanks) // send human bank names; backend matches loosely
   };
 
-  // loading
+  // UX
   $btnSearch.disabled = true;
-  const oldText = $btnSearch.textContent;
+  const old = $btnSearch.textContent;
   $btnSearch.textContent = "Searching…";
 
   try {
     const resp = await fetch(`${BACKEND}/search`, {
-      method:"POST",
-      headers: { "Content-Type":"application/json" },
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
       body: JSON.stringify(payload)
     });
     const json = await resp.json();
 
+    // Render (already sorted asc by backend)
     const out = json.outboundFlights || [];
     const ret = json.returnFlights || [];
     $outList.innerHTML = out.length ? out.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     $retList.innerHTML = ret.length ? ret.map(cardHTML).join("") : `<div class="card meta">No flights found for your search.</div>`;
     bindPriceButtons(out.concat(ret));
+
     console.log("[SkyDeal] /search meta ->", json.meta);
   } catch (e) {
     console.error(e);
@@ -202,15 +197,15 @@ async function doSearch() {
     $retList.innerHTML = `<div class="card meta">Failed to fetch flights.</div>`;
   } finally {
     $btnSearch.disabled = false;
-    $btnSearch.textContent = oldText;
+    $btnSearch.textContent = old;
   }
 }
 
 $btnSearch.onclick = doSearch;
 
-// Hide/show return date based on trip
-$one.addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
-$rt .addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
+// Trip toggle
+document.getElementById("one").addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 0.35);
+document.getElementById("rt") .addEventListener("change", ()=> document.getElementById("returnWrap").style.opacity = 1);
 
-// first paint
+// init
 updatePmCount();
