@@ -1,191 +1,175 @@
-const API_BASE = "https://skydeal-backend.onrender.com";
+// ----- CONFIG -----
+const BACKEND = "https://skydeal-backend.onrender.com";
 
-/* ---------- State ---------- */
-let paymentOptions = {};              // { "Credit Card":[...], "Debit Card":[...], ... }
-let selectedCategory = null;          // "Credit Card" | ...
-let selectedBanks = new Set();        // "HDFC Bank", ...
-let currentSearchBody = null;         // last search body
+// state
+const state = {
+  paymentBuckets: {
+    "Credit Card": [],
+    "Debit Card": [],
+    "Net Banking": [],
+    UPI: [],
+    Wallet: [],
+  },
+  selected: [], // [{type:'Credit Card', bank:'HDFC Bank'}]
+  activeType: "Credit Card",
+};
 
-/* ---------- DOM ---------- */
-const modal = document.getElementById("paymentModal");
-const openBtn = document.getElementById("openPaymentModal");
-const closeBtn = document.getElementById("closePaymentModal");
-const saveBtn  = document.getElementById("savePayments");
-const clearBtn = document.getElementById("clearPayments");
-
-const chipsWrap = document.getElementById("payment-category-chips");
-const optionsList = document.getElementById("payment-options-list");
-const selectedCountEl = document.getElementById("selectedCount");
-
-const outList = document.getElementById("outbound");
-const retList = document.getElementById("return");
-const tpl = document.getElementById("flight-card-tpl");
-
-/* ---------- Helpers ---------- */
-const fmtINR = v => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
-
-/* ---------- Modal ---------- */
-openBtn.addEventListener("click", async () => {
-  modal.classList.remove("hidden");
-  await ensurePaymentOptionsLoaded();
-  renderCategoryChips();
-  renderBankList();
-});
-
-closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-saveBtn.addEventListener("click", () => modal.classList.add("hidden"));
-clearBtn.addEventListener("click", () => {
-  selectedBanks.clear();
-  renderBankList();
-  updateSelectedCount();
-});
-
-function updateSelectedCount(){
-  selectedCountEl.textContent = `(${selectedBanks.size})`;
+// --- utils ---
+function ddmmyyyyToISO(s) {
+  if (!s) return "";
+  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return s; // assume already ISO
+  const [_, dd, mm, yyyy] = m;
+  return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
-/* ---------- Fetch payment options (Mongo-backed) ---------- */
-async function ensurePaymentOptionsLoaded(){
-  if (Object.keys(paymentOptions).length) return;
-  const res = await fetch(`${API_BASE}/payment-options`);
-  const data = await res.json();       // { usedFallback, options: { "Credit Card":[...], ... } }
-  paymentOptions = data.options || {};
+function el(q) { return document.querySelector(q); }
+function ce(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
 
-  // Normalize canonical 5 categories only
-  const order = ["Credit Card","Debit Card","Net Banking","UPI","Wallet"];
-  const normalized = {};
-  order.forEach(k => normalized[k] = [...new Set(paymentOptions[k] || [])]);
-  paymentOptions = normalized;
+// --- Payment modal rendering ---
+const pmBtn = el("#pmBtn");
+const pmCount = el("#pmCount");
+const modal = el("#paymentModal");
+const pmClose = el("#pmClose");
+const pmTabs = el("#pmTabs");
+const pmBanks = el("#pmBanks");
+const pmClear = el("#pmClear");
+const pmDone = el("#pmDone");
 
-  // default category
-  if (!selectedCategory) selectedCategory = order[0];
-}
+function openModal() { modal.setAttribute("aria-hidden", "false"); }
+function closeModal() { modal.setAttribute("aria-hidden", "true"); }
 
-/* ---------- Render category chips ---------- */
-function renderCategoryChips(){
-  chipsWrap.innerHTML = "";
-  Object.keys(paymentOptions).forEach(cat => {
-    const btn = document.createElement("button");
-    btn.className = "chip";
-    btn.textContent = cat;
-    if (cat === selectedCategory) btn.style.outline = "2px solid #0f1f38";
-
-    btn.onclick = () => { selectedCategory = cat; renderBankList(); };
-    chipsWrap.appendChild(btn);
+function renderTabs() {
+  pmTabs.innerHTML = "";
+  Object.keys(state.paymentBuckets).forEach((t) => {
+    const chip = ce("div", "tab" + (state.activeType === t ? " active" : ""));
+    chip.textContent = t;
+    chip.onclick = () => { state.activeType = t; renderTabs(); renderBanks(); };
+    pmTabs.appendChild(chip);
   });
 }
 
-/* ---------- Render bank list ---------- */
-function renderBankList(){
-  optionsList.innerHTML = "";
-  const banks = paymentOptions[selectedCategory] || [];
-  if (!banks.length){
-    const p = document.createElement("p");
-    p.style.color = "#6b7280";
-    p.textContent = "No options";
-    optionsList.appendChild(p);
+function isChecked(type, bank) {
+  return state.selected.some((x) => x.type === type && x.bank === bank);
+}
+
+function renderBanks() {
+  pmBanks.innerHTML = "";
+  const type = state.activeType;
+  const banks = state.paymentBuckets[type] || [];
+  if (!banks.length) {
+    const p = ce("div"); p.style.color="#6b7280"; p.style.padding="10px"; p.textContent="No options"; pmBanks.appendChild(p);
     return;
   }
-
-  banks.forEach(bank => {
-    const row = document.createElement("div");
-    row.className = "bank-row";
-
+  banks.forEach((name) => {
+    const row = ce("label", "bank");
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.checked = selectedBanks.has(bank);
+    cb.checked = isChecked(type, name);
     cb.onchange = () => {
-      if (cb.checked) selectedBanks.add(bank);
-      else selectedBanks.delete(bank);
-      updateSelectedCount();
+      if (cb.checked) {
+        state.selected.push({ type, bank: name });
+      } else {
+        state.selected = state.selected.filter((x) => !(x.type === type && x.bank === name));
+      }
+      pmCount.textContent = `(${state.selected.length})`;
     };
-
-    const label = document.createElement("span");
-    label.textContent = bank;
-
-    row.appendChild(cb);
-    row.appendChild(label);
-    optionsList.appendChild(row);
+    const span = ce("span"); span.textContent = name;
+    row.append(cb, span);
+    pmBanks.appendChild(row);
   });
 }
 
-/* ---------- Search ---------- */
-document.getElementById("searchBtn").addEventListener("click", async () => {
-  const body = {
-    from: document.getElementById("from").value.trim() || "BOM",
-    to: document.getElementById("to").value.trim() || "DEL",
-    departureDate: document.getElementById("departDate").value,
-    returnDate: document.getElementById("returnDate").value,
-    tripType: document.getElementById("returnDate").value ? "round-trip" : "one-way",
-    passengers: Number(document.getElementById("passengers").value || 1),
-    travelClass: document.getElementById("cabin").value || "economy",
-    paymentMethods: Array.from(selectedBanks)  // banks only; backend applies offers
+async function fetchPaymentOptions() {
+  const r = await fetch(`${BACKEND}/payment-options`);
+  if (!r.ok) throw new Error("payment-options failed");
+  const data = await r.json();
+  state.paymentBuckets = data.options || state.paymentBuckets;
+  // keep exactly five buckets; dedupe already done by backend
+  renderTabs(); renderBanks();
+}
+
+// modal buttons
+pmBtn.onclick = () => openModal();
+pmClose.onclick = () => closeModal();
+pmClear.onclick = () => { state.selected = []; pmCount.textContent = "(0)"; renderBanks(); };
+pmDone.onclick = () => closeModal();
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+// --- Search ---
+const btnSearch = el("#searchBtn");
+const outBox = el("#outbound");
+const retBox = el("#return");
+
+function cardHTML(f) {
+  const name = f.airlineName || "Airline";
+  const time = `${f.departure} → ${f.arrival}`;
+  const stops = f.stops === 0 ? "Non-stop" : `${f.stops} stop${f.stops>1?"s":""}`;
+  const best = f.bestDeal ? `Best: ₹${f.bestDeal.finalPrice} on ${f.bestDeal.portal}` : "";
+  return `
+    <div class="card">
+      <div>
+        <div><strong>${name}</strong></div>
+        <div class="meta">${time} • ${stops}</div>
+        <div class="best">${best}</div>
+      </div>
+      <div>
+        <button class="btn">Prices & breakdown</button>
+      </div>
+    </div>
+  `;
+}
+
+async function doSearch() {
+  outBox.innerHTML = '<div class="meta">Searching…</div>';
+  retBox.innerHTML = '<div class="meta">Searching…</div>';
+
+  const payload = {
+    from: el("#from").value.trim().toUpperCase(),
+    to: el("#to").value.trim().toUpperCase(),
+    departureDate: ddmmyyyyToISO(el("#depart").value.trim()),
+    returnDate: ddmmyyyyToISO(el("#ret").value.trim()),
+    passengers: Number(el("#pax").value || 1),
+    travelClass: el("#cabin").value || "economy",
+    tripType: (document.querySelector('input[name="trip"]:checked')?.value) || "round-trip",
+    paymentFilters: state.selected.slice(), // [{type, bank}]
   };
 
-  currentSearchBody = body;
-
-  outList.innerHTML = "";
-  retList.innerHTML = "";
+  if (payload.tripType === "one-way") payload.returnDate = "";
 
   try {
-    const res = await fetch(`${API_BASE}/search`, {
+    const r = await fetch(`${BACKEND}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await r.json();
+    console.log("[SkyDeal] /search meta", data?.meta);
 
-    // meta.debug is logged silently if present
-    console.log("[SkyDeal] /search meta", data.meta);
+    const outs = data?.outboundFlights || [];
+    const rets = data?.returnFlights || [];
 
-    renderFlights(outList, data.outboundFlights || []);
-    renderFlights(retList, data.returnFlights || []);
-  } catch (e){
-    outList.innerHTML = `<div class="flight-card">Failed to fetch flights.</div>`;
-    retList.innerHTML = `<div class="flight-card">Failed to fetch flights.</div>`;
+    outBox.innerHTML = outs.length ? outs.map(cardHTML).join("") : '<div class="meta">No flights found for your search.</div>';
+    retBox.innerHTML = payload.tripType === "round-trip"
+      ? (rets.length ? rets.map(cardHTML).join("") : '<div class="meta">No flights found for your search.</div>')
+      : '<div class="meta">—</div>';
+
+  } catch (e) {
+    outBox.innerHTML = '<div class="meta">Failed to fetch flights.</div>';
+    retBox.innerHTML = '<div class="meta">Failed to fetch flights.</div>';
+    console.error(e);
   }
-});
-
-/* ---------- Render flight cards ---------- */
-function renderFlights(container, flights){
-  container.innerHTML = "";
-  if (!flights.length){
-    container.innerHTML = `<div class="flight-card">No flights found for your search.</div>`;
-    return;
-  }
-
-  flights.forEach(f => {
-    const node = tpl.content.cloneNode(true);
-    node.querySelector(".airline").textContent =
-      [f.airlineName, f.flightNumber].filter(Boolean).join(" • ");
-
-    const t1 = [f.departureTime, f.arrivalTime].filter(Boolean).join(" → ");
-    const stops = (f.stops === 0 || f.stops === "0") ? "Non-stop" :
-                  (typeof f.stops === "number" ? `${f.stops} stop(s)` : (f.stops || ""));
-    node.querySelector(".meta").textContent =
-      [t1, stops, f.duration].filter(Boolean).join(" • ");
-
-    const best = node.querySelector(".best");
-    if (f.bestDeal && f.bestDeal.portal && f.bestDeal.finalPrice){
-      best.textContent = `Best: ${fmtINR(f.bestDeal.finalPrice)} on ${f.bestDeal.portal}`;
-    } else if (typeof f.price === "number") {
-      best.textContent = `Base: ${fmtINR(f.price)}`;
-    } else {
-      best.textContent = "Best price unavailable";
-    }
-
-    node.querySelector(".pricesBtn").onclick = () => {
-      // show a lightweight breakdown from backend (if you later add popup, wire here)
-      alert(
-        [
-          f.airlineName || "Flight",
-          f.flightNumber ? `#${f.flightNumber}` : "",
-          f.bestDeal?.portal ? `\nBest via ${f.bestDeal.portal}: ${fmtINR(f.bestDeal.finalPrice)}` : "",
-          typeof f.price === "number" ? `\nBase fare: ${fmtINR(f.price)}` : ""
-        ].join("")
-      );
-    };
-
-    container.appendChild(node);
-  });
 }
+
+// init
+fetchPaymentOptions().catch(console.error);
+btnSearch.onclick = doSearch;
+
+// Prefill today/today+2 in dd/mm/yyyy to avoid empty inputs
+(function presetDates(){
+  const d = new Date();
+  const r = new Date(d.getTime() + 2*86400000);
+  const fmt = (x) => String(x.getDate()).padStart(2,"0") + "/" + String(x.getMonth()+1).padStart(2,"0") + "/" + x.getFullYear();
+  el("#depart").value = fmt(d);
+  el("#ret").value = fmt(r);
+})();
