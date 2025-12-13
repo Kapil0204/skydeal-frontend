@@ -1,106 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
   <title>SkyDeal</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+
+  <header class="header">
     <h1>SkyDeal</h1>
-    <p class="tagline">Real flights + real OTA offers</p>
+    <p>Real flights + real OTA offers</p>
+  </header>
 
-    <div class="search-card">
-      <div class="row">
-        <label>From
-          <input id="from" value="BOM" />
-        </label>
-        <label>To
-          <input id="to" value="DEL" />
-        </label>
-        <label>Depart
-          <input id="depart" type="date" />
-        </label>
-        <label id="returnWrap">Return
-          <input id="ret" type="date" />
-        </label>
-        <label>Passengers
-          <select id="pax">
-            <option>1</option><option>2</option><option>3</option>
-          </select>
-        </label>
-        <label>Cabin
-          <select id="cabin">
-            <option value="economy">Economy</option>
-            <option value="premium_economy">Premium Economy</option>
-            <option value="business">Business</option>
-          </select>
-        </label>
-        <div class="tripwrap">
-          <div>
-            <input type="radio" name="trip" id="one" value="one-way">
-            <label for="one">One-way</label>
-          </div>
-          <div>
-            <input type="radio" name="trip" id="rt" value="round-trip" checked>
-            <label for="rt">Round-trip</label>
-          </div>
-        </div>
-        <div class="pmwrap">
-          <div class="pm-label">Payment methods</div>
-          <button id="btnPayments" class="btn-outline">Selected (<span id="pmCount">0</span>)</button>
-        </div>
-      </div>
-      <button id="btnSearch" class="btn-primary">Search</button>
-    </div>
+  <!-- SEARCH BAR -->
+  <section class="search-box">
+    <input id="from" placeholder="BOM" />
+    <input id="to" placeholder="DEL" />
+    <input id="departDate" type="date" />
+    <input id="returnDate" type="date" />
+    <select id="passengers">
+      <option value="1">1</option>
+    </select>
+    <select id="cabin">
+      <option value="economy">Economy</option>
+    </select>
 
-    <div class="columns">
-      <div class="col">
-        <div class="colhdr">
-          <div>Outbound</div>
-          <div class="pager"><button id="outPrev" class="btn-sm">Prev</button><span id="outPage">Page 1 / 1</span><button id="outNext" class="btn-sm">Next</button></div>
-        </div>
-        <div id="outboundList" class="cards"></div>
-      </div>
-      <div class="col">
-        <div class="colhdr">
-          <div>Return</div>
-          <div class="pager"><button id="retPrev" class="btn-sm">Prev</button><span id="retPage">Page 1 / 1</span><button id="retNext" class="btn-sm">Next</button></div>
-        </div>
-        <div id="returnList" class="cards"></div>
+    <button id="openPaymentModal">Payment methods (0)</button>
+    <button id="searchBtn">Search</button>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results">
+    <div id="outbound"></div>
+    <div id="return"></div>
+  </section>
+
+  <!-- PAYMENT MODAL -->
+  <div id="paymentModal" class="modal hidden">
+    <div class="modal-content">
+
+      <h2>Select Payment Methods</h2>
+
+      <!-- CATEGORY CHIPS -->
+      <div id="payment-category-chips" class="chips"></div>
+
+      <!-- BANK LIST -->
+      <div id="payment-options-list"></div>
+
+      <div class="modal-actions">
+        <button id="clearPayments">Clear</button>
+        <button id="closePaymentModal">Done</button>
       </div>
     </div>
   </div>
-
-  <!-- Prices Modal -->
-  <dialog id="pricesModal">
-    <div class="modal-hdr">
-      <div class="title">Prices & breakdown</div>
-      <button id="closePrices" class="btn-icon">✕</button>
-    </div>
-    <div id="pricesMeta" class="muted"></div>
-    <table class="price-table">
-      <thead><tr><th>Portal</th><th>Final</th><th>Source</th></tr></thead>
-      <tbody id="pricesBody"></tbody>
-    </table>
-    <details class="why"><summary>Why offers applied / skipped</summary><pre id="whyDump">{}</pre></details>
-    <div class="modal-ftr"><button id="closePrices2" class="btn-outline">Close</button></div>
-  </dialog>
-
-  <!-- Payment Methods Modal -->
-  <dialog id="paymentsModal" class="modal">
-    <div class="modal-hdr">
-      <div class="title">Select Payment Methods</div>
-      <button id="pmClose" class="btn-icon">✕</button>
-    </div>
-    <div class="pm-tabs" id="pmTabs"></div>
-    <div id="pmOptions" class="pm-options"></div>
-    <div class="modal-ftr">
-      <button id="pmClear" class="btn-outline">Clear</button>
-      <button id="pmDone" class="btn-primary">Done</button>
-    </div>
-  </dialog>
 
   <script src="script.js"></script>
 </body>
