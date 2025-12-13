@@ -1,152 +1,130 @@
-// script.js — FULL FILE
 const API_BASE = "https://skydeal-backend.onrender.com";
 
-const el = {
-  from: document.getElementById("from"),
-  to: document.getElementById("to"),
-  depart: document.getElementById("depart"),
-  ret: document.getElementById("return"),
-  pax: document.getElementById("passengers"),
-  cabin: document.getElementById("cabin"),
-  oneway: document.getElementById("oneway"),
-  roundtrip: document.getElementById("roundtrip"),
-  btnSearch: document.getElementById("btn-search"),
-  outWrap: document.getElementById("outbound"),
-  retWrap: document.getElementById("return-wrap"),
-  payBtn: document.getElementById("payment-btn"),
-  payBadge: document.getElementById("payment-badge"),
+let paymentOptions = {};
+let selectedCategory = null;
+let selectedBanks = new Set();
 
-  modal: document.getElementById("pay-modal"),
-  modalClose: document.getElementById("pay-close"),
-  chipRow: document.getElementById("pay-chips"),
-  listWrap: document.getElementById("pay-list"),
-  clearBtn: document.getElementById("pay-clear"),
-  doneBtn: document.getElementById("pay-done"),
+/* ------------------------------
+   PAYMENT MODAL HANDLING
+-------------------------------- */
+
+const modal = document.getElementById("paymentModal");
+const openBtn = document.getElementById("openPaymentModal");
+const closeBtn = document.getElementById("closePaymentModal");
+const clearBtn = document.getElementById("clearPayments");
+
+openBtn.onclick = async () => {
+  modal.classList.remove("hidden");
+  await fetchPaymentOptions();
 };
 
-const state = {
-  payOptions: { "Credit Card":[], "Debit Card":[], "Net Banking":[], "UPI":[], "Wallet":[] },
-  paySelected: new Set(),     // banks selected by user
-  payActiveTab: "Credit Card",
+closeBtn.onclick = () => {
+  modal.classList.add("hidden");
 };
 
-function rs(x){ return typeof x==="number" ? x.toLocaleString("en-IN") : x; }
-function inr(n){ return "₹" + rs(n); }
+clearBtn.onclick = () => {
+  selectedBanks.clear();
+  renderBankList();
+};
 
-function show(elm){ elm.classList.remove("hidden"); }
-function hide(elm){ elm.classList.add("hidden"); }
+/* ------------------------------
+   FETCH PAYMENT OPTIONS
+-------------------------------- */
 
 async function fetchPaymentOptions() {
-  const r = await fetch(`${API_BASE}/payment-options`);
-  if (!r.ok) throw new Error("payment-options failed");
-  const j = await r.json();
-  state.payOptions = j.options || state.payOptions;
-  renderPayChips();
-  renderPayList();
+  const res = await fetch(`${API_BASE}/payment-options`);
+  const data = await res.json();
+
+  paymentOptions = data.options || {};
+  renderCategoryChips();
 }
 
-function renderPayChips() {
-  const cats = Object.keys(state.payOptions);
-  el.chipRow.innerHTML = "";
-  cats.forEach(cat=>{
-    const b = document.createElement("button");
-    b.className = "chip" + (state.payActiveTab===cat?" chip--active":"");
-    b.textContent = cat;
-    b.addEventListener("click", ()=>{ state.payActiveTab = cat; renderPayChips(); renderPayList(); });
-    el.chipRow.appendChild(b);
-  });
-}
+/* ------------------------------
+   CATEGORY CHIPS
+-------------------------------- */
 
-function renderPayList() {
-  const banks = state.payOptions[state.payActiveTab] || [];
-  el.listWrap.innerHTML = "";
-  if (!banks.length) {
-    el.listWrap.innerHTML = `<div class="muted">No options</div>`;
-    return;
-  }
-  banks.forEach((name)=>{
-    const id = `pay-${name.replace(/\s+/g,"-")}`;
-    const row = document.createElement("label");
-    row.className = "pay-row";
-    row.innerHTML = `
-      <input type="checkbox" id="${id}" ${state.paySelected.has(name)?"checked":""}/>
-      <span>${name}</span>
-    `;
-    row.querySelector("input").addEventListener("change",(ev)=>{
-      if (ev.target.checked) state.paySelected.add(name);
-      else state.paySelected.delete(name);
-      el.payBadge.textContent = `(${state.paySelected.size})`;
-    });
-    el.listWrap.appendChild(row);
-  });
-}
+function renderCategoryChips() {
+  const chipContainer = document.getElementById("payment-category-chips");
+  if (!chipContainer) return;
 
-function openPayModal(){ show(el.modal); }
-function closePayModal(){ hide(el.modal); }
+  chipContainer.innerHTML = "";
 
-el.payBtn?.addEventListener("click", openPayModal);
-el.modalClose?.addEventListener("click", closePayModal);
-el.clearBtn?.addEventListener("click", ()=>{
-  state.paySelected.clear();
-  el.payBadge.textContent = "(0)";
-  renderPayList();
-});
-el.doneBtn?.addEventListener("click", closePayModal);
+  Object.keys(paymentOptions).forEach(category => {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.innerText = category;
 
-function flightCardHTML(f) {
-  const best = f.bestDeal || { finalPrice: f.price, note: "No eligible offer", portal: "—" };
-  const bestLine = (best.note === "No eligible offer")
-    ? `<div class="muted">Best price on OTA: ${inr(best.finalPrice)}</div>`
-    : `<div class="best">Best: ${inr(best.finalPrice)} on ${best.portal}</div>`;
-
-  return `
-  <div class="card">
-    <div class="title">${f.airlineName || "Flight"} • ${f.id || ""}</div>
-    <div class="meta">${f.depTime || ""} → ${f.arrTime || ""} • ${f.stops || "—"}</div>
-    ${bestLine}
-    <button class="btn-outline sm" data-id="${f.id}">Prices & breakdown</button>
-  </div>`;
-}
-
-function renderResults(outbound, returns){
-  el.outWrap.innerHTML = outbound.length ? outbound.map(flightCardHTML).join("") : `<div class="muted">No flights found for your search.</div>`;
-  el.retWrap.innerHTML = returns.length ? returns.map(flightCardHTML).join("") : `<div class="muted">No flights found for your search.</div>`;
-}
-
-async function doSearch() {
-  try {
-    el.btnSearch.disabled = true;
-
-    const payload = {
-      from: el.from.value.trim(),
-      to: el.to.value.trim(),
-      departureDate: el.depart.value,
-      returnDate: el.ret.value,
-      tripType: el.roundtrip.checked ? "round-trip":"one-way",
-      passengers: Number(el.pax.value||1),
-      travelClass: String(el.cabin.value||"economy").toLowerCase(),
-      paymentMethods: Array.from(state.paySelected)
+    chip.onclick = () => {
+      selectedCategory = category;
+      renderBankList();
     };
 
-    const r = await fetch(`${API_BASE}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!r.ok) throw new Error(`/search ${r.status}`);
-    const j = await r.json();
-    renderResults(j.outboundFlights || [], j.returnFlights || []);
-    console.log("[SkyDeal] /search meta", j.meta);
-  } catch (e) {
-    console.error(e);
-    renderResults([], []);
-  } finally {
-    el.btnSearch.disabled = false;
-  }
+    chipContainer.appendChild(chip);
+  });
 }
 
-el.btnSearch?.addEventListener("click", doSearch);
+/* ------------------------------
+   BANK LIST
+-------------------------------- */
 
-// initial boot
-fetchPaymentOptions().catch(console.error);
+function renderBankList() {
+  const list = document.getElementById("payment-options-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  if (!selectedCategory || !paymentOptions[selectedCategory]) {
+    list.innerHTML = "<p>No options</p>";
+    return;
+  }
+
+  const banks = [...new Set(paymentOptions[selectedCategory])];
+
+  banks.forEach(bank => {
+    const row = document.createElement("div");
+    row.className = "bank-row";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = selectedBanks.has(bank);
+
+    checkbox.onchange = () => {
+      checkbox.checked
+        ? selectedBanks.add(bank)
+        : selectedBanks.delete(bank);
+    };
+
+    const label = document.createElement("span");
+    label.innerText = bank;
+
+    row.appendChild(checkbox);
+    row.appendChild(label);
+    list.appendChild(row);
+  });
+}
+
+/* ------------------------------
+   SEARCH
+-------------------------------- */
+
+document.getElementById("searchBtn").onclick = async () => {
+  const body = {
+    from: document.getElementById("from").value,
+    to: document.getElementById("to").value,
+    departureDate: document.getElementById("departDate").value,
+    returnDate: document.getElementById("returnDate").value,
+    tripType: document.getElementById("returnDate").value ? "round-trip" : "one-way",
+    passengers: 1,
+    travelClass: "economy",
+    paymentMethods: [...selectedBanks]
+  };
+
+  const res = await fetch(`${API_BASE}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  console.log("Search result:", data);
+};
