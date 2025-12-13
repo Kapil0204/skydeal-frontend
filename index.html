@@ -2,57 +2,125 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyDeal</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <header class="header">
-    <h1>SkyDeal</h1>
-    <p>Real flights + real OTA offers</p>
+  <header class="topbar">
+    <div class="brand">SkyDeal</div>
+    <div class="tagline">Real flights + real OTA offers</div>
   </header>
 
-  <!-- SEARCH BAR -->
-  <section class="search-box">
-    <input id="from" placeholder="BOM" />
-    <input id="to" placeholder="DEL" />
-    <input id="departDate" type="date" />
-    <input id="returnDate" type="date" />
-    <select id="passengers">
-      <option value="1">1</option>
-    </select>
-    <select id="cabin">
-      <option value="economy">Economy</option>
-    </select>
+  <main class="container">
+    <!-- Search Card -->
+    <section class="card search-card">
+      <div class="grid grid-6">
+        <div class="field">
+          <label for="from">From</label>
+          <input id="from" placeholder="BOM" />
+        </div>
+        <div class="field">
+          <label for="to">To</label>
+          <input id="to" placeholder="DEL" />
+        </div>
+        <div class="field">
+          <label for="departDate">Depart</label>
+          <input id="departDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="returnDate">Return</label>
+          <input id="returnDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="passengers">Passengers</label>
+          <select id="passengers">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cabin">Cabin</label>
+          <select id="cabin">
+            <option value="economy" selected>Economy</option>
+            <option value="premium_economy">Premium Economy</option>
+            <option value="business">Business</option>
+          </select>
+        </div>
+      </div>
 
-    <button id="openPaymentModal">Payment methods (0)</button>
-    <button id="searchBtn">Search</button>
-  </section>
+      <div class="actions">
+        <button id="openPaymentModal" class="btn ghost">
+          Payment methods <span id="selectedCount">(0)</span>
+        </button>
+        <button id="searchBtn" class="btn primary">Search</button>
+      </div>
+    </section>
 
-  <!-- RESULTS -->
-  <section id="results">
-    <div id="outbound"></div>
-    <div id="return"></div>
-  </section>
+    <!-- Results -->
+    <section class="results">
+      <div class="results-col">
+        <h3>Outbound</h3>
+        <div id="outbound" class="list"></div>
+        <div class="pager">
+          <button id="outPrev" class="btn sm ghost" disabled>Prev</button>
+          <span id="outPage">Page 1 / 1</span>
+          <button id="outNext" class="btn sm ghost" disabled>Next</button>
+        </div>
+      </div>
 
-  <!-- PAYMENT MODAL -->
-  <div id="paymentModal" class="modal hidden">
-    <div class="modal-content">
+      <div class="results-col">
+        <h3>Return</h3>
+        <div id="return" class="list"></div>
+        <div class="pager">
+          <button id="retPrev" class="btn sm ghost" disabled>Prev</button>
+          <span id="retPage">Page 1 / 1</span>
+          <button id="retNext" class="btn sm ghost" disabled>Next</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
-      <h2>Select Payment Methods</h2>
+  <!-- Payment Methods Modal -->
+  <div id="paymentModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2>Select Payment Methods</h2>
+        <button id="closePaymentModal" class="icon-btn" aria-label="Close">✕</button>
+      </div>
 
-      <!-- CATEGORY CHIPS -->
-      <div id="payment-category-chips" class="chips"></div>
+      <!-- 5 main categories -->
+      <div id="payment-category-chips" class="chips">
+        <!-- rendered by JS -->
+      </div>
 
-      <!-- BANK LIST -->
-      <div id="payment-options-list"></div>
+      <!-- banks/options list -->
+      <div id="payment-options-list" class="options-list">
+        <!-- rendered by JS -->
+      </div>
 
-      <div class="modal-actions">
-        <button id="clearPayments">Clear</button>
-        <button id="closePaymentModal">Done</button>
+      <div class="modal-foot">
+        <button id="clearPayments" class="btn ghost">Clear</button>
+        <button id="savePayments" class="btn primary">Done</button>
       </div>
     </div>
+    <div class="modal-backdrop" tabindex="-1"></div>
   </div>
+
+  <template id="flight-card-tpl">
+    <article class="flight-card">
+      <div class="row1">
+        <div class="airline"></div>
+        <div class="meta"></div>
+      </div>
+      <div class="row2">
+        <div class="best"></div>
+        <button class="btn sm ghost pricesBtn">Prices & breakdown</button>
+      </div>
+    </article>
+  </template>
 
   <script src="script.js"></script>
 </body>
