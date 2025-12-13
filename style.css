@@ -1,43 +1,55 @@
 :root{
-  --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#6b7280;
-  --accent:#0f1b2e; --accent-ink:#fff; --hair:#e5e7eb; --pill:#eef2ff;
+  --bg:#f4f6f8; --card:#fff; --text:#0b1220; --muted:#6b7280;
+  --brand:#0b1b34; --accent:#12253f; --primary:#0f1f38; --ring:#dbe2ea;
+  --success:#0f7a2a; --chip:#eef2f7;
 }
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
-.container{max-width:1100px;margin:32px auto;padding:0 16px}
-h1{margin:0 0 4px 0} .tagline{margin:0 0 16px 0;color:var(--muted)}
-.search-card{background:var(--card);border-radius:14px;padding:16px 16px 12px;box-shadow:0 4px 24px rgba(0,0,0,.04)}
-.row{display:grid;grid-template-columns:repeat(10,1fr);gap:12px;align-items:end}
-.row label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
-.row input,.row select{border:1px solid var(--hair);border-radius:10px;padding:10px 12px;background:#fafafa}
-.tripwrap{grid-column:auto / span 2;display:flex;gap:12px;align-items:center;justify-content:center}
-.pmwrap{grid-column:auto / span 2}
-.pm-label{font-size:12px;color:var(--muted);margin-bottom:6px}
-.btn-primary{width:100%;margin-top:12px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer}
-.btn-primary[disabled]{opacity:.6;cursor:wait}
-.btn-outline{border:1px solid var(--hair);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
-.btn-sm{border:1px solid var(--hair);background:#fff;border-radius:999px;padding:4px 10px;cursor:pointer}
-.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
-.colhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.pager{display:flex;gap:8px;align-items:center;color:var(--muted)}
-.cards{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--hair)}
-.card .top{display:flex;justify-content:space-between;align-items:center}
-.airline{font-weight:700}
-.meta{color:var(--muted);font-size:12px}
-.best{margin-top:6px;color:#0a8f2d;font-weight:700}
-.btn-ghost{border:1px solid var(--hair);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
-dialog{border:0;border-radius:14px;max-width:720px;width:720px}
-.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 8px 0}
-.modal-hdr .title{font-weight:700}
-.modal-ftr{display:flex;justify-content:flex-end;gap:8px;padding:8px}
-.btn-icon{border:1px solid var(--hair);background:#fff;border-radius:10px;width:34px;height:34px;cursor:pointer}
-.price-table{width:100%;border-collapse:collapse;margin-top:8px}
-.price-table th,.price-table td{border-top:1px solid var(--hair);padding:10px;text-align:left}
-.muted{color:var(--muted);margin:6px 0 8px}
-.why summary{cursor:pointer;padding:8px 0;color:var(--muted)}
-.pm-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px}
-.pm-tabs .tab{padding:6px 10px;border:1px solid var(--hair);border-radius:999px;background:#fff;cursor:pointer}
-.pm-tabs .tab.active{background:var(--pill)}
-.pm-options{padding:8px 12px 14px;border-top:1px solid var(--hair);max-height:330px;overflow:auto}
-.pm-opt{display:flex;align-items:center;justify-content:space-between;border-bottom:1px dashed var(--hair);padding:10px 2px;font-size:14px}
-.pm-opt input{transform:scale(1.2)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{padding:20px 24px;background:var(--brand);color:#fff}
+.topbar .brand{font-size:28px;font-weight:800}
+.topbar .tagline{opacity:.85;margin-top:4px}
+
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--ring);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.search-card{padding:16px 16px 12px}
+
+.grid{display:grid;gap:12px}
+.grid-6{grid-template-columns:repeat(6,1fr)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--muted)}
+.field input,.field select{height:38px;border:1px solid var(--ring);border-radius:10px;padding:0 10px;background:#fff}
+
+.actions{display:flex;gap:12px;justify-content:flex-end;margin-top:12px}
+.btn{height:40px;border-radius:10px;border:1px solid var(--ring);padding:0 14px;background:#fff;cursor:pointer}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.ghost{background:#fff}
+.btn.sm{height:32px;padding:0 10px;border-radius:8px}
+.icon-btn{border:none;background:#fff;font-size:18px;cursor:pointer}
+
+.results{display:grid;gap:18px;grid-template-columns:1fr 1fr;margin-top:18px}
+.results-col h3{margin:0 0 8px 4px;color:var(--muted);font-weight:600}
+.list{display:flex;flex-direction:column;gap:12px}
+.flight-card{border:1px solid var(--ring);border-radius:12px;padding:12px;background:#fff}
+.flight-card .row1{display:flex;justify-content:space-between;gap:8px}
+.flight-card .airline{font-weight:700}
+.flight-card .meta{color:var(--muted);font-size:12px}
+.flight-card .row2{margin-top:8px;display:flex;justify-content:space-between;align-items:center}
+.flight-card .best{color:var(--success);font-weight:700}
+
+.pager{display:flex;align-items:center;gap:12px;justify-content:flex-end;margin-top:8px;color:var(--muted)}
+
+.modal.hidden{display:none}
+.modal{position:fixed;inset:0;display:grid;place-items:center;z-index:50}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.modal-panel{position:relative;background:#fff;width:min(800px,92vw);border-radius:16px;border:1px solid var(--ring);box-shadow:0 20px 60px rgba(0,0,0,.15);padding:16px 16px 12px;z-index:1}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px}
+.chips .chip{background:var(--chip);border:1px solid var(--ring);padding:8px 12px;border-radius:18px;cursor:pointer}
+.options-list{border-top:1px solid var(--ring);padding-top:8px;max-height:320px;overflow:auto}
+.bank-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px dashed #eef2f7}
+.modal-foot{display:flex;justify-content:space-between;margin-top:10px}
+
+@media (max-width:900px){
+  .grid-6{grid-template-columns:repeat(2,1fr)}
+  .results{grid-template-columns:1fr}
+}
