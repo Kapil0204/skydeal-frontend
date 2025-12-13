@@ -1,102 +1,118 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>SkyDeal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="brand">SkyDeal</div>
-      <div class="tagline">Real flights + real OTA offers</div>
-    </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkyDeal</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">SkyDeal</div>
+    <div class="tagline">Real flights + real OTA offers</div>
+  </header>
 
-    <main class="container">
-      <section class="search-card">
-        <div class="grid grid-7">
-          <div class="field">
-            <label>From</label>
-            <input id="from" value="BOM" />
-          </div>
-          <div class="field">
-            <label>To</label>
-            <input id="to" value="DEL" />
-          </div>
-          <div class="field">
-            <label>Depart</label>
-            <input id="depart" placeholder="dd/mm/yyyy" />
-          </div>
-          <div class="field">
-            <label>Return</label>
-            <input id="ret" placeholder="dd/mm/yyyy" />
-          </div>
-          <div class="field">
-            <label>Passengers</label>
-            <select id="pax">
-              <option>1</option><option>2</option><option>3</option><option>4</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Cabin</label>
-            <select id="cabin">
-              <option value="economy" selected>Economy</option>
-              <option value="premium_economy">Premium Economy</option>
-              <option value="business">Business</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <div class="trip">
-              <label><input type="radio" name="trip" value="one-way" /> One-way</label>
-              <label><input type="radio" name="trip" value="round-trip" checked /> Round-trip</label>
-            </div>
+  <main class="container">
+    <section class="search-card">
+      <div class="grid">
+        <div class="field">
+          <label for="from">From</label>
+          <input id="from" placeholder="BOM" />
+        </div>
+        <div class="field">
+          <label for="to">To</label>
+          <input id="to" placeholder="DEL" />
+        </div>
+        <div class="field">
+          <label for="depart">Depart</label>
+          <input id="depart" type="date" />
+        </div>
+        <div class="field">
+          <label for="return">Return</label>
+          <input id="return" type="date" />
+        </div>
+        <div class="field">
+          <label for="passengers">Passengers</label>
+          <select id="passengers">
+            <option value="1" selected>1</option>
+            <option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cabin">Cabin</label>
+          <select id="cabin">
+            <option value="economy" selected>Economy</option>
+            <option value="premium_economy">Premium Economy</option>
+            <option value="business">Business</option>
+          </select>
+        </div>
+        <div class="field trip">
+          <label> </label>
+          <div class="trip-wrap">
+            <label><input type="radio" name="trip" id="tripOne" value="one-way" /> One-way</label>
+            <label><input type="radio" name="trip" id="tripRound" value="round-trip" checked /> Round-trip</label>
           </div>
         </div>
-
-        <div class="actions">
-          <button id="pmBtn" class="btn secondary">Payment methods <span id="pmCount">(0)</span></button>
-          <button id="searchBtn" class="btn primary">Search</button>
-        </div>
-      </section>
-
-      <section class="results grid grid-2">
-        <div>
-          <h3>Outbound</h3>
-          <div id="outbound" class="list"></div>
-          <div class="pager"><span>Page 1 / 1</span></div>
-        </div>
-        <div>
-          <h3>Return</h3>
-          <div id="return" class="list"></div>
-          <div class="pager"><span>Page 1 / 1</span></div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Payment modal -->
-    <div id="paymentModal" class="modal" aria-hidden="true">
-      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
-        <div class="dialog-head">
-          <h4 id="pmTitle">Select Payment Methods</h4>
-          <button id="pmClose" class="icon">&times;</button>
-        </div>
-
-        <div class="tabs" id="pmTabs">
-          <!-- chips injected -->
-        </div>
-        <div class="banks" id="pmBanks">
-          <!-- banks injected -->
-        </div>
-
-        <div class="dialog-foot">
-          <button id="pmClear" class="btn secondary">Clear</button>
-          <button id="pmDone" class="btn primary">Done</button>
+        <div class="field">
+          <label>Payment methods</label>
+          <button id="openPaymentModal" class="btn-secondary">Payment methods (<span id="selectedCount">0</span>)</button>
         </div>
       </div>
-    </div>
+      <button id="searchBtn" class="btn-primary wide">Search</button>
+    </section>
 
-    <script src="./script.js"></script>
-  </body>
+    <section class="results">
+      <div class="col">
+        <h3>Outbound</h3>
+        <div id="outboundWrap" class="cards"></div>
+        <div class="pager">
+          <button class="btn-secondary" disabled>Prev</button>
+          <span>Page 1 / 1</span>
+          <button class="btn-secondary" disabled>Next</button>
+        </div>
+      </div>
+      <div class="col">
+        <h3>Return</h3>
+        <div id="returnWrap" class="cards"></div>
+        <div class="pager">
+          <button class="btn-secondary" disabled>Prev</button>
+          <span>Page 1 / 1</span>
+          <button class="btn-secondary" disabled>Next</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Select Payment Methods</h3>
+        <button id="closePayment" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+
+      <div id="paymentTabs" class="tabs">
+        <button data-type="Credit Card" class="tab active">Credit Card</button>
+        <button data-type="Debit Card" class="tab">Debit Card</button>
+        <button data-type="Net Banking" class="tab">Net Banking</button>
+        <button data-type="UPI" class="tab">UPI</button>
+        <button data-type="Wallet" class="tab">Wallet</button>
+      </div>
+
+      <div class="modal-body">
+        <ul id="paymentList" class="bank-list"></ul>
+        <div id="noOptions" class="muted">No options</div>
+      </div>
+
+      <div class="modal-foot">
+        <button id="payClear" class="btn-secondary">Clear</button>
+        <button id="payDone" class="btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
 </html>
