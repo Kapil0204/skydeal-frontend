@@ -1,5 +1,5 @@
 // ===============================
-// SkyDeal - FRONTEND SCRIPT (resilient bindings)
+// SkyDeal - FRONTEND SCRIPT (resilient bindings + delegation)
 // ===============================
 const API_BASE = "https://skydeal-backend.onrender.com";
 
@@ -18,7 +18,7 @@ function getEl(ids=[], sels=[]) {
 // derive tripType robustly
 function getTripType() {
   const checked = $('input[name="tripType"]:checked');
-  if (checked && checked.value) return checked.value; // 'one-way' or 'round-trip'
+  if (checked?.value) return checked.value;           // 'one-way' or 'round-trip'
   const one   = getEl(['oneWayRadio'],  ['#oneWayRadio']);
   const round = getEl(['roundTripRadio'], ['#roundTripRadio']);
   if (round?.checked) return 'round-trip';
@@ -26,7 +26,7 @@ function getTripType() {
   return 'round-trip';
 }
 
-// ---------- bind UI (very permissive) ----------
+// ---------- bind inputs (never break) ----------
 const fromInput        = getEl(['fromInput'],   ['#from','input[name="from"]']);
 const toInput          = getEl(['toInput'],     ['#to','input[name="to"]']);
 const departInput      = getEl(['departInput'], ['#depart','input[name="depart"]','input[type="date"]']);
@@ -34,16 +34,8 @@ const returnInput      = getEl(['returnInput'], ['#return','input[name="return"]
 const passengersSelect = getEl(['passengersSelect'], ['#passengers','select[name="passengers"]']);
 const cabinSelect      = getEl(['cabinSelect'], ['#cabin','select[name="cabin"]']);
 
-// 1) prefer an explicit id
-let searchBtn = getEl(['searchBtn'], ['#searchBtn','button#search','button[data-role="search"]']);
-// 2) otherwise, grab a button whose text is “Search”
-if (!searchBtn) {
-  searchBtn = $$('button').find(b => (b.textContent||'').trim().toLowerCase() === 'search');
-}
-// 3) fall back to the first submit button if present
-if (!searchBtn) searchBtn = $('button[type="submit"]');
-
-const searchForm = getEl(['searchForm'], ['form#searchForm','form']);
+const outboundMount = getEl(['outboundResults'], ['#outboundResults','.outbound-results']);
+const returnMount   = getEl(['returnResults'],   ['#returnResults','.return-results']);
 
 function renderFlights(list, mount) {
   if (!mount) return;
@@ -68,9 +60,6 @@ function renderFlights(list, mount) {
     mount.appendChild(card);
   }
 }
-
-const outboundMount = getEl(['outboundResults'], ['#outboundResults','.outbound-results']);
-const returnMount   = getEl(['returnResults'],   ['#returnResults','.return-results']);
 
 async function doSearch(ev) {
   if (ev?.preventDefault) ev.preventDefault();
@@ -108,9 +97,27 @@ async function doSearch(ev) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // bind once we’re sure DOM is ready
-  if (searchForm)  searchForm.addEventListener('submit', doSearch);
-  if (searchBtn)   searchBtn.addEventListener('click', doSearch);
+// ---- initial bind (for existing button) ----
+function wireInitial() {
+  let searchBtn = getEl(['searchBtn'], ['#searchBtn','button#search','button[data-role="search"]']);
+  if (!searchBtn) {
+    searchBtn = $$('button').find(b => (b.textContent||'').trim().toLowerCase() === 'search');
+  }
+  const searchForm = getEl(['searchForm'], ['form#searchForm','form']);
+  if (searchForm) searchForm.addEventListener('submit', doSearch);
+  if (searchBtn)  searchBtn.addEventListener('click', doSearch);
   console.log('[SkyDeal] frontend ready; wired searchBtn =', !!searchBtn, 'wired form =', !!searchForm);
+}
+
+// ---- delegation (keeps working even if DOM re-renders) ----
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const label = (btn.textContent||'').trim().toLowerCase();
+  if (label === 'search') {
+    e.preventDefault();
+    doSearch(e);
+  }
 });
+
+document.addEventListener('DOMContentLoaded', wireInitial);
