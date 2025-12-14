@@ -1,11 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SkyDeal</title>
-  <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header class="topbar">
@@ -14,72 +17,74 @@
   </header>
 
   <main class="container">
-    <section class="search-card">
-      <div class="grid">
-        <div class="field">
-          <label for="from">From</label>
-          <input id="from" placeholder="BOM" />
+    <section class="card">
+      <div class="grid form-grid">
+        <div>
+          <label>From</label>
+          <input id="from" value="BOM" />
         </div>
-        <div class="field">
-          <label for="to">To</label>
-          <input id="to" placeholder="DEL" />
+        <div>
+          <label>To</label>
+          <input id="to" value="DEL" />
         </div>
-        <div class="field">
-          <label for="depart">Depart</label>
+        <div>
+          <label>Depart</label>
           <input id="depart" type="date" />
         </div>
-        <div class="field">
-          <label for="return">Return</label>
+        <div>
+          <label>Return</label>
           <input id="return" type="date" />
         </div>
-        <div class="field">
-          <label for="passengers">Passengers</label>
-          <select id="passengers">
+        <div>
+          <label>Passengers</label>
+          <select id="pax">
             <option value="1" selected>1</option>
             <option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option>
           </select>
         </div>
-        <div class="field">
-          <label for="cabin">Cabin</label>
+        <div>
+          <label>Cabin</label>
           <select id="cabin">
             <option value="economy" selected>Economy</option>
             <option value="premium_economy">Premium Economy</option>
             <option value="business">Business</option>
           </select>
         </div>
-        <div class="field trip">
+        <div class="trip-type">
           <label> </label>
-          <div class="trip-wrap">
-            <label><input type="radio" name="trip" id="tripOne" value="one-way" /> One-way</label>
-            <label><input type="radio" name="trip" id="tripRound" value="round-trip" checked /> Round-trip</label>
+          <div class="trip-row">
+            <label><input type="radio" name="trip" value="one-way" /> One-way</label>
+            <label><input type="radio" name="trip" value="round-trip" checked /> Round-trip</label>
           </div>
         </div>
-        <div class="field">
+        <div class="pmethods-cell">
           <label>Payment methods</label>
-          <button id="openPaymentModal" class="btn-secondary">Payment methods (<span id="selectedCount">0</span>)</button>
+          <button id="btnPayment" class="btn-outline">
+            <span id="pmCount">Selected (0)</span>
+          </button>
         </div>
       </div>
-      <button id="searchBtn" class="btn-primary wide">Search</button>
+
+      <button id="btnSearch" class="btn-primary full">Search</button>
     </section>
 
-    <section class="results">
-      <div class="col">
+    <section class="results-grid">
+      <div>
         <h3>Outbound</h3>
-        <div id="outboundWrap" class="cards"></div>
+        <div id="outList" class="list"></div>
         <div class="pager">
-          <button class="btn-secondary" disabled>Prev</button>
-          <span>Page 1 / 1</span>
-          <button class="btn-secondary" disabled>Next</button>
+          <button id="prevOut" class="btn-small">Prev</button>
+          <span id="pageOut">Page 1 / 1</span>
+          <button id="nextOut" class="btn-small">Next</button>
         </div>
       </div>
-      <div class="col">
+      <div>
         <h3>Return</h3>
-        <div id="returnWrap" class="cards"></div>
+        <div id="retList" class="list"></div>
         <div class="pager">
-          <button class="btn-secondary" disabled>Prev</button>
-          <span>Page 1 / 1</span>
-          <button class="btn-secondary" disabled>Next</button>
+          <button id="prevRet" class="btn-small">Prev</button>
+          <span id="pageRet">Page 1 / 1</span>
+          <button id="nextRet" class="btn-small">Next</button>
         </div>
       </div>
     </section>
@@ -87,32 +92,25 @@
 
   <!-- Payment Modal -->
   <div id="paymentModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
-        <h3>Select Payment Methods</h3>
-        <button id="closePayment" class="icon-btn" aria-label="Close">✕</button>
+        <h3 id="modalTitle">Select Payment Methods</h3>
+        <button id="modalClose" class="x">×</button>
       </div>
 
-      <div id="paymentTabs" class="tabs">
-        <button data-type="Credit Card" class="tab active">Credit Card</button>
-        <button data-type="Debit Card" class="tab">Debit Card</button>
-        <button data-type="Net Banking" class="tab">Net Banking</button>
-        <button data-type="UPI" class="tab">UPI</button>
-        <button data-type="Wallet" class="tab">Wallet</button>
+      <div class="pill-row" id="pillRow">
+        <!-- category pills inserted here -->
       </div>
 
-      <div class="modal-body">
-        <ul id="paymentList" class="bank-list"></ul>
-        <div id="noOptions" class="muted">No options</div>
-      </div>
+      <div id="bankList" class="banks"></div>
 
       <div class="modal-foot">
-        <button id="payClear" class="btn-secondary">Clear</button>
-        <button id="payDone" class="btn-primary">Done</button>
+        <button id="clearSel" class="btn-outline">Clear</button>
+        <button id="applySel" class="btn-primary">Done</button>
       </div>
     </div>
   </div>
 
-  <script src="./script.js"></script>
+  <script src="./script.js" defer></script>
 </body>
 </html>
