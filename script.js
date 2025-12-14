@@ -1,12 +1,12 @@
 /* =========================
    SkyDeal Frontend – script.js
-   (Safe full file: search fixed; payment modal untouched)
+   (Search fixed; payment modal opener fallback only)
    ========================= */
 
 /** ====== CONFIG ====== **/
 const BACKEND = 'https://skydeal-backend.onrender.com';
 
-/** ====== DOM HOOKS (IDs must exist in HTML) ====== **/
+/** ====== DOM HOOKS ====== **/
 const fromInput         = document.getElementById('from');
 const toInput           = document.getElementById('to');
 const departInput       = document.getElementById('departDate');
@@ -20,22 +20,21 @@ const searchBtn         = document.getElementById('searchBtn');
 const outboundWrap      = document.getElementById('outboundResults');
 const returnWrap        = document.getElementById('returnResults');
 
-const paymentBtn        = document.getElementById('paymentBtn');      // your existing button
-const paymentBadge      = document.getElementById('paymentBadge');    // optional tiny (n) inside button
+const paymentBtn        = document.getElementById('paymentBtn');      // your button
+const paymentBadge      = document.getElementById('paymentBadge');    // optional tiny (n)
+const paymentModal      = document.getElementById('paymentModal');    // your existing modal root (if present)
 
 /** ====== UTIL ====== **/
 function toISO(d) {
   if (!d) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; // already yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; // yyyy-mm-dd already
   const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); // dd/mm/yyyy
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   const dt = new Date(d);
   return isNaN(dt) ? '' : dt.toISOString().slice(0, 10);
 }
 
-function fmt(s, def = '—') {
-  return s ?? def;
-}
+function fmt(s, def = '—') { return s ?? def; }
 
 function clearResults() {
   if (outboundWrap) outboundWrap.innerHTML = `<div class="empty">No flights found for your search.</div>`;
@@ -73,15 +72,15 @@ function renderList(targetEl, flights = []) {
   targetEl.innerHTML = flights.map(flightCard).join('');
 }
 
-/** ====== PAYMENT (SAFE WARM ONLY; MODAL UNTOUCHED) ====== **/
+/** ====== PAYMENT (warm only + SAFE open/close fallback) ====== **/
 async function warmPaymentOptions() {
   try {
     const res = await fetch(`${BACKEND}/payment-options`);
     const data = await res.json();
-    window.__paymentOptions = data; // cache for whoever needs it
+    window.__paymentOptions = data; // cache
     console.log('[SkyDeal] /payment-options', { usedFallback: data.usedFallback, options: data.options });
 
-    // update tiny badge if present (does NOT change your modal code)
+    // tiny badge update if present
     if (paymentBadge && data && data.options) {
       const groups = data.options;
       const nonEmptyGroups = Object.values(groups).filter(v => Array.isArray(v) ? v.length : !!v);
@@ -90,6 +89,19 @@ async function warmPaymentOptions() {
   } catch (e) {
     console.log('[SkyDeal] payment warm failed:', e.message);
   }
+}
+
+// Fallback open/close only if your global modal functions don’t exist.
+// This does NOT change your modal’s internal logic/content.
+function openPaymentModalFallback() {
+  if (!paymentModal) return;
+  paymentModal.setAttribute('aria-hidden', 'false');
+  paymentModal.style.display = 'grid';
+}
+function closePaymentModalFallback() {
+  if (!paymentModal) return;
+  paymentModal.setAttribute('aria-hidden', 'true');
+  paymentModal.style.display = 'none';
 }
 
 /** ====== SEARCH ====== **/
@@ -106,7 +118,6 @@ async function handleSearch(ev) {
     travelClass: (cabinSelect?.value || 'economy').toLowerCase()
   };
 
-  // basic validation
   if (!payload.from || !payload.to || !payload.departureDate) {
     alert('Please enter From, To and a valid Depart date.');
     return;
@@ -129,10 +140,8 @@ async function handleSearch(ev) {
 
     console.log('[SkyDeal] /search meta', json?.meta);
 
-    // Draw results
     renderList(outboundWrap, json?.outboundFlights || []);
     renderList(returnWrap,   json?.returnFlights   || []);
-
   } catch (e) {
     console.error('[SkyDeal] search failed:', e);
     clearResults();
@@ -142,11 +151,9 @@ async function handleSearch(ev) {
 /** ====== WIRING ====== **/
 function wireBindings() {
   // search button
-  if (searchBtn) {
-    searchBtn.addEventListener('click', handleSearch);
-  }
+  if (searchBtn) searchBtn.addEventListener('click', handleSearch);
 
-  // allow Enter key on key fields
+  // Enter key triggers search
   [fromInput, toInput, departInput, returnInput].forEach(el => {
     if (!el) return;
     el.addEventListener('keydown', (e) => {
@@ -166,25 +173,40 @@ function wireBindings() {
     toggleReturn();
   }
 
+  // Payment button: prefer your own global opener if it exists; otherwise fallback
+  if (paymentBtn) {
+    paymentBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (typeof window.openPaymentModal === 'function') {
+        window.openPaymentModal();               // your original code (if present)
+      } else {
+        openPaymentModalFallback();              // safe fallback
+      }
+    });
+  }
+
+  // Provide a generic close fallback for any element with [data-close="payment"]
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest('[data-close="payment"]')) {
+      e.preventDefault();
+      if (typeof window.closePaymentModal === 'function') {
+        window.closePaymentModal();
+      } else {
+        closePaymentModalFallback();
+      }
+    }
+  });
+
   console.log('[SkyDeal] frontend ready (bindings set)');
 }
 
 /** ====== STARTUP ====== **/
 document.addEventListener('DOMContentLoaded', () => {
-  // Use ISO defaults so the browser is happy and backend receives good dates
+  // Use ISO defaults (backend expects yyyy-mm-dd)
   if (departInput && !departInput.value) departInput.value = '2025-12-17';
   if (returnInput && !returnInput.value) returnInput.value = '2025-12-27';
 
   wireBindings();
-
-  // Warm payment count badge ONLY (does not modify your modal logic)
-  warmPaymentOptions();
+  warmPaymentOptions(); // only warms & updates badge; modal logic untouched
 });
-
-/* ====== NOTE ======
- * Your existing payment selection modal code (open/close, checkboxes, DONE/CLEAR)
- * stays exactly as you have it. This file does NOT define or override it.
- * If your HTML uses different element IDs, either:
- *  - adjust the const selectors at the top, or
- *  - add matching IDs in your markup.
- * =================== */
