@@ -28,10 +28,15 @@ const outboundMount = $('#outboundResults') || $('.outbound-results') || $('#out
 const returnMount   = $('#returnResults')   || $('.return-results')   || $('#return');
 
 function getTripType() {
-  const r = $('input[name="tripType"]:checked');
-  if (r?.value) return r.value;
-  return ($('#roundTrip')?.checked ? 'round-trip' : ($('#oneWay')?.checked ? 'one-way' : 'round-trip'));
+  // Map any accidental values to the canonical ones the backend expects
+  const v = $('input[name="tripType"]:checked')?.value || '';
+  if (v === 'one' || v === 'oneway' || v === 'one-way') return 'one-way';
+  if (v === 'round' || v === 'roundtrip' || v === 'round-trip') return 'round-trip';
+  // Fallback: prefer round-trip if the Round-trip radio is checked
+  if ($('#roundTrip')?.checked) return 'round-trip';
+  return 'one-way';
 }
+
 
 // ======================
 // Payment options / UI
@@ -200,16 +205,19 @@ function renderFlights(list, mount) {
 async function doSearch(ev) {
   if (ev?.preventDefault) ev.preventDefault();
 
-  const payload = {
-    from: txt(fromInput?.value),
-    to: txt(toInput?.value),
-    departureDate: toISO(txt(departInput?.value)),
-    returnDate: toISO(txt(returnInput?.value)),
-    tripType: getTripType(),
-    passengers: Number(txt(passengersSelect?.value) || 1),
-    travelClass: (txt(cabinSelect?.value) || 'economy'),
-    paymentFilters
-  };
+  const depISO = toISO(txt(departInput?.value));
+const retISO = toISO(txt(returnInput?.value));
+
+const payload = {
+  from: txt(fromInput?.value || 'BOM'),
+  to: txt(toInput?.value || 'DEL'),
+  departureDate: depISO || '2025-12-17',
+  returnDate:    retISO || '2025-12-27',
+  tripType: getTripType(),
+  passengers: Number(txt(passengersSelect?.value) || 1),
+  travelClass: (txt(cabinSelect?.value) || 'economy'),
+  paymentFilters
+};
   console.log('[SkyDeal] FIRE /search payload →', payload);
 
   if (outboundMount) outboundMount.innerHTML = 'Loading flights...';
