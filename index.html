@@ -43,6 +43,7 @@
             <option value="economy">Economy</option>
             <option value="premium_economy">Premium Economy</option>
             <option value="business">Business</option>
+            <option value="first">First</option>
           </select>
         </label>
 
@@ -63,21 +64,11 @@
       <div class="col">
         <h3>Outbound</h3>
         <div id="outboundList" class="cards empty">No flights found for your search.</div>
-        <div class="pager">
-          <button id="outPrev" class="btn-sm" disabled>Prev</button>
-          <span>Page <span id="outPage">1</span> / 1</span>
-          <button id="outNext" class="btn-sm" disabled>Next</button>
-        </div>
       </div>
 
       <div class="col">
         <h3>Return</h3>
         <div id="returnList" class="cards empty">No flights found for your search.</div>
-        <div class="pager">
-          <button id="retPrev" class="btn-sm" disabled>Prev</button>
-          <span>Page <span id="retPage">1</span> / 1</span>
-          <button id="retNext" class="btn-sm" disabled>Next</button>
-        </div>
       </div>
     </section>
   </main>
@@ -90,13 +81,7 @@
         <button id="pmClose" class="x">&times;</button>
       </div>
 
-      <div class="pm-tabs">
-        <button data-tab="Credit Card" class="tab active">Credit Card</button>
-        <button data-tab="Debit Card"  class="tab">Debit Card</button>
-        <button data-tab="Net Banking" class="tab">Net Banking</button>
-        <button data-tab="UPI"         class="tab">UPI</button>
-        <button data-tab="Wallet"      class="tab">Wallet</button>
-      </div>
+      <div class="pm-tabs" id="pmTabs"></div>
 
       <div class="pm-body">
         <div id="pmList" class="pm-list"></div>
@@ -105,6 +90,22 @@
       <div class="pm-actions">
         <button id="pmClear" class="btn-ghost">Clear</button>
         <button id="pmDone" class="btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portal Prices Modal -->
+  <div id="priceModal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="priceTitle">
+      <div class="modal-head">
+        <h2 id="priceTitle">Price comparison</h2>
+        <button id="priceClose" class="x">&times;</button>
+      </div>
+
+      <div id="priceBody" class="price-body"></div>
+
+      <div class="pm-actions">
+        <button id="priceDone" class="btn-primary">Done</button>
       </div>
     </div>
   </div>
