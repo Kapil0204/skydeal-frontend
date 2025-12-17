@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="nav">
-    <div class="brand">SkyDeal</div>
+    <div class="brand">SkyDeal: Find the Best Flight Offers</div>
     <div class="sub">Real flights + real OTA offers</div>
   </header>
 
@@ -41,9 +41,8 @@
         <label>Cabin
           <select id="cabinSelect">
             <option value="economy">Economy</option>
-            <option value="premium_economy">Premium Economy</option>
+            <option value="premium economy">Premium Economy</option>
             <option value="business">Business</option>
-            <option value="first">First</option>
           </select>
         </label>
 
@@ -53,7 +52,9 @@
         </div>
 
         <div class="pm-holder">
-          <button id="paymentBtn" class="btn-ghost">Payment methods (<span id="pmCount">0</span>)</button>
+          <button id="paymentBtn" class="btn-ghost">
+            Select Payment Methods (<span id="pmCount">0</span>)
+          </button>
         </div>
       </div>
 
@@ -62,13 +63,45 @@
 
     <section class="results">
       <div class="col">
-        <h3>Outbound</h3>
+        <div class="col-head">
+          <h3>Outbound Flights</h3>
+          <div class="sort">
+            <label>Sort by</label>
+            <select id="outSort" disabled>
+              <option value="priceAsc">Cost (Low → High)</option>
+              <option value="depAsc">Departure (Early → Late)</option>
+            </select>
+          </div>
+        </div>
+
         <div id="outboundList" class="cards empty">No flights found for your search.</div>
+
+        <div class="pager">
+          <button id="outPrev" class="btn-sm" disabled>Prev</button>
+          <span>Page <span id="outPage">1</span> / <span id="outPages">1</span></span>
+          <button id="outNext" class="btn-sm" disabled>Next</button>
+        </div>
       </div>
 
       <div class="col">
-        <h3>Return</h3>
+        <div class="col-head">
+          <h3>Return Flights</h3>
+          <div class="sort">
+            <label>Sort by</label>
+            <select id="retSort" disabled>
+              <option value="priceAsc">Cost (Low → High)</option>
+              <option value="depAsc">Departure (Early → Late)</option>
+            </select>
+          </div>
+        </div>
+
         <div id="returnList" class="cards empty">No flights found for your search.</div>
+
+        <div class="pager">
+          <button id="retPrev" class="btn-sm" disabled>Prev</button>
+          <span>Page <span id="retPage">1</span> / <span id="retPages">1</span></span>
+          <button id="retNext" class="btn-sm" disabled>Next</button>
+        </div>
       </div>
     </section>
   </main>
@@ -78,7 +111,7 @@
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
       <div class="modal-head">
         <h2 id="pmTitle">Select Payment Methods</h2>
-        <button id="pmClose" class="x">&times;</button>
+        <button id="pmClose" class="x" aria-label="Close">&times;</button>
       </div>
 
       <div class="pm-tabs" id="pmTabs"></div>
@@ -94,19 +127,14 @@
     </div>
   </div>
 
-  <!-- Portal Prices Modal -->
+  <!-- Price Comparison Modal -->
   <div id="priceModal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="priceTitle">
+    <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="priceTitle">
       <div class="modal-head">
-        <h2 id="priceTitle">Price comparison</h2>
-        <button id="priceClose" class="x">&times;</button>
+        <h2 id="priceTitle">Portal Price Comparison</h2>
+        <button id="priceClose" class="x" aria-label="Close">&times;</button>
       </div>
-
       <div id="priceBody" class="price-body"></div>
-
-      <div class="pm-actions">
-        <button id="priceDone" class="btn-primary">Done</button>
-      </div>
     </div>
   </div>
 
