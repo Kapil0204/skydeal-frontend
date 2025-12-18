@@ -91,6 +91,83 @@ function updatePaymentButtonLabel() {
   if (paymentBtn) paymentBtn.textContent = `Payment methods (${n})`;
 }
 
+/* =========================
+   NEW: Offer line formatter + T&C modal
+   (Only used inside comparison popup)
+   ========================= */
+function formatOfferLine(p) {
+  if (!p?.applied) return `<span style="opacity:.65;font-size:13px;">No offer available</span>`;
+
+  const parts = [];
+  if (p.rawDiscount) parts.push(safeText(p.rawDiscount));
+  if (p.code) parts.push(`Code: <b>${safeText(p.code)}</b>`);
+
+  const summary = parts.length ? parts.join(" • ") : "Offer available";
+
+  const tncBtn = p.terms
+    ? ` <button class="tncBtn" data-portal="${safeText(p.portal)}" data-terms="${encodeURIComponent(
+        String(p.terms || "")
+      )}">T&amp;C</button>`
+    : "";
+
+  return `<span style="opacity:.85;font-size:13px;">Offer: ${summary}</span>${tncBtn}`;
+}
+
+function openTncModal(title, terms) {
+  let modal = document.getElementById("tncModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "tncModal";
+    modal.className = "modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.style.position = "fixed";
+    modal.style.inset = "0";
+    modal.style.background = "rgba(0,0,0,.55)";
+    modal.style.display = "none";
+    modal.style.zIndex = "10000";
+    modal.innerHTML = `
+      <div style="max-width:900px;margin:7vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div id="tncTitle" style="font-size:16px;font-weight:700;"></div>
+          <button id="tncClose" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+        </div>
+        <div id="tncBody" style="margin-top:12px;white-space:pre-wrap;line-height:1.45;max-height:65vh;overflow:auto;opacity:.92;"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", (ev) => {
+      if (ev.target === modal) closeTncModal();
+    });
+    modal.querySelector("#tncClose").addEventListener("click", closeTncModal);
+  }
+
+  modal.querySelector("#tncTitle").textContent = `${title} — Terms & Conditions`;
+  modal.querySelector("#tncBody").textContent = terms || "No terms available.";
+
+  modal.style.display = "block";
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeTncModal() {
+  const modal = document.getElementById("tncModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.display = "none";
+}
+
+// One global delegated click handler for all T&C buttons
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".tncBtn");
+  if (!btn) return;
+
+  const terms = decodeURIComponent(btn.getAttribute("data-terms") || "");
+  const portal = btn.getAttribute("data-portal") || "Offer";
+  openTncModal(portal, terms);
+});
+
 // ---------- Payment Modal ----------
 function openPaymentModal() {
   if (!paymentModal) return;
@@ -276,9 +353,7 @@ function showPortalCompare(flight) {
               <div style="font-weight:600;">${safeText(p.portal)}</div>
               <div style="font-weight:700;">${money(p.finalPrice)}</div>
             </div>`;
-            const line2 = p.applied
-              ? `<div style="opacity:.85;font-size:13px;">Applied: ${safeText(p.rawDiscount, "Offer")} • Code: ${safeText(p.code, "—")}</div>`
-              : `<div style="opacity:.65;font-size:13px;">No applicable offer</div>`;
+            const line2 = `<div>${formatOfferLine(p)}</div>`;
             return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
           })
           .join("")}
