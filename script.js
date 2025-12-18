@@ -300,7 +300,10 @@ function flightCard(f) {
   const bestLine = best
     ? `<div class="best">
          Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
-         <span style="opacity:.85;">(${best.applied ? "offer applied" : "no offer"})</span>
+         <span style="opacity:.85;">(${
+  best.applied ? (best.paymentLabel || "offer applied") : "no offer"
+})</span>
+
          ${best.code ? `• Code: <b>${safeText(best.code)}</b>` : ""}
        </div>`
     : `<div class="best">Best: —</div>`;
