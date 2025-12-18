@@ -96,22 +96,39 @@ function updatePaymentButtonLabel() {
    (Only used inside comparison popup)
    ========================= */
 function formatOfferLine(p) {
-  if (!p?.applied) return `<span style="opacity:.65;font-size:13px;">No offer available</span>`;
+  if (!p.applied) {
+    return `<div style="opacity:.65;font-size:13px;">No offer available</div>`;
+  }
 
-  const parts = [];
-  if (p.rawDiscount) parts.push(safeText(p.rawDiscount));
-  if (p.code) parts.push(`Code: <b>${safeText(p.code)}</b>`);
+  const offerText = safeText(p.rawDiscount, "Offer available");
+  const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
 
-  const summary = parts.length ? parts.join(" • ") : "Offer available";
+  const hasTerms = p.terms && String(p.terms).trim().length > 0;
 
-  const tncBtn = p.terms
-    ? ` <button class="tncBtn" data-portal="${safeText(p.portal)}" data-terms="${encodeURIComponent(
-        String(p.terms || "")
-      )}">T&amp;C</button>`
+  const tncBtn = hasTerms
+    ? ` • <button 
+          class="tncBtn"
+          data-portal="${safeText(p.portal)}"
+          data-terms="${encodeURIComponent(String(p.terms))}"
+          style="
+            background:transparent;
+            border:1px solid rgba(255,255,255,.25);
+            color:#e5e7eb;
+            border-radius:10px;
+            padding:2px 8px;
+            font-size:12px;
+            cursor:pointer;
+          "
+        >T&C</button>`
     : "";
 
-  return `<span style="opacity:.85;font-size:13px;">Offer: ${summary}</span>${tncBtn}`;
+  return `
+    <div style="opacity:.85;font-size:13px;">
+      Offer: ${offerText}${codeText}${tncBtn}
+    </div>
+  `;
 }
+
 
 function openTncModal(title, terms) {
   let modal = document.getElementById("tncModal");
@@ -360,6 +377,14 @@ function showPortalCompare(flight) {
       </div>
     `;
   }
+// Wire T&C buttons
+body.querySelectorAll(".tncBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const portal = btn.getAttribute("data-portal") || "Portal";
+    const terms = decodeURIComponent(btn.getAttribute("data-terms") || "");
+    alert(`${portal} — Terms & Conditions\n\n${terms}`);
+  });
+});
 
   modal.style.display = "block";
 }
