@@ -77,6 +77,19 @@ function fmtTime(t) {
   if (s.includes("T")) return s.split("T")[1]?.slice(0, 5) || s;
   return s;
 }
+function displayFlightNumber(f) {
+  // Prefer already-formatted flight code if backend sends it
+  const fc = (f?.flightCode || f?.flightIata || "").toString().trim();
+  if (fc) return fc;
+
+  // Otherwise build from carrier code + numeric flight number
+  const carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
+  const num = (f?.flightNumber || "").toString().trim();
+
+  if (carrier && num) return `${carrier} ${num}`;
+  return num || "—";
+}
+
 
 function money(n) {
   if (typeof n === "number" && !isNaN(n)) return `₹${Math.round(n)}`;
@@ -361,7 +374,7 @@ function showPortalCompare(flight) {
   } else {
     body.innerHTML = `
       <div style="opacity:.85;margin-bottom:10px;">
-        ${safeText(flight.airlineName)} (${safeText(flight.flightNumber)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
+        ${safeText(flight.airlineName)} (${displayFlightNumber(flight)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${portalPrices
@@ -391,7 +404,7 @@ body.querySelectorAll(".tncBtn").forEach((btn) => {
 
 function flightCard(f) {
   const name = safeText(f.airlineName);
-  const num = safeText(f.flightNumber);
+  const num = displayFlightNumber(f);
   const dep = fmtTime(f.departureTime);
   const arr = fmtTime(f.arrivalTime);
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
