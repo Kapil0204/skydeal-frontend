@@ -443,7 +443,10 @@ function flightCard(f) {
   return `
     <div class="card">
       <div class="row">
-        <div class="air">${name} <span style="opacity:.75;">(${num})</span></div>
+        <div class="air">
+  <div>${name}</div>
+  <div style="font-size:12px; opacity:0.8; margin-top:2px;">${num}</div>
+</div>
         <div class="times">${dep} → ${arr}</div>
         <div class="stops">${stops} stop(s)</div>
         <div class="price">${money(best?.finalPrice ?? f.price)}</div>
