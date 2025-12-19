@@ -82,13 +82,32 @@ function displayFlightNumber(f) {
   const fc = (f?.flightCode || f?.flightIata || "").toString().trim();
   if (fc) return fc;
 
-  // Otherwise build from carrier code + numeric flight number
-  const carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
-  const num = (f?.flightNumber || "").toString().trim();
+  // Try carrier code fields if present
+  let carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
 
+  // FAST fallback: infer carrier code from airline name (India-focused)
+  if (!carrier) {
+    const name = (f?.airlineName || "").toString().toLowerCase();
+
+    const map = [
+      { k: "indigo", c: "6E" },
+      { k: "air india express", c: "IX" },
+      { k: "air india", c: "AI" },
+      { k: "akasa", c: "QP" },
+      { k: "spicejet", c: "SG" },
+      { k: "vistara", c: "UK" },
+      { k: "go first", c: "G8" },
+    ];
+
+    const hit = map.find((x) => name.includes(x.k));
+    if (hit) carrier = hit.c;
+  }
+
+  const num = (f?.flightNumber || "").toString().trim();
   if (carrier && num) return `${carrier} ${num}`;
   return num || "—";
 }
+
 
 
 function money(n) {
