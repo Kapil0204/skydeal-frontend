@@ -138,6 +138,48 @@ function cabinToMMT(cabin) {
   return cabinToGoibibo(cabin);
 }
 
+function isoToDDMMYYYY(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const [yyyy, mm, dd] = iso.split("-");
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function normalizeCabinLabel(cabin) {
+  const c = String(cabin || "economy").toLowerCase();
+  if (c.includes("premium")) return "Premium_Economy";
+  if (c.includes("business")) return "Business";
+  if (c.includes("first")) return "First";
+  return "Economy";
+}
+
+function cabinToGoibibo(cabin) {
+  const c = String(cabin || "economy").toLowerCase();
+  if (c.includes("premium")) return "PE";
+  if (c.includes("business")) return "B";
+  if (c.includes("first")) return "F";
+  return "E";
+}
+
+function cabinToMMT(cabin) {
+  return cabinToGoibibo(cabin);
+}
+
+function cityMap(iata) {
+  const x = String(iata || "").toUpperCase();
+  const map = {
+    BOM: "Mumbai",
+    DEL: "Delhi",
+    BLR: "Bengaluru",
+    HYD: "Hyderabad",
+    MAA: "Chennai",
+    CCU: "Kolkata",
+    PNQ: "Pune",
+    GOI: "Goa",
+    AMD: "Ahmedabad",
+  };
+  return map[x] || x; // fallback: use IATA itself
+}
+
 function buildPortalSearchUrl(portal, payload) {
   if (!payload) return null;
 
@@ -147,32 +189,57 @@ function buildPortalSearchUrl(portal, payload) {
   const retISO = payload.returnDate || "";
   const tripType = payload.tripType || "one-way";
   const adults = Number(payload.passengers || 1) || 1;
-  const cabin = payload.travelClass || "economy";
+  const cabinRaw = payload.travelClass || "economy";
 
   if (!from || !to || !depISO) return null;
 
-  const dep = isoToDDMMYYYY(depISO);
-  const ret = isoToDDMMYYYY(retISO);
+  const depDDMMYYYY = isoToDDMMYYYY(depISO);
+  const retDDMMYYYY = isoToDDMMYYYY(retISO);
 
-  // Only these two for now (you confirmed these patterns work)
+  // ✅ Goibibo
   if (portal === "Goibibo") {
-    const cabinClass = cabinToGoibibo(cabin);
-    if (tripType === "round-trip" && ret) {
-      return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${dep}_${to}-${from}-${ret}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    const cabinClass = cabinToGoibibo(cabinRaw);
+    if (tripType === "round-trip" && retDDMMYYYY) {
+      return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}_${to}-${from}-${retDDMMYYYY}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
     }
-    return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${dep}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
   }
 
+  // ✅ MakeMyTrip
   if (portal === "MakeMyTrip") {
-    const cabinClass = cabinToMMT(cabin);
-    if (tripType === "round-trip" && ret) {
-      return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${dep}_${to}-${from}-${ret}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    const cabinClass = cabinToMMT(cabinRaw);
+    if (tripType === "round-trip" && retDDMMYYYY) {
+      return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}_${to}-${from}-${retDDMMYYYY}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
     }
-    return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${dep}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+  }
+
+  // ✅ Yatra (use your exact sample structure)
+  if (portal === "Yatra") {
+    const cabinLabel = normalizeCabinLabel(cabinRaw); // Economy/Business/etc
+    const flight_depart_date = encodeURIComponent(depDDMMYYYY); // "23%2F12%2F2025"
+    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(cabinLabel)}&ADT=${adults}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
+  }
+
+  // ✅ EaseMyTrip (closer to your sample, with city names)
+  if (portal === "EaseMyTrip") {
+    const fromCity = cityMap(from);
+    const toCity = cityMap(to);
+    const srch = `${from}-${fromCity}-India|${to}-${toCity}-India|${depDDMMYYYY}`;
+    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(srch)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=true&isdm=true&lang=en-us&CCODE=IN&curr=INR&apptype=B2C`;
+  }
+
+  // ✅ Cleartrip (use your sample’s key params + proper cabin label)
+  if (portal === "Cleartrip") {
+    const cabinLabel = normalizeCabinLabel(cabinRaw); // Economy/Business/etc
+    const originText = `${from}%20-%20${encodeURIComponent(cityMap(from))},%20IN`;
+    const destText = `${to}%20-%20${encodeURIComponent(cityMap(to))},%20IN`;
+    return `https://www.cleartrip.com/flights/results?adults=${adults}&childs=0&infants=0&class=${encodeURIComponent(cabinLabel)}&depart_date=${encodeURIComponent(depDDMMYYYY)}&from=${from}&to=${to}&intl=n&origin=${originText}&destination=${destText}&return_date=&rnd_one=O&isCfw=false`;
   }
 
   return null;
 }
+
 
 
 function updatePaymentButtonLabel() {
@@ -527,9 +594,8 @@ function showPortalCompare(flight) {
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${portalPrices
           .map((p) => {
-            const href =
-  buildPortalSearchUrl(p.portal, searchParams) ||
-  buildPortalSearchUrl2(p.portal, getSearchParamsFromUI());
+            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+
 
 
 const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
