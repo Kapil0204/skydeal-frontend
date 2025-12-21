@@ -51,6 +51,7 @@ let selectedPaymentMethods = []; // [{type,name}]
 
 let outboundAll = [];
 let returnAll = [];
+let lastSearchPayload = null; // used to build OTA deep links in comparison modal
 
 const PAGE_SIZE = 6;
 let outPageIdx = 1;
@@ -116,6 +117,63 @@ function money(n) {
   if (!isNaN(v)) return `₹${Math.round(v)}`;
   return "₹0";
 }
+// ---------- OTA deep links (ONLY Goibibo + MakeMyTrip for now) ----------
+function isoToDDMMYYYY(iso) {
+  // iso: YYYY-MM-DD -> DD/MM/YYYY
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const [yyyy, mm, dd] = iso.split("-");
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function cabinToGoibibo(cabin) {
+  const c = String(cabin || "economy").toLowerCase();
+  if (c.includes("premium")) return "PE";
+  if (c.includes("business")) return "B";
+  if (c.includes("first")) return "F";
+  return "E"; // Economy
+}
+
+function cabinToMMT(cabin) {
+  // MMT uses same cabinClass codes in your working example
+  return cabinToGoibibo(cabin);
+}
+
+function buildPortalSearchUrl(portal, payload) {
+  if (!payload) return null;
+
+  const from = (payload.from || "").trim().toUpperCase();
+  const to = (payload.to || "").trim().toUpperCase();
+  const depISO = payload.departureDate || "";
+  const retISO = payload.returnDate || "";
+  const tripType = payload.tripType || "one-way";
+  const adults = Number(payload.passengers || 1) || 1;
+  const cabin = payload.travelClass || "economy";
+
+  if (!from || !to || !depISO) return null;
+
+  const dep = isoToDDMMYYYY(depISO);
+  const ret = isoToDDMMYYYY(retISO);
+
+  // Only these two for now (you confirmed these patterns work)
+  if (portal === "Goibibo") {
+    const cabinClass = cabinToGoibibo(cabin);
+    if (tripType === "round-trip" && ret) {
+      return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${dep}_${to}-${from}-${ret}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    }
+    return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${dep}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+  }
+
+  if (portal === "MakeMyTrip") {
+    const cabinClass = cabinToMMT(cabin);
+    if (tripType === "round-trip" && ret) {
+      return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${dep}_${to}-${from}-${ret}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+    }
+    return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${dep}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
+  }
+
+  return null;
+}
+
 
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
@@ -398,10 +456,19 @@ function showPortalCompare(flight) {
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${portalPrices
           .map((p) => {
-            const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;">
-              <div style="font-weight:600;">${safeText(p.portal)}</div>
-              <div style="font-weight:700;">${money(p.finalPrice)}</div>
-            </div>`;
+            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+
+const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+  <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
+    <span>${safeText(p.portal)}</span>
+    ${href ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
+        style="font-size:12px;opacity:.9;text-decoration:underline;">
+        Open
+      </a>` : ""}
+  </div>
+  <div style="font-weight:700;">${money(p.finalPrice)}</div>
+</div>`;
+
             const line2 = `<div>${formatOfferLine(p)}</div>`;
             return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
           })
@@ -505,6 +572,8 @@ async function handleSearch(e) {
     travelClass: cabinSelect?.value || "economy",
     paymentMethods: selectedPaymentMethods, // IMPORTANT
   };
+   lastSearchPayload = payload;
+
 
   if (!payload.from || !payload.to || !payload.departureDate) {
     alert("Please enter From, To and Depart date.");
