@@ -460,34 +460,25 @@ function fmtDateDDMMYYYY(dateStr) {
 }
 
 function getSearchParamsFromUI() {
-  const from = (document.querySelector("#from")?.value || "").trim().toUpperCase();
-  const to = (document.querySelector("#to")?.value || "").trim().toUpperCase();
-  const depart = document.querySelector("#departureDate")?.value || document.querySelector("#departDate")?.value || "";
-  const pax = Number(document.querySelector("#passengers")?.value || 1) || 1;
-
-  // Your UI has Cabin dropdown; try common ids
-  const cabinRaw =
-    document.querySelector("#travelClass")?.value ||
-    document.querySelector("#cabin")?.value ||
-    "Economy";
-
-  // Your UI has One-way / Round-trip radio
-  const tripType =
-    document.querySelector('input[name="tripType"]:checked')?.value ||
-    document.querySelector('input[name="trip"]:checked')?.value ||
-    "one-way";
+  const from = (fromInput?.value || "").trim().toUpperCase();
+  const to = (toInput?.value || "").trim().toUpperCase();
+  const depart = toISO(departInput?.value || ""); // ISO
+  const pax = Number(paxSelect?.value || 1) || 1;
+  const cabin = cabinSelect?.value || "economy";
+  const tripType = roundTripRadio?.checked ? "round-trip" : "one-way";
 
   return {
     from,
     to,
-    departDDMMYYYY: fmtDateDDMMYYYY(depart),
+    departDDMMYYYY: isoToDDMMYYYY(depart),
     pax,
-    cabin: cabinRaw || "Economy",
+    cabin,
     tripType
   };
 }
 
-function buildPortalSearchUrl(portal, params) {
+
+function buildPortalSearchUrl2(portal, params) {
   const from = params?.from || "";
   const to = params?.to || "";
   const d = params?.departDDMMYYYY || "";
@@ -524,7 +515,7 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
-   const searchParams = getSearchParamsFromUI();
+   const searchParams = lastSearchPayload;
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
@@ -536,7 +527,10 @@ function showPortalCompare(flight) {
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${portalPrices
           .map((p) => {
-            const href = buildPortalSearchUrl(p.portal, searchParams);
+            const href =
+  buildPortalSearchUrl(p.portal, searchParams) ||
+  buildPortalSearchUrl2(p.portal, getSearchParamsFromUI());
+
 
 const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
   <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
