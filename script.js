@@ -461,10 +461,20 @@ function showPortalCompare(flight) {
 const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
   <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
     <span>${safeText(p.portal)}</span>
-    ${href ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
-        style="font-size:12px;opacity:.9;text-decoration:underline;">
+   ${href ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
+        style="
+          font-size:12px;
+          font-weight:600;
+          padding:4px 8px;
+          border-radius:6px;
+          background:#2563eb;
+          color:#ffffff;
+          text-decoration:none;
+          line-height:1;
+        ">
         Open
       </a>` : ""}
+
   </div>
   <div style="font-weight:700;">${money(p.finalPrice)}</div>
 </div>`;
