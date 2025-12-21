@@ -440,12 +440,92 @@ function ensurePortalModal() {
 
   return modal;
 }
+function fmtDateDDMMYYYY(dateStr) {
+  // Accepts "YYYY-MM-DD" or "DD/MM/YYYY" and returns "DD/MM/YYYY"
+  if (!dateStr) return "";
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+
+  const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+
+  // Fallback: try Date()
+  const d = new Date(dateStr);
+  if (!isNaN(d)) {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+  return "";
+}
+
+function getSearchParamsFromUI() {
+  const from = (document.querySelector("#from")?.value || "").trim().toUpperCase();
+  const to = (document.querySelector("#to")?.value || "").trim().toUpperCase();
+  const depart = document.querySelector("#departureDate")?.value || document.querySelector("#departDate")?.value || "";
+  const pax = Number(document.querySelector("#passengers")?.value || 1) || 1;
+
+  // Your UI has Cabin dropdown; try common ids
+  const cabinRaw =
+    document.querySelector("#travelClass")?.value ||
+    document.querySelector("#cabin")?.value ||
+    "Economy";
+
+  // Your UI has One-way / Round-trip radio
+  const tripType =
+    document.querySelector('input[name="tripType"]:checked')?.value ||
+    document.querySelector('input[name="trip"]:checked')?.value ||
+    "one-way";
+
+  return {
+    from,
+    to,
+    departDDMMYYYY: fmtDateDDMMYYYY(depart),
+    pax,
+    cabin: cabinRaw || "Economy",
+    tripType
+  };
+}
+
+function buildPortalSearchUrl(portal, params) {
+  const from = params?.from || "";
+  const to = params?.to || "";
+  const d = params?.departDDMMYYYY || "";
+  const pax = params?.pax || 1;
+  const cabin = params?.cabin || "Economy";
+
+  if (!from || !to || !d) return null;
+
+  // These 3 are EXACTLY based on your working samples
+  if (portal === "Yatra") {
+    // NOTE: Yatra expects date as URL-encoded DD/MM/YYYY
+    const flight_depart_date = encodeURIComponent(d);
+    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(cabin)}&ADT=${pax}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
+  }
+
+  if (portal === "EaseMyTrip") {
+    // EaseMyTrip link format requires city strings.
+    // We don’t have city names from UI, so we safely inject IATA as placeholders.
+    // You can later enhance with a map (BOM->Mumbai etc).
+    const srch = `${from}-${from}-India|${to}-${to}-India|${d}`;
+    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(srch)}&px=${pax}-0-0&cbn=0&curr=INR&apptype=B2C`;
+  }
+
+  if (portal === "Cleartrip") {
+    // Cleartrip uses depart_date as DD/MM/YYYY and from/to as IATA
+    return `https://www.cleartrip.com/flights/results?adults=${pax}&childs=0&infants=0&class=${encodeURIComponent(cabin)}&depart_date=${encodeURIComponent(d)}&from=${from}&to=${to}&intl=n&return_date=&rnd_one=O`;
+  }
+
+  return null;
+}
 
 function showPortalCompare(flight) {
   const modal = ensurePortalModal();
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+   const searchParams = getSearchParamsFromUI();
+
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
   } else {
@@ -456,7 +536,7 @@ function showPortalCompare(flight) {
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${portalPrices
           .map((p) => {
-            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+            const href = buildPortalSearchUrl(p.portal, searchParams);
 
 const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
   <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
