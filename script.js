@@ -377,6 +377,25 @@ function renderPaymentTabs() {
       pmTabsContainer.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       renderPaymentList();
+       // NEW: render info offers if present (non-blocking)
+if (Array.isArray(p.infoOffers) && p.infoOffers.length > 0) {
+  html += `
+    <div class="info-offers">
+      <div class="info-offers-title">Other offers (not applied to price)</div>
+      <ul class="info-offers-list">
+        ${p.infoOffers.map(o => `
+          <li class="info-offer-item">
+            <div class="info-offer-name">${o.title || "Offer"}</div>
+            ${o.couponCode ? `<div class="info-offer-code">Code: <strong>${o.couponCode}</strong></div>` : ``}
+            ${o.offerSummary ? `<div class="info-offer-summary">${o.offerSummary}</div>` : ``}
+            ${o.terms ? `<details class="info-offer-terms"><summary>Terms</summary><div>${o.terms}</div></details>` : ``}
+          </li>
+        `).join("")}
+      </ul>
+    </div>
+  `;
+}
+
     });
   });
 }
