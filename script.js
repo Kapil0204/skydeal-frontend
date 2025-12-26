@@ -739,9 +739,28 @@ async function handleSearch(e) {
     tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
     passengers: Number(paxSelect?.value || 1),
     travelClass: cabinSelect?.value || "economy",
-    paymentMethods: selectedPaymentMethods, // IMPORTANT
+   paymentMethods: (Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [])
+  .map((x) => {
+    // If it's already a string, keep it
+    if (typeof x === "string") return x.trim();
+
+    // If it's an object, convert it to a stable string token
+    // Prefer type (Credit Card / UPI / EMI / Net Banking / Wallet)
+    const t = String(x?.type || x?.methodType || x?.paymentType || "").trim();
+    if (t) return t;
+
+    // fallback: sometimes the UI stores the label in name/raw
+    const n = String(x?.name || x?.raw || "").trim();
+    if (n) return n;
+
+    return "";
+  })
+  .filter(Boolean),
+
   };
    lastSearchPayload = payload;
+   console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
+
 
 
   if (!payload.from || !payload.to || !payload.departureDate) {
