@@ -675,6 +675,7 @@ function flightCard(f) {
     ${p.paymentLabel ? `<br><small>Payment: ${p.paymentLabel}</small>` : ""}
   </span>
 ` : ""}
+}
 
 
          ${best.code ? `• Code: <b>${safeText(best.code)}</b>` : ""}
