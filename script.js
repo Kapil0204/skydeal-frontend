@@ -669,8 +669,13 @@ function flightCard(f) {
     ? `<div class="best">
          Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
          <span style="opacity:.85;">(${
-  best.applied ? (best.paymentLabel || "offer applied") : "no offer"
-})</span>
+  ${p.applied ? `
+  <span class="offer">
+    ${p.title || "Offer applied"}
+    ${p.paymentLabel ? `<br><small>Payment: ${p.paymentLabel}</small>` : ""}
+  </span>
+` : ""}
+
 
          ${best.code ? `• Code: <b>${safeText(best.code)}</b>` : ""}
        </div>`
