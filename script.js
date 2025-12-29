@@ -425,4 +425,306 @@ function slicePage(items, pageIdx) {
   return items.slice(start, start + PAGE_SIZE);
 }
 
-function totalPages(items
+function totalPages(items) {
+  return Math.max(1, Math.ceil((items.length || 0) / PAGE_SIZE));
+}
+
+function renderPager(which) {
+  if (which === "out") {
+    const tp = totalPages(outboundAll);
+    if (outPage) outPage.textContent = String(outPageIdx);
+    if (outPrev) outPrev.disabled = outPageIdx <= 1;
+    if (outNext) outNext.disabled = outPageIdx >= tp;
+  } else {
+    const tp = totalPages(returnAll);
+    if (retPage) retPage.textContent = String(retPageIdx);
+    if (retPrev) retPrev.disabled = retPageIdx <= 1;
+    if (retNext) retNext.disabled = retPageIdx >= tp;
+  }
+}
+
+function ensurePortalModal() {
+  let modal = document.getElementById("portalCompareModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "portalCompareModal";
+  modal.style.position = "fixed";
+  modal.style.inset = "0";
+  modal.style.background = "rgba(0,0,0,.55)";
+  modal.style.display = "none";
+  modal.style.zIndex = "9999";
+  modal.innerHTML = `
+    <div style="max-width:720px;margin:7vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
+        <button id="portalCompareClose" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+      </div>
+      <div id="portalCompareBody" style="margin-top:12px;"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+  modal.querySelector("#portalCompareClose").addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  return modal;
+}
+
+function showPortalCompare(flight) {
+  const modal = ensurePortalModal();
+  const body = modal.querySelector("#portalCompareBody");
+
+  const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+
+  if (portalPrices.length === 0) {
+    body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
+  } else {
+    body.innerHTML = `
+      <div style="opacity:.85;margin-bottom:10px;">
+        ${safeText(flight.airlineName)} (${displayFlightNumber(flight)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${portalPrices
+          .map((p) => {
+            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+
+            const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+              <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
+                <span>${safeText(p.portal)}</span>
+                ${
+                  href
+                    ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
+                        style="
+                          font-size:12px;
+                          font-weight:600;
+                          padding:4px 8px;
+                          border-radius:6px;
+                          background:#2563eb;
+                          color:#ffffff;
+                          text-decoration:none;
+                          line-height:1;
+                        ">
+                        Open
+                      </a>`
+                    : ""
+                }
+              </div>
+              <div style="font-weight:700;">${money(p.finalPrice)}</div>
+            </div>`;
+
+            const line2 = `<div>${formatOfferLine(p)}</div>`;
+            return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  modal.style.display = "block";
+}
+
+function flightCard(f) {
+  const name = safeText(f.airlineName);
+  const num = displayFlightNumber(f);
+  const dep = fmtTime(f.departureTime);
+  const arr = fmtTime(f.arrivalTime);
+  const stops = Number.isFinite(f.stops) ? f.stops : 0;
+
+  const best = f.bestDeal;
+
+  const bestLine = best
+    ? `<div class="best">
+         Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
+         ${best.rawDiscount ? `<div style="opacity:.9;margin-top:4px;">Offer: ${safeText(best.rawDiscount)}</div>` : ""}
+         ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(best.paymentLabel)}</b></div>` : ""}
+         ${best.code ? `<div style="opacity:.9;">Code: <b>${safeText(best.code)}</b></div>` : ""}
+       </div>`
+    : `<div class="best">Best: —</div>`;
+
+  return `
+    <div class="card">
+      <div class="row">
+        <div class="air">
+          <div>${name}</div>
+          <div style="font-size:12px; opacity:0.8; margin-top:2px;">${num}</div>
+        </div>
+        <div class="times">${dep} → ${arr}</div>
+        <div class="stops">${stops} stop(s)</div>
+        <div class="price">${money(best?.finalPrice ?? f.price)}</div>
+        <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">👁</button>
+      </div>
+      ${bestLine}
+    </div>
+  `;
+}
+
+function renderList(el, items) {
+  if (!el) return;
+  if (!Array.isArray(items) || items.length === 0) {
+    el.innerHTML = `<div class="empty">No flights found for your search.</div>`;
+    return;
+  }
+  el.innerHTML = items.map(flightCard).join("");
+
+  const btns = el.querySelectorAll(".infoBtn");
+  btns.forEach((btn, idx) => {
+    btn.addEventListener("click", () => showPortalCompare(items[idx]));
+  });
+}
+
+function renderOutbound() {
+  const pageItems = slicePage(outboundAll, outPageIdx);
+  renderList(outboundList, pageItems);
+  renderPager("out");
+}
+
+function renderReturn() {
+  const pageItems = slicePage(returnAll, retPageIdx);
+  renderList(returnList, pageItems);
+  renderPager("ret");
+}
+
+// ---------- Search ----------
+function toggleReturn() {
+  const show = !!roundTripRadio?.checked;
+  if (!returnInput) return;
+  returnInput.disabled = !show;
+  returnInput.parentElement?.classList?.toggle("disabled", !show);
+}
+
+async function handleSearch(e) {
+  e?.preventDefault?.();
+
+  const payload = {
+    from: safeText(fromInput?.value, "").trim().toUpperCase(),
+    to: safeText(toInput?.value, "").trim().toUpperCase(),
+    departureDate: toISO(departInput?.value || ""),
+    returnDate: roundTripRadio?.checked ? toISO(returnInput?.value || "") : "",
+    tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
+    passengers: Number(paxSelect?.value || 1),
+    travelClass: cabinSelect?.value || "economy",
+
+    // ✅ CRITICAL FIX: send structured selections so backend can match bank/type correctly
+    paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
+  };
+
+  lastSearchPayload = payload;
+  console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
+
+  if (!payload.from || !payload.to || !payload.departureDate) {
+    alert("Please enter From, To and Depart date.");
+    return;
+  }
+  if (payload.tripType === "round-trip" && !payload.returnDate) {
+    alert("Please enter Return date for round-trip.");
+    return;
+  }
+
+  outboundList.innerHTML = `<div class="empty">Loading…</div>`;
+  returnList.innerHTML = `<div class="empty">Loading…</div>`;
+
+  outPageIdx = 1;
+  retPageIdx = 1;
+
+  try {
+    const res = await fetch(`${BACKEND}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    console.log("[SkyDeal] /search meta", json?.meta);
+
+    if (!res.ok) {
+      const msg = json?.meta?.error || `Backend error (${res.status})`;
+      outboundAll = [];
+      returnAll = [];
+      outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
+      returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
+      renderPager("out");
+      renderPager("ret");
+      return;
+    }
+
+    outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
+    returnAll = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
+
+    renderOutbound();
+    renderReturn();
+  } catch (err) {
+    console.error(err);
+    outboundAll = [];
+    returnAll = [];
+    outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
+    returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
+  }
+}
+
+// ---------- Wiring ----------
+function wire() {
+  searchBtn?.addEventListener("click", handleSearch);
+
+  oneWayRadio?.addEventListener("change", toggleReturn);
+  roundTripRadio?.addEventListener("change", toggleReturn);
+  toggleReturn();
+
+  outPrev?.addEventListener("click", () => {
+    outPageIdx = Math.max(1, outPageIdx - 1);
+    renderOutbound();
+  });
+  outNext?.addEventListener("click", () => {
+    outPageIdx = Math.min(totalPages(outboundAll), outPageIdx + 1);
+    renderOutbound();
+  });
+
+  retPrev?.addEventListener("click", () => {
+    retPageIdx = Math.max(1, retPageIdx - 1);
+    renderReturn();
+  });
+  retNext?.addEventListener("click", () => {
+    retPageIdx = Math.min(totalPages(returnAll), retPageIdx + 1);
+    renderReturn();
+  });
+
+  paymentBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openPaymentModal();
+  });
+
+  pmClose?.addEventListener("click", closePaymentModal);
+  paymentModal?.addEventListener("click", (e) => {
+    if (e.target === paymentModal) closePaymentModal();
+  });
+
+  pmClear?.addEventListener("click", () => {
+    selectedPaymentMethods = [];
+    updatePaymentButtonLabel();
+    renderPaymentList();
+  });
+
+  pmDone?.addEventListener("click", () => {
+    updatePaymentButtonLabel();
+    closePaymentModal();
+  });
+
+  renderPager("out");
+  renderPager("ret");
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  if (departInput && !departInput.value) departInput.value = "2025-12-17";
+  if (returnInput && !returnInput.value) returnInput.value = "2025-12-24";
+
+  await loadPaymentOptions();
+  wire();
+  updatePaymentButtonLabel();
+
+  console.log("[SkyDeal] frontend ready");
+});
+
