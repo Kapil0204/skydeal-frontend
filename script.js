@@ -41,17 +41,19 @@ const pmList = document.getElementById("pmList");
 const pmClear = document.getElementById("pmClear");
 const pmDone = document.getElementById("pmDone");
 
-// Tabs container is static in your HTML but we will rebuild if backend has more types.
+// Tabs container
 const pmTabsContainer = document.querySelector(".pm-tabs");
 
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
 let activePaymentType = "Credit Card";
-let selectedPaymentMethods = []; // [{type,name}]
+
+// ✅ Keep as objects: [{type,name}]
+let selectedPaymentMethods = [];
 
 let outboundAll = [];
 let returnAll = [];
-let lastSearchPayload = null; // used to build OTA deep links in comparison modal
+let lastSearchPayload = null;
 
 const PAGE_SIZE = 6;
 let outPageIdx = 1;
@@ -78,18 +80,15 @@ function fmtTime(t) {
   if (s.includes("T")) return s.split("T")[1]?.slice(0, 5) || s;
   return s;
 }
+
 function displayFlightNumber(f) {
-  // Prefer already-formatted flight code if backend sends it
   const fc = (f?.flightCode || f?.flightIata || "").toString().trim();
   if (fc) return fc;
 
-  // Try carrier code fields if present
   let carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
 
-  // FAST fallback: infer carrier code from airline name (India-focused)
   if (!carrier) {
     const name = (f?.airlineName || "").toString().toLowerCase();
-
     const map = [
       { k: "indigo", c: "6E" },
       { k: "air india express", c: "IX" },
@@ -99,7 +98,6 @@ function displayFlightNumber(f) {
       { k: "vistara", c: "UK" },
       { k: "go first", c: "G8" },
     ];
-
     const hit = map.find((x) => name.includes(x.k));
     if (hit) carrier = hit.c;
   }
@@ -109,47 +107,18 @@ function displayFlightNumber(f) {
   return num || "—";
 }
 
-
-
 function money(n) {
   if (typeof n === "number" && !isNaN(n)) return `₹${Math.round(n)}`;
   const v = Number(String(n || "").replace(/[^\d.]/g, ""));
   if (!isNaN(v)) return `₹${Math.round(v)}`;
   return "₹0";
 }
-// ---------- OTA deep links (ONLY Goibibo + MakeMyTrip for now) ----------
-function isoToDDMMYYYY(iso) {
-  // iso: YYYY-MM-DD -> DD/MM/YYYY
-  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
-  const [yyyy, mm, dd] = iso.split("-");
-  return `${dd}/${mm}/${yyyy}`;
-}
 
-function cabinToGoibibo(cabin) {
-  const c = String(cabin || "economy").toLowerCase();
-  if (c.includes("premium")) return "PE";
-  if (c.includes("business")) return "B";
-  if (c.includes("first")) return "F";
-  return "E"; // Economy
-}
-
-function cabinToMMT(cabin) {
-  // MMT uses same cabinClass codes in your working example
-  return cabinToGoibibo(cabin);
-}
-
+// ---------- OTA deep links ----------
 function isoToDDMMYYYY(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
   const [yyyy, mm, dd] = iso.split("-");
   return `${dd}/${mm}/${yyyy}`;
-}
-
-function normalizeCabinLabel(cabin) {
-  const c = String(cabin || "economy").toLowerCase();
-  if (c.includes("premium")) return "Premium_Economy";
-  if (c.includes("business")) return "Business";
-  if (c.includes("first")) return "First";
-  return "Economy";
 }
 
 function cabinToGoibibo(cabin) {
@@ -162,6 +131,14 @@ function cabinToGoibibo(cabin) {
 
 function cabinToMMT(cabin) {
   return cabinToGoibibo(cabin);
+}
+
+function normalizeCabinLabel(cabin) {
+  const c = String(cabin || "economy").toLowerCase();
+  if (c.includes("premium")) return "Premium_Economy";
+  if (c.includes("business")) return "Business";
+  if (c.includes("first")) return "First";
+  return "Economy";
 }
 
 function cityMap(iata) {
@@ -177,7 +154,7 @@ function cityMap(iata) {
     GOI: "Goa",
     AMD: "Ahmedabad",
   };
-  return map[x] || x; // fallback: use IATA itself
+  return map[x] || x;
 }
 
 function buildPortalSearchUrl(portal, payload) {
@@ -196,7 +173,6 @@ function buildPortalSearchUrl(portal, payload) {
   const depDDMMYYYY = isoToDDMMYYYY(depISO);
   const retDDMMYYYY = isoToDDMMYYYY(retISO);
 
-  // ✅ Goibibo
   if (portal === "Goibibo") {
     const cabinClass = cabinToGoibibo(cabinRaw);
     if (tripType === "round-trip" && retDDMMYYYY) {
@@ -205,7 +181,6 @@ function buildPortalSearchUrl(portal, payload) {
     return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
   }
 
-  // ✅ MakeMyTrip
   if (portal === "MakeMyTrip") {
     const cabinClass = cabinToMMT(cabinRaw);
     if (tripType === "round-trip" && retDDMMYYYY) {
@@ -214,14 +189,12 @@ function buildPortalSearchUrl(portal, payload) {
     return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
   }
 
-  // ✅ Yatra (use your exact sample structure)
   if (portal === "Yatra") {
-    const cabinLabel = normalizeCabinLabel(cabinRaw); // Economy/Business/etc
-    const flight_depart_date = encodeURIComponent(depDDMMYYYY); // "23%2F12%2F2025"
+    const cabinLabel = normalizeCabinLabel(cabinRaw);
+    const flight_depart_date = encodeURIComponent(depDDMMYYYY);
     return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(cabinLabel)}&ADT=${adults}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
   }
 
-  // ✅ EaseMyTrip (closer to your sample, with city names)
   if (portal === "EaseMyTrip") {
     const fromCity = cityMap(from);
     const toCity = cityMap(to);
@@ -229,9 +202,8 @@ function buildPortalSearchUrl(portal, payload) {
     return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(srch)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=true&isdm=true&lang=en-us&CCODE=IN&curr=INR&apptype=B2C`;
   }
 
-  // ✅ Cleartrip (use your sample’s key params + proper cabin label)
   if (portal === "Cleartrip") {
-    const cabinLabel = normalizeCabinLabel(cabinRaw); // Economy/Business/etc
+    const cabinLabel = normalizeCabinLabel(cabinRaw);
     const originText = `${from}%20-%20${encodeURIComponent(cityMap(from))},%20IN`;
     const destText = `${to}%20-%20${encodeURIComponent(cityMap(to))},%20IN`;
     return `https://www.cleartrip.com/flights/results?adults=${adults}&childs=0&infants=0&class=${encodeURIComponent(cabinLabel)}&depart_date=${encodeURIComponent(depDDMMYYYY)}&from=${from}&to=${to}&intl=n&origin=${originText}&destination=${destText}&return_date=&rnd_one=O&isCfw=false`;
@@ -240,8 +212,6 @@ function buildPortalSearchUrl(portal, payload) {
   return null;
 }
 
-
-
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
   if (pmCount) pmCount.textContent = String(n);
@@ -249,8 +219,7 @@ function updatePaymentButtonLabel() {
 }
 
 /* =========================
-   NEW: Offer line formatter + T&C modal
-   (Only used inside comparison popup)
+   Offer line formatter + T&C modal
    ========================= */
 function formatOfferLine(p) {
   if (!p.applied) {
@@ -259,7 +228,6 @@ function formatOfferLine(p) {
 
   const offerText = safeText(p.rawDiscount, "Offer available");
   const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
-
   const hasTerms = p.terms && String(p.terms).trim().length > 0;
 
   const tncBtn = hasTerms
@@ -281,11 +249,12 @@ function formatOfferLine(p) {
 
   return `
     <div style="opacity:.85;font-size:13px;">
-      Offer: ${offerText}${codeText}${tncBtn}
+      Offer: ${offerText}${codeText}
+      ${p.paymentLabel ? `<div style="opacity:.85;margin-top:4px;">Payment: <b>${safeText(p.paymentLabel)}</b></div>` : ""}
+      ${tncBtn}
     </div>
   `;
 }
-
 
 function openTncModal(title, terms) {
   let modal = document.getElementById("tncModal");
@@ -377,25 +346,6 @@ function renderPaymentTabs() {
       pmTabsContainer.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       renderPaymentList();
-       // NEW: render info offers if present (non-blocking)
-if (Array.isArray(p.infoOffers) && p.infoOffers.length > 0) {
-  html += `
-    <div class="info-offers">
-      <div class="info-offers-title">Other offers (not applied to price)</div>
-      <ul class="info-offers-list">
-        ${p.infoOffers.map(o => `
-          <li class="info-offer-item">
-            <div class="info-offer-name">${o.title || "Offer"}</div>
-            ${o.couponCode ? `<div class="info-offer-code">Code: <strong>${o.couponCode}</strong></div>` : ``}
-            ${o.offerSummary ? `<div class="info-offer-summary">${o.offerSummary}</div>` : ``}
-            ${o.terms ? `<details class="info-offer-terms"><summary>Terms</summary><div>${o.terms}</div></details>` : ``}
-          </li>
-        `).join("")}
-      </ul>
-    </div>
-  `;
-}
-
     });
   });
 }
@@ -456,7 +406,6 @@ async function loadPaymentOptions() {
     const res = await fetch(`${BACKEND}/payment-options`);
     const data = await res.json();
     paymentOptions = data?.options || {};
-    // pick first available tab if current missing
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
@@ -465,7 +414,6 @@ async function loadPaymentOptions() {
     updatePaymentButtonLabel();
   } catch (e) {
     console.error("[SkyDeal] payment-options failed", e);
-    // don’t fake anything; show 0
     paymentOptions = {};
     updatePaymentButtonLabel();
   }
@@ -477,412 +425,4 @@ function slicePage(items, pageIdx) {
   return items.slice(start, start + PAGE_SIZE);
 }
 
-function totalPages(items) {
-  return Math.max(1, Math.ceil((items.length || 0) / PAGE_SIZE));
-}
-
-function renderPager(which) {
-  if (which === "out") {
-    const tp = totalPages(outboundAll);
-    if (outPage) outPage.textContent = String(outPageIdx);
-    if (outPrev) outPrev.disabled = outPageIdx <= 1;
-    if (outNext) outNext.disabled = outPageIdx >= tp;
-  } else {
-    const tp = totalPages(returnAll);
-    if (retPage) retPage.textContent = String(retPageIdx);
-    if (retPrev) retPrev.disabled = retPageIdx <= 1;
-    if (retNext) retNext.disabled = retPageIdx >= tp;
-  }
-}
-
-function ensurePortalModal() {
-  let modal = document.getElementById("portalCompareModal");
-  if (modal) return modal;
-
-  modal = document.createElement("div");
-  modal.id = "portalCompareModal";
-  modal.style.position = "fixed";
-  modal.style.inset = "0";
-  modal.style.background = "rgba(0,0,0,.55)";
-  modal.style.display = "none";
-  modal.style.zIndex = "9999";
-  modal.innerHTML = `
-    <div style="max-width:720px;margin:7vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-        <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
-        <button id="portalCompareClose" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
-      </div>
-      <div id="portalCompareBody" style="margin-top:12px;"></div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.style.display = "none";
-  });
-  modal.querySelector("#portalCompareClose").addEventListener("click", () => {
-    modal.style.display = "none";
-  });
-
-  return modal;
-}
-function fmtDateDDMMYYYY(dateStr) {
-  // Accepts "YYYY-MM-DD" or "DD/MM/YYYY" and returns "DD/MM/YYYY"
-  if (!dateStr) return "";
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-
-  const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-
-  // Fallback: try Date()
-  const d = new Date(dateStr);
-  if (!isNaN(d)) {
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  return "";
-}
-
-function getSearchParamsFromUI() {
-  const from = (fromInput?.value || "").trim().toUpperCase();
-  const to = (toInput?.value || "").trim().toUpperCase();
-  const depart = toISO(departInput?.value || ""); // ISO
-  const pax = Number(paxSelect?.value || 1) || 1;
-  const cabin = cabinSelect?.value || "economy";
-  const tripType = roundTripRadio?.checked ? "round-trip" : "one-way";
-
-  return {
-    from,
-    to,
-    departDDMMYYYY: isoToDDMMYYYY(depart),
-    pax,
-    cabin,
-    tripType
-  };
-}
-
-
-function buildPortalSearchUrl2(portal, params) {
-  const from = params?.from || "";
-  const to = params?.to || "";
-  const d = params?.departDDMMYYYY || "";
-  const pax = params?.pax || 1;
-  const cabin = params?.cabin || "Economy";
-
-  if (!from || !to || !d) return null;
-
-  // These 3 are EXACTLY based on your working samples
-  if (portal === "Yatra") {
-    // NOTE: Yatra expects date as URL-encoded DD/MM/YYYY
-    const flight_depart_date = encodeURIComponent(d);
-    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(cabin)}&ADT=${pax}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
-  }
-
-  if (portal === "EaseMyTrip") {
-    // EaseMyTrip link format requires city strings.
-    // We don’t have city names from UI, so we safely inject IATA as placeholders.
-    // You can later enhance with a map (BOM->Mumbai etc).
-    const srch = `${from}-${from}-India|${to}-${to}-India|${d}`;
-    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(srch)}&px=${pax}-0-0&cbn=0&curr=INR&apptype=B2C`;
-  }
-
-  if (portal === "Cleartrip") {
-    // Cleartrip uses depart_date as DD/MM/YYYY and from/to as IATA
-    return `https://www.cleartrip.com/flights/results?adults=${pax}&childs=0&infants=0&class=${encodeURIComponent(cabin)}&depart_date=${encodeURIComponent(d)}&from=${from}&to=${to}&intl=n&return_date=&rnd_one=O`;
-  }
-
-  return null;
-}
-
-function showPortalCompare(flight) {
-  const modal = ensurePortalModal();
-  const body = modal.querySelector("#portalCompareBody");
-
-  const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
-   const searchParams = lastSearchPayload;
-
-  if (portalPrices.length === 0) {
-    body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
-  } else {
-    body.innerHTML = `
-      <div style="opacity:.85;margin-bottom:10px;">
-        ${safeText(flight.airlineName)} (${displayFlightNumber(flight)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        ${portalPrices
-          .map((p) => {
-            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
-
-
-
-const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-  <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
-    <span>${safeText(p.portal)}</span>
-   ${href ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
-        style="
-          font-size:12px;
-          font-weight:600;
-          padding:4px 8px;
-          border-radius:6px;
-          background:#2563eb;
-          color:#ffffff;
-          text-decoration:none;
-          line-height:1;
-        ">
-        Open
-      </a>` : ""}
-
-  </div>
-  <div style="font-weight:700;">${money(p.finalPrice)}</div>
-</div>`;
-
-            const line2 = `<div>${formatOfferLine(p)}</div>`;
-            return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
-          })
-          .join("")}
-      </div>
-    `;
-  }
-// Wire T&C buttons
-body.querySelectorAll(".tncBtn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const portal = btn.getAttribute("data-portal") || "Portal";
-    const terms = decodeURIComponent(btn.getAttribute("data-terms") || "");
-    alert(`${portal} — Terms & Conditions\n\n${terms}`);
-  });
-});
-
-  modal.style.display = "block";
-}
-
-function flightCard(f) {
-  const name = safeText(f.airlineName);
-  const num = displayFlightNumber(f);
-  const dep = fmtTime(f.departureTime);
-  const arr = fmtTime(f.arrivalTime);
-  const stops = Number.isFinite(f.stops) ? f.stops : 0;
-
-  const best = f.bestDeal;
-  const bestLine = best
-    ? `<div class="best">
-         Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
-         <span style="opacity:.85;">(${
-  ${p.applied ? `
-  <span class="offer">
-    ${p.title || "Offer applied"}
-    ${p.paymentLabel ? `<br><small>Payment: ${p.paymentLabel}</small>` : ""}
-  </span>
-` : ""}
-}
-
-
-         ${best.code ? `• Code: <b>${safeText(best.code)}</b>` : ""}
-       </div>`
-    : `<div class="best">Best: —</div>`;
-
-  return `
-    <div class="card">
-      <div class="row">
-        <div class="air">
-  <div>${name}</div>
-  <div style="font-size:12px; opacity:0.8; margin-top:2px;">${num}</div>
-</div>
-        <div class="times">${dep} → ${arr}</div>
-        <div class="stops">${stops} stop(s)</div>
-        <div class="price">${money(best?.finalPrice ?? f.price)}</div>
-        <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">👁</button>
-      </div>
-      ${bestLine}
-    </div>
-  `;
-}
-
-function renderList(el, items) {
-  if (!el) return;
-  if (!Array.isArray(items) || items.length === 0) {
-    el.innerHTML = `<div class="empty">No flights found for your search.</div>`;
-    return;
-  }
-  el.innerHTML = items.map(flightCard).join("");
-
-  // wire comparison buttons
-  const btns = el.querySelectorAll(".infoBtn");
-  btns.forEach((btn, idx) => {
-    btn.addEventListener("click", () => showPortalCompare(items[idx]));
-  });
-}
-
-function renderOutbound() {
-  const pageItems = slicePage(outboundAll, outPageIdx);
-  renderList(outboundList, pageItems);
-  renderPager("out");
-}
-
-function renderReturn() {
-  const pageItems = slicePage(returnAll, retPageIdx);
-  renderList(returnList, pageItems);
-  renderPager("ret");
-}
-
-// ---------- Search ----------
-function toggleReturn() {
-  const show = !!roundTripRadio?.checked;
-  if (!returnInput) return;
-  returnInput.disabled = !show;
-  returnInput.parentElement?.classList?.toggle("disabled", !show);
-}
-
-async function handleSearch(e) {
-  e?.preventDefault?.();
-
-  const payload = {
-    from: safeText(fromInput?.value, "").trim().toUpperCase(),
-    to: safeText(toInput?.value, "").trim().toUpperCase(),
-    departureDate: toISO(departInput?.value || ""),
-    returnDate: roundTripRadio?.checked ? toISO(returnInput?.value || "") : "",
-    tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
-    passengers: Number(paxSelect?.value || 1),
-    travelClass: cabinSelect?.value || "economy",
-   paymentMethods: (Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [])
-  .map((x) => {
-    // If it's already a string, keep it
-    if (typeof x === "string") return x.trim();
-
-    // If it's an object, convert it to a stable string token
-    // Prefer type (Credit Card / UPI / EMI / Net Banking / Wallet)
-    const t = String(x?.type || x?.methodType || x?.paymentType || "").trim();
-    if (t) return t;
-
-    // fallback: sometimes the UI stores the label in name/raw
-    const n = String(x?.name || x?.raw || "").trim();
-    if (n) return n;
-
-    return "";
-  })
-  .filter(Boolean),
-
-  };
-   lastSearchPayload = payload;
-   console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
-
-
-
-  if (!payload.from || !payload.to || !payload.departureDate) {
-    alert("Please enter From, To and Depart date.");
-    return;
-  }
-  if (payload.tripType === "round-trip" && !payload.returnDate) {
-    alert("Please enter Return date for round-trip.");
-    return;
-  }
-
-  outboundList.innerHTML = `<div class="empty">Loading…</div>`;
-  returnList.innerHTML = `<div class="empty">Loading…</div>`;
-
-  outPageIdx = 1;
-  retPageIdx = 1;
-
-  try {
-    const res = await fetch(`${BACKEND}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const json = await res.json();
-    console.log("[SkyDeal] /search meta", json?.meta);
-
-    if (!res.ok) {
-      const msg = json?.meta?.error || `Backend error (${res.status})`;
-      outboundAll = [];
-      returnAll = [];
-      outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
-      returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
-      renderPager("out");
-      renderPager("ret");
-      return;
-    }
-
-    outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
-    returnAll = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
-
-    renderOutbound();
-    renderReturn();
-  } catch (err) {
-    console.error(err);
-    outboundAll = [];
-    returnAll = [];
-    outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
-    returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
-  }
-}
-
-// ---------- Wiring ----------
-function wire() {
-  // Search
-  searchBtn?.addEventListener("click", handleSearch);
-
-  // Toggle round-trip
-  oneWayRadio?.addEventListener("change", toggleReturn);
-  roundTripRadio?.addEventListener("change", toggleReturn);
-  toggleReturn();
-
-  // Pagination
-  outPrev?.addEventListener("click", () => {
-    outPageIdx = Math.max(1, outPageIdx - 1);
-    renderOutbound();
-  });
-  outNext?.addEventListener("click", () => {
-    outPageIdx = Math.min(totalPages(outboundAll), outPageIdx + 1);
-    renderOutbound();
-  });
-
-  retPrev?.addEventListener("click", () => {
-    retPageIdx = Math.max(1, retPageIdx - 1);
-    renderReturn();
-  });
-  retNext?.addEventListener("click", () => {
-    retPageIdx = Math.min(totalPages(returnAll), retPageIdx + 1);
-    renderReturn();
-  });
-
-  // Payment modal
-  paymentBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    openPaymentModal();
-  });
-
-  pmClose?.addEventListener("click", closePaymentModal);
-  paymentModal?.addEventListener("click", (e) => {
-    if (e.target === paymentModal) closePaymentModal();
-  });
-
-  pmClear?.addEventListener("click", () => {
-    selectedPaymentMethods = [];
-    updatePaymentButtonLabel();
-    renderPaymentList();
-  });
-
-  pmDone?.addEventListener("click", () => {
-    updatePaymentButtonLabel();
-    closePaymentModal();
-  });
-
-  // Initial pager state
-  renderPager("out");
-  renderPager("ret");
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  // Set defaults if empty
-  if (departInput && !departInput.value) departInput.value = "2025-12-17";
-  if (returnInput && !returnInput.value) returnInput.value = "2025-12-24";
-
-  await loadPaymentOptions();
-  wire();
-  updatePaymentButtonLabel();
-
-  console.log("[SkyDeal] frontend ready");
-});
+function totalPages(items
