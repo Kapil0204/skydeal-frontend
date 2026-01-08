@@ -400,12 +400,52 @@ function renderPaymentList() {
     });
   });
 }
+function normalizePmNameForUI(name) {
+  const s = (name ?? "").toString().trim().replace(/\s+/g, " ");
+  if (!s) return "";
+  // Title-case-ish, but preserve ALLCAPS acronyms like HDFC/ICICI/HSBC
+  const upper = s.toUpperCase();
+  const acronyms = ["HDFC", "ICICI", "HSBC", "SBI", "RBL", "IDFC", "PNB", "BOB", "AXIS", "KOTAK", "YES", "AU"];
+  for (const a of acronyms) {
+    if (upper === a || upper.startsWith(a + " ")) return upper.replace(/\bBANK\b/i, "Bank");
+  }
+  // Default: capitalize words
+  return s
+    .split(" ")
+    .map(w => w.length <= 2 ? w.toUpperCase() : (w[0].toUpperCase() + w.slice(1).toLowerCase()))
+    .join(" ");
+}
+
+function dedupePaymentOptions(options) {
+  const out = {};
+  for (const [type, arr] of Object.entries(options || {})) {
+    const list = Array.isArray(arr) ? arr : [];
+    const seen = new Set();
+    const cleaned = [];
+
+    for (const raw of list) {
+      const name = normalizePmNameForUI(raw);
+      const key = name.toLowerCase();
+
+      // drop junk/too-short tokens like "Au" (but keep "AU Bank" etc.)
+      if (!name) continue;
+      if (name.length <= 2) continue;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        cleaned.push(name);
+      }
+    }
+    out[type] = cleaned;
+  }
+  return out;
+}
 
 async function loadPaymentOptions() {
   try {
     const res = await fetch(`${BACKEND}/payment-options`);
     const data = await res.json();
-    paymentOptions = data?.options || {};
+    paymentOptions = dedupePaymentOptions(data?.options || {});
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
@@ -480,6 +520,8 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
+
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
