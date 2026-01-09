@@ -383,7 +383,8 @@ function toggleSelected(type, name, checked) {
 function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
-  const list = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
+  const raw = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
+const list = [...new Set(raw.map(x => String(x || "").trim()).filter(Boolean))];
 
   if (list.length === 0) {
     pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
