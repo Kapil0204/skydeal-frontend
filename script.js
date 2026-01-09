@@ -107,6 +107,16 @@ function displayFlightNumber(f) {
   return num || "—";
 }
 
+function flightKey(f) {
+  return [
+    (f?.airlineName || "").toString().trim().toLowerCase(),
+    displayFlightNumber(f),
+    fmtTime(f?.departureTime),
+    fmtTime(f?.arrivalTime),
+    Number.isFinite(f?.price) ? Math.round(f.price) : ""
+  ].join("|");
+}
+
 function money(n) {
   if (typeof n === "number" && !isNaN(n)) return `₹${Math.round(n)}`;
   const v = Number(String(n || "").replace(/[^\d.]/g, ""));
@@ -446,6 +456,19 @@ async function loadPaymentOptions() {
     const res = await fetch(`${BACKEND}/payment-options`);
     const data = await res.json();
     paymentOptions = dedupePaymentOptions(data?.options || {});
+     // Deduplicate within each payment type (case-insensitive)
+for (const k of Object.keys(paymentOptions)) {
+  const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
+  const seen = new Set();
+  paymentOptions[k] = arr.filter((name) => {
+    const norm = String(name || "").trim().toLowerCase();
+    if (!norm) return false;
+    if (seen.has(norm)) return false;
+    seen.add(norm);
+    return true;
+  });
+}
+
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
@@ -556,7 +579,7 @@ function showPortalCompare(flight) {
                     : ""
                 }
               </div>
-              <div style="font-weight:700;">${money(p.finalPrice)}</div>
+             <div style="font-weight:700;">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
             </div>`;
 
             const line2 = `<div>${formatOfferLine(p)}</div>`;
@@ -588,8 +611,9 @@ function flightCard(f) {
        </div>`
     : `<div class="best">Best: —</div>`;
 
-  return `
-    <div class="card">
+ const key = flightKey(f);
+return `
+  <div class="card" data-flightkey="${key}">
       <div class="row">
         <div class="air">
           <div>${name}</div>
@@ -613,10 +637,19 @@ function renderList(el, items) {
   }
   el.innerHTML = items.map(flightCard).join("");
 
-  const btns = el.querySelectorAll(".infoBtn");
-  btns.forEach((btn, idx) => {
-    btn.addEventListener("click", () => showPortalCompare(items[idx]));
+  el.querySelectorAll(".infoBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const card = btn.closest(".card");
+    const key = card?.getAttribute("data-flightkey");
+
+    // Search in BOTH arrays (because modal can be opened from outbound or return)
+    const all = [...(outboundAll || []), ...(returnAll || [])];
+    const flight = all.find((x) => flightKey(x) === key);
+
+    showPortalCompare(flight || null);
   });
+});
+
 }
 
 function renderOutbound() {
