@@ -231,6 +231,17 @@ function updatePaymentButtonLabel() {
 /* =========================
    Offer line formatter + T&C modal
    ========================= */
+function getTermsString(p) {
+  // ✅ Uses new backend field first, but remains backward compatible
+  if (p?.termsText && String(p.termsText).trim()) return String(p.termsText);
+  if (typeof p?.terms === "string" && p.terms.trim()) return p.terms;
+  if (p?.terms?.raw && String(p.terms.raw).trim()) return String(p.terms.raw);
+  try {
+    if (p?.terms && typeof p.terms === "object") return JSON.stringify(p.terms, null, 2);
+  } catch (_) {}
+  return "";
+}
+
 function formatOfferLine(p) {
   if (!p.applied) {
     return `<div style="opacity:.65;font-size:13px;">No offer available</div>`;
@@ -238,13 +249,15 @@ function formatOfferLine(p) {
 
   const offerText = safeText(p.rawDiscount, "Offer available");
   const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
-  const hasTerms = p.terms && String(p.terms).trim().length > 0;
+
+  const termsStr = getTermsString(p);
+  const hasTerms = !!(termsStr && termsStr.trim().length > 0);
 
   const tncBtn = hasTerms
     ? ` • <button 
           class="tncBtn"
           data-portal="${safeText(p.portal)}"
-          data-terms="${encodeURIComponent(String(p.terms))}"
+          data-terms="${encodeURIComponent(termsStr)}"
           style="
             background:transparent;
             border:1px solid rgba(255,255,255,.25);
@@ -384,7 +397,7 @@ function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
   const raw = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
-const list = [...new Set(raw.map(x => String(x || "").trim()).filter(Boolean))];
+  const list = [...new Set(raw.map(x => String(x || "").trim()).filter(Boolean))];
 
   if (list.length === 0) {
     pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
@@ -411,16 +424,15 @@ const list = [...new Set(raw.map(x => String(x || "").trim()).filter(Boolean))];
     });
   });
 }
+
 function normalizePmNameForUI(name) {
   const s = (name ?? "").toString().trim().replace(/\s+/g, " ");
   if (!s) return "";
-  // Title-case-ish, but preserve ALLCAPS acronyms like HDFC/ICICI/HSBC
   const upper = s.toUpperCase();
   const acronyms = ["HDFC", "ICICI", "HSBC", "SBI", "RBL", "IDFC", "PNB", "BOB", "AXIS", "KOTAK", "YES", "AU"];
   for (const a of acronyms) {
     if (upper === a || upper.startsWith(a + " ")) return upper.replace(/\bBANK\b/i, "Bank");
   }
-  // Default: capitalize words
   return s
     .split(" ")
     .map(w => w.length <= 2 ? w.toUpperCase() : (w[0].toUpperCase() + w.slice(1).toLowerCase()))
@@ -437,8 +449,6 @@ function dedupePaymentOptions(options) {
     for (const raw of list) {
       const name = normalizePmNameForUI(raw);
       const key = name.toLowerCase();
-
-      // drop junk/too-short tokens like "Au" (but keep "AU Bank" etc.)
       if (!name) continue;
       if (name.length <= 2) continue;
 
@@ -457,18 +467,18 @@ async function loadPaymentOptions() {
     const res = await fetch(`${BACKEND}/payment-options`);
     const data = await res.json();
     paymentOptions = dedupePaymentOptions(data?.options || {});
-     // Deduplicate within each payment type (case-insensitive)
-for (const k of Object.keys(paymentOptions)) {
-  const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
-  const seen = new Set();
-  paymentOptions[k] = arr.filter((name) => {
-    const norm = String(name || "").trim().toLowerCase();
-    if (!norm) return false;
-    if (seen.has(norm)) return false;
-    seen.add(norm);
-    return true;
-  });
-}
+
+    for (const k of Object.keys(paymentOptions)) {
+      const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
+      const seen = new Set();
+      paymentOptions[k] = arr.filter((name) => {
+        const norm = String(name || "").trim().toLowerCase();
+        if (!norm) return false;
+        if (seen.has(norm)) return false;
+        seen.add(norm);
+        return true;
+      });
+    }
 
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
@@ -544,8 +554,7 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
-   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
-
+  console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
@@ -580,7 +589,7 @@ function showPortalCompare(flight) {
                     : ""
                 }
               </div>
-             <div style="font-weight:700;">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
+              <div style="font-weight:700;">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
             </div>`;
 
             const line2 = `<div>${formatOfferLine(p)}</div>`;
@@ -612,9 +621,9 @@ function flightCard(f) {
        </div>`
     : `<div class="best">Best: —</div>`;
 
- const key = flightKey(f);
-return `
-  <div class="card" data-flightkey="${key}">
+  const key = flightKey(f);
+  return `
+    <div class="card" data-flightkey="${key}">
       <div class="row">
         <div class="air">
           <div>${name}</div>
@@ -639,18 +648,16 @@ function renderList(el, items) {
   el.innerHTML = items.map(flightCard).join("");
 
   el.querySelectorAll(".infoBtn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const card = btn.closest(".card");
-    const key = card?.getAttribute("data-flightkey");
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".card");
+      const key = card?.getAttribute("data-flightkey");
 
-    // Search in BOTH arrays (because modal can be opened from outbound or return)
-    const all = [...(outboundAll || []), ...(returnAll || [])];
-    const flight = all.find((x) => flightKey(x) === key);
+      const all = [...(outboundAll || []), ...(returnAll || [])];
+      const flight = all.find((x) => flightKey(x) === key);
 
-    showPortalCompare(flight || null);
+      showPortalCompare(flight || null);
+    });
   });
-});
-
 }
 
 function renderOutbound() {
@@ -685,7 +692,7 @@ async function handleSearch(e) {
     passengers: Number(paxSelect?.value || 1),
     travelClass: cabinSelect?.value || "economy",
 
-    // ✅ CRITICAL FIX: send structured selections so backend can match bank/type correctly
+    // ✅ send structured selections so backend can match bank/type correctly
     paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
   };
 
@@ -803,4 +810,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.log("[SkyDeal] frontend ready");
 });
-
