@@ -3,6 +3,7 @@
    - Payment modal (Mongo-driven)
    - Search (FlightAPI backend)
    - Pagination
+   - Optional sorting
    - Portal comparison popup
    ========================= */
 
@@ -44,7 +45,7 @@ const pmDone = document.getElementById("pmDone");
 const pmTabsContainer = document.querySelector(".pm-tabs");
 
 // ---------- State ----------
-let paymentOptions = {};
+let paymentOptions = {}; // { "Credit Card":[...], ... }
 let activePaymentType = "Credit Card";
 
 // ✅ Keep as objects: [{type,name}]
@@ -112,7 +113,7 @@ function flightKey(f) {
     displayFlightNumber(f),
     fmtTime(f?.departureTime),
     fmtTime(f?.arrivalTime),
-    Number.isFinite(f?.price) ? Math.round(f.price) : ""
+    Number.isFinite(f?.price) ? Math.round(f.price) : "",
   ].join("|");
 }
 
@@ -121,6 +122,17 @@ function money(n) {
   const v = Number(String(n || "").replace(/[^\d.]/g, ""));
   if (!isNaN(v)) return `₹${Math.round(v)}`;
   return "₹0";
+}
+
+function prettyPaymentLabel(label) {
+  const s = String(label || "");
+  // purely display: normalize emi/upi/wallet to uppercase tokens
+  return s
+    .replace(/\bemi\b/gi, "EMI")
+    .replace(/\bupi\b/gi, "UPI")
+    .replace(/\bnetbanking\b/gi, "NetBanking")
+    .replace(/\bcreditcard\b/gi, "Credit Card")
+    .replace(/\bdebitcard\b/gi, "Debit Card");
 }
 
 // ---------- OTA deep links ----------
@@ -201,21 +213,27 @@ function buildPortalSearchUrl(portal, payload) {
   if (portal === "Yatra") {
     const cabinLabel = normalizeCabinLabel(cabinRaw);
     const flight_depart_date = encodeURIComponent(depDDMMYYYY);
-    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(cabinLabel)}&ADT=${adults}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
+    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(
+      cabinLabel
+    )}&ADT=${adults}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
   }
 
   if (portal === "EaseMyTrip") {
     const fromCity = cityMap(from);
     const toCity = cityMap(to);
     const srch = `${from}-${fromCity}-India|${to}-${toCity}-India|${depDDMMYYYY}`;
-    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(srch)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=true&isdm=true&lang=en-us&CCODE=IN&curr=INR&apptype=B2C`;
+    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(
+      srch
+    )}&px=${adults}-0-0&cbn=0&ar=undefined&isow=true&isdm=true&lang=en-us&CCODE=IN&curr=INR&apptype=B2C`;
   }
 
   if (portal === "Cleartrip") {
     const cabinLabel = normalizeCabinLabel(cabinRaw);
     const originText = `${from}%20-%20${encodeURIComponent(cityMap(from))},%20IN`;
     const destText = `${to}%20-%20${encodeURIComponent(cityMap(to))},%20IN`;
-    return `https://www.cleartrip.com/flights/results?adults=${adults}&childs=0&infants=0&class=${encodeURIComponent(cabinLabel)}&depart_date=${encodeURIComponent(depDDMMYYYY)}&from=${from}&to=${to}&intl=n&origin=${originText}&destination=${destText}&return_date=&rnd_one=O&isCfw=false`;
+    return `https://www.cleartrip.com/flights/results?adults=${adults}&childs=0&infants=0&class=${encodeURIComponent(
+      cabinLabel
+    )}&depart_date=${encodeURIComponent(depDDMMYYYY)}&from=${from}&to=${to}&intl=n&origin=${originText}&destination=${destText}&return_date=&rnd_one=O&isCfw=false`;
   }
 
   return null;
@@ -256,10 +274,12 @@ function formatOfferLine(p) {
         >T&C</button>`
     : "";
 
+  const pay = p.paymentLabel ? prettyPaymentLabel(p.paymentLabel) : "";
+
   return `
     <div style="opacity:.85;font-size:13px;">
       Offer: ${offerText}${codeText}
-      ${p.paymentLabel ? `<div style="opacity:.85;margin-top:4px;">Payment: <b>${safeText(p.paymentLabel)}</b></div>` : ""}
+      ${pay ? `<div style="opacity:.85;margin-top:4px;">Payment: <b>${safeText(pay)}</b></div>` : ""}
       ${tncBtn}
     </div>
   `;
@@ -310,7 +330,7 @@ function closeTncModal() {
   modal.style.display = "none";
 }
 
-// Delegated click handler for T&C buttons
+// One global delegated click handler for all T&C buttons
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".tncBtn");
   if (!btn) return;
@@ -340,10 +360,7 @@ function renderPaymentTabs() {
 
   const types = Object.keys(paymentOptions || {}).filter((k) => Array.isArray(paymentOptions[k]));
   const ordered = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet", "EMI"];
-  const finalTypes = [
-    ...ordered.filter((t) => types.includes(t)),
-    ...types.filter((t) => !ordered.includes(t)),
-  ];
+  const finalTypes = [...ordered.filter((t) => types.includes(t)), ...types.filter((t) => !ordered.includes(t))];
 
   pmTabsContainer.innerHTML = finalTypes
     .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${t}</button>`)
@@ -360,9 +377,7 @@ function renderPaymentTabs() {
 }
 
 function isSelected(type, name) {
-  return selectedPaymentMethods.some(
-    (x) => x.type === type && x.name.toLowerCase().trim() === name.toLowerCase().trim()
-  );
+  return selectedPaymentMethods.some((x) => x.type === type && x.name.toLowerCase().trim() === name.toLowerCase().trim());
 }
 
 function toggleSelected(type, name, checked) {
@@ -383,7 +398,7 @@ function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
   const raw = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
-  const list = [...new Set(raw.map(x => String(x || "").trim()).filter(Boolean))];
+  const list = [...new Set(raw.map((x) => String(x || "").trim()).filter(Boolean))];
 
   if (list.length === 0) {
     pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
@@ -421,7 +436,7 @@ function normalizePmNameForUI(name) {
   }
   return s
     .split(" ")
-    .map(w => w.length <= 2 ? w.toUpperCase() : (w[0].toUpperCase() + w.slice(1).toLowerCase()))
+    .map((w) => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
     .join(" ");
 }
 
@@ -435,8 +450,10 @@ function dedupePaymentOptions(options) {
     for (const raw of list) {
       const name = normalizePmNameForUI(raw);
       const key = name.toLowerCase();
+
       if (!name) continue;
       if (name.length <= 2) continue;
+
       if (!seen.has(key)) {
         seen.add(key);
         cleaned.push(name);
@@ -453,6 +470,18 @@ async function loadPaymentOptions() {
     const data = await res.json();
     paymentOptions = dedupePaymentOptions(data?.options || {});
 
+    for (const k of Object.keys(paymentOptions)) {
+      const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
+      const seen = new Set();
+      paymentOptions[k] = arr.filter((name) => {
+        const norm = String(name || "").trim().toLowerCase();
+        if (!norm) return false;
+        if (seen.has(norm)) return false;
+        seen.add(norm);
+        return true;
+      });
+    }
+
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
@@ -466,7 +495,7 @@ async function loadPaymentOptions() {
   }
 }
 
-// ---------- Pagination ----------
+// ---------- Flight Results Rendering + Pagination ----------
 function slicePage(items, pageIdx) {
   const start = (pageIdx - 1) * PAGE_SIZE;
   return items.slice(start, start + PAGE_SIZE);
@@ -490,7 +519,6 @@ function renderPager(which) {
   }
 }
 
-// ---------- Portal Modal ----------
 function ensurePortalModal() {
   let modal = document.getElementById("portalCompareModal");
   if (modal) return modal;
@@ -528,6 +556,7 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+  console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
@@ -547,7 +576,16 @@ function showPortalCompare(flight) {
                 ${
                   href
                     ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
-                        style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:#2563eb;color:#ffffff;text-decoration:none;line-height:1;">
+                        style="
+                          font-size:12px;
+                          font-weight:600;
+                          padding:4px 8px;
+                          border-radius:6px;
+                          background:#2563eb;
+                          color:#ffffff;
+                          text-decoration:none;
+                          line-height:1;
+                        ">
                         Open
                       </a>`
                     : ""
@@ -567,7 +605,6 @@ function showPortalCompare(flight) {
   modal.style.display = "block";
 }
 
-// ---------- Cards ----------
 function flightCard(f) {
   const name = safeText(f.airlineName);
   const num = displayFlightNumber(f);
@@ -581,13 +618,12 @@ function flightCard(f) {
     ? `<div class="best">
          Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
          ${best.rawDiscount ? `<div style="opacity:.9;margin-top:4px;">Offer: ${safeText(best.rawDiscount)}</div>` : ""}
-         ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(best.paymentLabel)}</b></div>` : ""}
+         ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(prettyPaymentLabel(best.paymentLabel))}</b></div>` : ""}
          ${best.code ? `<div style="opacity:.9;">Code: <b>${safeText(best.code)}</b></div>` : ""}
        </div>`
     : `<div class="best">Best: —</div>`;
 
   const key = flightKey(f);
-
   return `
     <div class="card" data-flightkey="${key}">
       <div class="row">
@@ -617,8 +653,10 @@ function renderList(el, items) {
     btn.addEventListener("click", () => {
       const card = btn.closest(".card");
       const key = card?.getAttribute("data-flightkey");
+
       const all = [...(outboundAll || []), ...(returnAll || [])];
       const flight = all.find((x) => flightKey(x) === key);
+
       showPortalCompare(flight || null);
     });
   });
@@ -655,10 +693,13 @@ async function handleSearch(e) {
     tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
     passengers: Number(paxSelect?.value || 1),
     travelClass: cabinSelect?.value || "economy",
+
+    // ✅ send structured selections so backend can match bank/type correctly
     paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
   };
 
   lastSearchPayload = payload;
+  console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
 
   if (!payload.from || !payload.to || !payload.departureDate) {
     alert("Please enter From, To and Depart date.");
@@ -685,19 +726,12 @@ async function handleSearch(e) {
     const json = await res.json();
     console.log("[SkyDeal] /search meta", json?.meta);
 
-    // ✅ NEW: log offer buckets so you can confirm portal buckets are non-zero immediately
-    if (json?.meta?.offers?.byPortal) {
-      console.log("[SkyDeal] offers.byPortal", json.meta.offers.byPortal, "unknown:", json?.meta?.offers?.unknownPortalCount);
-    }
-
     if (!res.ok) {
       const msg = json?.meta?.error || `Backend error (${res.status})`;
       outboundAll = [];
       returnAll = [];
       outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
       returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
-      renderPager("out");
-      renderPager("ret");
       return;
     }
 
@@ -776,3 +810,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.log("[SkyDeal] frontend ready");
 });
+
