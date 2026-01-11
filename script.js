@@ -3,7 +3,6 @@
    - Payment modal (Mongo-driven)
    - Search (FlightAPI backend)
    - Pagination
-   - Optional sorting
    - Portal comparison popup
    ========================= */
 
@@ -45,7 +44,7 @@ const pmDone = document.getElementById("pmDone");
 const pmTabsContainer = document.querySelector(".pm-tabs");
 
 // ---------- State ----------
-let paymentOptions = {}; // { "Credit Card":[...], ... }
+let paymentOptions = {};
 let activePaymentType = "Credit Card";
 
 // ✅ Keep as objects: [{type,name}]
@@ -231,17 +230,6 @@ function updatePaymentButtonLabel() {
 /* =========================
    Offer line formatter + T&C modal
    ========================= */
-function getTermsString(p) {
-  // ✅ Uses new backend field first, but remains backward compatible
-  if (p?.termsText && String(p.termsText).trim()) return String(p.termsText);
-  if (typeof p?.terms === "string" && p.terms.trim()) return p.terms;
-  if (p?.terms?.raw && String(p.terms.raw).trim()) return String(p.terms.raw);
-  try {
-    if (p?.terms && typeof p.terms === "object") return JSON.stringify(p.terms, null, 2);
-  } catch (_) {}
-  return "";
-}
-
 function formatOfferLine(p) {
   if (!p.applied) {
     return `<div style="opacity:.65;font-size:13px;">No offer available</div>`;
@@ -249,15 +237,13 @@ function formatOfferLine(p) {
 
   const offerText = safeText(p.rawDiscount, "Offer available");
   const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
-
-  const termsStr = getTermsString(p);
-  const hasTerms = !!(termsStr && termsStr.trim().length > 0);
+  const hasTerms = p.terms && String(p.terms).trim().length > 0;
 
   const tncBtn = hasTerms
     ? ` • <button 
           class="tncBtn"
           data-portal="${safeText(p.portal)}"
-          data-terms="${encodeURIComponent(termsStr)}"
+          data-terms="${encodeURIComponent(String(p.terms))}"
           style="
             background:transparent;
             border:1px solid rgba(255,255,255,.25);
@@ -324,7 +310,7 @@ function closeTncModal() {
   modal.style.display = "none";
 }
 
-// One global delegated click handler for all T&C buttons
+// Delegated click handler for T&C buttons
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".tncBtn");
   if (!btn) return;
@@ -451,7 +437,6 @@ function dedupePaymentOptions(options) {
       const key = name.toLowerCase();
       if (!name) continue;
       if (name.length <= 2) continue;
-
       if (!seen.has(key)) {
         seen.add(key);
         cleaned.push(name);
@@ -468,18 +453,6 @@ async function loadPaymentOptions() {
     const data = await res.json();
     paymentOptions = dedupePaymentOptions(data?.options || {});
 
-    for (const k of Object.keys(paymentOptions)) {
-      const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
-      const seen = new Set();
-      paymentOptions[k] = arr.filter((name) => {
-        const norm = String(name || "").trim().toLowerCase();
-        if (!norm) return false;
-        if (seen.has(norm)) return false;
-        seen.add(norm);
-        return true;
-      });
-    }
-
     if (!paymentOptions[activePaymentType]) {
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
@@ -493,7 +466,7 @@ async function loadPaymentOptions() {
   }
 }
 
-// ---------- Flight Results Rendering + Pagination ----------
+// ---------- Pagination ----------
 function slicePage(items, pageIdx) {
   const start = (pageIdx - 1) * PAGE_SIZE;
   return items.slice(start, start + PAGE_SIZE);
@@ -517,6 +490,7 @@ function renderPager(which) {
   }
 }
 
+// ---------- Portal Modal ----------
 function ensurePortalModal() {
   let modal = document.getElementById("portalCompareModal");
   if (modal) return modal;
@@ -554,7 +528,6 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
-  console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
@@ -574,16 +547,7 @@ function showPortalCompare(flight) {
                 ${
                   href
                     ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
-                        style="
-                          font-size:12px;
-                          font-weight:600;
-                          padding:4px 8px;
-                          border-radius:6px;
-                          background:#2563eb;
-                          color:#ffffff;
-                          text-decoration:none;
-                          line-height:1;
-                        ">
+                        style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:#2563eb;color:#ffffff;text-decoration:none;line-height:1;">
                         Open
                       </a>`
                     : ""
@@ -603,6 +567,7 @@ function showPortalCompare(flight) {
   modal.style.display = "block";
 }
 
+// ---------- Cards ----------
 function flightCard(f) {
   const name = safeText(f.airlineName);
   const num = displayFlightNumber(f);
@@ -622,6 +587,7 @@ function flightCard(f) {
     : `<div class="best">Best: —</div>`;
 
   const key = flightKey(f);
+
   return `
     <div class="card" data-flightkey="${key}">
       <div class="row">
@@ -651,10 +617,8 @@ function renderList(el, items) {
     btn.addEventListener("click", () => {
       const card = btn.closest(".card");
       const key = card?.getAttribute("data-flightkey");
-
       const all = [...(outboundAll || []), ...(returnAll || [])];
       const flight = all.find((x) => flightKey(x) === key);
-
       showPortalCompare(flight || null);
     });
   });
@@ -691,16 +655,10 @@ async function handleSearch(e) {
     tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
     passengers: Number(paxSelect?.value || 1),
     travelClass: cabinSelect?.value || "economy",
-
-    // ✅ send structured selections so backend can match bank/type correctly
-    paymentMethods: Array.isArray(selectedPaymentMethods)
-  ? selectedPaymentMethods.map(x => ({ type: x.type, name: x.name }))
-  : [],
-
+    paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
   };
 
   lastSearchPayload = payload;
-  console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
 
   if (!payload.from || !payload.to || !payload.departureDate) {
     alert("Please enter From, To and Depart date.");
@@ -726,6 +684,11 @@ async function handleSearch(e) {
 
     const json = await res.json();
     console.log("[SkyDeal] /search meta", json?.meta);
+
+    // ✅ NEW: log offer buckets so you can confirm portal buckets are non-zero immediately
+    if (json?.meta?.offers?.byPortal) {
+      console.log("[SkyDeal] offers.byPortal", json.meta.offers.byPortal, "unknown:", json?.meta?.offers?.unknownPortalCount);
+    }
 
     if (!res.ok) {
       const msg = json?.meta?.error || `Backend error (${res.status})`;
@@ -804,8 +767,8 @@ function wire() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (departInput && !departInput.value) departInput.value = "2025-12-17";
-  if (returnInput && !returnInput.value) returnInput.value = "2025-12-24";
+  if (departInput && !departInput.value) departInput.value = "2026-01-15";
+  if (returnInput && !returnInput.value) returnInput.value = "2026-01-22";
 
   await loadPaymentOptions();
   wire();
