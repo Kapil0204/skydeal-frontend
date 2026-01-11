@@ -693,7 +693,10 @@ async function handleSearch(e) {
     travelClass: cabinSelect?.value || "economy",
 
     // ✅ send structured selections so backend can match bank/type correctly
-    paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
+    paymentMethods: Array.isArray(selectedPaymentMethods)
+  ? selectedPaymentMethods.map(x => ({ type: x.type, name: x.name }))
+  : [],
+
   };
 
   lastSearchPayload = payload;
