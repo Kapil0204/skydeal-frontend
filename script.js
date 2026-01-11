@@ -9,6 +9,34 @@
 
 const BACKEND = "https://skydeal-backend.onrender.com";
 
+async function loadPaymentOptions() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/payment-options`);
+    if (!res.ok) throw new Error(`payment-options failed: ${res.status}`);
+    const data = await res.json();
+
+    // Expecting: { usedFallback:false, options:{ EMI:[], CreditCard:[], ... } }
+    if (!data || !data.options) throw new Error("Invalid payment-options payload");
+
+    // ✅ IMPORTANT: call your existing render function here
+    // Replace this line with whatever your script currently uses to populate dropdown UI:
+    // renderPaymentDropdown(data.options);
+
+    console.log("✅ Payment options loaded:", data.options);
+  } catch (err) {
+    console.error("❌ Failed to load payment options:", err.message);
+    // optional: show small UI error if you have a status element
+    const el = document.getElementById("paymentOptionsStatus");
+    if (el) el.textContent = "Payment options failed to load. Refresh after backend deploy.";
+  }
+}
+
+// call on page load
+window.addEventListener("DOMContentLoaded", () => {
+  loadPaymentOptions();
+});
+
+
 // ---------- DOM (match your index.html ids) ----------
 const fromInput = document.getElementById("fromInput");
 const toInput = document.getElementById("toInput");
