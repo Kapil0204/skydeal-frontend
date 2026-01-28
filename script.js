@@ -495,8 +495,23 @@ function dedupePaymentOptions(options) {
 async function loadPaymentOptions() {
   try {
     const res = await fetch(`${BACKEND}/payment-options`);
-    const data = await res.json();
-    paymentOptions = dedupePaymentOptions(data?.options || {});
+const text = await res.text();
+
+if (!res.ok) {
+  console.error("payment-options failed:", res.status, text);
+  throw new Error(`payment-options failed: ${res.status}`);
+}
+
+let data;
+try {
+  data = JSON.parse(text);
+} catch (e) {
+  console.error("payment-options returned non-JSON:", text);
+  throw e;
+}
+
+paymentOptions = dedupePaymentOptions(data?.options || {});
+
 
     for (const k of Object.keys(paymentOptions)) {
       const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
