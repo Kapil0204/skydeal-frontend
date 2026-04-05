@@ -457,11 +457,33 @@ function renderPaymentList() {
 function normalizePmNameForUI(name) {
   const s = (name ?? "").toString().trim().replace(/\s+/g, " ");
   if (!s) return "";
-  const upper = s.toUpperCase();
-  const acronyms = ["HDFC", "ICICI", "HSBC", "SBI", "RBL", "IDFC", "PNB", "BOB", "AXIS", "KOTAK", "YES", "AU"];
-  for (const a of acronyms) {
-    if (upper === a || upper.startsWith(a + " ")) return upper.replace(/\bBANK\b/i, "Bank");
-  }
+
+  const u = s.toUpperCase();
+
+  if (u.includes("FLIPKART") && u.includes("AXIS")) return "Flipkart Axis Bank";
+  if (u.includes("AMAZON") && u.includes("ICICI")) return "Amazon Pay ICICI Bank";
+
+  if (u === "AXIS" || u === "AXIS BANK") return "Axis Bank";
+  if (u === "HDFC" || u === "HDFC BANK") return "HDFC Bank";
+  if (u === "ICICI" || u === "ICICI BANK") return "ICICI Bank";
+  if (u === "HSBC" || u === "HSBC BANK" || u === "HSBC CREDIT") return "HSBC";
+  if (u === "SBI" || u === "STATE BANK OF INDIA") return "SBI";
+  if (u === "KOTAK" || u === "KOTAK BANK" || u === "KOTAK MAHINDRA BANK" || u === "KOTAK BANK LTD") return "Kotak Bank";
+  if (u === "YES" || u === "YES BANK" || u === "YES BANK LTD") return "Yes Bank";
+  if (u === "RBL" || u === "RBL BANK" || u === "RBL BANK LTD") return "RBL Bank";
+  if (u === "FEDERAL" || u === "FEDERAL BANK" || u === "FEDERAL BANK LTD") return "Federal Bank";
+  if (u === "IDFC FIRST" || u === "IDFC FIRST BANK" || u === "IDFC FIRST BANK LTD" || u === "IDFC") return "IDFC First Bank";
+  if (u === "AU" || u === "AU BANK" || u === "AU SMALL FINANCE BANK" || u === "AU SMALL BANK") return "AU Bank";
+  if (u === "BOB" || u === "BANK OF BARODA" || u === "BOBCARD" || u === "BOBCARD LTD") return "Bank of Baroda";
+  if (u === "AMERICAN EXPRESS" || u === "AMEX") return "American Express";
+  if (u === "ONE" || u === "ONECARD" || u === "ONE CARD") return "OneCard";
+  if (u === "CENTRAL BANK OF INDIA") return "Central Bank of India";
+  if (u === "CANARA BANK") return "Canara Bank";
+  if (u === "J&K BANK" || u === "J AND K BANK") return "J&K Bank";
+  if (u === "BANK OF INDIA") return "Bank of India";
+  if (u === "DBS") return "DBS";
+  if (u === "RUPAY") return "RuPay";
+
   return s
     .split(" ")
     .map((w) => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
