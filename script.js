@@ -303,11 +303,19 @@ function formatOfferLine(p) {
     : "";
 
   const pay = p.paymentLabel ? prettyPaymentLabel(p.paymentLabel) : "";
+  const typeLine = p.offerTypeLabel
+    ? `<div style="opacity:.85;margin-top:4px;">Type: <b>${safeText(p.offerTypeLabel)}</b></div>`
+    : "";
+  const channelLine = p.channelLabel
+    ? `<div style="opacity:.85;margin-top:4px;">Channel: <b>${safeText(p.channelLabel)}</b></div>`
+    : "";
 
   return `
     <div style="opacity:.85;font-size:13px;">
       Offer: ${offerText}${codeText}
       ${pay ? `<div style="opacity:.85;margin-top:4px;">Payment: <b>${safeText(pay)}</b></div>` : ""}
+      ${typeLine}
+      ${channelLine}
       ${tncBtn}
     </div>
   `;
@@ -680,13 +688,15 @@ function flightCard(f) {
   const best = f.bestDeal;
 
   const bestLine = best
-    ? `<div class="best">
-         Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
-         ${best.rawDiscount ? `<div style="opacity:.9;margin-top:4px;">Offer: ${safeText(best.rawDiscount)}</div>` : ""}
-         ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(prettyPaymentLabel(best.paymentLabel))}</b></div>` : ""}
-         ${best.code ? `<div style="opacity:.9;">Code: <b>${safeText(best.code)}</b></div>` : ""}
-       </div>`
-    : `<div class="best">Best: —</div>`;
+  ? `<div class="best">
+       Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
+       ${best.rawDiscount ? `<div style="opacity:.9;margin-top:4px;">Offer: ${safeText(best.rawDiscount)}</div>` : ""}
+       ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(prettyPaymentLabel(best.paymentLabel))}</b></div>` : ""}
+       ${best.offerTypeLabel ? `<div style="opacity:.85;">Type: <b>${safeText(best.offerTypeLabel)}</b></div>` : ""}
+       ${best.channelLabel ? `<div style="opacity:.85;">Channel: <b>${safeText(best.channelLabel)}</b></div>` : ""}
+       ${best.code ? `<div style="opacity:.9;">Code: <b>${safeText(best.code)}</b></div>` : ""}
+     </div>`
+  : `<div class="best">Best: —</div>`;
 
   const key = flightKey(f);
   return `
