@@ -550,11 +550,11 @@ function renderSelectedPaymentMethodsSummary() {
   }
 
   host.innerHTML = selectedPaymentMethods
-    .map((pm, idx) => {
-            const label = paymentMethodDisplayLabel(pm);
+        .map((pm, idx) => {
+      const label = paymentMethodDisplayLabel(pm);
       const detail = paymentMethodDetailSummary(pm);
       const supportsOptionalDetails = ["Credit Card", "Debit Card", "EMI"].includes(pm.type);
-      return ` `
+      return `
         <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);">
           <div style="display:flex;flex-direction:column;line-height:1.1;">
             <span style="font-size:12px;font-weight:600;">${safeText(label)}</span>
