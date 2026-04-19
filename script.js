@@ -94,24 +94,120 @@ const CARD_NETWORK_OPTIONS = [
   "Visa",
   "Mastercard",
   "RuPay",
-  "American Express",
-  "Diners"
+  "American Express"
 ];
 
-const CARD_TYPE_OPTIONS = [
-  "Infinia",
-  "Diners",
-  "Regalia",
-  "Millennia",
-  "Tata Neu",
-  "Swiggy HDFC",
-  "Flipkart Axis",
-  "Amazon Pay ICICI",
-  "SBI Cashback",
-  "Business Card",
-  "Corporate Card",
-  "Other Card"
-];
+const CARD_TYPE_OPTIONS_BY_BANK = {
+  "HDFC Bank": [
+    "Infinia",
+    "Diners Club",
+    "Regalia",
+    "Millennia",
+    "Tata Neu",
+    "Swiggy HDFC",
+    "Other HDFC Card"
+  ],
+  "Axis Bank": [
+    "Flipkart Axis",
+    "Axis Vistara",
+    "Axis Atlas",
+    "Axis Ace",
+    "Axis Neo",
+    "Axis Rewards",
+    "Other Axis Card"
+  ],
+  "ICICI Bank": [
+    "Amazon Pay ICICI",
+    "Coral",
+    "Rubyx",
+    "Sapphiro",
+    "Emeralde",
+    "Other ICICI Card"
+  ],
+  "SBI": [
+    "SBI Cashback",
+    "SimplyCLICK",
+    "SimplySAVE",
+    "Prime",
+    "Elite",
+    "Other SBI Card"
+  ],
+  "HSBC": [
+    "HSBC Cashback",
+    "HSBC TravelOne",
+    "HSBC Premier",
+    "Other HSBC Card"
+  ],
+  "Kotak Bank": [
+    "Kotak White",
+    "Myntra Kotak",
+    "League",
+    "Zen",
+    "Other Kotak Card"
+  ],
+  "American Express": [
+    "Membership Rewards",
+    "SmartEarn",
+    "Gold Card",
+    "Platinum Travel",
+    "Other Amex Card"
+  ],
+  "IndusInd Bank": [
+    "Legend",
+    "Tiger",
+    "Pinnacle",
+    "Other IndusInd Card"
+  ],
+  "IDFC First Bank": [
+    "Select",
+    "Wealth",
+    "Classic",
+    "Other IDFC First Card"
+  ],
+  "AU Bank": [
+    "Altura",
+    "Zenith",
+    "Vetta",
+    "Other AU Card"
+  ],
+  "Yes Bank": [
+    "Prosperity",
+    "Marquee",
+    "Other Yes Bank Card"
+  ],
+  "Federal Bank": [
+    "Imperio",
+    "Scapia Federal",
+    "Other Federal Card"
+  ],
+  "Bank of Baroda": [
+    "BoB Premier",
+    "BoB Eterna",
+    "Other Bank of Baroda Card"
+  ],
+  "OneCard": [
+    "OneCard"
+  ],
+  "Other Credit Card": [
+    "Other Credit Card"
+  ]
+};
+
+const DEBIT_CARD_TYPE_OPTIONS_BY_BANK = {
+  "HDFC Bank": ["Classic", "Platinum", "EasyShop", "Signature", "Other HDFC Debit Card"],
+  "ICICI Bank": ["Classic", "Platinum", "Coral", "Sapphiro", "Other ICICI Debit Card"],
+  "Axis Bank": ["Classic", "EasyPay", "Priority", "Burgundy", "Other Axis Debit Card"],
+  "SBI": ["Classic", "Global", "Platinum", "Signature", "Other SBI Debit Card"],
+  "HSBC": ["Classic", "Platinum", "Other HSBC Debit Card"],
+  "Kotak Bank": ["Classic", "811", "Platinum", "Other Kotak Debit Card"],
+  "IndusInd Bank": ["Classic", "Signature", "Other IndusInd Debit Card"],
+  "IDFC First Bank": ["Classic", "Platinum", "Other IDFC First Debit Card"],
+  "AU Bank": ["Classic", "Platinum", "Other AU Debit Card"],
+  "Yes Bank": ["Classic", "Platinum", "Other Yes Bank Debit Card"],
+  "Federal Bank": ["Classic", "Visa Platinum", "Other Federal Debit Card"],
+  "Bank of Baroda": ["Classic", "Platinum", "Other Bank of Baroda Debit Card"],
+  "Other Debit Card": ["Other Debit Card"]
+};
 
 const CORPORATE_OPTIONS = [
   { label: "Personal", value: false },
@@ -389,6 +485,20 @@ function paymentMethodDisplayLabel(pm) {
   return pm.name || "—";
 }
 
+function getCardTypeOptionsForPaymentMethod(pm) {
+  if (!pm) return ["Other Card"];
+
+  if (pm.type === "Credit Card") {
+    return CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other Credit Card"];
+  }
+
+  if (pm.type === "Debit Card") {
+    return DEBIT_CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other Debit Card"];
+  }
+
+  return ["Other Card"];
+}
+
 function paymentMethodDetailSummary(pm) {
   if (!pm) return "";
 
@@ -441,22 +551,29 @@ function renderSelectedPaymentMethodsSummary() {
 
   host.innerHTML = selectedPaymentMethods
     .map((pm, idx) => {
-      const label = paymentMethodDisplayLabel(pm);
+            const label = paymentMethodDisplayLabel(pm);
       const detail = paymentMethodDetailSummary(pm);
-      return `
+      const supportsOptionalDetails = ["Credit Card", "Debit Card", "EMI"].includes(pm.type);
+      return ` `
         <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);">
           <div style="display:flex;flex-direction:column;line-height:1.1;">
             <span style="font-size:12px;font-weight:600;">${safeText(label)}</span>
             ${detail ? `<span style="font-size:11px;opacity:.75;">${safeText(detail)}</span>` : ""}
           </div>
-                    <button
-            type="button"
-            class="pm-edit-btn"
-            data-pm-index="${idx}"
-            style="background:transparent;border:0;color:#93c5fd;cursor:pointer;font-size:12px;"
-          >
-            ${detail ? "Edit optional details" : "Add optional details"}
-          </button>
+          ${
+            supportsOptionalDetails
+              ? `
+                <button
+                  type="button"
+                  class="pm-edit-btn"
+                  data-pm-index="${idx}"
+                  style="background:transparent;border:0;color:#93c5fd;cursor:pointer;font-size:12px;"
+                >
+                  ${detail ? "Edit optional details" : "Add optional details"}
+                </button>
+              `
+              : ""
+          }
         </div>
       `;
     })
@@ -583,7 +700,9 @@ function openPaymentDetailEditor(index) {
         ${UPI_PROVIDER_OPTIONS.map((name) => `<option value="${name}" ${pm.provider === name || paymentMethodDisplayLabel(pm) === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
     `;
-  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+    } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+    const cardTypeOptions = getCardTypeOptionsForPaymentMethod(pm);
+
     bodyEl.innerHTML = `
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">All details below are optional.</div>
 
@@ -596,7 +715,7 @@ function openPaymentDetailEditor(index) {
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card type / card family</label>
       <select id="pmDetailCardType" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
         <option value="">Not specified</option>
-        ${CARD_TYPE_OPTIONS.map((name) => `<option value="${name}" ${pm.cardFamily === name ? "selected" : ""}>${name}</option>`).join("")}
+        ${cardTypeOptions.map((name) => `<option value="${name}" ${pm.cardFamily === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">Personal vs corporate</label>
