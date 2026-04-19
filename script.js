@@ -1172,7 +1172,25 @@ function showPortalCompare(flight) {
               <div style="font-weight:700;">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
             </div>`;
 
-            const line2 = `<div>${formatOfferLine(p)}</div>`;
+                        const infoOffersHtml =
+              Array.isArray(p.infoOffers) && p.infoOffers.length > 0
+                ? `
+                  <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
+                    <div style="font-size:12px;opacity:.75;margin-bottom:6px;">Other possible offers</div>
+                    ${p.infoOffers
+                      .map((io) => `
+                        <div style="font-size:12px;opacity:.88;margin-bottom:6px;">
+                          <div><b>${safeText(io.title || io.couponCode || "Offer")}</b></div>
+                          ${io.rawDiscount ? `<div>${safeText(io.rawDiscount)}</div>` : ""}
+                          ${io.infoLabel ? `<div style="color:#fbbf24;">${safeText(io.infoLabel)}</div>` : ""}
+                        </div>
+                      `)
+                      .join("")}
+                  </div>
+                `
+                : "";
+
+            const line2 = `<div>${formatOfferLine(p)}${infoOffersHtml}</div>`;
             return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
           })
           .join("")}
