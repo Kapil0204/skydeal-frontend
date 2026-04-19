@@ -9,6 +9,86 @@
 
 const BACKEND = "https://skydeal-backend.onrender.com";
 
+const MASTER_PAYMENT_CATALOG = {
+  "Credit Card": [
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "SBI",
+    "HSBC",
+    "Kotak Bank",
+    "American Express",
+    "IndusInd Bank",
+    "IDFC First Bank",
+    "AU Bank",
+    "Yes Bank",
+    "Federal Bank",
+    "Bank of Baroda",
+    "OneCard",
+    "Other Credit Card"
+  ],
+  "Debit Card": [
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "SBI",
+    "HSBC",
+    "Kotak Bank",
+    "IndusInd Bank",
+    "IDFC First Bank",
+    "AU Bank",
+    "Yes Bank",
+    "Federal Bank",
+    "Bank of Baroda",
+    "Other Debit Card"
+  ],
+  "Net Banking": [
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "SBI",
+    "HSBC",
+    "Kotak Bank",
+    "IndusInd Bank",
+    "IDFC First Bank",
+    "AU Bank",
+    "Yes Bank",
+    "Federal Bank",
+    "Bank of Baroda",
+    "Other Net Banking"
+  ],
+  "UPI": [
+    "Google Pay",
+    "PhonePe",
+    "Paytm UPI",
+    "CRED",
+    "BHIM",
+    "Other UPI"
+  ],
+  "Wallet": [
+    "Amazon Pay",
+    "Paytm Wallet",
+    "Mobikwik",
+    "Freecharge",
+    "Other Wallet"
+  ],
+  "EMI": [
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "SBI",
+    "HSBC",
+    "Kotak Bank",
+    "IndusInd Bank",
+    "IDFC First Bank",
+    "AU Bank",
+    "Yes Bank",
+    "Federal Bank",
+    "Bank of Baroda",
+    "Other EMI"
+  ]
+};
+
 
 // ---------- DOM (match your index.html ids) ----------
 const fromInput = document.getElementById("fromInput");
@@ -49,7 +129,8 @@ const pmTabsContainer = document.querySelector(".pm-tabs");
 let paymentOptions = {}; // { "Credit Card":[...], ... }
 let activePaymentType = "Credit Card";
 
-// ✅ Keep as objects: [{type,name}]
+// ✅ Backward-compatible richer objects:
+// { type, name, provider, network, cardFamily, cardVariant, isCorporate, tenureMonths }
 let selectedPaymentMethods = [];
 
 let outboundAll = [];
@@ -239,6 +320,18 @@ function buildPortalSearchUrl(portal, payload) {
 
   return null;
 }
+function buildSelectedPaymentMethod(type, name) {
+  return {
+    type,
+    name,
+    provider: null,
+    network: null,
+    cardFamily: null,
+    cardVariant: null,
+    isCorporate: null,
+    tenureMonths: null
+  };
+}
 
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
@@ -394,7 +487,7 @@ function toggleSelected(type, name, checked) {
   const n = name;
 
   if (checked) {
-    if (!isSelected(t, n)) selectedPaymentMethods.push({ type: t, name: n });
+    if (!isSelected(t, n)) selectedPaymentMethods.push(buildSelectedPaymentMethod(t, n));
   } else {
     selectedPaymentMethods = selectedPaymentMethods.filter(
       (x) => !(x.type === t && x.name.toLowerCase().trim() === n.toLowerCase().trim())
@@ -495,26 +588,58 @@ function dedupePaymentOptions(options) {
   return out;
 }
 
+function mergeMasterCatalogWithBackend(backendOptions) {
+  const merged = {};
+  const allTypes = new Set([
+    ...Object.keys(MASTER_PAYMENT_CATALOG || {}),
+    ...Object.keys(backendOptions || {})
+  ]);
+
+  for (const type of allTypes) {
+    const masterList = Array.isArray(MASTER_PAYMENT_CATALOG[type]) ? MASTER_PAYMENT_CATALOG[type] : [];
+    const backendList = Array.isArray(backendOptions?.[type]) ? backendOptions[type] : [];
+
+    const combined = [...masterList, ...backendList];
+    const seen = new Set();
+    const finalList = [];
+
+    for (const raw of combined) {
+      const name = normalizePmNameForUI(raw);
+      const key = name.toLowerCase();
+
+      if (!name) continue;
+      if (!seen.has(key)) {
+        seen.add(key);
+        finalList.push(name);
+      }
+    }
+
+    merged[type] = finalList;
+  }
+
+  return merged;
+}
+
 async function loadPaymentOptions() {
   try {
     const res = await fetch(`${BACKEND}/payment-options`);
-const text = await res.text();
+    const text = await res.text();
 
-if (!res.ok) {
-  console.error("payment-options failed:", res.status, text);
-  throw new Error(`payment-options failed: ${res.status}`);
-}
+    if (!res.ok) {
+      console.error("payment-options failed:", res.status, text);
+      throw new Error(`payment-options failed: ${res.status}`);
+    }
 
-let data;
-try {
-  data = JSON.parse(text);
-} catch (e) {
-  console.error("payment-options returned non-JSON:", text);
-  throw e;
-}
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("payment-options returned non-JSON:", text);
+      throw e;
+    }
 
-paymentOptions = dedupePaymentOptions(data?.options || {});
-
+    const backendOptions = dedupePaymentOptions(data?.options || {});
+    paymentOptions = mergeMasterCatalogWithBackend(backendOptions);
 
     for (const k of Object.keys(paymentOptions)) {
       const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
@@ -532,11 +657,15 @@ paymentOptions = dedupePaymentOptions(data?.options || {});
       const keys = Object.keys(paymentOptions);
       activePaymentType = keys[0] || "Credit Card";
     }
+
     renderPaymentTabs();
     updatePaymentButtonLabel();
   } catch (e) {
     console.error("[SkyDeal] payment-options failed", e);
-    paymentOptions = {};
+
+    // Safe fallback: still show master catalog even if backend call fails
+    paymentOptions = mergeMasterCatalogWithBackend({});
+    renderPaymentTabs();
     updatePaymentButtonLabel();
   }
 }
