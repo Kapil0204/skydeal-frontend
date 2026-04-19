@@ -88,7 +88,29 @@ const MASTER_PAYMENT_CATALOG = {
     "Other EMI"
   ]
 };
+const EMI_TENURE_OPTIONS = [3, 6, 9, 12, 18, 24];
 
+const CARD_NETWORK_OPTIONS = [
+  "Visa",
+  "Mastercard",
+  "RuPay",
+  "American Express",
+  "Diners"
+];
+
+const CORPORATE_OPTIONS = [
+  { label: "Personal", value: false },
+  { label: "Corporate", value: true }
+];
+
+const UPI_PROVIDER_OPTIONS = [
+  "Google Pay",
+  "PhonePe",
+  "Paytm UPI",
+  "CRED",
+  "BHIM",
+  "Other UPI"
+];
 
 // ---------- DOM (match your index.html ids) ----------
 const fromInput = document.getElementById("fromInput");
@@ -124,6 +146,8 @@ const pmDone = document.getElementById("pmDone");
 
 // Tabs container
 const pmTabsContainer = document.querySelector(".pm-tabs");
+// Payment details editor
+let editingPaymentIndex = null;
 
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
@@ -321,7 +345,7 @@ function buildPortalSearchUrl(portal, payload) {
   return null;
 }
 function buildSelectedPaymentMethod(type, name) {
-  return {
+  const obj = {
     type,
     name,
     provider: null,
@@ -331,12 +355,237 @@ function buildSelectedPaymentMethod(type, name) {
     isCorporate: null,
     tenureMonths: null
   };
+
+  if (type === "UPI") {
+    obj.provider = name;
+    obj.name = "UPI";
+  }
+
+  return obj;
+}
+
+function paymentMethodDisplayLabel(pm) {
+  if (!pm) return "—";
+
+  if (pm.type === "UPI") {
+    return pm.provider || pm.name || "UPI";
+  }
+
+  return pm.name || "—";
+}
+
+function paymentMethodDetailSummary(pm) {
+  if (!pm) return "";
+
+  const parts = [];
+
+  if (pm.type === "EMI" && Number.isFinite(pm.tenureMonths)) {
+    parts.push(`${pm.tenureMonths} months`);
+  }
+
+  if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.network) {
+    parts.push(pm.network);
+  }
+
+  if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.isCorporate === true) {
+    parts.push("Corporate");
+  } else if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.isCorporate === false) {
+    parts.push("Personal");
+  }
+
+  if (pm.type === "UPI" && pm.provider) {
+    parts.push(pm.provider);
+  }
+
+  return parts.join(" • ");
+}
+
+function renderSelectedPaymentMethodsSummary() {
+  let host = document.getElementById("selectedPmSummary");
+
+  if (!paymentBtn) return;
+
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "selectedPmSummary";
+    host.style.marginTop = "8px";
+    host.style.display = "flex";
+    host.style.flexWrap = "wrap";
+    host.style.gap = "8px";
+    paymentBtn.insertAdjacentElement("afterend", host);
+  }
+
+  if (!Array.isArray(selectedPaymentMethods) || selectedPaymentMethods.length === 0) {
+    host.innerHTML = "";
+    return;
+  }
+
+  host.innerHTML = selectedPaymentMethods
+    .map((pm, idx) => {
+      const label = paymentMethodDisplayLabel(pm);
+      const detail = paymentMethodDetailSummary(pm);
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);">
+          <div style="display:flex;flex-direction:column;line-height:1.1;">
+            <span style="font-size:12px;font-weight:600;">${safeText(label)}</span>
+            ${detail ? `<span style="font-size:11px;opacity:.75;">${safeText(detail)}</span>` : ""}
+          </div>
+          <button
+            type="button"
+            class="pm-edit-btn"
+            data-pm-index="${idx}"
+            style="background:transparent;border:0;color:#93c5fd;cursor:pointer;font-size:12px;"
+          >
+            Edit details
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+
+  host.querySelectorAll(".pm-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.getAttribute("data-pm-index"));
+      openPaymentDetailEditor(idx);
+    });
+  });
+}
+
+function ensurePaymentDetailModal() {
+  let modal = document.getElementById("pmDetailModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "pmDetailModal";
+  modal.className = "modal";
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.position = "fixed";
+  modal.style.inset = "0";
+  modal.style.background = "rgba(0,0,0,.55)";
+  modal.style.display = "none";
+  modal.style.zIndex = "10001";
+
+  modal.innerHTML = `
+    <div style="max-width:520px;margin:8vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div id="pmDetailTitle" style="font-size:16px;font-weight:700;">Payment details</div>
+        <button id="pmDetailClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+      </div>
+
+      <div id="pmDetailBody" style="margin-top:14px;"></div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button id="pmDetailCancel" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e5e7eb;cursor:pointer;">Cancel</button>
+        <button id="pmDetailSave" type="button" style="padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer;">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => {
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    editingPaymentIndex = null;
+  };
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector("#pmDetailClose").addEventListener("click", close);
+  modal.querySelector("#pmDetailCancel").addEventListener("click", close);
+
+  modal.querySelector("#pmDetailSave").addEventListener("click", () => {
+    if (editingPaymentIndex == null) return;
+
+    const pm = selectedPaymentMethods[editingPaymentIndex];
+    if (!pm) return;
+
+    if (pm.type === "EMI") {
+      const tenureEl = document.getElementById("pmDetailTenure");
+      pm.tenureMonths = tenureEl && tenureEl.value ? Number(tenureEl.value) : null;
+    }
+
+    if (pm.type === "UPI") {
+      const providerEl = document.getElementById("pmDetailProvider");
+      pm.provider = providerEl && providerEl.value ? providerEl.value : pm.provider || null;
+      pm.name = "UPI";
+    }
+
+    if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+      const networkEl = document.getElementById("pmDetailNetwork");
+      const corpEl = document.getElementById("pmDetailCorporate");
+
+      pm.network = networkEl && networkEl.value ? networkEl.value : null;
+
+      if (corpEl && corpEl.value === "true") pm.isCorporate = true;
+      else if (corpEl && corpEl.value === "false") pm.isCorporate = false;
+      else pm.isCorporate = null;
+    }
+
+    renderSelectedPaymentMethodsSummary();
+    updatePaymentButtonLabel();
+    close();
+  });
+
+  return modal;
+}
+
+function openPaymentDetailEditor(index) {
+  const pm = selectedPaymentMethods[index];
+  if (!pm) return;
+
+  editingPaymentIndex = index;
+
+  const modal = ensurePaymentDetailModal();
+  const titleEl = modal.querySelector("#pmDetailTitle");
+  const bodyEl = modal.querySelector("#pmDetailBody");
+
+  titleEl.textContent = `Details — ${paymentMethodDisplayLabel(pm)}`;
+
+  if (pm.type === "EMI") {
+    bodyEl.innerHTML = `
+      <label style="display:block;font-size:13px;margin-bottom:8px;">EMI tenure</label>
+      <select id="pmDetailTenure" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+        <option value="">Not specified</option>
+        ${EMI_TENURE_OPTIONS.map((n) => `<option value="${n}" ${pm.tenureMonths === n ? "selected" : ""}>${n} months</option>`).join("")}
+      </select>
+    `;
+  } else if (pm.type === "UPI") {
+    bodyEl.innerHTML = `
+      <label style="display:block;font-size:13px;margin-bottom:8px;">UPI provider</label>
+      <select id="pmDetailProvider" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+        ${UPI_PROVIDER_OPTIONS.map((name) => `<option value="${name}" ${pm.provider === name || paymentMethodDisplayLabel(pm) === name ? "selected" : ""}>${name}</option>`).join("")}
+      </select>
+    `;
+  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+    bodyEl.innerHTML = `
+      <label style="display:block;font-size:13px;margin-bottom:8px;">Card network</label>
+      <select id="pmDetailNetwork" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
+        <option value="">Not specified</option>
+        ${CARD_NETWORK_OPTIONS.map((name) => `<option value="${name}" ${pm.network === name ? "selected" : ""}>${name}</option>`).join("")}
+      </select>
+
+      <label style="display:block;font-size:13px;margin-bottom:8px;">Card type</label>
+      <select id="pmDetailCorporate" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+        <option value="" ${pm.isCorporate == null ? "selected" : ""}>Not specified</option>
+        ${CORPORATE_OPTIONS.map((opt) => `<option value="${opt.value}" ${pm.isCorporate === opt.value ? "selected" : ""}>${opt.label}</option>`).join("")}
+      </select>
+    `;
+  } else {
+    bodyEl.innerHTML = `<div style="opacity:.8;">No extra details available for this payment method yet.</div>`;
+  }
+
+  modal.style.display = "block";
+  modal.setAttribute("aria-hidden", "false");
 }
 
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
   if (pmCount) pmCount.textContent = String(n);
   if (paymentBtn) paymentBtn.textContent = `Payment methods (${n})`;
+  renderSelectedPaymentMethodsSummary();
 }
 
 /* =========================
