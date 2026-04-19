@@ -98,6 +98,21 @@ const CARD_NETWORK_OPTIONS = [
   "Diners"
 ];
 
+const CARD_TYPE_OPTIONS = [
+  "Infinia",
+  "Diners",
+  "Regalia",
+  "Millennia",
+  "Tata Neu",
+  "Swiggy HDFC",
+  "Flipkart Axis",
+  "Amazon Pay ICICI",
+  "SBI Cashback",
+  "Business Card",
+  "Corporate Card",
+  "Other Card"
+];
+
 const CORPORATE_OPTIONS = [
   { label: "Personal", value: false },
   { label: "Corporate", value: true }
@@ -387,6 +402,10 @@ function paymentMethodDetailSummary(pm) {
     parts.push(pm.network);
   }
 
+  if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.cardFamily) {
+    parts.push(pm.cardFamily);
+  }
+
   if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.isCorporate === true) {
     parts.push("Corporate");
   } else if ((pm.type === "Credit Card" || pm.type === "Debit Card") && pm.isCorporate === false) {
@@ -430,13 +449,13 @@ function renderSelectedPaymentMethodsSummary() {
             <span style="font-size:12px;font-weight:600;">${safeText(label)}</span>
             ${detail ? `<span style="font-size:11px;opacity:.75;">${safeText(detail)}</span>` : ""}
           </div>
-          <button
+                    <button
             type="button"
             class="pm-edit-btn"
             data-pm-index="${idx}"
             style="background:transparent;border:0;color:#93c5fd;cursor:pointer;font-size:12px;"
           >
-            Edit details
+            ${detail ? "Edit optional details" : "Add optional details"}
           </button>
         </div>
       `;
@@ -513,17 +532,18 @@ function ensurePaymentDetailModal() {
       pm.name = "UPI";
     }
 
-    if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+        if (pm.type === "Credit Card" || pm.type === "Debit Card") {
       const networkEl = document.getElementById("pmDetailNetwork");
+      const cardTypeEl = document.getElementById("pmDetailCardType");
       const corpEl = document.getElementById("pmDetailCorporate");
 
       pm.network = networkEl && networkEl.value ? networkEl.value : null;
+      pm.cardFamily = cardTypeEl && cardTypeEl.value ? cardTypeEl.value : null;
 
       if (corpEl && corpEl.value === "true") pm.isCorporate = true;
       else if (corpEl && corpEl.value === "false") pm.isCorporate = false;
       else pm.isCorporate = null;
     }
-
     renderSelectedPaymentMethodsSummary();
     updatePaymentButtonLabel();
     close();
@@ -544,30 +564,44 @@ function openPaymentDetailEditor(index) {
 
   titleEl.textContent = `Details — ${paymentMethodDisplayLabel(pm)}`;
 
-  if (pm.type === "EMI") {
+   if (pm.type === "EMI") {
     bodyEl.innerHTML = `
+      <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more accurate EMI offer matching.</div>
+
       <label style="display:block;font-size:13px;margin-bottom:8px;">EMI tenure</label>
       <select id="pmDetailTenure" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
         <option value="">Not specified</option>
         ${EMI_TENURE_OPTIONS.map((n) => `<option value="${n}" ${pm.tenureMonths === n ? "selected" : ""}>${n} months</option>`).join("")}
       </select>
     `;
-  } else if (pm.type === "UPI") {
+    `
+   } else if (pm.type === "UPI") {
     bodyEl.innerHTML = `
+      <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more precise UPI-offer matching.</div>
+
       <label style="display:block;font-size:13px;margin-bottom:8px;">UPI provider</label>
       <select id="pmDetailProvider" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
         ${UPI_PROVIDER_OPTIONS.map((name) => `<option value="${name}" ${pm.provider === name || paymentMethodDisplayLabel(pm) === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
     `;
-  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+ 
+    `  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
     bodyEl.innerHTML = `
+      <div style="opacity:.8;font-size:12px;margin-bottom:12px;">All details below are optional.</div>
+
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card network</label>
       <select id="pmDetailNetwork" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
         <option value="">Not specified</option>
         ${CARD_NETWORK_OPTIONS.map((name) => `<option value="${name}" ${pm.network === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
 
-      <label style="display:block;font-size:13px;margin-bottom:8px;">Card type</label>
+      <label style="display:block;font-size:13px;margin-bottom:8px;">Card type / card family</label>
+      <select id="pmDetailCardType" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
+        <option value="">Not specified</option>
+        ${CARD_TYPE_OPTIONS.map((name) => `<option value="${name}" ${pm.cardFamily === name ? "selected" : ""}>${name}</option>`).join("")}
+      </select>
+
+      <label style="display:block;font-size:13px;margin-bottom:8px;">Personal vs corporate</label>
       <select id="pmDetailCorporate" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
         <option value="" ${pm.isCorporate == null ? "selected" : ""}>Not specified</option>
         ${CORPORATE_OPTIONS.map((opt) => `<option value="${opt.value}" ${pm.isCorporate === opt.value ? "selected" : ""}>${opt.label}</option>`).join("")}
