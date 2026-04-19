@@ -601,7 +601,7 @@ function mergeMasterCatalogWithBackend(backendOptions) {
 
     const combined = [...masterList, ...backendList];
     const seen = new Set();
-    const finalList = [];
+    let finalList = [];
 
     for (const raw of combined) {
       const name = normalizePmNameForUI(raw);
@@ -613,6 +613,9 @@ function mergeMasterCatalogWithBackend(backendOptions) {
         finalList.push(name);
       }
     }
+
+    // ✅ NEW: alphabetical sorting (case-insensitive, clean UX)
+    finalList.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
     merged[type] = finalList;
   }
