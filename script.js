@@ -564,7 +564,7 @@ function openPaymentDetailEditor(index) {
 
   titleEl.textContent = `Details — ${paymentMethodDisplayLabel(pm)}`;
 
-   if (pm.type === "EMI") {
+     if (pm.type === "EMI") {
     bodyEl.innerHTML = `
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more accurate EMI offer matching.</div>
 
@@ -574,8 +574,7 @@ function openPaymentDetailEditor(index) {
         ${EMI_TENURE_OPTIONS.map((n) => `<option value="${n}" ${pm.tenureMonths === n ? "selected" : ""}>${n} months</option>`).join("")}
       </select>
     `;
-    `
-   } else if (pm.type === "UPI") {
+  } else if (pm.type === "UPI") {
     bodyEl.innerHTML = `
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more precise UPI-offer matching.</div>
 
@@ -584,8 +583,7 @@ function openPaymentDetailEditor(index) {
         ${UPI_PROVIDER_OPTIONS.map((name) => `<option value="${name}" ${pm.provider === name || paymentMethodDisplayLabel(pm) === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
     `;
- 
-    `  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+  } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
     bodyEl.innerHTML = `
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">All details below are optional.</div>
 
