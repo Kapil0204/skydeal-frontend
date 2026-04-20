@@ -6,7 +6,7 @@
    - Optional sorting
    - Portal comparison popup
    ========================= */
-
+import { AIRPORTS } from "./airports.js";
 const BACKEND = "https://skydeal-backend.onrender.com";
 
 const MASTER_PAYMENT_CATALOG = {
@@ -275,28 +275,6 @@ let returnAll = [];
 let lastSearchPayload = null;
 
 const PAGE_SIZE = 6;
-const LOCATION_CATALOG = [
-  { code: "BOM", city: "Mumbai", airport: "Mumbai", aliases: ["Bombay", "Mumbai", "BOM"] },
-  { code: "DEL", city: "Delhi", airport: "Delhi", aliases: ["Delhi", "New Delhi", "DEL"] },
-  { code: "BLR", city: "Bengaluru", airport: "Bengaluru", aliases: ["Bangalore", "Bengaluru", "BLR"] },
-  { code: "HYD", city: "Hyderabad", airport: "Hyderabad", aliases: ["Hyderabad", "HYD"] },
-  { code: "MAA", city: "Chennai", airport: "Chennai", aliases: ["Madras", "Chennai", "MAA"] },
-  { code: "CCU", city: "Kolkata", airport: "Kolkata", aliases: ["Calcutta", "Kolkata", "CCU"] },
-  { code: "PNQ", city: "Pune", airport: "Pune", aliases: ["Pune", "PNQ"] },
-  { code: "GOI", city: "Goa", airport: "Goa", aliases: ["Goa", "GOI", "Dabolim", "Mopa"] },
-  { code: "AMD", city: "Ahmedabad", airport: "Ahmedabad", aliases: ["Ahmedabad", "AMD"] },
-  { code: "COK", city: "Kochi", airport: "Kochi", aliases: ["Cochin", "Kochi", "COK"] },
-  { code: "TRV", city: "Thiruvananthapuram", airport: "Thiruvananthapuram", aliases: ["Trivandrum", "Thiruvananthapuram", "TRV"] },
-  { code: "IXC", city: "Chandigarh", airport: "Chandigarh", aliases: ["Chandigarh", "IXC"] },
-  { code: "JAI", city: "Jaipur", airport: "Jaipur", aliases: ["Jaipur", "JAI"] },
-  { code: "LKO", city: "Lucknow", airport: "Lucknow", aliases: ["Lucknow", "LKO"] },
-  { code: "PAT", city: "Patna", airport: "Patna", aliases: ["Patna", "PAT"] },
-  { code: "BBI", city: "Bhubaneswar", airport: "Bhubaneswar", aliases: ["Bhubaneswar", "Bhubaneshwar", "BBI"] },
-  { code: "NAG", city: "Nagpur", airport: "Nagpur", aliases: ["Nagpur", "NAG"] },
-  { code: "IDR", city: "Indore", airport: "Indore", aliases: ["Indore", "IDR"] },
-  { code: "DXB", city: "Dubai", airport: "Dubai", aliases: ["Dubai", "DXB"] },
-  { code: "SIN", city: "Singapore", airport: "Singapore", aliases: ["Singapore", "SIN"] }
-];
 
 let outPageIdx = 1;
 let retPageIdx = 1;
@@ -339,18 +317,23 @@ function searchLocations(query) {
   const q = normalizeLocationText(query);
   if (!q) return [];
 
-  return LOCATION_CATALOG.filter((item) => {
+  return AIRPORTS.filter((item) => {
     const hay = [
       item.code,
       item.city,
-      item.airport,
+      item.name,
       ...(item.aliases || [])
-    ]
-      .join(" ")
-      .toLowerCase();
+    ].join(" ").toLowerCase();
 
     return hay.includes(q);
-  }).slice(0, 8);
+  })
+  .sort((a, b) => {
+    // prioritise starts-with match
+    const aStarts = a.city.toLowerCase().startsWith(q);
+    const bStarts = b.city.toLowerCase().startsWith(q);
+    return bStarts - aStarts;
+  })
+  .slice(0, 8);
 }
 
 function resolveLocationToCode(value) {
@@ -387,8 +370,8 @@ function renderLocationSuggestions(inputEl, boxEl, query) {
   boxEl.innerHTML = results.map((item) => `
     <div class="location-option" data-code="${item.code}" data-label="${item.city}">
       <div>
-        <div class="location-option-main">${item.city}</div>
-        <div class="location-option-sub">${item.code}</div>
+        <div class="location-option-main">${item.city} (${item.code})</div>
+<div class="location-option-sub">${item.name}</div>
       </div>
       <div class="location-option-sub">${item.airport}</div>
     </div>
