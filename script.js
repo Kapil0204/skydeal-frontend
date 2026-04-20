@@ -765,7 +765,49 @@ function updatePaymentButtonLabel() {
   if (paymentBtn) paymentBtn.textContent = `Payment methods (${n})`;
   renderSelectedPaymentMethodsSummary();
 }
+function formatTermsForDisplay(terms) {
+  if (!terms) return "";
 
+  if (typeof terms === "string") {
+    return terms.trim();
+  }
+
+  if (typeof terms === "object") {
+    const parts = [];
+
+    if (terms.raw && String(terms.raw).trim()) {
+      parts.push(String(terms.raw).trim());
+    }
+
+    if (Array.isArray(terms.highlights) && terms.highlights.length) {
+      parts.push("Highlights:\n- " + terms.highlights.join("\n- "));
+    }
+
+    if (Array.isArray(terms.exclusions) && terms.exclusions.length) {
+      parts.push("Exclusions:\n- " + terms.exclusions.join("\n- "));
+    }
+
+    if (Array.isArray(terms.stepsToRedeem) && terms.stepsToRedeem.length) {
+      parts.push("How to use:\n- " + terms.stepsToRedeem.join("\n- "));
+    }
+
+    if (Array.isArray(terms.paymentConditions) && terms.paymentConditions.length) {
+      parts.push("Payment conditions:\n- " + terms.paymentConditions.join("\n- "));
+    }
+
+    if (Array.isArray(terms.routeOrAirlineRestrictions) && terms.routeOrAirlineRestrictions.length) {
+      parts.push("Route / airline restrictions:\n- " + terms.routeOrAirlineRestrictions.join("\n- "));
+    }
+
+    if (Array.isArray(terms.bookingChannel) && terms.bookingChannel.length) {
+      parts.push("Booking channels:\n- " + terms.bookingChannel.join("\n- "));
+    }
+
+    return parts.join("\n\n").trim();
+  }
+
+  return "";
+}
 /* =========================
    Offer line formatter + T&C modal
    ========================= */
@@ -774,15 +816,16 @@ function formatOfferLine(p) {
     return `<div style="opacity:.65;font-size:13px;">No offer available</div>`;
   }
 
-  const offerText = safeText(p.rawDiscount, "Offer available");
-  const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
-  const hasTerms = p.terms && String(p.terms).trim().length > 0;
+const offerText = safeText(p.rawDiscount, "Offer available");
+const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
+const termsText = formatTermsForDisplay(p.terms);
+const hasTerms = !!termsText;
 
-  const tncBtn = hasTerms
-    ? ` • <button 
-          class="tncBtn"
-          data-portal="${safeText(p.portal)}"
-          data-terms="${encodeURIComponent(String(p.terms))}"
+const tncBtn = hasTerms
+  ? ` • <button 
+        class="tncBtn"
+        data-portal="${safeText(p.portal)}"
+        data-terms="${encodeURIComponent(termsText)}"
           style="
             background:transparent;
             border:1px solid rgba(255,255,255,.25);
@@ -796,9 +839,13 @@ function formatOfferLine(p) {
     : "";
 
   const pay = p.paymentLabel ? prettyPaymentLabel(p.paymentLabel) : "";
-  const typeLine = p.offerTypeLabel
-    ? `<div style="opacity:.85;margin-top:4px;">Type: <b>${safeText(p.offerTypeLabel)}</b></div>`
-    : "";
+  const showTypeLabel =
+  p.offerTypeLabel &&
+  String(p.offerTypeLabel).trim().toLowerCase() !== "payment offer";
+
+const typeLine = showTypeLabel
+  ? `<div style="opacity:.85;margin-top:4px;">Type: <b>${safeText(p.offerTypeLabel)}</b></div>`
+  : "";
   const channelLine = p.channelLabel
     ? `<div style="opacity:.85;margin-top:4px;">Channel: <b>${safeText(p.channelLabel)}</b></div>`
     : "";
