@@ -328,7 +328,6 @@ function searchLocations(query) {
     return hay.includes(q);
   })
   .sort((a, b) => {
-    // prioritise starts-with match
     const aStarts = a.city.toLowerCase().startsWith(q);
     const bStarts = b.city.toLowerCase().startsWith(q);
     return bStarts - aStarts;
@@ -341,12 +340,12 @@ function resolveLocationToCode(value) {
   if (!raw) return "";
 
   const upper = raw.toUpperCase();
-  const exactCode = LOCATION_CATALOG.find((x) => x.code === upper);
+  const exactCode = AIRPORTS.find((x) => x.code === upper);
   if (exactCode) return exactCode.code;
 
   const lowered = raw.toLowerCase();
-  const exactAlias = LOCATION_CATALOG.find((x) =>
-    [x.city, x.airport, ...(x.aliases || [])]
+  const exactAlias = AIRPORTS.find((x) =>
+    [x.city, x.name, ...(x.aliases || [])]
       .filter(Boolean)
       .some((a) => String(a).toLowerCase() === lowered)
   );
