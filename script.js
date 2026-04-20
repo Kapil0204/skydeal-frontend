@@ -6,7 +6,7 @@
    - Optional sorting
    - Portal comparison popup
    ========================= */
-const AIRPORTS = [ ...full list... ];
+import { AIRPORTS } from "./airports.js";
 const BACKEND = "https://skydeal-backend.onrender.com";
 
 const MASTER_PAYMENT_CATALOG = {
