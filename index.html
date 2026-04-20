@@ -15,13 +15,15 @@
   <main class="wrap">
     <section class="search-card">
       <div class="grid">
-        <label>From
-          <input id="fromInput" placeholder="BOM" />
-        </label>
+        <label class="location-field">From
+  <input id="fromInput" placeholder="BOM / Mumbai / Bombay" autocomplete="off" />
+  <div id="fromSuggestions" class="location-suggestions"></div>
+</label>
 
-        <label>To
-          <input id="toInput" placeholder="DEL" />
-        </label>
+        <label class="location-field">To
+  <input id="toInput" placeholder="DEL / Delhi" autocomplete="off" />
+  <div id="toSuggestions" class="location-suggestions"></div>
+</label>
 
         <label>Depart
           <input id="departInput" type="date" />
