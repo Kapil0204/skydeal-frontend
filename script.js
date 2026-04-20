@@ -226,6 +226,8 @@ const UPI_PROVIDER_OPTIONS = [
 // ---------- DOM (match your index.html ids) ----------
 const fromInput = document.getElementById("fromInput");
 const toInput = document.getElementById("toInput");
+const fromSuggestions = document.getElementById("fromSuggestions");
+const toSuggestions = document.getElementById("toSuggestions");
 const departInput = document.getElementById("departInput");
 const returnInput = document.getElementById("returnInput");
 const paxSelect = document.getElementById("paxSelect");
@@ -273,6 +275,29 @@ let returnAll = [];
 let lastSearchPayload = null;
 
 const PAGE_SIZE = 6;
+const LOCATION_CATALOG = [
+  { code: "BOM", city: "Mumbai", airport: "Mumbai", aliases: ["Bombay", "Mumbai", "BOM"] },
+  { code: "DEL", city: "Delhi", airport: "Delhi", aliases: ["Delhi", "New Delhi", "DEL"] },
+  { code: "BLR", city: "Bengaluru", airport: "Bengaluru", aliases: ["Bangalore", "Bengaluru", "BLR"] },
+  { code: "HYD", city: "Hyderabad", airport: "Hyderabad", aliases: ["Hyderabad", "HYD"] },
+  { code: "MAA", city: "Chennai", airport: "Chennai", aliases: ["Madras", "Chennai", "MAA"] },
+  { code: "CCU", city: "Kolkata", airport: "Kolkata", aliases: ["Calcutta", "Kolkata", "CCU"] },
+  { code: "PNQ", city: "Pune", airport: "Pune", aliases: ["Pune", "PNQ"] },
+  { code: "GOI", city: "Goa", airport: "Goa", aliases: ["Goa", "GOI", "Dabolim", "Mopa"] },
+  { code: "AMD", city: "Ahmedabad", airport: "Ahmedabad", aliases: ["Ahmedabad", "AMD"] },
+  { code: "COK", city: "Kochi", airport: "Kochi", aliases: ["Cochin", "Kochi", "COK"] },
+  { code: "TRV", city: "Thiruvananthapuram", airport: "Thiruvananthapuram", aliases: ["Trivandrum", "Thiruvananthapuram", "TRV"] },
+  { code: "IXC", city: "Chandigarh", airport: "Chandigarh", aliases: ["Chandigarh", "IXC"] },
+  { code: "JAI", city: "Jaipur", airport: "Jaipur", aliases: ["Jaipur", "JAI"] },
+  { code: "LKO", city: "Lucknow", airport: "Lucknow", aliases: ["Lucknow", "LKO"] },
+  { code: "PAT", city: "Patna", airport: "Patna", aliases: ["Patna", "PAT"] },
+  { code: "BBI", city: "Bhubaneswar", airport: "Bhubaneswar", aliases: ["Bhubaneswar", "Bhubaneshwar", "BBI"] },
+  { code: "NAG", city: "Nagpur", airport: "Nagpur", aliases: ["Nagpur", "NAG"] },
+  { code: "IDR", city: "Indore", airport: "Indore", aliases: ["Indore", "IDR"] },
+  { code: "DXB", city: "Dubai", airport: "Dubai", aliases: ["Dubai", "DXB"] },
+  { code: "SIN", city: "Singapore", airport: "Singapore", aliases: ["Singapore", "SIN"] }
+];
+
 let outPageIdx = 1;
 let retPageIdx = 1;
 
@@ -289,6 +314,99 @@ function toISO(d) {
 function safeText(v, def = "—") {
   const s = v == null ? "" : String(v);
   return s.trim() ? s : def;
+}
+function normalizeLocationText(v) {
+  return String(v || "").trim().toLowerCase();
+}
+
+function searchLocations(query) {
+  const q = normalizeLocationText(query);
+  if (!q) return [];
+
+  return LOCATION_CATALOG.filter((item) => {
+    const hay = [
+      item.code,
+      item.city,
+      item.airport,
+      ...(item.aliases || [])
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return hay.includes(q);
+  }).slice(0, 8);
+}
+
+function resolveLocationToCode(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const upper = raw.toUpperCase();
+  const exactCode = LOCATION_CATALOG.find((x) => x.code === upper);
+  if (exactCode) return exactCode.code;
+
+  const lowered = raw.toLowerCase();
+  const exactAlias = LOCATION_CATALOG.find((x) =>
+    [x.city, x.airport, ...(x.aliases || [])]
+      .filter(Boolean)
+      .some((a) => String(a).toLowerCase() === lowered)
+  );
+  if (exactAlias) return exactAlias.code;
+
+  const partial = searchLocations(raw)[0];
+  return partial ? partial.code : upper;
+}
+
+function renderLocationSuggestions(inputEl, boxEl, query) {
+  if (!boxEl) return;
+
+  const results = searchLocations(query);
+
+  if (!query.trim() || results.length === 0) {
+    boxEl.innerHTML = "";
+    boxEl.classList.remove("open");
+    return;
+  }
+
+  boxEl.innerHTML = results.map((item) => `
+    <div class="location-option" data-code="${item.code}" data-label="${item.city}">
+      <div>
+        <div class="location-option-main">${item.city}</div>
+        <div class="location-option-sub">${item.code}</div>
+      </div>
+      <div class="location-option-sub">${item.airport}</div>
+    </div>
+  `).join("");
+
+  boxEl.classList.add("open");
+
+  boxEl.querySelectorAll(".location-option").forEach((el) => {
+    el.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const code = el.getAttribute("data-code") || "";
+      inputEl.value = code;
+      boxEl.classList.remove("open");
+      boxEl.innerHTML = "";
+    });
+  });
+}
+
+function wireLocationAutocomplete(inputEl, boxEl) {
+  if (!inputEl || !boxEl) return;
+
+  inputEl.addEventListener("input", () => {
+    renderLocationSuggestions(inputEl, boxEl, inputEl.value);
+  });
+
+  inputEl.addEventListener("focus", () => {
+    renderLocationSuggestions(inputEl, boxEl, inputEl.value);
+  });
+
+  inputEl.addEventListener("blur", () => {
+    setTimeout(() => {
+      boxEl.classList.remove("open");
+    }, 150);
+  });
 }
 
 function fmtTime(t) {
@@ -1442,8 +1560,8 @@ async function handleSearch(e) {
   e?.preventDefault?.();
 
   const payload = {
-    from: safeText(fromInput?.value, "").trim().toUpperCase(),
-    to: safeText(toInput?.value, "").trim().toUpperCase(),
+    from: resolveLocationToCode(safeText(fromInput?.value, "").trim()),
+to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     departureDate: toISO(departInput?.value || ""),
     returnDate: roundTripRadio?.checked ? toISO(returnInput?.value || "") : "",
     tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
@@ -1561,8 +1679,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (returnInput && !returnInput.value) returnInput.value = "2026-01-22";
 
   await loadPaymentOptions();
-  wire();
-  updatePaymentButtonLabel();
+wire();
+wireLocationAutocomplete(fromInput, fromSuggestions);
+wireLocationAutocomplete(toInput, toSuggestions);
+updatePaymentButtonLabel();
 
   console.log("[SkyDeal] frontend ready");
 });
