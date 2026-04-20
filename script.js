@@ -811,28 +811,93 @@ function formatTermsForDisplay(terms) {
 function cleanTermsText(text) {
   if (!text) return "";
 
-  let t = text;
+  let t = String(text);
 
-  // ❌ Remove useless references
-  t = t.replace(/table above/gi, "");
-  t = t.replace(/aforementioned/gi, "");
-  t = t.replace(/as mentioned/gi, "");
+  // -------------------------
+  // Remove noisy references
+  // -------------------------
+  t = t.replace(/\btable above\b/gi, "");
+  t = t.replace(/\baforementioned\b/gi, "");
+  t = t.replace(/\bas mentioned\b/gi, "");
+  t = t.replace(/\bas per table\b/gi, "");
+  t = t.replace(/\bas per aforementioned table\b/gi, "");
 
-  // ❌ Remove duplicate spaces
-  t = t.replace(/\s+/g, " ");
+  // -------------------------
+  // Fix common broken phrases
+  // -------------------------
+  t = t.replace(/\bin the on\b/gi, "on");
+  t = t.replace(/\bmust enter E\b/gi, "must enter the e-coupon");
+  t = t.replace(/\bCoupon as per table in the E\b/gi, "coupon in the e-coupon");
+  t = t.replace(/\bCoupon field\b/gi, "coupon field");
+  t = t.replace(/\bMulti\s*•\s*City\b/gi, "Multi-City");
+  t = t.replace(/\b3rd party\b/gi, "third-party");
+  t = t.replace(/\bPay Pal\b/gi, "PayPal");
+  t = t.replace(/\bGift card\b/gi, "gift card");
+  t = t.replace(/\bnet banking\b/gi, "net banking");
+  t = t.replace(/\bMy Wallet\b/gi, "My Wallet");
+  t = t.replace(/\bcommercial cards\b/gi, "commercial cards");
 
-  // ✅ Fix bullet formatting
-  t = t.replace(/-\s*/g, "\n• ");
+  // -------------------------
+  // Fix broken quoted phrases
+  // -------------------------
+  t = t.replace(/"Multi\s*City Flights"/gi, '"Multi-City Flights"');
+  t = t.replace(/"Multi\s*City"/gi, '"Multi-City"');
 
-  // ✅ Clean headings spacing
-  t = t.replace(/(Exclusions:|How to use:|Route.*?:|Booking channels:)/g, "\n\n$1");
+  // -------------------------
+  // Fix line-broken fragments
+  // -------------------------
+  t = t.replace(/([a-z])\s*\n\s*([a-z])/g, "$1 $2");
+  t = t.replace(/([A-Za-z])\s*\n\s*-\s*/g, "$1\n• ");
+  t = t.replace(/\n{3,}/g, "\n\n");
 
-  // ✅ Remove weird punctuation artifacts
-  t = t.replace(/\.\s*\./g, ".");
-  t = t.replace(/:\s*\./g, ":");
+  // -------------------------
+  // Normalize headings
+  // -------------------------
+  t = t.replace(/\bExclusions:\b/gi, "\n\nExclusions:");
+  t = t.replace(/\bHow to use:\b/gi, "\n\nHow to use:");
+  t = t.replace(/\bRoute ?\/ ?airline restrictions:\b/gi, "\n\nRoute / airline restrictions:");
+  t = t.replace(/\bBooking channels:\b/gi, "\n\nBooking channels:");
 
-  // ✅ Trim nicely
-  return t.trim();
+  // -------------------------
+  // Convert dash bullets to dots
+  // -------------------------
+  t = t.replace(/^\s*-\s*/gm, "• ");
+  t = t.replace(/^\s*•\s*/gm, "• ");
+
+  // -------------------------
+  // Collapse ugly spaces
+  // -------------------------
+  t = t.replace(/[ \t]+/g, " ");
+  t = t.replace(/ \./g, ".");
+  t = t.replace(/\s+,/g, ",");
+  t = t.replace(/\s+:/g, ":");
+  t = t.replace(/\(\s+/g, "(");
+  t = t.replace(/\s+\)/g, ")");
+
+  // -------------------------
+  // Targeted sentence repairs
+  // -------------------------
+  t = t.replace(
+    /Customers will get instant discount on HSBC Bank Credit Cards\./gi,
+    "Customers will get an instant discount on HSBC Bank Credit Cards."
+  );
+
+  t = t.replace(
+    /To avail the offer, customer must enter the e-coupon coupon in the e-coupon coupon field\./gi,
+    "To avail the offer, the customer must enter the e-coupon in the coupon field."
+  );
+
+  t = t.replace(
+    /The offer is not valid on "Multi-City Flights" made through the "Multi-City" tab on MakeMyTrip website\./gi,
+    'The offer is not valid on "Multi-City Flights" made through the "Multi-City" tab on the MakeMyTrip website.'
+  );
+
+  // -------------------------
+  // Final trim
+  // -------------------------
+  t = t.trim();
+
+  return t;
 }
 /* =========================
    Offer line formatter + T&C modal
