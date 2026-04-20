@@ -340,6 +340,35 @@ function money(n) {
   if (!isNaN(v)) return `₹${Math.round(v)}`;
   return "₹0";
 }
+function getSavingsAmount(basePrice, finalPrice) {
+  const b = Number(basePrice);
+  const f = Number(finalPrice);
+  if (!Number.isFinite(b) || !Number.isFinite(f)) return 0;
+  return Math.max(0, Math.round(b - f));
+}
+
+function renderBestDealSummary(bestDeal) {
+  if (!bestDeal || !bestDeal.applied) return "";
+
+  const savings = getSavingsAmount(bestDeal.basePrice, bestDeal.finalPrice);
+  const portal = safeText(bestDeal.portal || "Best portal");
+  const finalPrice = money(bestDeal.finalPrice);
+  const code = safeText(bestDeal.code || "");
+  const explain = safeText(bestDeal.explain || "");
+
+  return `
+    <div class="bestDealBanner">
+      <div class="bestDealTop">Best price: ${finalPrice} on ${portal}</div>
+      ${savings > 0 ? `<div class="bestDealSave">You save ${money(savings)}</div>` : ""}
+      ${code ? `<div class="bestDealCode">Offer code: <b>${code}</b></div>` : ""}
+      ${bestDeal.rawDiscount ? `<div class="bestDealDiscount">${safeText(bestDeal.rawDiscount)}</div>` : ""}
+      ${bestDeal.paymentLabel ? `<div class="bestDealMeta">Payment: <b>${safeText(prettyPaymentLabel(bestDeal.paymentLabel))}</b></div>` : ""}
+      ${bestDeal.offerTypeLabel ? `<div class="bestDealMeta">Type: <b>${safeText(bestDeal.offerTypeLabel)}</b></div>` : ""}
+      ${bestDeal.channelLabel ? `<div class="bestDealMeta">Channel: <b>${safeText(bestDeal.channelLabel)}</b></div>` : ""}
+      ${explain ? `<div class="bestDealExplain">${explain}</div>` : ""}
+    </div>
+  `;
+}
 
 function prettyPaymentLabel(label) {
   const s = String(label || "");
@@ -1210,16 +1239,9 @@ function flightCard(f) {
 
   const best = f.bestDeal;
 
-  const bestLine = best
-  ? `<div class="best">
-       Best: <b>${safeText(best.portal)}</b> • ${money(best.finalPrice)}
-       ${best.rawDiscount ? `<div style="opacity:.9;margin-top:4px;">Offer: ${safeText(best.rawDiscount)}</div>` : ""}
-       ${best.paymentLabel ? `<div style="opacity:.85;">Payment: <b>${safeText(prettyPaymentLabel(best.paymentLabel))}</b></div>` : ""}
-       ${best.offerTypeLabel ? `<div style="opacity:.85;">Type: <b>${safeText(best.offerTypeLabel)}</b></div>` : ""}
-       ${best.channelLabel ? `<div style="opacity:.85;">Channel: <b>${safeText(best.channelLabel)}</b></div>` : ""}
-       ${best.code ? `<div style="opacity:.9;">Code: <b>${safeText(best.code)}</b></div>` : ""}
-     </div>`
-  : `<div class="best">Best: —</div>`;
+    const bestLine = best
+    ? renderBestDealSummary(best)
+    : `<div class="best">Best: —</div>`;
 
   const key = flightKey(f);
   return `
@@ -1231,7 +1253,7 @@ function flightCard(f) {
         </div>
         <div class="times">${dep} → ${arr}</div>
         <div class="stops">${stops} stop(s)</div>
-        <div class="price">${money(best?.finalPrice ?? f.price)}</div>
+                <div class="price">${money(f.price)}</div>
         <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">👁</button>
       </div>
       ${bestLine}
