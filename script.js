@@ -803,10 +803,36 @@ function formatTermsForDisplay(terms) {
       parts.push("Booking channels:\n- " + terms.bookingChannel.join("\n- "));
     }
 
-    return parts.join("\n\n").trim();
+    return cleanTermsText(parts.join("\n\n").trim());
   }
 
   return "";
+}
+function cleanTermsText(text) {
+  if (!text) return "";
+
+  let t = text;
+
+  // ❌ Remove useless references
+  t = t.replace(/table above/gi, "");
+  t = t.replace(/aforementioned/gi, "");
+  t = t.replace(/as mentioned/gi, "");
+
+  // ❌ Remove duplicate spaces
+  t = t.replace(/\s+/g, " ");
+
+  // ✅ Fix bullet formatting
+  t = t.replace(/-\s*/g, "\n• ");
+
+  // ✅ Clean headings spacing
+  t = t.replace(/(Exclusions:|How to use:|Route.*?:|Booking channels:)/g, "\n\n$1");
+
+  // ✅ Remove weird punctuation artifacts
+  t = t.replace(/\.\s*\./g, ".");
+  t = t.replace(/:\s*\./g, ":");
+
+  // ✅ Trim nicely
+  return t.trim();
 }
 /* =========================
    Offer line formatter + T&C modal
