@@ -354,18 +354,16 @@ function renderBestDealSummary(bestDeal) {
   const portal = safeText(bestDeal.portal || "Best portal");
   const finalPrice = money(bestDeal.finalPrice);
   const code = safeText(bestDeal.code || "");
-  const explain = safeText(bestDeal.explain || "");
+  const payment = bestDeal.paymentLabel ? safeText(prettyPaymentLabel(bestDeal.paymentLabel)) : "";
 
   return `
     <div class="bestDealBanner">
-      <div class="bestDealTop">Best price: ${finalPrice} on ${portal}</div>
-      ${savings > 0 ? `<div class="bestDealSave">You save ${money(savings)}</div>` : ""}
-      ${code ? `<div class="bestDealCode">Offer code: <b>${code}</b></div>` : ""}
-      ${bestDeal.rawDiscount ? `<div class="bestDealDiscount">${safeText(bestDeal.rawDiscount)}</div>` : ""}
-      ${bestDeal.paymentLabel ? `<div class="bestDealMeta">Payment: <b>${safeText(prettyPaymentLabel(bestDeal.paymentLabel))}</b></div>` : ""}
-      ${bestDeal.offerTypeLabel ? `<div class="bestDealMeta">Type: <b>${safeText(bestDeal.offerTypeLabel)}</b></div>` : ""}
-      ${bestDeal.channelLabel ? `<div class="bestDealMeta">Channel: <b>${safeText(bestDeal.channelLabel)}</b></div>` : ""}
-      ${explain ? `<div class="bestDealExplain">${explain}</div>` : ""}
+      <div class="bestDealTopRow">
+        <div class="bestDealTop">Best ${finalPrice}</div>
+        <div class="bestDealPortal">on ${portal}</div>
+      </div>
+      ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
+      ${(payment || code) ? `<div class="bestDealMeta">${payment}${payment && code ? " • " : ""}${code ? `Code: ${code}` : ""}</div>` : ""}
     </div>
   `;
 }
