@@ -310,6 +310,22 @@ function toISO(d) {
   const t = new Date(d);
   return isNaN(t) ? "" : t.toISOString().slice(0, 10);
 }
+function todayISO() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function addDaysISO(iso, days) {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 function safeText(v, def = "—") {
   const s = v == null ? "" : String(v);
@@ -1552,8 +1568,18 @@ function renderReturn() {
 function toggleReturn() {
   const show = !!roundTripRadio?.checked;
   if (!returnInput) return;
+
+  const departVal = departInput?.value || todayISO();
   returnInput.disabled = !show;
   returnInput.parentElement?.classList?.toggle("disabled", !show);
+
+  returnInput.min = departVal;
+
+  if (show) {
+    if (!returnInput.value || returnInput.value < departVal) {
+      returnInput.value = addDaysISO(departVal, 7);
+    }
+  }
 }
 
 async function handleSearch(e) {
@@ -1628,8 +1654,9 @@ function wire() {
   searchBtn?.addEventListener("click", handleSearch);
 
   oneWayRadio?.addEventListener("change", toggleReturn);
-  roundTripRadio?.addEventListener("change", toggleReturn);
-  toggleReturn();
+roundTripRadio?.addEventListener("change", toggleReturn);
+departInput?.addEventListener("change", toggleReturn);
+toggleReturn();
 
   outPrev?.addEventListener("click", () => {
     outPageIdx = Math.max(1, outPageIdx - 1);
@@ -1675,8 +1702,18 @@ function wire() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (departInput && !departInput.value) departInput.value = "2026-01-15";
-  if (returnInput && !returnInput.value) returnInput.value = "2026-01-22";
+  const today = todayISO();
+const defaultReturn = addDaysISO(today, 7);
+
+if (departInput) {
+  departInput.min = today;
+  if (!departInput.value) departInput.value = today;
+}
+
+if (returnInput) {
+  returnInput.min = today;
+  if (!returnInput.value) returnInput.value = defaultReturn;
+}
 
   await loadPaymentOptions();
 wire();
