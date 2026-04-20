@@ -1161,55 +1161,35 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+  const bestPortal = flight?.bestDeal?.portal || null;
+
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
   } else {
     body.innerHTML = `
-      <div style="opacity:.85;margin-bottom:10px;">
+      <div class="portalCompareFlightHead">
         ${safeText(flight.airlineName)} (${displayFlightNumber(flight)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
+
+      <div class="portalCompareList">
         ${portalPrices
           .map((p) => {
             const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+            const isBest = bestPortal && p.portal === bestPortal;
 
-            const line1 = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-              <div style="font-weight:600;display:flex;gap:10px;align-items:center;">
-                <span>${safeText(p.portal)}</span>
-                ${
-                  href
-                    ? `<a href="${href}" target="_blank" rel="noopener noreferrer"
-                        style="
-                          font-size:12px;
-                          font-weight:600;
-                          padding:4px 8px;
-                          border-radius:6px;
-                          background:#2563eb;
-                          color:#ffffff;
-                          text-decoration:none;
-                          line-height:1;
-                        ">
-                        Open
-                      </a>`
-                    : ""
-                }
-              </div>
-              <div style="font-weight:700;">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
-            </div>`;
-
-                        const infoOffersHtml =
+            const infoOffersHtml =
               Array.isArray(p.infoOffers) && p.infoOffers.length > 0
                 ? `
-                  <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
-                    <div style="font-size:12px;opacity:.75;margin-bottom:6px;">Other possible offers</div>
+                  <div class="otherOffers">
+                    <div class="otherOffersTitle">Other possible offers</div>
                     ${p.infoOffers
                       .map((io) => `
-                        <div style="font-size:12px;opacity:.88;margin-bottom:6px;">
+                        <div class="otherOfferItem">
                           <div><b>${safeText(io.title || io.couponCode || "Offer")}</b></div>
                           ${io.rawDiscount ? `<div>${safeText(io.rawDiscount)}</div>` : ""}
-                          ${io.infoLabel ? `<div style="color:#fbbf24;">${safeText(io.infoLabel)}</div>` : ""}
+                          ${io.infoLabel ? `<div><span>${safeText(io.infoLabel)}</span></div>` : ""}
                         </div>
                       `)
                       .join("")}
@@ -1217,8 +1197,28 @@ function showPortalCompare(flight) {
                 `
                 : "";
 
-            const line2 = `<div>${formatOfferLine(p)}${infoOffersHtml}</div>`;
-            return `<div style="padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;">${line1}${line2}</div>`;
+            return `
+              <div class="portalRow ${isBest ? "best" : ""}">
+                <div class="portalHeader">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div class="portalName">${safeText(p.portal)}</div>
+                    ${isBest ? `<span class="badge">Best</span>` : ""}
+                    ${
+                      href
+                        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge" style="text-decoration:none;">Open</a>`
+                        : ""
+                    }
+                  </div>
+                  <div class="portalPrice">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
+                </div>
+
+                <div class="mainOffer">
+                  ${formatOfferLine(p)}
+                </div>
+
+                ${infoOffersHtml}
+              </div>
+            `;
           })
           .join("")}
       </div>
