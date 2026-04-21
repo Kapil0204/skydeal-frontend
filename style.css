@@ -587,6 +587,9 @@ h3{ margin:0; font-size:18px; }
 .otherOffersMore::-webkit-scrollbar-track{
   background:transparent;
 }
+.mainOffer{
+  margin-top:8px;
+}
 
 .price-body{
   padding:14px;
