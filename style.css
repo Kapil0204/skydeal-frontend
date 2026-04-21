@@ -647,6 +647,75 @@ h3{ margin:0; font-size:18px; }
   font-size:13px;
   color:var(--text);
 }
+.otherOffersInline{
+  margin-top:12px;
+}
+
+.otherOffersInlineBtn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  border-radius:999px;
+  padding:7px 12px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.otherOffersInlineBtn:hover{
+  background:rgba(255,255,255,0.08);
+}
+
+.otherOffersDrawer{
+  display:none;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+}
+
+.otherOffersDrawer.open{
+  display:block;
+}
+
+.otherOffersMore{
+  max-height:240px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.copyCouponBtn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.copyCouponBtn:hover{
+  background:rgba(255,255,255,0.08);
+}
+
+.inlineCopyCouponBtn{
+  padding:2px 8px;
+  font-size:12px;
+  margin-left:2px;
+  vertical-align:middle;
+}
+
+.otherOfferActions{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
 
 .otherOffers{
   margin-top:10px;
