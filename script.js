@@ -1434,22 +1434,25 @@ function showPortalCompare(flight) {
             const isBest = bestPortal && p.portal === bestPortal;
 
             const infoOffersHtml =
-              Array.isArray(p.infoOffers) && p.infoOffers.length > 0
-                ? `
-                  <div class="otherOffers">
-                    <div class="otherOffersTitle">Other possible offers</div>
-                    ${p.infoOffers
-                      .map((io) => `
-                        <div class="otherOfferItem">
-                          <div><b>${safeText(io.title || io.couponCode || "Offer")}</b></div>
-                          ${io.rawDiscount ? `<div>${safeText(io.rawDiscount)}</div>` : ""}
-                          ${io.infoLabel ? `<div><span>${safeText(io.infoLabel)}</span></div>` : ""}
-                        </div>
-                      `)
-                      .join("")}
-                  </div>
-                `
-                : "";
+  Array.isArray(p.infoOffers) && p.infoOffers.length > 0
+    ? `
+      <div class="otherOffers">
+        <div class="otherOffersTitle">Other relevant offers</div>
+        ${p.infoOffers
+          .map((io) => `
+            <div class="otherOfferItem">
+              <div class="otherOfferHead">
+                <b>${safeText(io.title || io.couponCode || "Offer")}</b>
+                ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(io.infoLabel)}</span>` : ""}
+              </div>
+              ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
+              ${io.rawDiscount ? `<div>${safeText(io.rawDiscount)}</div>` : ""}
+            </div>
+          `)
+          .join("")}
+      </div>
+    `
+    : "";
 
             return `
               <div class="portalRow ${isBest ? "best" : ""}">
