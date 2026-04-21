@@ -1435,23 +1435,69 @@ function showPortalCompare(flight) {
 
             const infoOffersHtml =
   Array.isArray(p.infoOffers) && p.infoOffers.length > 0
-    ? `
-      <div class="otherOffers">
-        <div class="otherOffersTitle">Other relevant offers</div>
-        ${p.infoOffers
-          .map((io) => `
-            <div class="otherOfferItem">
-              <div class="otherOfferHead">
-                <b>${safeText(io.title || io.couponCode || "Offer")}</b>
-                ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(io.infoLabel)}</span>` : ""}
-              </div>
-              ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
-              ${io.rawDiscount ? `<div>${safeText(io.rawDiscount)}</div>` : ""}
+    ? (() => {
+        const visibleOffers = p.infoOffers.slice(0, 2);
+        const hiddenOffers = p.infoOffers.slice(2);
+        const hasMore = hiddenOffers.length > 0;
+        const portalSlug = String(p.portal || "portal")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+
+        const renderOfferCard = (io) => `
+          <div class="otherOfferItem">
+            <div class="otherOfferHead">
+              <b>${safeText(io.title || io.couponCode || "Offer")}</b>
+              ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(io.infoLabel)}</span>` : ""}
             </div>
-          `)
-          .join("")}
-      </div>
-    `
+            ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
+            ${io.rawDiscount ? `<div class="otherOfferDiscount">${safeText(io.rawDiscount)}</div>` : ""}
+            ${
+              io.terms
+                ? `<div class="otherOfferActions">
+                    <button
+                      class="tncBtn altTncBtn"
+                      data-portal="${safeText(p.portal)}"
+                      data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
+                    >
+                      T&C
+                    </button>
+                  </div>`
+                : ""
+            }
+          </div>
+        `;
+
+        return `
+          <div class="otherOffers">
+            <div class="otherOffersTitle">Other relevant offers</div>
+
+            <div class="otherOffersPreview">
+              ${visibleOffers.map(renderOfferCard).join("")}
+            </div>
+
+            ${
+              hasMore
+                ? `
+                  <div class="otherOffersMoreWrap">
+                    <button
+                      type="button"
+                      class="otherOffersToggle"
+                      data-target="more-offers-${portalSlug}"
+                      data-state="closed"
+                    >
+                      Show ${hiddenOffers.length} more
+                    </button>
+
+                    <div id="more-offers-${portalSlug}" class="otherOffersMore">
+                      ${hiddenOffers.map(renderOfferCard).join("")}
+                    </div>
+                  </div>
+                `
+                : ""
+            }
+          </div>
+        `;
+      })()
     : "";
 
             return `
@@ -1483,6 +1529,22 @@ function showPortalCompare(flight) {
   }
 
   modal.style.display = "block";
+
+  body.querySelectorAll(".otherOffersToggle").forEach((btn) => {
+    btn.onclick = () => {
+      const targetId = btn.getAttribute("data-target");
+      const state = btn.getAttribute("data-state");
+      const box = body.querySelector(`#${targetId}`);
+      if (!box) return;
+
+      const isClosed = state === "closed";
+
+      box.classList.toggle("open", isClosed);
+      btn.setAttribute("data-state", isClosed ? "open" : "closed");
+      btn.textContent = isClosed ? "Show less" : `Show ${box.children.length} more`;
+    };
+  });
+}
 }
 
 function flightCard(f) {
