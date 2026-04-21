@@ -524,6 +524,70 @@ h3{ margin:0; font-size:18px; }
   margin-bottom:4px;
 }
 
+.otherOfferDiscount{
+  margin-top:4px;
+  color:rgba(255,255,255,0.92);
+}
+
+.otherOfferActions{
+  margin-top:8px;
+}
+
+.altTncBtn{
+  padding:4px 10px;
+  font-size:11px;
+}
+
+.otherOffersPreview{
+  display:flex;
+  flex-direction:column;
+}
+
+.otherOffersMoreWrap{
+  margin-top:6px;
+}
+
+.otherOffersToggle{
+  appearance:none;
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.otherOffersToggle:hover{
+  background:rgba(255,255,255,0.08);
+}
+
+.otherOffersMore{
+  display:none;
+  margin-top:10px;
+  max-height:220px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.otherOffersMore.open{
+  display:block;
+}
+
+.otherOffersMore::-webkit-scrollbar{
+  width:8px;
+}
+
+.otherOffersMore::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.18);
+  border-radius:999px;
+}
+
+.otherOffersMore::-webkit-scrollbar-track{
+  background:transparent;
+}
+
 .price-body{
   padding:14px;
   overflow:auto;
@@ -601,11 +665,11 @@ h3{ margin:0; font-size:18px; }
 .otherOfferItem{
   font-size:12px;
   color:rgba(255,255,255,0.86);
-  padding:8px 10px;
+  padding:10px 12px;
   border-radius:10px;
   background:rgba(255,255,255,0.04);
   margin-bottom:8px;
-  line-height:1.35;
+  line-height:1.4;
 }
 
 .otherOfferItem span{
