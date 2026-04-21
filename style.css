@@ -498,6 +498,31 @@ h3{ margin:0; font-size:18px; }
 .otherOfferItem span{
   color:#facc15;
 }
+.otherOfferHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:4px;
+}
+
+.otherOfferBadge{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  background:rgba(250,204,21,0.12);
+  color:#facc15;
+  border:1px solid rgba(250,204,21,0.22);
+}
+
+.otherOfferHint{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
 
 .price-body{
   padding:14px;
