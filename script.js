@@ -1024,7 +1024,14 @@ function formatOfferLine(p) {
   }
 
 const offerText = safeText(p.rawDiscount, "Offer available");
-const codeText = p.code ? ` • Code: ${safeText(p.code)}` : "";
+const codeText = p.code
+  ? ` • <button
+        type="button"
+        class="copyCouponBtn inlineCopyCouponBtn"
+        data-code="${safeText(p.code)}"
+        title="Copy coupon code"
+      >Code: ${safeText(p.code)}</button>`
+  : "";
 const termsText = formatTermsForDisplay(p.terms);
 const hasTerms = !!termsText;
 
@@ -1436,9 +1443,6 @@ function showPortalCompare(flight) {
             const infoOffersHtml =
   Array.isArray(p.infoOffers) && p.infoOffers.length > 0
     ? (() => {
-        const visibleOffers = p.infoOffers.slice(0, 2);
-        const hiddenOffers = p.infoOffers.slice(2);
-        const hasMore = hiddenOffers.length > 0;
         const portalSlug = String(p.portal || "portal")
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-");
@@ -1452,49 +1456,64 @@ function showPortalCompare(flight) {
             ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
             ${io.rawDiscount ? `<div class="otherOfferDiscount">${safeText(io.rawDiscount)}</div>` : ""}
             ${
-              io.terms
+              io.couponCode
                 ? `<div class="otherOfferActions">
                     <button
-                      class="tncBtn altTncBtn"
-                      data-portal="${safeText(p.portal)}"
-                      data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
+                      type="button"
+                      class="copyCouponBtn"
+                      data-code="${safeText(io.couponCode, "")}"
+                      title="Copy coupon code"
                     >
-                      T&C
+                      Copy code: ${safeText(io.couponCode)}
                     </button>
+                    ${
+                      io.terms
+                        ? `
+                          <button
+                            class="tncBtn altTncBtn"
+                            data-portal="${safeText(p.portal)}"
+                            data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
+                          >
+                            T&C
+                          </button>
+                        `
+                        : ""
+                    }
                   </div>`
-                : ""
+                : `${
+                    io.terms
+                      ? `<div class="otherOfferActions">
+                          <button
+                            class="tncBtn altTncBtn"
+                            data-portal="${safeText(p.portal)}"
+                            data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
+                          >
+                            T&C
+                          </button>
+                        </div>`
+                      : ""
+                  }`
             }
           </div>
         `;
 
         return `
-          <div class="otherOffers">
-            <div class="otherOffersTitle">Other relevant offers</div>
+          <div class="otherOffersInline">
+            <button
+              type="button"
+              class="otherOffersInlineBtn"
+              data-target="portal-other-offers-${portalSlug}"
+              data-state="closed"
+            >
+              Other possible offers for you on ${safeText(p.portal)}
+            </button>
 
-            <div class="otherOffersPreview">
-              ${visibleOffers.map(renderOfferCard).join("")}
+            <div id="portal-other-offers-${portalSlug}" class="otherOffersDrawer">
+              <div class="otherOffersTitle">Other possible offers on ${safeText(p.portal)}</div>
+              <div class="otherOffersMore open">
+                ${p.infoOffers.map(renderOfferCard).join("")}
+              </div>
             </div>
-
-            ${
-              hasMore
-                ? `
-                  <div class="otherOffersMoreWrap">
-                    <button
-                      type="button"
-                      class="otherOffersToggle"
-                      data-target="more-offers-${portalSlug}"
-                      data-state="closed"
-                    >
-                      Show ${hiddenOffers.length} more
-                    </button>
-
-                    <div id="more-offers-${portalSlug}" class="otherOffersMore">
-                      ${hiddenOffers.map(renderOfferCard).join("")}
-                    </div>
-                  </div>
-                `
-                : ""
-            }
           </div>
         `;
       })()
@@ -1530,7 +1549,7 @@ function showPortalCompare(flight) {
 
   modal.style.display = "block";
 
-   body.querySelectorAll(".otherOffersToggle").forEach((btn) => {
+     body.querySelectorAll(".otherOffersInlineBtn").forEach((btn) => {
     btn.onclick = () => {
       const targetId = btn.getAttribute("data-target");
       const state = btn.getAttribute("data-state");
@@ -1538,10 +1557,37 @@ function showPortalCompare(flight) {
       if (!box) return;
 
       const isClosed = state === "closed";
-
       box.classList.toggle("open", isClosed);
       btn.setAttribute("data-state", isClosed ? "open" : "closed");
-      btn.textContent = isClosed ? "Show less" : `Show ${box.children.length} more`;
+      btn.textContent = isClosed
+        ? `Hide other offers on ${safeText(btn.textContent.replace(/^Other possible offers for you on\s+/i, ""))}`
+        : btn.getAttribute("data-original-label") || btn.textContent;
+    };
+
+    if (!btn.getAttribute("data-original-label")) {
+      btn.setAttribute("data-original-label", btn.textContent);
+    }
+  });
+
+  body.querySelectorAll(".copyCouponBtn").forEach((btn) => {
+    btn.onclick = async () => {
+      const code = btn.getAttribute("data-code") || "";
+      if (!code) return;
+
+      try {
+        await navigator.clipboard.writeText(code);
+        const oldText = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => {
+          btn.textContent = oldText;
+        }, 1200);
+      } catch {
+        const oldText = btn.textContent;
+        btn.textContent = "Copy failed";
+        setTimeout(() => {
+          btn.textContent = oldText;
+        }, 1200);
+      }
     };
   });
 }
