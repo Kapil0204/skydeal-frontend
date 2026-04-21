@@ -1530,7 +1530,7 @@ function showPortalCompare(flight) {
 
   modal.style.display = "block";
 
-  body.querySelectorAll(".otherOffersToggle").forEach((btn) => {
+   body.querySelectorAll(".otherOffersToggle").forEach((btn) => {
     btn.onclick = () => {
       const targetId = btn.getAttribute("data-target");
       const state = btn.getAttribute("data-state");
@@ -1544,7 +1544,6 @@ function showPortalCompare(flight) {
       btn.textContent = isClosed ? "Show less" : `Show ${box.children.length} more`;
     };
   });
-}
 }
 
 function flightCard(f) {
