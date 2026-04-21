@@ -247,6 +247,11 @@ const retPrev = document.getElementById("retPrev");
 const retNext = document.getElementById("retNext");
 const retPage = document.getElementById("retPage");
 
+// Sort selects
+const sortSelectEls = document.querySelectorAll(".sort select");
+const outSortSelect = sortSelectEls[0] || null;
+const retSortSelect = sortSelectEls[1] || null;
+
 // Payment UI
 const paymentBtn = document.getElementById("paymentBtn");
 const pmCount = document.getElementById("pmCount");
@@ -493,6 +498,72 @@ function prettyPaymentLabel(label) {
     .replace(/\bnetbanking\b/gi, "NetBanking")
     .replace(/\bcreditcard\b/gi, "Credit Card")
     .replace(/\bdebitcard\b/gi, "Debit Card");
+}
+function getPortalCtaLabel(portal) {
+  return `Go to ${safeText(portal)}`;
+}
+
+function getOtherOffersButtonLabel(portal) {
+  return `More offers you may be eligible for on ${safeText(portal)}`;
+}
+
+function getOtherOffersHideLabel(portal) {
+  return `Hide more offers on ${safeText(portal)}`;
+}
+
+function getInfoBadgeLabel(io) {
+  const raw = String(io?.infoLabel || "").trim().toLowerCase();
+  if (raw !== "specific card type required") return safeText(io?.infoLabel, "");
+
+  const title = String(io?.title || "");
+  const knownCards = [
+    "Flipkart Axis",
+    "Amazon Pay ICICI",
+    "SBI Cashback",
+    "Tata Neu",
+    "Infinia",
+    "Regalia",
+    "Millennia",
+    "Axis Atlas",
+    "Axis Vistara",
+    "Axis Ace",
+    "Scapia Federal",
+    "SimplyCLICK",
+    "SimplySAVE"
+  ];
+
+  const found = knownCards.find((k) => title.toLowerCase().includes(k.toLowerCase()));
+  return found ? `Needs ${found}` : "Specific card required";
+}
+
+function getCompareButtonLabel() {
+  return "Compare prices";
+}
+
+function getSortValue(selectEl) {
+  return selectEl?.value || "price-asc";
+}
+
+function sortFlightsForDisplay(items, sortValue) {
+  const arr = Array.isArray(items) ? [...items] : [];
+
+  if (sortValue === "price-asc") {
+    return arr.sort((a, b) => Number(a?.bestDeal?.finalPrice ?? a?.price ?? 0) - Number(b?.bestDeal?.finalPrice ?? b?.price ?? 0));
+  }
+
+  if (sortValue === "departure-asc") {
+    return arr.sort((a, b) => String(a?.departureTime || "").localeCompare(String(b?.departureTime || "")));
+  }
+
+  if (sortValue === "savings-desc") {
+    return arr.sort((a, b) => {
+      const aSave = getSavingsAmount(a?.price, a?.bestDeal?.finalPrice ?? a?.price);
+      const bSave = getSavingsAmount(b?.price, b?.bestDeal?.finalPrice ?? b?.price);
+      return bSave - aSave;
+    });
+  }
+
+  return arr;
 }
 
 // ---------- OTA deep links ----------
@@ -1451,13 +1522,14 @@ function showPortalCompare(flight) {
           <div class="otherOfferItem">
             <div class="otherOfferHead">
               <b>${safeText(io.title || io.couponCode || "Offer")}</b>
-              ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(io.infoLabel)}</span>` : ""}
+              ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(getInfoBadgeLabel(io))}</span>` : ""}
             </div>
             ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
             ${io.rawDiscount ? `<div class="otherOfferDiscount">${safeText(io.rawDiscount)}</div>` : ""}
-            ${
-              io.couponCode
-                ? `<div class="otherOfferActions">
+            <div class="otherOfferActions">
+              ${
+                io.couponCode
+                  ? `
                     <button
                       type="button"
                       class="copyCouponBtn"
@@ -1466,34 +1538,23 @@ function showPortalCompare(flight) {
                     >
                       Copy code: ${safeText(io.couponCode)}
                     </button>
-                    ${
-                      io.terms
-                        ? `
-                          <button
-                            class="tncBtn altTncBtn"
-                            data-portal="${safeText(p.portal)}"
-                            data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
-                          >
-                            T&C
-                          </button>
-                        `
-                        : ""
-                    }
-                  </div>`
-                : `${
-                    io.terms
-                      ? `<div class="otherOfferActions">
-                          <button
-                            class="tncBtn altTncBtn"
-                            data-portal="${safeText(p.portal)}"
-                            data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
-                          >
-                            T&C
-                          </button>
-                        </div>`
-                      : ""
-                  }`
-            }
+                  `
+                  : ""
+              }
+              ${
+                io.terms
+                  ? `
+                    <button
+                      class="tncBtn altTncBtn"
+                      data-portal="${safeText(p.portal)}"
+                      data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
+                    >
+                      T&C
+                    </button>
+                  `
+                  : ""
+              }
+            </div>
           </div>
         `;
 
@@ -1504,12 +1565,14 @@ function showPortalCompare(flight) {
               class="otherOffersInlineBtn"
               data-target="portal-other-offers-${portalSlug}"
               data-state="closed"
+              data-show-label="${getOtherOffersButtonLabel(p.portal)}"
+              data-hide-label="${getOtherOffersHideLabel(p.portal)}"
             >
-              Other possible offers for you on ${safeText(p.portal)}
+              ${getOtherOffersButtonLabel(p.portal)}
             </button>
 
             <div id="portal-other-offers-${portalSlug}" class="otherOffersDrawer">
-              <div class="otherOffersTitle">Other possible offers on ${safeText(p.portal)}</div>
+              <div class="otherOffersTitle">More offers you may be eligible for on ${safeText(p.portal)}</div>
               <div class="otherOffersMore open">
                 ${p.infoOffers.map(renderOfferCard).join("")}
               </div>
@@ -1522,15 +1585,15 @@ function showPortalCompare(flight) {
             return `
               <div class="portalRow ${isBest ? "best" : ""}">
                 <div class="portalHeader">
-                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <div class="portalName">${safeText(p.portal)}</div>
-                    ${isBest ? `<span class="badge">Best</span>` : ""}
-                    ${
-                      href
-                        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge" style="text-decoration:none;">Open</a>`
-                        : ""
-                    }
-                  </div>
+<div class="portalHeaderLeft">
+  <div class="portalName">${safeText(p.portal)}</div>
+  ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
+  ${
+    href
+      ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge" style="text-decoration:none;">${getPortalCtaLabel(p.portal)}</a>`
+      : ""
+  }
+</div>
                   <div class="portalPrice">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
                 </div>
 
@@ -1549,25 +1612,21 @@ function showPortalCompare(flight) {
 
   modal.style.display = "block";
 
-     body.querySelectorAll(".otherOffersInlineBtn").forEach((btn) => {
-    btn.onclick = () => {
-      const targetId = btn.getAttribute("data-target");
-      const state = btn.getAttribute("data-state");
-      const box = body.querySelector(`#${targetId}`);
-      if (!box) return;
+    body.querySelectorAll(".otherOffersInlineBtn").forEach((btn) => {
+  btn.onclick = () => {
+    const targetId = btn.getAttribute("data-target");
+    const state = btn.getAttribute("data-state");
+    const box = body.querySelector(`#${targetId}`);
+    if (!box) return;
 
-      const isClosed = state === "closed";
-      box.classList.toggle("open", isClosed);
-      btn.setAttribute("data-state", isClosed ? "open" : "closed");
-      btn.textContent = isClosed
-        ? `Hide other offers on ${safeText(btn.textContent.replace(/^Other possible offers for you on\s+/i, ""))}`
-        : btn.getAttribute("data-original-label") || btn.textContent;
-    };
-
-    if (!btn.getAttribute("data-original-label")) {
-      btn.setAttribute("data-original-label", btn.textContent);
-    }
-  });
+    const isClosed = state === "closed";
+    box.classList.toggle("open", isClosed);
+    btn.setAttribute("data-state", isClosed ? "open" : "closed");
+    btn.textContent = isClosed
+      ? (btn.getAttribute("data-hide-label") || "Hide more offers")
+      : (btn.getAttribute("data-show-label") || "More offers");
+  };
+});
 
   body.querySelectorAll(".copyCouponBtn").forEach((btn) => {
     btn.onclick = async () => {
@@ -1616,7 +1675,7 @@ function flightCard(f) {
         <div class="times">${dep} → ${arr}</div>
         <div class="stops">${stops} stop(s)</div>
                 <div class="price">${money(f.price)}</div>
-        <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">👁</button>
+        <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">${getCompareButtonLabel()}</button>
       </div>
       ${bestLine}
     </div>
@@ -1645,13 +1704,15 @@ function renderList(el, items) {
 }
 
 function renderOutbound() {
-  const pageItems = slicePage(outboundAll, outPageIdx);
+  const sorted = sortFlightsForDisplay(outboundAll, getSortValue(outSortSelect));
+  const pageItems = slicePage(sorted, outPageIdx);
   renderList(outboundList, pageItems);
   renderPager("out");
 }
 
 function renderReturn() {
-  const pageItems = slicePage(returnAll, retPageIdx);
+  const sorted = sortFlightsForDisplay(returnAll, getSortValue(retSortSelect));
+  const pageItems = slicePage(sorted, retPageIdx);
   renderList(returnList, pageItems);
   renderPager("ret");
 }
@@ -1788,7 +1849,15 @@ toggleReturn();
     updatePaymentButtonLabel();
     closePaymentModal();
   });
+outSortSelect?.addEventListener("change", () => {
+  outPageIdx = 1;
+  renderOutbound();
+});
 
+retSortSelect?.addEventListener("change", () => {
+  retPageIdx = 1;
+  renderReturn();
+});
   renderPager("out");
   renderPager("ret");
 }
