@@ -500,7 +500,7 @@ function prettyPaymentLabel(label) {
     .replace(/\bdebitcard\b/gi, "Debit Card");
 }
 function getPortalCtaLabel(portal) {
-  return `Go to ${safeText(portal)}`;
+  return `Book on ${safeText(portal)}`;
 }
 
 function getOtherOffersButtonLabel(portal) {
@@ -533,7 +533,7 @@ function getInfoBadgeLabel(io) {
   ];
 
   const found = knownCards.find((k) => title.toLowerCase().includes(k.toLowerCase()));
-  return found ? `Needs ${found}` : "Specific card required";
+  return found ? `Needs ${found} credit card` : "Specific card required";
 }
 
 function getCompareButtonLabel() {
@@ -545,9 +545,22 @@ function getSortValue(selectEl) {
 
   if (!raw) return "price-asc";
 
-  if (raw === "price-asc" || raw.includes("cost")) return "price-asc";
-  if (raw === "departure-asc" || raw.includes("departure")) return "departure-asc";
-  if (raw === "savings-desc" || raw.includes("saving")) return "savings-desc";
+  if (
+    raw === "price-asc" ||
+    raw.includes("cost") ||
+    raw.includes("price")
+  ) return "price-asc";
+
+  if (
+    raw === "departure-asc" ||
+    raw.includes("departure")
+  ) return "departure-asc";
+
+  if (
+    raw === "savings-desc" ||
+    raw.includes("saving") ||
+    raw.includes("save")
+  ) return "savings-desc";
 
   return "price-asc";
 }
@@ -824,16 +837,20 @@ function ensurePaymentDetailModal() {
   modal.style.zIndex = "10001";
 
   modal.innerHTML = `
-  <div class="portalModalShell">
-    <div class="portalModalCard">
+    <div style="max-width:520px;margin:8vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-        <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
-        <button id="portalCompareClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+        <div id="pmDetailTitle" style="font-size:16px;font-weight:700;">Payment details</div>
+        <button id="pmDetailClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
       </div>
-      <div id="portalCompareBody" style="margin-top:12px;"></div>
+
+      <div id="pmDetailBody" style="margin-top:14px;"></div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button id="pmDetailCancel" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e5e7eb;cursor:pointer;">Cancel</button>
+        <button id="pmDetailSave" type="button" style="padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer;">Save</button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
   document.body.appendChild(modal);
 
@@ -867,7 +884,7 @@ function ensurePaymentDetailModal() {
       pm.name = "UPI";
     }
 
-        if (pm.type === "Credit Card" || pm.type === "Debit Card") {
+    if (pm.type === "Credit Card" || pm.type === "Debit Card") {
       const networkEl = document.getElementById("pmDetailNetwork");
       const cardTypeEl = document.getElementById("pmDetailCardType");
       const corpEl = document.getElementById("pmDetailCorporate");
@@ -879,6 +896,7 @@ function ensurePaymentDetailModal() {
       else if (corpEl && corpEl.value === "false") pm.isCorporate = false;
       else pm.isCorporate = null;
     }
+
     renderSelectedPaymentMethodsSummary();
     updatePaymentButtonLabel();
     close();
@@ -1467,25 +1485,31 @@ function ensurePortalModal() {
 
   modal = document.createElement("div");
   modal.id = "portalCompareModal";
+  modal.className = "modal";
   modal.style.position = "fixed";
   modal.style.inset = "0";
   modal.style.background = "rgba(0,0,0,.55)";
   modal.style.display = "none";
   modal.style.zIndex = "9999";
+
   modal.innerHTML = `
-    <div style="max-width:720px;margin:7vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-        <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
-        <button id="portalCompareClose" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+    <div class="portalModalShell">
+      <div class="portalModalCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
+          <button id="portalCompareClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+        </div>
+        <div id="portalCompareBody" style="margin-top:12px;"></div>
       </div>
-      <div id="portalCompareBody" style="margin-top:12px;"></div>
     </div>
   `;
+
   document.body.appendChild(modal);
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) modal.style.display = "none";
   });
+
   modal.querySelector("#portalCompareClose").addEventListener("click", () => {
     modal.style.display = "none";
   });
