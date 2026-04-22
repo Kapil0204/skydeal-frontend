@@ -541,19 +541,28 @@ function getCompareButtonLabel() {
 }
 
 function getSortValue(selectEl) {
-  const raw = String(selectEl?.value || "").trim().toLowerCase();
+  if (!selectEl) return "price-asc";
+
+  const selectedText =
+    selectEl.options && selectEl.selectedIndex >= 0
+      ? String(selectEl.options[selectEl.selectedIndex]?.textContent || "")
+      : "";
+
+  const raw = String(selectEl.value || selectedText || "").trim().toLowerCase();
 
   if (!raw) return "price-asc";
 
   if (
     raw === "price-asc" ||
     raw.includes("cost") ||
-    raw.includes("price")
+    raw.includes("price") ||
+    raw.includes("low")
   ) return "price-asc";
 
   if (
     raw === "departure-asc" ||
-    raw.includes("departure")
+    raw.includes("departure") ||
+    raw.includes("early")
   ) return "departure-asc";
 
   if (
@@ -1615,17 +1624,20 @@ function showPortalCompare(flight) {
             return `
               <div class="portalRow ${isBest ? "best" : ""}">
                 <div class="portalHeader">
-<div class="portalHeaderLeft">
-  <div class="portalName">${safeText(p.portal)}</div>
-  ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
-  ${
-    href
-      ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge" style="text-decoration:none;">${getPortalCtaLabel(p.portal)}</a>`
-      : ""
-  }
+  <div class="portalHeaderLeft">
+    <div class="portalName">${safeText(p.portal)}</div>
+    ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
+  </div>
+
+  <div class="portalHeaderRight">
+    <div class="portalPrice">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
+    ${
+      href
+        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice" style="text-decoration:none;">${getPortalCtaLabel(p.portal)}</a>`
+        : ""
+    }
+  </div>
 </div>
-                  <div class="portalPrice">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
-                </div>
 
                 <div class="mainOffer">
                   ${formatOfferLine(p)}
@@ -1881,11 +1893,13 @@ toggleReturn();
   });
 outSortSelect?.addEventListener("change", () => {
   outPageIdx = 1;
+  console.log("[SkyDeal] outbound sort changed:", getSortValue(outSortSelect));
   renderOutbound();
 });
 
 retSortSelect?.addEventListener("change", () => {
   retPageIdx = 1;
+  console.log("[SkyDeal] return sort changed:", getSortValue(retSortSelect));
   renderReturn();
 });
   renderPager("out");
