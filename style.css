@@ -480,6 +480,16 @@ h3{ margin:0; font-size:18px; }
 .portalLinkBadge{
   background:rgba(255,255,255,0.04);
 }
+.portalHeaderRight{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+
+.portalLinkBelowPrice{
+  align-self:flex-end;
+}
 
 .portalName{
   font-weight:700;
