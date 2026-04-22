@@ -508,7 +508,7 @@ function getOtherOffersButtonLabel(portal) {
 }
 
 function getOtherOffersHideLabel(portal) {
-  return `Hide more offers on ${safeText(portal)}`;
+  return `Hide offers on ${safeText(portal)}`;
 }
 
 function getInfoBadgeLabel(io) {
