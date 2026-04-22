@@ -537,7 +537,7 @@ function getInfoBadgeLabel(io) {
 }
 
 function getCompareButtonLabel() {
-  return "Compare prices";
+  return "Compare";
 }
 
 function getSortValue(selectEl) {
