@@ -504,7 +504,7 @@ function getPortalCtaLabel(portal) {
 }
 
 function getOtherOffersButtonLabel(portal) {
-  return `More offers you may be eligible for on ${safeText(portal)}`;
+  return `More offers on ${safeText(portal)}`;
 }
 
 function getOtherOffersHideLabel(portal) {
@@ -1112,20 +1112,21 @@ const hasTerms = !!termsText;
 
 const tncBtn = hasTerms
   ? ` • <button 
+        type="button"
         class="tncBtn"
         data-portal="${safeText(p.portal)}"
         data-terms="${encodeURIComponent(termsText)}"
-          style="
-            background:transparent;
-            border:1px solid rgba(255,255,255,.25);
-            color:#e5e7eb;
-            border-radius:10px;
-            padding:2px 8px;
-            font-size:12px;
-            cursor:pointer;
-          "
-        >T&C</button>`
-    : "";
+        style="
+          background:transparent;
+          border:1px solid rgba(255,255,255,.25);
+          color:#e5e7eb;
+          border-radius:10px;
+          padding:2px 8px;
+          font-size:12px;
+          cursor:pointer;
+        "
+      >T&C</button>`
+  : "";
 
   const pay = p.paymentLabel ? prettyPaymentLabel(p.paymentLabel) : "";
   const showTypeLabel =
@@ -1549,7 +1550,8 @@ function showPortalCompare(flight) {
                 io.terms
                   ? `
                     <button
-                      class="tncBtn altTncBtn"
+  type="button"
+  class="tncBtn altTncBtn"
                       data-portal="${safeText(p.portal)}"
                       data-terms="${encodeURIComponent(formatTermsForDisplay(io.terms))}"
                     >
@@ -1576,7 +1578,7 @@ function showPortalCompare(flight) {
             </button>
 
             <div id="portal-other-offers-${portalSlug}" class="otherOffersDrawer">
-              <div class="otherOffersTitle">More offers you may be eligible for on ${safeText(p.portal)}</div>
+              <div class="otherOffersTitle">More offers on ${safeText(p.portal)}</div>
               <div class="otherOffersMore open">
                 ${p.infoOffers.map(renderOfferCard).join("")}
               </div>
