@@ -541,7 +541,15 @@ function getCompareButtonLabel() {
 }
 
 function getSortValue(selectEl) {
-  return selectEl?.value || "price-asc";
+  const raw = String(selectEl?.value || "").trim().toLowerCase();
+
+  if (!raw) return "price-asc";
+
+  if (raw === "price-asc" || raw.includes("cost")) return "price-asc";
+  if (raw === "departure-asc" || raw.includes("departure")) return "departure-asc";
+  if (raw === "savings-desc" || raw.includes("saving")) return "savings-desc";
+
+  return "price-asc";
 }
 
 function sortFlightsForDisplay(items, sortValue) {
@@ -816,20 +824,16 @@ function ensurePaymentDetailModal() {
   modal.style.zIndex = "10001";
 
   modal.innerHTML = `
-    <div style="max-width:520px;margin:8vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+  <div class="portalModalShell">
+    <div class="portalModalCard">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-        <div id="pmDetailTitle" style="font-size:16px;font-weight:700;">Payment details</div>
-        <button id="pmDetailClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+        <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
+        <button id="portalCompareClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
       </div>
-
-      <div id="pmDetailBody" style="margin-top:14px;"></div>
-
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
-        <button id="pmDetailCancel" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e5e7eb;cursor:pointer;">Cancel</button>
-        <button id="pmDetailSave" type="button" style="padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer;">Save</button>
-      </div>
+      <div id="portalCompareBody" style="margin-top:12px;"></div>
     </div>
-  `;
+  </div>
+`;
 
   document.body.appendChild(modal);
 
