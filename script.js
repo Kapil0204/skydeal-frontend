@@ -1121,9 +1121,13 @@ function cleanTermsText(text) {
    Offer line formatter + T&C modal
    ========================= */
 function formatOfferLine(p) {
-  if (!p.applied) {
-    return `<div style="opacity:.65;font-size:13px;">No offer available</div>`;
-  }
+if (!p.applied) {
+  return `
+    <div style="opacity:.72;font-size:13px;">
+      No eligible offer for selected payment method
+    </div>
+  `;
+}
 
 const offerText = safeText(p.rawDiscount, "Offer available");
 const codeText = p.code
