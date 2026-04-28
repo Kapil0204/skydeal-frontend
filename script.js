@@ -270,6 +270,7 @@ let editingPaymentIndex = null;
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
 let activePaymentType = "Credit Card";
+let includeEmiOffers = false;
 
 // ✅ Backward-compatible richer objects:
 // { type, name, provider, network, cardFamily, cardVariant, isCorporate, tenureMonths }
@@ -718,6 +719,37 @@ function buildSelectedPaymentMethod(type, name) {
 
   return obj;
 }
+function buildSearchPaymentMethods() {
+  const selected = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [];
+  const out = [...selected];
+
+  if (includeEmiOffers) {
+    const selectedCreditCards = selected.filter((pm) => pm?.type === "Credit Card");
+
+    for (const cc of selectedCreditCards) {
+      const alreadyHasEmi = out.some(
+        (pm) =>
+          pm?.type === "EMI" &&
+          String(pm?.name || "").toLowerCase().trim() === String(cc?.name || "").toLowerCase().trim()
+      );
+
+      if (!alreadyHasEmi) {
+        out.push({
+          type: "EMI",
+          name: cc.name,
+          provider: null,
+          network: cc.network || null,
+          cardFamily: cc.cardFamily || null,
+          cardVariant: cc.cardVariant || null,
+          isCorporate: cc.isCorporate ?? null,
+          tenureMonths: null
+        });
+      }
+    }
+  }
+
+  return out;
+}
 
 function paymentMethodDisplayLabel(pm) {
   if (!pm) return "—";
@@ -980,7 +1012,11 @@ function openPaymentDetailEditor(index) {
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
   if (pmCount) pmCount.textContent = String(n);
-  if (paymentBtn) paymentBtn.textContent = `Payment methods (${n})`;
+  if (paymentBtn) {
+  paymentBtn.textContent = includeEmiOffers
+    ? `Payment methods (${n}) + EMI offers`
+    : `Payment methods (${n})`;
+}
   renderSelectedPaymentMethodsSummary();
 }
 function formatTermsForDisplay(terms) {
@@ -1256,7 +1292,7 @@ function renderPaymentTabs() {
   if (!pmTabsContainer) return;
 
   const types = Object.keys(paymentOptions || {}).filter((k) => Array.isArray(paymentOptions[k]));
-  const ordered = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet", "EMI"];
+  const ordered = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
   const finalTypes = [...ordered.filter((t) => types.includes(t)), ...types.filter((t) => !ordered.includes(t))];
 
   pmTabsContainer.innerHTML = finalTypes
@@ -1301,8 +1337,16 @@ function renderPaymentList() {
     pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
     return;
   }
-
-  pmList.innerHTML = list
+const emiToggleHtml =
+  type === "Credit Card"
+    ? `
+      <label class="pm-item" style="margin-bottom:10px;border-color:rgba(96,165,250,.45);">
+        <input id="includeEmiOffersToggle" type="checkbox" ${includeEmiOffers ? "checked" : ""} />
+        <span>Also include EMI offers for selected credit cards</span>
+      </label>
+    `
+    : "";
+  pmList.innerHTML = emiToggleHtml + list
     .map((name, idx) => {
       const id = `pm_${type}_${idx}`.replace(/\s+/g, "_");
       const checked = isSelected(type, name) ? "checked" : "";
@@ -1314,6 +1358,13 @@ function renderPaymentList() {
       `;
     })
     .join("");
+   const emiToggle = document.getElementById("includeEmiOffersToggle");
+if (emiToggle) {
+  emiToggle.addEventListener("change", (e) => {
+    includeEmiOffers = !!e.target.checked;
+    updatePaymentButtonLabel();
+  });
+}
 
   pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
     cb.addEventListener("change", (e) => {
@@ -1794,7 +1845,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     travelClass: cabinSelect?.value || "economy",
 
     // ✅ send structured selections so backend can match bank/type correctly
-    paymentMethods: Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods : [],
+    paymentMethods: buildSearchPaymentMethods(),
   };
 
   lastSearchPayload = payload;
