@@ -1436,7 +1436,7 @@ if (emiToggle) {
   emiToggle.addEventListener("click", () => {
     includeEmiOffers = !includeEmiOffers;
     updatePaymentButtonLabel();
-    renderPaymentList();
+    renderPaymentTabs();
   });
 }
 
@@ -2004,6 +2004,18 @@ toggleReturn();
     e.preventDefault();
     openPaymentModal();
   });
+   pmTabsContainer?.addEventListener("click", (e) => {
+  const toggle = e.target.closest("#includeEmiOffersToggle");
+  if (!toggle) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  includeEmiOffers = !includeEmiOffers;
+  renderPaymentTabs();
+  renderPaymentList();
+  updatePaymentButtonLabel();
+});
 
   pmClose?.addEventListener("click", closePaymentModal);
   paymentModal?.addEventListener("click", (e) => {
