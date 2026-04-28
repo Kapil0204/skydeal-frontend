@@ -1296,7 +1296,7 @@ function renderPaymentTabs() {
   const finalTypes = [...ordered.filter((t) => types.includes(t)), ...types.filter((t) => !ordered.includes(t))];
 
   pmTabsContainer.innerHTML = finalTypes
-    .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${t}</button>`)
+    .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}" style="padding:10px 18px;min-height:42px;line-height:1.2;border-radius:999px;">${t}</button>`)
     .join("");
 
   pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
@@ -1340,10 +1340,60 @@ function renderPaymentList() {
 const emiToggleHtml =
   type === "Credit Card"
     ? `
-      <label class="pm-item" style="margin-bottom:10px;border-color:rgba(96,165,250,.45);">
-        <input id="includeEmiOffersToggle" type="checkbox" ${includeEmiOffers ? "checked" : ""} />
-        <span>Also include EMI offers for selected credit cards</span>
-      </label>
+      <div style="
+        display:flex;
+        justify-content:flex-end;
+        align-items:center;
+        margin:0 0 14px 0;
+      ">
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          padding:8px 12px;
+          border:1px solid rgba(96,165,250,.35);
+          border-radius:999px;
+          background:rgba(37,99,235,.10);
+        ">
+          <span style="font-size:13px;color:#cbd5e1;">Show EMI offers</span>
+
+          <button
+            id="includeEmiOffersToggle"
+            type="button"
+            aria-pressed="${includeEmiOffers ? "true" : "false"}"
+            style="
+              width:48px;
+              height:26px;
+              border-radius:999px;
+              border:1px solid ${includeEmiOffers ? "rgba(34,197,94,.75)" : "rgba(148,163,184,.45)"};
+              background:${includeEmiOffers ? "rgba(34,197,94,.25)" : "rgba(15,23,42,.85)"};
+              position:relative;
+              cursor:pointer;
+              padding:0;
+            "
+          >
+            <span style="
+              position:absolute;
+              top:3px;
+              left:${includeEmiOffers ? "24px" : "4px"};
+              width:18px;
+              height:18px;
+              border-radius:999px;
+              background:${includeEmiOffers ? "#22c55e" : "#94a3b8"};
+              transition:all .18s ease;
+            "></span>
+          </button>
+
+          <span style="
+            font-size:12px;
+            font-weight:700;
+            color:${includeEmiOffers ? "#86efac" : "#94a3b8"};
+            min-width:24px;
+          ">
+            ${includeEmiOffers ? "ON" : "OFF"}
+          </span>
+        </div>
+      </div>
     `
     : "";
   pmList.innerHTML = emiToggleHtml + list
@@ -1360,9 +1410,10 @@ const emiToggleHtml =
     .join("");
    const emiToggle = document.getElementById("includeEmiOffersToggle");
 if (emiToggle) {
-  emiToggle.addEventListener("change", (e) => {
-    includeEmiOffers = !!e.target.checked;
+  emiToggle.addEventListener("click", () => {
+    includeEmiOffers = !includeEmiOffers;
     updatePaymentButtonLabel();
+    renderPaymentList();
   });
 }
 
