@@ -1293,20 +1293,43 @@ function renderPaymentTabs() {
 
   const types = Object.keys(paymentOptions || {}).filter((k) => Array.isArray(paymentOptions[k]));
   const ordered = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
-  const finalTypes = [...ordered.filter((t) => types.includes(t)), ...types.filter((t) => !ordered.includes(t))];
+  const finalTypes = [
+    ...ordered.filter((t) => types.includes(t)),
+    ...types.filter((t) => !ordered.includes(t) && t !== "EMI")
+  ];
 
-  pmTabsContainer.innerHTML = finalTypes
-    .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}" style="padding:10px 18px;min-height:42px;line-height:1.2;border-radius:999px;">${t}</button>`)
+  const tabsHtml = finalTypes
+    .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${t}</button>`)
     .join("");
+
+  const emiToggleHtml = `
+    <div class="emiToggleWrap">
+      <span class="emiToggleText">Show EMI offers</span>
+      <button
+        id="includeEmiOffersToggle"
+        type="button"
+        class="emiToggle ${includeEmiOffers ? "active" : ""}"
+        aria-pressed="${includeEmiOffers ? "true" : "false"}"
+      >
+        <span class="emiToggleKnob"></span>
+      </button>
+      <span class="emiToggleState ${includeEmiOffers ? "active" : ""}">
+        ${includeEmiOffers ? "ON" : "OFF"}
+      </span>
+    </div>
+  `;
+
+  pmTabsContainer.innerHTML = tabsHtml + emiToggleHtml;
 
   pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       activePaymentType = btn.getAttribute("data-tab");
-      pmTabsContainer.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+      renderPaymentTabs();
       renderPaymentList();
     });
   });
+
+ 
 }
 
 function isSelected(type, name) {
@@ -1396,7 +1419,7 @@ const emiToggleHtml =
       </div>
     `
     : "";
-  pmList.innerHTML = emiToggleHtml + list
+ pmList.innerHTML = list
     .map((name, idx) => {
       const id = `pm_${type}_${idx}`.replace(/\s+/g, "_");
       const checked = isSelected(type, name) ? "checked" : "";
