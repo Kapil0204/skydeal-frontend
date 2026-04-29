@@ -1431,14 +1431,7 @@ const emiToggleHtml =
       `;
     })
     .join("");
-   const emiToggle = document.getElementById("includeEmiOffersToggle");
-if (emiToggle) {
-  emiToggle.addEventListener("click", () => {
-    includeEmiOffers = !includeEmiOffers;
-    updatePaymentButtonLabel();
-    renderPaymentTabs();
-  });
-}
+   
 
   pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
     cb.addEventListener("change", (e) => {
