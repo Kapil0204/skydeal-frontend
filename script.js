@@ -494,7 +494,7 @@ function renderBestDealSummary(bestDeal) {
       <div class="bestDealTopRow">
         <div>
           <div class="bestDealTop">${finalPrice}</div>
-          <div class="bestDealPortal">Best final price on ${portal}</div>
+          <div class="bestDealPortal">Best overall via ${portal}</div>
         </div>
         ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
       </div>
@@ -1675,7 +1675,14 @@ function showPortalCompare(flight) {
   const modal = ensurePortalModal();
   const body = modal.querySelector("#portalCompareBody");
 
-  const portalPrices = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+  const portalPricesRaw = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
+const bestPortal = flight?.bestDeal?.portal || null;
+
+const portalPrices = [...portalPricesRaw].sort((a, b) => {
+  const aPrice = Number(a?.finalPrice ?? a?.basePrice ?? Infinity);
+  const bPrice = Number(b?.finalPrice ?? b?.basePrice ?? Infinity);
+  return aPrice - bPrice;
+});
   const bestPortal = flight?.bestDeal?.portal || null;
 
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
@@ -1772,7 +1779,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
                 <div class="portalHeader">
   <div class="portalHeaderLeft">
     <div class="portalName">${safeText(p.portal)}</div>
-    ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
+   ${isBest ? `<span class="badge bestPriceBadge">Best overall</span>` : ""}
   </div>
 
   <div class="portalHeaderRight">
