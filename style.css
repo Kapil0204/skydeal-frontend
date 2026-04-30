@@ -1801,3 +1801,252 @@ h3{
   min-height:13px;
   margin:0;
 }
+/* =========================
+   SkyDeal Payment Modal — Premium UX
+   ========================= */
+
+.modal-content{
+  width:min(980px, 94vw);
+  max-height:88vh;
+  border-radius:24px;
+  overflow:hidden;
+}
+
+.modal-head{
+  padding:18px 22px;
+  background:linear-gradient(135deg, #ffffff, #f7fbff);
+}
+
+.modal-head h2{
+  font-size:24px;
+  letter-spacing:-0.04em;
+}
+
+.pm-tabs{
+  padding:14px 20px;
+  gap:10px;
+  background:#ffffff;
+  border-bottom:1px solid #e6eaf2;
+}
+
+.tab{
+  min-height:40px;
+  padding:9px 18px;
+  font-size:14px;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#344054;
+  border:1px solid #d9e1ef;
+}
+
+.tab.active{
+  background:linear-gradient(135deg, #eef4ff, #eaf8ff);
+  border-color:#7da2ff;
+  color:#1d4ed8;
+  box-shadow:0 8px 18px rgba(37,99,235,0.12);
+}
+
+.emiToggleWrap{
+  min-height:40px;
+  padding:7px 12px;
+  margin-left:auto;
+  background:linear-gradient(135deg, #eef4ff, #eaf8ff);
+  border:1px solid #8fb0ff;
+}
+
+.emiToggleText{
+  color:#101828 !important;
+  font-weight:900;
+  font-size:13px;
+}
+
+.emiToggleState{
+  color:#475467 !important;
+  font-weight:900;
+  font-size:12px;
+}
+
+.emiToggleState.active{
+  color:#059669 !important;
+}
+
+.emiToggle{
+  width:44px;
+  height:24px;
+}
+
+.pm-body{
+  padding:14px 20px;
+  max-height:56vh;
+  overflow:auto;
+  background:
+    radial-gradient(600px 240px at 10% 0%, rgba(37,99,235,0.06), transparent 60%),
+    #ffffff;
+}
+
+.pm-list{
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.pm-item{
+  min-height:52px;
+  height:52px;
+  padding:10px 14px;
+  border-radius:16px;
+  background:#ffffff;
+  border:1px solid #e1e8f5;
+  color:#101828;
+  font-weight:850;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  transition:all .16s ease;
+}
+
+.pm-item:hover{
+  border-color:#8fb0ff;
+  background:#f7fbff;
+  transform:translateY(-1px);
+}
+
+.pm-item:has(input:checked){
+  border-color:#2563eb;
+  background:linear-gradient(135deg, #eef4ff, #f0fbff);
+  box-shadow:0 8px 18px rgba(37,99,235,0.10);
+}
+
+.pm-item input{
+  width:17px;
+  height:17px;
+  min-height:17px;
+  accent-color:#2563eb;
+}
+
+.pm-item span{
+  font-size:14px;
+  color:#101828;
+  line-height:1.15;
+}
+
+.pm-actions{
+  padding:14px 20px;
+  background:#ffffff;
+  border-top:1px solid #e6eaf2;
+  box-shadow:0 -12px 30px rgba(15,23,42,0.06);
+}
+
+.pm-actions .btn-primary{
+  margin-top:0;
+  min-height:46px;
+}
+
+.pm-actions .btn-ghost{
+  min-width:96px;
+}
+
+@media (max-width: 900px){
+  .pm-list{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media (max-width: 560px){
+  .pm-list{
+    grid-template-columns:1fr;
+  }
+}
+/* =========================
+   Portal comparison compact polish
+   ========================= */
+
+.portalModalShell{
+  padding:18px 0 28px;
+}
+
+.portalModalCard{
+  max-width:760px;
+  padding:18px;
+  border-radius:22px;
+}
+
+.portalCompareFlightHead{
+  margin-bottom:12px;
+  font-size:15px;
+  color:#475467;
+}
+
+.portalCompareList{
+  gap:10px;
+}
+
+.portalRow{
+  padding:14px 16px;
+  border-radius:18px;
+}
+
+.portalHeader{
+  margin-bottom:8px;
+}
+
+.portalName{
+  font-size:17px;
+}
+
+.portalPrice{
+  font-size:26px;
+  line-height:1;
+}
+
+.portalHeaderRight{
+  gap:5px;
+}
+
+.portalLinkBelowPrice{
+  padding:5px 10px;
+  font-size:12px;
+}
+
+.mainOffer{
+  margin-top:6px;
+  font-size:13px;
+  line-height:1.4;
+}
+
+.mainOffer div{
+  margin-top:2px !important;
+}
+
+.tncBtn{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  opacity:1 !important;
+  color:#1d4ed8 !important;
+  background:#ffffff !important;
+}
+
+.otherOffersInline{
+  margin-top:8px;
+}
+
+.otherOffersInlineBtn{
+  padding:6px 11px;
+  font-size:12px;
+}
+
+.otherOffersDrawer{
+  margin-top:8px;
+  padding:10px;
+}
+
+.otherOfferItem{
+  padding:9px 10px;
+  margin-bottom:7px;
+}
+
+.otherOfferDiscount{
+  font-size:12px;
+  line-height:1.35;
+}
