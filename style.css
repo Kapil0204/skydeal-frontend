@@ -1720,3 +1720,59 @@ h3{
     width:100%;
   }
 }
+/* =========================
+   Payment modal compact fix
+   ========================= */
+
+.pm-body{
+  flex:0 1 auto;
+  max-height:58vh;
+  padding:12px 18px;
+}
+
+.pm-list{
+  align-items:start;
+  grid-auto-rows:auto;
+  gap:10px 14px;
+}
+
+.pm-item{
+  min-height:48px;
+  height:48px;
+  padding:10px 14px;
+  justify-content:flex-start;
+  align-items:center;
+  flex-direction:row;
+}
+
+.pm-item input{
+  width:16px;
+  height:16px;
+  min-height:16px;
+  flex:0 0 auto;
+}
+
+.pm-item span{
+  font-size:14px;
+  line-height:1.2;
+  color:#101828;
+}
+
+.emiToggleWrap{
+  padding:8px 12px;
+  min-height:48px;
+}
+
+.emiToggleText{
+  color:#101828 !important;
+  opacity:1 !important;
+}
+
+.emiToggleState{
+  color:#344054 !important;
+  opacity:1 !important;
+}
+
+.emiToggleState.active{
+  color:#059669 !important;
+}
