@@ -1853,6 +1853,67 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
   });
 }
 
+function getAirlineLogoClass(airlineName) {
+  const n = String(airlineName || "").toLowerCase();
+
+  if (n.includes("indigo")) return "logo-indigo";
+  if (n.includes("air india")) return "logo-air-india";
+  if (n.includes("akasa")) return "logo-akasa";
+  if (n.includes("spicejet")) return "logo-spicejet";
+  if (n.includes("vistara")) return "logo-vistara";
+
+  return "logo-default";
+}
+
+function getAirlineInitials(airlineName) {
+  const n = String(airlineName || "").trim();
+
+  if (/indigo/i.test(n)) return "6E";
+  if (/air india express/i.test(n)) return "IX";
+  if (/air india/i.test(n)) return "AI";
+  if (/akasa/i.test(n)) return "QP";
+  if (/spicejet/i.test(n)) return "SG";
+  if (/vistara/i.test(n)) return "UK";
+
+  return n
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((x) => x[0])
+    .join("")
+    .toUpperCase() || "✈";
+}
+
+function emptyStateHtml(type = "default") {
+  if (type === "return-hidden") {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">↩️</div>
+        <div class="empty-title">Return flights are off for one-way trips</div>
+        <div class="empty-copy">Switch to round-trip when you want SkyDeal to compare return flights too.</div>
+      </div>
+    `;
+  }
+
+  if (type === "loading") {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🔎</div>
+        <div class="empty-title">Finding your best flight deals</div>
+        <div class="empty-copy">Checking real fares and matching them with portal offers.</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="empty-state">
+      <div class="empty-icon">✈️</div>
+      <div class="empty-title">Search to unlock SkyDeal pricing</div>
+      <div class="empty-copy">Enter your route and payment methods to compare final payable prices across portals.</div>
+    </div>
+  `;
+}
+
 function flightCard(f) {
   const name = safeText(f.airlineName);
   const num = displayFlightNumber(f);
@@ -1861,33 +1922,40 @@ function flightCard(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
 
   const best = f.bestDeal;
-   const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
-const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalPrice) : 0;
+  const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
+  const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalPrice) : 0;
 
-    const bestLine = best
+  const bestLine = best
     ? renderBestDealSummary(best)
-    : `<div class="best">Best: —</div>`;
+    : `<div class="best">Compare portals to find the best payable price.</div>`;
 
   const key = flightKey(f);
   return `
     <div class="card" data-flightkey="${key}">
       <div class="row">
         <div class="air">
-          <div>${name}</div>
-          <div style="font-size:12px; opacity:0.8; margin-top:2px;">${num}</div>
+          <div class="airline-logo ${getAirlineLogoClass(name)}">${getAirlineInitials(name)}</div>
+          <div>
+            <div class="airline-name">${name}</div>
+            <div class="flight-number">${num}</div>
+          </div>
         </div>
+
         <div class="times">${dep} → ${arr}</div>
-        <div class="stops">${stops} stop(s)</div>
-               <div class="price">
-  <div>${money(cardFinalPrice)}</div>
-  ${
-    cardSavings > 0
-      ? `<div style="font-size:12px;opacity:.75;text-decoration:line-through;">${money(f.price)}</div>`
-      : ""
-  }
-</div>
-        <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">${getCompareButtonLabel()}</button>
+        <div class="stops">${stops === 0 ? "Non-stop" : `${stops} stop(s)`}</div>
+
+        <div class="price">
+          <div>${money(cardFinalPrice)}</div>
+          ${
+            cardSavings > 0
+              ? `<div style="font-size:12px;opacity:.65;text-decoration:line-through;">${money(f.price)}</div>`
+              : ""
+          }
+        </div>
+
+        <button class="infoBtn" title="Compare portal prices">${getCompareButtonLabel()}</button>
       </div>
+
       ${bestLine}
     </div>
   `;
@@ -1896,9 +1964,10 @@ const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalP
 function renderList(el, items) {
   if (!el) return;
   if (!Array.isArray(items) || items.length === 0) {
-    el.innerHTML = `<div class="empty">No flights found for your search.</div>`;
+    el.innerHTML = emptyStateHtml("default");
     return;
   }
+
   el.innerHTML = items.map(flightCard).join("");
 
   el.querySelectorAll(".infoBtn").forEach((btn) => {
@@ -1922,20 +1991,40 @@ function renderOutbound() {
 }
 
 function renderReturn() {
+  const returnPanel = document.getElementById("returnResultsPanel");
+  const flightsWorkspace = document.querySelector(".flights-workspace");
+  const isRoundTrip = !!roundTripRadio?.checked;
+
+  if (!isRoundTrip) {
+    returnPanel?.classList.add("is-hidden");
+    flightsWorkspace?.classList.add("one-way");
+    if (returnList) returnList.innerHTML = emptyStateHtml("return-hidden");
+    renderPager("ret");
+    return;
+  }
+
+  returnPanel?.classList.remove("is-hidden");
+  flightsWorkspace?.classList.remove("one-way");
+
   const sorted = sortFlightsForDisplay(returnAll, getSortValue(retSortSelect));
   const pageItems = slicePage(sorted, retPageIdx);
   renderList(returnList, pageItems);
   renderPager("ret");
 }
 
-// ---------- Search ----------
 function toggleReturn() {
   const show = !!roundTripRadio?.checked;
+  const returnPanel = document.getElementById("returnResultsPanel");
+  const flightsWorkspace = document.querySelector(".flights-workspace");
+
   if (!returnInput) return;
 
   const departVal = departInput?.value || todayISO();
   returnInput.disabled = !show;
   returnInput.parentElement?.classList?.toggle("disabled", !show);
+
+  returnPanel?.classList.toggle("is-hidden", !show);
+  flightsWorkspace?.classList.toggle("one-way", !show);
 
   returnInput.min = departVal;
 
@@ -1943,6 +2032,8 @@ function toggleReturn() {
     if (!returnInput.value || returnInput.value < departVal) {
       returnInput.value = addDaysISO(departVal, 7);
     }
+  } else if (returnList) {
+    returnList.innerHTML = emptyStateHtml("return-hidden");
   }
 }
 
@@ -1974,8 +2065,13 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     return;
   }
 
-  outboundList.innerHTML = `<div class="empty">Loading…</div>`;
-  returnList.innerHTML = `<div class="empty">Loading…</div>`;
+   outboundList.innerHTML = emptyStateHtml("loading");
+
+  if (payload.tripType === "round-trip") {
+    returnList.innerHTML = emptyStateHtml("loading");
+  } else {
+    returnList.innerHTML = emptyStateHtml("return-hidden");
+  }
 
   outPageIdx = 1;
   retPageIdx = 1;
