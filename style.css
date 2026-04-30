@@ -1776,3 +1776,28 @@ h3{
 .emiToggleState.active{
   color:#059669 !important;
 }
+/* =========================
+   Compact trip type buttons
+   ========================= */
+
+.trip-toggle{
+  gap:12px;
+  padding:4px 0;
+  align-items:center;
+}
+
+.trip-toggle label{
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:700;
+  color:#344054;
+}
+
+.trip-toggle input[type="radio"]{
+  width:13px;
+  height:13px;
+  min-height:13px;
+  margin:0;
+}
