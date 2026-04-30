@@ -1683,7 +1683,6 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
   const bPrice = Number(b?.finalPrice ?? b?.basePrice ?? Infinity);
   return aPrice - bPrice;
 });
-  const bestPortal = flight?.bestDeal?.portal || null;
 
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
