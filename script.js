@@ -287,7 +287,7 @@ let activeFilters = {
   airlines: []
 };
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 25;
 
 let outPageIdx = 1;
 let retPageIdx = 1;
