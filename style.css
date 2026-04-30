@@ -941,4 +941,521 @@ h3{ margin:0; font-size:18px; }
 .info-offer-code, .info-offer-summary { font-size: 12px; opacity: 0.9; margin-top: 4px; }
 .info-offer-terms summary { cursor: pointer; font-size: 12px; opacity: 0.85; margin-top: 6px; }
 .info-offer-terms div { font-size: 12px; opacity: 0.85; margin-top: 6px; white-space: pre-wrap; }
+/* =========================
+   SkyDeal Pro UI Refresh
+   Light theme + filters + airline badges
+   ========================= */
 
+:root{
+  --bg:#f5f7fb;
+  --panel:#ffffff;
+  --panel2:#f8fafc;
+  --text:#172033;
+  --muted:#667085;
+  --line:#e6eaf2;
+  --btn:#2563eb;
+  --btn2:#eef4ff;
+  --accent:#00d4ff;
+  --accent2:#7c3aed;
+  --success:#059669;
+  --warning:#f59e0b;
+  --shadow:0 18px 45px rgba(15,23,42,0.08);
+  --radius:18px;
+}
+
+body{
+  background:
+    radial-gradient(900px 420px at 15% -10%, rgba(37,99,235,0.18), transparent 60%),
+    radial-gradient(700px 360px at 85% 0%, rgba(0,212,255,0.16), transparent 55%),
+    var(--bg);
+  color:var(--text);
+}
+
+.nav{
+  background:rgba(255,255,255,0.82);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line);
+  position:sticky;
+  top:0;
+  z-index:40;
+}
+
+.brand{
+  font-size:24px;
+  letter-spacing:-0.04em;
+  color:#111827;
+}
+
+.sub{
+  color:#667085;
+  font-weight:500;
+}
+
+.wrap{
+  max-width:1280px;
+  margin:24px auto;
+}
+
+.search-card{
+  background:linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  border:1px solid rgba(37,99,235,0.12);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+label{
+  color:#475467;
+  font-weight:700;
+}
+
+input,
+select{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid #d9e1ef;
+  border-radius:14px;
+  min-height:44px;
+  font-weight:650;
+}
+
+input:focus,
+select:focus{
+  border-color:rgba(37,99,235,0.65);
+  box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+}
+
+.location-suggestions{
+  background:#ffffff;
+  border:1px solid #d9e1ef;
+  box-shadow:0 18px 40px rgba(15,23,42,0.14);
+}
+
+.location-option{
+  border-bottom:1px solid #eef2f7;
+}
+
+.location-option:hover{
+  background:#f3f7ff;
+}
+
+.location-option-main{
+  color:#111827;
+}
+
+.location-option-sub{
+  color:#667085;
+}
+
+.trip-toggle{
+  color:#344054;
+  font-weight:700;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg, #2563eb, #00a6ff);
+  box-shadow:0 12px 30px rgba(37,99,235,0.24);
+  border-radius:16px;
+  min-height:48px;
+}
+
+.btn-primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 16px 34px rgba(37,99,235,0.28);
+}
+
+.btn-ghost{
+  background:#eef4ff;
+  border:1px solid #c7d7fe;
+  color:#1d4ed8;
+  font-weight:800;
+}
+
+.btn-sm{
+  background:#ffffff;
+  border:1px solid #d9e1ef;
+  color:#344054;
+}
+
+.pro-results{
+  display:grid;
+  grid-template-columns:280px minmax(0, 1fr);
+  gap:18px;
+  align-items:start;
+  margin-top:18px;
+}
+
+.filter-panel{
+  position:sticky;
+  top:92px;
+}
+
+.filter-card{
+  background:#ffffff;
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+
+.filter-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.filter-head h3{
+  font-size:18px;
+  margin:0;
+}
+
+.clear-filter-btn{
+  border:0;
+  background:transparent;
+  color:#2563eb;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.filter-group{
+  border-top:1px solid #eef2f7;
+  padding-top:14px;
+  margin-top:14px;
+}
+
+.filter-group:first-of-type{
+  border-top:0;
+  padding-top:0;
+  margin-top:0;
+}
+
+.filter-title{
+  font-size:13px;
+  font-weight:900;
+  color:#101828;
+  margin-bottom:10px;
+}
+
+.filter-option{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  color:#344054;
+  font-size:14px;
+  font-weight:650;
+  margin:10px 0;
+}
+
+.filter-option input{
+  width:18px;
+  min-height:18px;
+  accent-color:#2563eb;
+}
+
+.deal-tip{
+  background:linear-gradient(135deg, rgba(37,99,235,0.10), rgba(0,212,255,0.10));
+  border:1px solid rgba(37,99,235,0.16);
+  color:#344054;
+  border-radius:16px;
+  padding:12px;
+  font-size:13px;
+  line-height:1.45;
+  font-weight:650;
+}
+
+.flights-workspace{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  min-width:0;
+}
+
+.flights-workspace.one-way{
+  grid-template-columns:1fr;
+}
+
+.return-panel.is-hidden{
+  display:none;
+}
+
+.col{
+  background:#ffffff;
+  border:1px solid var(--line);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:16px;
+}
+
+.col-head{
+  padding-bottom:12px;
+  border-bottom:1px solid #eef2f7;
+}
+
+.section-subtitle{
+  margin-top:4px;
+  font-size:13px;
+  color:#667085;
+  font-weight:650;
+}
+
+h3{
+  color:#101828;
+  letter-spacing:-0.03em;
+}
+
+.sort{
+  color:#667085;
+  font-weight:700;
+}
+
+.sort select{
+  background:#ffffff;
+  color:#111827;
+}
+
+.cards{
+  margin-top:14px;
+}
+
+.empty{
+  color:#667085;
+}
+
+.empty-state{
+  border:1px dashed #cbd5e1;
+  background:linear-gradient(135deg, #f8fbff, #ffffff);
+  border-radius:20px;
+  padding:28px 20px;
+  text-align:center;
+}
+
+.empty-icon{
+  font-size:30px;
+  margin-bottom:8px;
+}
+
+.empty-title{
+  font-size:18px;
+  font-weight:900;
+  color:#101828;
+  margin-bottom:6px;
+}
+
+.empty-copy{
+  color:#667085;
+  font-size:14px;
+  line-height:1.45;
+  max-width:420px;
+  margin:0 auto;
+}
+
+.card{
+  background:#ffffff;
+  border:1px solid #e6eaf2;
+  border-radius:20px;
+  box-shadow:0 10px 24px rgba(15,23,42,0.05);
+  padding:14px;
+}
+
+.card:hover{
+  border-color:rgba(37,99,235,0.35);
+  box-shadow:0 16px 34px rgba(15,23,42,0.09);
+  transform:translateY(-1px);
+}
+
+.row{
+  grid-template-columns:1.45fr 1fr 0.7fr 0.75fr auto;
+}
+
+.air{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#101828;
+}
+
+.airline-logo{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  color:#ffffff;
+  font-weight:950;
+  font-size:13px;
+  flex:0 0 auto;
+  box-shadow:0 10px 20px rgba(15,23,42,0.12);
+}
+
+.logo-indigo{ background:linear-gradient(135deg, #123c9c, #2563eb); }
+.logo-air-india{ background:linear-gradient(135deg, #b91c1c, #ef4444); }
+.logo-akasa{ background:linear-gradient(135deg, #f97316, #fb923c); }
+.logo-spicejet{ background:linear-gradient(135deg, #dc2626, #f59e0b); }
+.logo-vistara{ background:linear-gradient(135deg, #4c1d95, #7c3aed); }
+.logo-default{ background:linear-gradient(135deg, #334155, #64748b); }
+
+.airline-name{
+  font-weight:950;
+  color:#101828;
+  line-height:1.05;
+}
+
+.flight-number{
+  font-size:12px;
+  color:#667085;
+  margin-top:3px;
+  font-weight:750;
+}
+
+.times,
+.stops{
+  color:#475467;
+  font-weight:750;
+}
+
+.price{
+  color:#101828;
+  font-size:18px;
+}
+
+.bestDealBanner{
+  background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,212,255,0.08));
+  border:1px solid rgba(37,99,235,0.18);
+  border-radius:18px;
+}
+
+.bestDealTop{
+  color:#101828;
+}
+
+.bestDealPortal,
+.bestDealMeta{
+  color:#667085;
+}
+
+.bestDealSave{
+  color:#059669;
+}
+
+.infoBtn{
+  background:#101828;
+  color:#ffffff;
+  border:0;
+  border-radius:12px;
+}
+
+.infoBtn:hover{
+  background:#2563eb;
+}
+
+.pager{
+  color:#667085;
+}
+
+.modal-content,
+.portalModalCard{
+  background:#ffffff;
+  color:#101828;
+  border:1px solid #e6eaf2;
+}
+
+.modal-head{
+  border-bottom:1px solid #eef2f7;
+}
+
+.x{
+  color:#101828;
+  border:1px solid #d9e1ef;
+}
+
+.tab{
+  background:#f8fafc;
+  color:#344054;
+  border:1px solid #d9e1ef;
+}
+
+.tab.active{
+  background:#eef4ff;
+  color:#1d4ed8;
+  border-color:#93b4ff;
+}
+
+.pm-item{
+  background:#ffffff;
+  color:#101828;
+  border:1px solid #e6eaf2;
+}
+
+.portalRow{
+  background:#ffffff;
+  border:1px solid #e6eaf2;
+}
+
+.portalRow:hover{
+  background:#f8fbff;
+}
+
+.portalRow.best{
+  background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,212,255,0.06));
+  border-color:rgba(37,99,235,0.38);
+}
+
+.portalName,
+.portalPrice,
+.mainOffer{
+  color:#101828;
+}
+
+.otherOfferItem,
+.otherOffersDrawer{
+  background:#f8fafc;
+  color:#344054;
+  border:1px solid #eef2f7;
+}
+
+.copyCouponBtn,
+.otherOffersInlineBtn,
+.tncBtn{
+  background:#ffffff;
+  color:#1d4ed8;
+  border:1px solid #c7d7fe;
+}
+
+@media (max-width: 1080px){
+  .pro-results{
+    grid-template-columns:1fr;
+  }
+
+  .filter-panel{
+    position:static;
+  }
+
+  .flights-workspace{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 760px){
+  .wrap{
+    margin:14px auto;
+  }
+
+  .search-card,
+  .col,
+  .filter-card{
+    border-radius:18px;
+  }
+
+  .row{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .infoBtn{
+    width:100%;
+  }
+}
