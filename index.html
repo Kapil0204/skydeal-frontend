@@ -63,50 +63,118 @@
       <button id="searchBtn" class="btn-primary">Search</button>
     </section>
 
-    <section class="results">
-      <div class="col">
-        <div class="col-head">
-          <h3>Outbound Flights</h3>
-          <div class="sort">
-            <label>Sort by</label>
-            <select id="outSort">
-  <option value="price-asc">Cost (Low → High)</option>
-  <option value="departure-asc">Departure (Early → Late)</option>
-  <option value="savings-desc">Savings (High → Low)</option>
-</select>
+    <section class="results pro-results">
+      <aside class="filter-panel">
+        <div class="filter-card">
+          <div class="filter-head">
+            <h3>Filters</h3>
+            <button type="button" class="clear-filter-btn">Clear all</button>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Popular filters</div>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>Non-stop flights</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>Best offer available</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>Morning departure</span>
+            </label>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Airlines</div>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>IndiGo</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>Air India</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" />
+              <span>Akasa Air</span>
+            </label>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">SkyDeal tip</div>
+            <div class="deal-tip">
+              Add your cards or UPI apps to unlock real portal-wise savings.
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="flights-workspace">
+        <div class="col" id="outboundResultsPanel">
+          <div class="col-head">
+            <div>
+              <h3>Outbound Flights</h3>
+              <div class="section-subtitle">Sorted by your best final payable price</div>
+            </div>
+            <div class="sort">
+              <label>Sort by</label>
+              <select id="outSort">
+                <option value="price-asc">Cost (Low → High)</option>
+                <option value="departure-asc">Departure (Early → Late)</option>
+                <option value="savings-desc">Savings (High → Low)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="outboundList" class="cards empty">
+            <div class="empty-state">
+              <div class="empty-icon">✈️</div>
+              <div class="empty-title">Ready when you are</div>
+              <div class="empty-copy">Search a route to see real flights, best portals, and payment-based savings.</div>
+            </div>
+          </div>
+
+          <div class="pager">
+            <button id="outPrev" class="btn-sm" disabled>Prev</button>
+            <span>Page <span id="outPage">1</span> / <span id="outPages">1</span></span>
+            <button id="outNext" class="btn-sm" disabled>Next</button>
           </div>
         </div>
 
-        <div id="outboundList" class="cards empty">No flights found for your search.</div>
+        <div class="col return-panel is-hidden" id="returnResultsPanel">
+          <div class="col-head">
+            <div>
+              <h3>Return Flights</h3>
+              <div class="section-subtitle">Shown only for round trips</div>
+            </div>
+            <div class="sort">
+              <label>Sort by</label>
+              <select id="retSort">
+                <option value="price-asc">Cost (Low → High)</option>
+                <option value="departure-asc">Departure (Early → Late)</option>
+                <option value="savings-desc">Savings (High → Low)</option>
+              </select>
+            </div>
+          </div>
 
-        <div class="pager">
-          <button id="outPrev" class="btn-sm" disabled>Prev</button>
-          <span>Page <span id="outPage">1</span> / <span id="outPages">1</span></span>
-          <button id="outNext" class="btn-sm" disabled>Next</button>
-        </div>
-      </div>
+          <div id="returnList" class="cards empty">
+            <div class="empty-state">
+              <div class="empty-icon">↩️</div>
+              <div class="empty-title">Return flights will appear here</div>
+              <div class="empty-copy">Choose round-trip to compare outbound and return options together.</div>
+            </div>
+          </div>
 
-      <div class="col">
-        <div class="col-head">
-          <h3>Return Flights</h3>
-          <div class="sort">
-            <label>Sort by</label>
-            <select id="retSort">
-  <option value="price-asc">Cost (Low → High)</option>
-  <option value="departure-asc">Departure (Early → Late)</option>
-  <option value="savings-desc">Savings (High → Low)</option>
-</select>
+          <div class="pager">
+            <button id="retPrev" class="btn-sm" disabled>Prev</button>
+            <span>Page <span id="retPage">1</span> / <span id="retPages">1</span></span>
+            <button id="retNext" class="btn-sm" disabled>Next</button>
           </div>
         </div>
-
-        <div id="returnList" class="cards empty">No flights found for your search.</div>
-
-        <div class="pager">
-          <button id="retPrev" class="btn-sm" disabled>Prev</button>
-          <span>Page <span id="retPage">1</span> / <span id="retPages">1</span></span>
-          <button id="retNext" class="btn-sm" disabled>Next</button>
-        </div>
-      </div>
+      </section>
     </section>
   </main>
 
