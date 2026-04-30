@@ -1459,3 +1459,264 @@ h3{
     width:100%;
   }
 }
+/* =========================
+   SkyDeal polish pass v2
+   Cleaner cards, compact radios, readable modal/payment UI
+   ========================= */
+
+.search-card{
+  margin-bottom:20px;
+}
+
+.trip-toggle{
+  gap:10px;
+  padding:6px 0;
+}
+
+.trip-toggle label{
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  font-weight:750;
+}
+
+.trip-toggle input{
+  width:14px;
+  height:14px;
+  min-height:14px;
+}
+
+.filter-card{
+  padding:18px;
+}
+
+.filter-option{
+  min-height:26px;
+}
+
+.filter-option input{
+  width:16px;
+  min-height:16px;
+}
+
+.filter-placeholder{
+  font-size:13px;
+  color:#667085;
+  background:#f8fafc;
+  border:1px dashed #cbd5e1;
+  border-radius:12px;
+  padding:10px;
+}
+
+.airline-filter-list{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.card{
+  padding:16px;
+}
+
+.card .row{
+  display:grid;
+  grid-template-columns:minmax(190px, 1.5fr) minmax(110px, 0.8fr) minmax(88px, 0.55fr) minmax(90px, 0.55fr) auto;
+  gap:16px;
+  align-items:center;
+}
+
+.air{
+  min-width:0;
+}
+
+.airline-logo{
+  display:grid !important;
+}
+
+.airline-name{
+  font-size:15px;
+  line-height:1.15;
+  white-space:normal;
+}
+
+.flight-number{
+  font-size:12px;
+}
+
+.times{
+  font-size:15px;
+  color:#344054;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.stops{
+  font-size:13px;
+  color:#667085;
+  font-weight:750;
+  white-space:nowrap;
+}
+
+.price{
+  text-align:right;
+  font-size:20px;
+  white-space:nowrap;
+}
+
+.infoBtn{
+  min-width:96px;
+  height:42px;
+  border-radius:16px;
+  font-size:14px;
+}
+
+.bestDealBanner{
+  margin-top:14px;
+  padding:12px 14px;
+}
+
+.bestDealTopRow{
+  justify-content:space-between;
+  align-items:center;
+}
+
+.bestDealTop{
+  font-size:20px;
+}
+
+.bestDealMeta{
+  font-size:13px;
+}
+
+.portalModalCard{
+  max-width:760px;
+  border-radius:20px;
+  padding:18px;
+}
+
+.portalCompareFlightHead{
+  color:#344054;
+  font-weight:800;
+  margin-bottom:16px;
+}
+
+.portalRow{
+  padding:16px;
+  border-radius:18px;
+}
+
+.portalHeader{
+  align-items:flex-start;
+}
+
+.portalPrice{
+  color:#101828;
+}
+
+.mainOffer{
+  color:#344054;
+  line-height:1.55;
+}
+
+.mainOffer b{
+  color:#047857;
+}
+
+.otherOfferItem{
+  color:#344054;
+  background:#ffffff;
+  border:1px solid #e6eaf2;
+}
+
+.otherOfferDiscount{
+  color:#475467;
+}
+
+.otherOfferBadge{
+  background:#fff7ed;
+  color:#c2410c;
+  border-color:#fed7aa;
+}
+
+.modal-content{
+  width:min(980px, 96vw);
+  border-radius:22px;
+}
+
+.pm-tabs{
+  gap:14px;
+  padding:14px 18px;
+}
+
+.tab{
+  min-height:48px;
+  padding:12px 28px;
+  font-size:15px;
+  color:#344054;
+}
+
+.tab.active{
+  color:#1d4ed8;
+  font-weight:900;
+}
+
+.pm-list{
+  grid-template-columns:1fr 1fr;
+  gap:12px 16px;
+}
+
+.pm-item{
+  min-height:58px;
+  padding:12px 16px;
+  justify-content:flex-start;
+  gap:12px;
+  color:#101828;
+  font-weight:800;
+}
+
+.pm-item input{
+  width:18px;
+  height:18px;
+  min-height:18px;
+}
+
+.emiToggleWrap{
+  background:#eef4ff;
+  border-color:#93b4ff;
+}
+
+.emiToggleText{
+  color:#344054;
+}
+
+.emiToggleState{
+  color:#475467;
+}
+
+.emiToggleState.active{
+  color:#059669;
+}
+
+.emiToggle.active{
+  background:rgba(34,197,94,0.16);
+}
+
+.pm-actions{
+  background:#ffffff;
+  box-shadow:0 -14px 30px rgba(15,23,42,0.08);
+}
+
+@media (max-width: 900px){
+  .card .row{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .price{
+    text-align:left;
+  }
+
+  .infoBtn{
+    width:100%;
+  }
+}
