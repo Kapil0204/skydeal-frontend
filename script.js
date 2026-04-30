@@ -280,6 +280,13 @@ let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
 
+let activeFilters = {
+  nonStop: false,
+  bestOffer: false,
+  timeSlots: [],
+  airlines: []
+};
+
 const PAGE_SIZE = 6;
 
 let outPageIdx = 1;
@@ -596,6 +603,137 @@ function getSortValue(selectEl) {
   ) return "savings-desc";
 
   return "price-asc";
+}
+function getDepartureHour(flight) {
+  const t = fmtTime(flight?.departureTime);
+  const h = Number(String(t || "").slice(0, 2));
+  return Number.isFinite(h) ? h : null;
+}
+
+function flightMatchesTimeSlots(flight, slots) {
+  if (!Array.isArray(slots) || slots.length === 0) return true;
+
+  const hour = getDepartureHour(flight);
+  if (hour == null) return true;
+
+  return slots.some((slot) => {
+    const [start, end] = String(slot).split("-").map(Number);
+    return hour >= start && hour < end;
+  });
+}
+
+function applyFlightFilters(items) {
+  const list = Array.isArray(items) ? [...items] : [];
+
+  return list.filter((flight) => {
+    if (activeFilters.nonStop && Number(flight?.stops || 0) !== 0) return false;
+
+    if (activeFilters.bestOffer && !flight?.bestDeal?.applied) return false;
+
+    if (
+      Array.isArray(activeFilters.airlines) &&
+      activeFilters.airlines.length > 0 &&
+      !activeFilters.airlines.includes(String(flight?.airlineName || ""))
+    ) {
+      return false;
+    }
+
+    if (!flightMatchesTimeSlots(flight, activeFilters.timeSlots)) return false;
+
+    return true;
+  });
+}
+
+function getAvailableAirlines() {
+  const all = [...(outboundAll || []), ...(returnAll || [])];
+  return [...new Set(all.map((f) => String(f?.airlineName || "").trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function renderAirlineFilters() {
+  const host = document.getElementById("airlineFilters");
+  if (!host) return;
+
+  const airlines = getAvailableAirlines();
+
+  if (airlines.length === 0) {
+    host.innerHTML = `<div class="filter-placeholder">Search once to see available airlines.</div>`;
+    return;
+  }
+
+  host.innerHTML = airlines.map((name) => `
+    <label class="filter-option">
+      <input type="checkbox" class="airline-filter" value="${safeText(name)}" ${
+        activeFilters.airlines.includes(name) ? "checked" : ""
+      } />
+      <span>${safeText(name)}</span>
+    </label>
+  `).join("");
+
+  host.querySelectorAll(".airline-filter").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      activeFilters.airlines = [...host.querySelectorAll(".airline-filter:checked")]
+        .map((x) => x.value);
+
+      outPageIdx = 1;
+      retPageIdx = 1;
+      renderOutbound();
+      renderReturn();
+    });
+  });
+}
+
+function wireFilters() {
+  const nonStop = document.getElementById("filterNonStop");
+  const bestOffer = document.getElementById("filterBestOffer");
+  const clearBtn = document.querySelector(".clear-filter-btn");
+
+  nonStop?.addEventListener("change", () => {
+    activeFilters.nonStop = !!nonStop.checked;
+    outPageIdx = 1;
+    retPageIdx = 1;
+    renderOutbound();
+    renderReturn();
+  });
+
+  bestOffer?.addEventListener("change", () => {
+    activeFilters.bestOffer = !!bestOffer.checked;
+    outPageIdx = 1;
+    retPageIdx = 1;
+    renderOutbound();
+    renderReturn();
+  });
+
+  document.querySelectorAll(".time-filter").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      activeFilters.timeSlots = [...document.querySelectorAll(".time-filter:checked")]
+        .map((x) => x.value);
+
+      outPageIdx = 1;
+      retPageIdx = 1;
+      renderOutbound();
+      renderReturn();
+    });
+  });
+
+  clearBtn?.addEventListener("click", () => {
+    activeFilters = {
+      nonStop: false,
+      bestOffer: false,
+      timeSlots: [],
+      airlines: []
+    };
+
+    document.querySelectorAll(".filter-panel input[type='checkbox']").forEach((cb) => {
+      cb.checked = false;
+    });
+
+    outPageIdx = 1;
+    retPageIdx = 1;
+    renderAirlineFilters();
+    renderOutbound();
+    renderReturn();
+  });
 }
 
 function sortFlightsForDisplay(items, sortValue) {
@@ -1984,12 +2122,12 @@ function renderList(el, items) {
 }
 
 function renderOutbound() {
-  const sorted = sortFlightsForDisplay(outboundAll, getSortValue(outSortSelect));
+  const filtered = applyFlightFilters(outboundAll);
+  const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
   const pageItems = slicePage(sorted, outPageIdx);
   renderList(outboundList, pageItems);
   renderPager("out");
 }
-
 function renderReturn() {
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
@@ -2006,7 +2144,8 @@ function renderReturn() {
   returnPanel?.classList.remove("is-hidden");
   flightsWorkspace?.classList.remove("one-way");
 
-  const sorted = sortFlightsForDisplay(returnAll, getSortValue(retSortSelect));
+  const filtered = applyFlightFilters(returnAll);
+  const sorted = sortFlightsForDisplay(filtered, getSortValue(retSortSelect));
   const pageItems = slicePage(sorted, retPageIdx);
   renderList(returnList, pageItems);
   renderPager("ret");
@@ -2095,8 +2234,11 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       return;
     }
 
-    outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
+       outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
     returnAll = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
+
+    activeFilters.airlines = [];
+    renderAirlineFilters();
 
     renderOutbound();
     renderReturn();
@@ -2179,6 +2321,9 @@ retSortSelect?.addEventListener("change", () => {
   console.log("[SkyDeal] return sort changed:", getSortValue(retSortSelect));
   renderReturn();
 });
+   wireFilters();
+  renderAirlineFilters();
+
   renderPager("out");
   renderPager("ret");
 }
