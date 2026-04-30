@@ -470,22 +470,41 @@ function getSavingsAmount(basePrice, finalPrice) {
 }
 
 function renderBestDealSummary(bestDeal) {
-  if (!bestDeal || !bestDeal.applied) return "";
+  if (!bestDeal || !bestDeal.applied) {
+    return `
+      <div class="bestDealBanner">
+        <div class="bestDealTopRow">
+          <div class="bestDealTop">No eligible offer found</div>
+        </div>
+        <div class="bestDealMeta">Compare portals to see base prices and other available offers.</div>
+      </div>
+    `;
+  }
 
   const savings = getSavingsAmount(bestDeal.basePrice, bestDeal.finalPrice);
   const portal = safeText(bestDeal.portal || "Best portal");
   const finalPrice = money(bestDeal.finalPrice);
-  const code = safeText(bestDeal.code || "");
-  const payment = bestDeal.paymentLabel ? safeText(prettyPaymentLabel(bestDeal.paymentLabel)) : "";
+  const basePrice = money(bestDeal.basePrice);
+  const code = bestDeal.code ? safeText(bestDeal.code) : "";
+  const payment = bestDeal.paymentLabel ? prettyPaymentLabel(bestDeal.paymentLabel) : "";
+  const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
 
   return `
     <div class="bestDealBanner">
       <div class="bestDealTopRow">
-        <div class="bestDealTop">Best ${finalPrice}</div>
-        <div class="bestDealPortal">on ${portal}</div>
+        <div>
+          <div class="bestDealTop">${finalPrice}</div>
+          <div class="bestDealPortal">Best final price on ${portal}</div>
+        </div>
+        ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
       </div>
-      ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
-      ${(payment || code) ? `<div class="bestDealMeta">${payment}${payment && code ? " • " : ""}${code ? `Code: ${code}` : ""}</div>` : ""}
+
+      <div class="bestDealMeta">
+        Base ${basePrice}
+        ${code ? ` • Code: ${code}` : ""}
+        ${payment ? ` • ${payment}` : ""}
+        ${type ? ` • ${type}` : ""}
+      </div>
     </div>
   `;
 }
@@ -504,12 +523,16 @@ function getPortalCtaLabel(portal) {
   return `Book on ${safeText(portal)}`;
 }
 
-function getOtherOffersButtonLabel(portal) {
-  return `More offers on ${safeText(portal)}`;
+function getOtherOffersButtonLabel(portal, count = 0) {
+  return count > 0
+    ? `More offers on ${safeText(portal)} (${count})`
+    : `More offers on ${safeText(portal)}`;
 }
 
-function getOtherOffersHideLabel(portal) {
-  return `Hide offers on ${safeText(portal)}`;
+function getOtherOffersHideLabel(portal, count = 0) {
+  return count > 0
+    ? `Hide offers on ${safeText(portal)} (${count})`
+    : `Hide offers on ${safeText(portal)}`;
 }
 
 function getInfoBadgeLabel(io) {
@@ -1670,6 +1693,7 @@ function showPortalCompare(flight) {
           .map((p) => {
             const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
             const isBest = bestPortal && p.portal === bestPortal;
+             const portalSavings = getSavingsAmount(p.basePrice, p.finalPrice);
 
             const infoOffersHtml =
   Array.isArray(p.infoOffers) && p.infoOffers.length > 0
@@ -1726,10 +1750,10 @@ function showPortalCompare(flight) {
               class="otherOffersInlineBtn"
               data-target="portal-other-offers-${portalSlug}"
               data-state="closed"
-              data-show-label="${getOtherOffersButtonLabel(p.portal)}"
-              data-hide-label="${getOtherOffersHideLabel(p.portal)}"
-            >
-              ${getOtherOffersButtonLabel(p.portal)}
+             data-show-label="${getOtherOffersButtonLabel(p.portal, p.infoOffers.length)}"
+data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
+>
+  ${getOtherOffersButtonLabel(p.portal, p.infoOffers.length)}
             </button>
 
             <div id="portal-other-offers-${portalSlug}" class="otherOffersDrawer">
@@ -1752,7 +1776,15 @@ function showPortalCompare(flight) {
   </div>
 
   <div class="portalHeaderRight">
-    <div class="portalPrice">${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
+    <div class="portalPrice">
+  <div>${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
+  ${
+    portalSavings > 0
+      ? `<div style="font-size:12px;opacity:.75;text-decoration:line-through;">${money(p.basePrice)}</div>
+         <div style="font-size:12px;color:#86efac;">Save ${money(portalSavings)}</div>`
+      : ""
+  }
+</div>
     ${
       href
         ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice" style="text-decoration:none;">${getPortalCtaLabel(p.portal)}</a>`
@@ -1823,6 +1855,8 @@ function flightCard(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
 
   const best = f.bestDeal;
+   const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
+const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalPrice) : 0;
 
     const bestLine = best
     ? renderBestDealSummary(best)
@@ -1838,7 +1872,14 @@ function flightCard(f) {
         </div>
         <div class="times">${dep} → ${arr}</div>
         <div class="stops">${stops} stop(s)</div>
-                <div class="price">${money(f.price)}</div>
+               <div class="price">
+  <div>${money(cardFinalPrice)}</div>
+  ${
+    cardSavings > 0
+      ? `<div style="font-size:12px;opacity:.75;text-decoration:line-through;">${money(f.price)}</div>`
+      : ""
+  }
+</div>
         <button class="infoBtn" title="Compare portal prices" style="margin-left:10px;">${getCompareButtonLabel()}</button>
       </div>
       ${bestLine}
