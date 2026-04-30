@@ -71,36 +71,43 @@
             <button type="button" class="clear-filter-btn">Clear all</button>
           </div>
 
-          <div class="filter-group">
+                   <div class="filter-group">
             <div class="filter-title">Popular filters</div>
             <label class="filter-option">
-              <input type="checkbox" />
+              <input type="checkbox" id="filterNonStop" />
               <span>Non-stop flights</span>
             </label>
             <label class="filter-option">
-              <input type="checkbox" />
+              <input type="checkbox" id="filterBestOffer" />
               <span>Best offer available</span>
             </label>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-title">Departure time</div>
             <label class="filter-option">
-              <input type="checkbox" />
-              <span>Morning departure</span>
+              <input type="checkbox" class="time-filter" value="0-6" />
+              <span>Late night · 12 AM - 6 AM</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" class="time-filter" value="6-12" />
+              <span>Morning · 6 AM - 12 PM</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" class="time-filter" value="12-18" />
+              <span>Afternoon · 12 PM - 6 PM</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" class="time-filter" value="18-24" />
+              <span>Evening · 6 PM - 12 AM</span>
             </label>
           </div>
 
           <div class="filter-group">
             <div class="filter-title">Airlines</div>
-            <label class="filter-option">
-              <input type="checkbox" />
-              <span>IndiGo</span>
-            </label>
-            <label class="filter-option">
-              <input type="checkbox" />
-              <span>Air India</span>
-            </label>
-            <label class="filter-option">
-              <input type="checkbox" />
-              <span>Akasa Air</span>
-            </label>
+            <div id="airlineFilters" class="airline-filter-list">
+              <div class="filter-placeholder">Search once to see available airlines.</div>
+            </div>
           </div>
 
           <div class="filter-group">
