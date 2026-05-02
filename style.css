@@ -2439,3 +2439,58 @@ body{
   background:linear-gradient(135deg, rgba(168,85,247,0.20), rgba(236,72,153,0.10));
   border-color:rgba(168,85,247,0.45);
 }
+/* =========================
+   Small visibility + typography fixes
+   ========================= */
+
+/* Payment modal close button */
+.x{
+  background:rgba(255,255,255,0.08) !important;
+  border:1px solid rgba(168,85,247,0.55) !important;
+  color:#ffffff !important;
+  font-size:22px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.x:hover{
+  background:#a855f7 !important;
+  color:#ffffff !important;
+  box-shadow:0 0 16px rgba(168,85,247,0.55);
+}
+
+/* Payment method subtype cards */
+.pm-item{
+  font-weight:650 !important;
+  letter-spacing:-0.01em;
+}
+
+.pm-item span{
+  font-size:14px !important;
+  font-weight:650 !important;
+  letter-spacing:-0.01em;
+}
+
+.pm-item:hover{
+  border-color:rgba(168,85,247,0.55) !important;
+  background:rgba(168,85,247,0.10) !important;
+}
+
+/* Clear all button in filter panel */
+.clear-filter-btn{
+  background:#faf5ff !important;
+  color:#7e22ce !important;
+  border:1px solid rgba(168,85,247,0.35) !important;
+  border-radius:8px !important;
+  padding:4px 8px !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+}
+
+.clear-filter-btn:hover{
+  background:#a855f7 !important;
+  color:#ffffff !important;
+}
