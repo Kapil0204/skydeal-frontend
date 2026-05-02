@@ -2072,7 +2072,12 @@ function flightCard(f) {
     <div class="card" data-flightkey="${key}">
       <div class="row">
         <div class="air">
-          <div class="airline-logo ${getAirlineLogoClass(name)}">${getAirlineInitials(name)}</div>
+          ${
+  getAirlineLogoUrl(name)
+    ? `<img class="airline-logo-img" src="${getAirlineLogoUrl(name)}" alt="${name} logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
+       <div class="airline-logo logo-default" style="display:none;">${getAirlineInitials(name)}</div>`
+    : `<div class="airline-logo logo-default">${getAirlineInitials(name)}</div>`
+}
           <div>
             <div class="airline-name">${name}</div>
             <div class="flight-number">${num}</div>
