@@ -2529,3 +2529,38 @@ input[type="date"]::-webkit-calendar-picker-indicator{
   cursor:pointer;
   filter:invert(1) brightness(1.8);
 }
+/* =========================
+   Strong date picker visibility fix
+   ========================= */
+
+input[type="date"]{
+  position:relative;
+  color-scheme:dark;
+  padding-right:46px !important;
+}
+
+/* hide the native dark calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:0;
+  width:44px;
+  height:44px;
+  cursor:pointer;
+  position:absolute;
+  right:0;
+  top:0;
+  z-index:3;
+}
+
+/* create our visible calendar button area */
+input[type="date"]::after{
+  content:"📅";
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:17px;
+  line-height:1;
+  pointer-events:none;
+  opacity:0.95;
+  filter:drop-shadow(0 0 6px rgba(168,85,247,0.45));
+}
