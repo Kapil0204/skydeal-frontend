@@ -2075,8 +2075,7 @@ function flightCard(f) {
         <div class="air">
           ${
   getAirlineLogoUrl(name)
-    ? `<img class="airline-logo-img" src="${getAirlineLogoUrl(name)}" alt="${name} logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
-       <div class="airline-logo logo-default" style="display:none;">${getAirlineInitials(name)}</div>`
+    ? `<img class="airline-logo-img" src="${getAirlineLogoUrl(name)}" alt="${name} logo" onerror="this.outerHTML='<div class=&quot;airline-logo logo-default&quot;>${getAirlineInitials(name)}</div>';" />`
     : `<div class="airline-logo logo-default">${getAirlineInitials(name)}</div>`
 }
           <div>
