@@ -2494,3 +2494,38 @@ body{
   background:#a855f7 !important;
   color:#ffffff !important;
 }
+/* =========================
+   Fix portal hover + date picker visibility
+   ========================= */
+
+/* Keep portal comparison rows readable on hover */
+.portalRow:hover{
+  background:rgba(168,85,247,0.10) !important;
+  border-color:rgba(168,85,247,0.45) !important;
+  color:#f8fafc !important;
+}
+
+.portalRow:hover .portalName,
+.portalRow:hover .portalPrice,
+.portalRow:hover .mainOffer,
+.portalRow:hover .offerMeta{
+  color:#f8fafc !important;
+}
+
+.portalRow:hover .portalLinkBelowPrice,
+.portalRow:hover .otherOffersInlineBtn{
+  background:rgba(255,255,255,0.08) !important;
+  color:#f8fafc !important;
+  border-color:rgba(168,85,247,0.45) !important;
+}
+
+/* Make date calendar icon visible on dark search card */
+input[type="date"]{
+  color-scheme:dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:1;
+  cursor:pointer;
+  filter:invert(1) brightness(1.8);
+}
