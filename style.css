@@ -2264,3 +2264,12 @@ select:focus{
   color:#f3e8ff !important;
   border:1px solid rgba(139,92,246,0.30) !important;
 }
+/* SkyDeal gradient logo text */
+.brand-name{
+  background:linear-gradient(135deg, #8b5cf6 0%, #ec4899 55%, #ff2d95 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:none;
+  font-weight:950;
+}
