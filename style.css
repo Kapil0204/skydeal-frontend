@@ -2050,3 +2050,217 @@ h3{
   font-size:12px;
   line-height:1.35;
 }
+/* =========================
+   SkyDeal Dark Neon Brand Refresh
+   Primary: Neon Purple
+   Accent: Hot Pink
+   ========================= */
+
+:root{
+  --bg:#070711;
+  --panel:#11111f;
+  --panel2:#17172a;
+  --text:#f8fafc;
+  --muted:#a5adcb;
+  --line:rgba(255,255,255,0.12);
+  --btn:#8b5cf6;
+  --btn2:#19192d;
+  --primary:#8b5cf6;
+  --primary2:#a855f7;
+  --pink:#ec4899;
+  --pink2:#ff2d95;
+  --success:#22c55e;
+  --shadow:0 24px 70px rgba(0,0,0,0.45);
+}
+
+body{
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(139,92,246,0.28), transparent 60%),
+    radial-gradient(700px 360px at 86% 0%, rgba(236,72,153,0.18), transparent 55%),
+    linear-gradient(180deg, #080812 0%, #10101d 100%);
+  color:var(--text);
+}
+
+.nav{
+  background:rgba(7,7,17,0.86);
+  border-bottom:1px solid rgba(139,92,246,0.22);
+  backdrop-filter:blur(18px);
+}
+
+.brand{
+  color:#f8fafc;
+}
+
+.brand-name{
+  color:var(--primary);
+  text-shadow:0 0 22px rgba(139,92,246,0.55);
+}
+
+.sub{
+  color:#b7bed7;
+}
+
+.search-card,
+.filter-card,
+.col,
+.modal-content,
+.portalModalCard{
+  background:linear-gradient(135deg, rgba(17,17,31,0.96), rgba(24,24,42,0.96));
+  border:1px solid rgba(139,92,246,0.22);
+  box-shadow:var(--shadow);
+}
+
+label,
+.section-subtitle,
+.sort,
+.empty-copy,
+.flight-number,
+.times,
+.stops,
+.bestDealMeta,
+.bestDealPortal,
+.pager{
+  color:var(--muted);
+}
+
+h3,
+.empty-title,
+.airline-name,
+.price,
+.bestDealTop,
+.portalName,
+.portalPrice,
+.mainOffer,
+.modal-head h2{
+  color:var(--text);
+}
+
+input,
+select{
+  background:#0c0c18;
+  color:var(--text);
+  border:1px solid rgba(139,92,246,0.24);
+}
+
+input:focus,
+select:focus{
+  border-color:rgba(236,72,153,0.72);
+  box-shadow:0 0 0 4px rgba(236,72,153,0.14);
+}
+
+.btn-primary{
+  background:linear-gradient(135deg, var(--primary), var(--pink2));
+  box-shadow:0 14px 38px rgba(139,92,246,0.34);
+}
+
+.btn-ghost,
+.btn-sm,
+.clear-filter-btn{
+  background:rgba(139,92,246,0.10);
+  color:#f2e9ff;
+  border:1px solid rgba(139,92,246,0.32);
+}
+
+.card,
+.portalRow,
+.pm-item,
+.empty-state{
+  background:rgba(255,255,255,0.045);
+  border:1px solid rgba(255,255,255,0.10);
+}
+
+.card:hover{
+  border-color:rgba(236,72,153,0.44);
+  box-shadow:0 20px 42px rgba(236,72,153,0.10);
+}
+
+.bestDealBanner,
+.portalRow.best{
+  background:linear-gradient(135deg, rgba(139,92,246,0.18), rgba(236,72,153,0.10));
+  border-color:rgba(139,92,246,0.45);
+}
+
+.bestDealSave,
+.mainOffer b{
+  color:var(--success);
+}
+
+.infoBtn{
+  background:linear-gradient(135deg, #111827, #201238);
+  border:1px solid rgba(236,72,153,0.35);
+  color:#ffffff;
+}
+
+.infoBtn:hover{
+  background:linear-gradient(135deg, var(--primary), var(--pink2));
+}
+
+.filter-title,
+.filter-option{
+  color:#f8fafc;
+}
+
+.filter-group,
+.col-head,
+.modal-head,
+.pm-tabs,
+.pm-actions{
+  border-color:rgba(255,255,255,0.10);
+}
+
+.deal-tip{
+  background:linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
+  border:1px solid rgba(236,72,153,0.24);
+  color:#f3e8ff;
+}
+
+.filter-placeholder,
+.otherOfferItem,
+.otherOffersDrawer{
+  background:rgba(255,255,255,0.05);
+  color:#cbd5e1;
+  border-color:rgba(255,255,255,0.10);
+}
+
+.tab{
+  background:#11111f;
+  color:#d8d6ff;
+  border-color:rgba(139,92,246,0.28);
+}
+
+.tab.active,
+.pm-item:has(input:checked){
+  background:linear-gradient(135deg, rgba(139,92,246,0.24), rgba(236,72,153,0.16));
+  border-color:rgba(236,72,153,0.55);
+  color:#ffffff;
+}
+
+.pm-body,
+.pm-tabs,
+.pm-actions,
+.modal-head{
+  background:#10101d;
+}
+
+.pm-item span{
+  color:#f8fafc;
+}
+
+.emiToggleWrap{
+  background:rgba(139,92,246,0.14);
+  border-color:rgba(236,72,153,0.38);
+}
+
+.emiToggleText,
+.emiToggleState{
+  color:#f8fafc !important;
+}
+
+.copyCouponBtn,
+.otherOffersInlineBtn,
+.tncBtn,
+.portalLinkBelowPrice{
+  background:rgba(255,255,255,0.06) !important;
+  color:#f3e8ff !important;
+  border:1px solid rgba(139,92,246,0.30) !important;
+}
