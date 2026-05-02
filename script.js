@@ -1991,16 +1991,17 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
   });
 }
 
-function getAirlineLogoClass(airlineName) {
+function getAirlineLogoUrl(airlineName) {
   const n = String(airlineName || "").toLowerCase();
 
-  if (n.includes("indigo")) return "logo-indigo";
-  if (n.includes("air india")) return "logo-air-india";
-  if (n.includes("akasa")) return "logo-akasa";
-  if (n.includes("spicejet")) return "logo-spicejet";
-  if (n.includes("vistara")) return "logo-vistara";
+  if (n.includes("indigo")) return "assets/airlines/indigo.png";
+  if (n.includes("air india express")) return "assets/airlines/air-india-express.png";
+  if (n.includes("air india")) return "assets/airlines/air-india.png";
+  if (n.includes("akasa")) return "assets/airlines/akasa.png";
+  if (n.includes("spicejet")) return "assets/airlines/spicejet.png";
+  if (n.includes("vistara")) return "assets/airlines/vistara.png";
 
-  return "logo-default";
+  return "";
 }
 
 function getAirlineInitials(airlineName) {
