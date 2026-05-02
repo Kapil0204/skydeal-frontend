@@ -2564,3 +2564,21 @@ input[type="date"]::after{
   opacity:0.95;
   filter:drop-shadow(0 0 6px rgba(168,85,247,0.45));
 }
+/* Airline logo image (MMT style) */
+.airline-logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 5px;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* Keep alignment clean */
+.air {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
