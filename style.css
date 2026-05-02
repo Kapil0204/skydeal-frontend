@@ -2278,3 +2278,164 @@ select:focus{
   text-shadow:0 0 14px rgba(168,85,247,0.38);
   font-weight:950;
 }
+/* =========================
+   SkyDeal Hybrid Product UI
+   Dark hero + light results
+   ========================= */
+
+body{
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(168,85,247,0.22), transparent 60%),
+    linear-gradient(180deg, #080812 0 360px, #f6f7fb 360px 100%);
+}
+
+/* Keep top/search area premium dark */
+.nav,
+.search-card{
+  background:linear-gradient(135deg, rgba(17,17,31,0.98), rgba(24,24,42,0.98));
+  border-color:rgba(168,85,247,0.34);
+}
+
+/* Results area becomes clean and trustworthy */
+.filter-card,
+.col{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid #e5e7eb;
+  box-shadow:0 18px 44px rgba(15,23,42,0.08);
+}
+
+/* Results text */
+.filter-card h3,
+.col h3,
+.filter-title,
+.filter-option,
+.airline-name,
+.price,
+.bestDealTop,
+.empty-title{
+  color:#111827;
+}
+
+.section-subtitle,
+.sort,
+.flight-number,
+.times,
+.stops,
+.bestDealMeta,
+.bestDealPortal,
+.pager,
+.empty-copy{
+  color:#667085;
+}
+
+/* Results separators */
+.filter-group,
+.col-head{
+  border-color:#eef2f7;
+}
+
+/* Filter inputs on light cards */
+.filter-option input{
+  accent-color:#a855f7;
+}
+
+/* Light result flight cards */
+.card{
+  background:#ffffff;
+  border:1px solid #e6eaf2;
+  box-shadow:0 10px 24px rgba(15,23,42,0.05);
+}
+
+.card:hover{
+  border-color:rgba(168,85,247,0.38);
+  box-shadow:0 18px 38px rgba(168,85,247,0.10);
+}
+
+/* Best deal / no offer block */
+.bestDealBanner,
+.empty-state{
+  background:linear-gradient(135deg, #faf5ff, #ffffff);
+  border:1px solid rgba(168,85,247,0.22);
+}
+
+.bestDealSave,
+.mainOffer b{
+  color:#059669;
+}
+
+/* Compare button remains brand-led */
+.infoBtn{
+  background:#111827;
+  color:#ffffff;
+  border:1px solid rgba(168,85,247,0.28);
+}
+
+.infoBtn:hover{
+  background:#a855f7;
+}
+
+/* Sort dropdown in light section */
+.sort select{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid #d9e1ef;
+}
+
+/* Filter placeholder and tip */
+.filter-placeholder{
+  background:#fafafa;
+  color:#667085;
+  border:1px dashed #d1d5db;
+}
+
+.deal-tip{
+  background:linear-gradient(135deg, #faf5ff, #ffffff);
+  border:1px solid rgba(168,85,247,0.22);
+  color:#374151;
+}
+
+/* Pager buttons on light area */
+.btn-sm{
+  background:#ffffff;
+  color:#374151;
+  border:1px solid #d9e1ef;
+}
+
+.btn-sm:not(:disabled):hover{
+  border-color:#a855f7;
+  color:#7e22ce;
+}
+
+/* Keep payment and comparison modals dark/premium for now */
+.modal-content,
+.portalModalCard{
+  background:#10101d;
+  color:#f8fafc;
+  border:1px solid rgba(168,85,247,0.28);
+}
+
+.modal-head,
+.pm-tabs,
+.pm-body,
+.pm-actions{
+  background:#10101d;
+  border-color:rgba(255,255,255,0.10);
+}
+
+.modal-head h2,
+.portalName,
+.portalPrice,
+.mainOffer{
+  color:#f8fafc;
+}
+
+.portalRow{
+  background:rgba(255,255,255,0.045);
+  border:1px solid rgba(255,255,255,0.10);
+}
+
+.portalRow.best{
+  background:linear-gradient(135deg, rgba(168,85,247,0.20), rgba(236,72,153,0.10));
+  border-color:rgba(168,85,247,0.45);
+}
