@@ -284,6 +284,7 @@ let lastSearchPayload = null;
 // This is frontend-only for now; backend comparison will be connected in the next step.
 let selectedOutboundFlight = null;
 let selectedReturnFlight = null;
+let selectedTripCompareLoading = false;
 
 let activeFilters = {
   nonStop: false,
@@ -2083,15 +2084,38 @@ function ensureSelectedTripPanel() {
   panel = document.createElement("section");
   panel.id = "selectedTripPanel";
   panel.style.display = "none";
-  panel.style.margin = "18px 0";
-  panel.style.padding = "16px";
-  panel.style.border = "1px solid rgba(37,99,235,0.18)";
-  panel.style.borderRadius = "20px";
-  panel.style.background = "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,212,255,0.08))";
-  panel.style.boxShadow = "0 12px 28px rgba(15,23,42,0.06)";
+  panel.style.position = "fixed";
+  panel.style.left = "50%";
+  panel.style.bottom = "18px";
+  panel.style.transform = "translateX(-50%)";
+  panel.style.width = "min(1120px, calc(100vw - 28px))";
+  panel.style.padding = "16px 18px";
+  panel.style.border = "1px solid rgba(168,85,247,0.34)";
+  panel.style.borderRadius = "24px";
+  panel.style.background = "linear-gradient(135deg, rgba(17,24,39,0.98), rgba(49,26,92,0.98))";
+  panel.style.backdropFilter = "blur(18px)";
+  panel.style.boxShadow = "0 22px 60px rgba(17,24,39,0.34), 0 0 0 1px rgba(255,255,255,0.06) inset";
+  panel.style.zIndex = "120";
+  panel.style.color = "#ffffff";
 
-  results.parentNode.insertBefore(panel, results);
+  document.body.appendChild(panel);
   return panel;
+}
+
+function scrollAfterTripSelection(direction) {
+  if (direction === "out" && returnResultsPanel) {
+    setTimeout(() => {
+      returnResultsPanel.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    }, 80);
+    return;
+  }
+
+  if (direction === "ret") {
+    setTimeout(() => {
+      const panel = document.getElementById("selectedTripPanel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }, 80);
+  }
 }
 
 function renderSelectedTripPanel() {
@@ -2112,40 +2136,127 @@ function renderSelectedTripPanel() {
 
   panel.style.display = "block";
   panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:13px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:.04em;">Selected round trip</div>
-        <div style="margin-top:8px;font-size:14px;color:#344054;line-height:1.55;">
-          <div><b>Outbound:</b> ${selectedFlightSummary(selectedOutboundFlight)}</div>
-          <div><b>Return:</b> ${selectedFlightSummary(selectedReturnFlight)}</div>
+    <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
+      <div style="min-width:260px;flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="font-size:13px;font-weight:950;color:#c084fc;text-transform:uppercase;letter-spacing:.04em;">Selected round trip</div>
+          <div style="font-size:12px;color:#cbd5e1;font-weight:750;">
+            ${ready ? "Ready to compare same-portal trip price" : "Select outbound + return"}
+          </div>
         </div>
-        <div style="margin-top:8px;font-size:13px;color:#667085;">
-          ${
-            ready
-              ? "Next step: we will compare the best single-portal booking price for this selected trip."
-              : "Select both outbound and return flights to compare the full trip booking price."
-          }
+
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:#e5e7eb;line-height:1.35;">
+          <div style="min-width:0;"><b>Outbound:</b> ${selectedFlightSummary(selectedOutboundFlight)}</div>
+          <div style="min-width:0;"><b>Return:</b> ${selectedFlightSummary(selectedReturnFlight)}</div>
         </div>
       </div>
 
-      <button
-        type="button"
-        id="clearSelectedTripBtn"
-        class="btn-ghost"
-        style="white-space:nowrap;"
-      >
-        Clear selection
-      </button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+        ${
+          ready
+            ? `
+              <button
+                type="button"
+                id="compareSelectedTripBtn"
+                class="btn-primary"
+                style="margin-top:0;width:auto;white-space:nowrap;padding:10px 16px;"
+                ${selectedTripCompareLoading ? "disabled" : ""}
+              >
+                ${selectedTripCompareLoading ? "Comparing..." : "Compare full trip price"}
+              </button>
+            `
+            : ""
+        }
+
+        <button
+          type="button"
+          id="clearSelectedTripBtn"
+          class="btn-ghost"
+          style="white-space:nowrap;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.18);color:#ffffff;"
+        >
+          Clear
+        </button>
+      </div>
     </div>
   `;
 
   panel.querySelector("#clearSelectedTripBtn")?.addEventListener("click", () => {
     selectedOutboundFlight = null;
     selectedReturnFlight = null;
+    selectedTripCompareLoading = false;
     renderOutbound();
     renderReturn();
     renderSelectedTripPanel();
   });
+
+  panel.querySelector("#compareSelectedTripBtn")?.addEventListener("click", () => {
+    compareSelectedRoundTrip();
+  });
+}
+
+async function compareSelectedRoundTrip() {
+  if (!selectedOutboundFlight || !selectedReturnFlight) {
+    alert("Please select both outbound and return flights first.");
+    return;
+  }
+
+  if (!lastSearchPayload) {
+    alert("Please run a flight search first.");
+    return;
+  }
+
+  selectedTripCompareLoading = true;
+  renderSelectedTripPanel();
+
+  try {
+    const payload = {
+      from: lastSearchPayload.from,
+      to: lastSearchPayload.to,
+      tripType: "round-trip",
+      passengers: lastSearchPayload.passengers || 1,
+      travelClass: lastSearchPayload.travelClass || "economy",
+      paymentMethods: buildSearchPaymentMethods(),
+      outboundFlight: selectedOutboundFlight,
+      returnFlight: selectedReturnFlight
+    };
+
+    const res = await fetch(`${BACKEND}/compare-selected-trip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data?.meta?.error) {
+      throw new Error(data?.meta?.error || `Trip comparison failed with HTTP ${res.status}`);
+    }
+
+    const comparison = data?.tripComparison;
+
+    if (!comparison || !Array.isArray(comparison.portalPrices)) {
+      throw new Error("Trip comparison response did not include portal prices.");
+    }
+
+    const comparisonFlight = {
+      airlineName: "Selected round trip",
+      flightNumber: `${displayFlightNumber(selectedOutboundFlight)} / ${displayFlightNumber(selectedReturnFlight)}`,
+      departureTime: selectedOutboundFlight.departureTime,
+      arrivalTime: selectedReturnFlight.arrivalTime,
+      stops: Number(selectedOutboundFlight.stops || 0) + Number(selectedReturnFlight.stops || 0),
+      price: comparison.baseTotal,
+      bestDeal: comparison.bestDeal || null,
+      portalPrices: comparison.portalPrices || [],
+      tripComparison: comparison
+    };
+
+    showPortalCompare(comparisonFlight);
+  } catch (err) {
+    alert(err?.message || "Could not compare this selected trip.");
+  } finally {
+    selectedTripCompareLoading = false;
+    renderSelectedTripPanel();
+  }
 }
 
 function flightCard(f, direction = "out") {
@@ -2258,6 +2369,7 @@ function renderList(el, items, direction = "out") {
       renderOutbound();
       renderReturn();
       renderSelectedTripPanel();
+      scrollAfterTripSelection(dir);
     });
   });
 
