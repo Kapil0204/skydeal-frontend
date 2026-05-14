@@ -482,14 +482,22 @@ function getSavingsAmount(basePrice, finalPrice) {
   return Math.max(0, Math.round(b - f));
 }
 
-function renderBestDealSummary(bestDeal) {
+function renderBestDealSummary(bestDeal, context = "default") {
+  const isRoundTripLeg = context === "round-trip-leg";
+
   if (!bestDeal || !bestDeal.applied) {
     return `
       <div class="bestDealBanner">
         <div class="bestDealTopRow">
           <div class="bestDealTop">No eligible offer found</div>
         </div>
-        <div class="bestDealMeta">Compare portals to see base prices and other available offers.</div>
+        <div class="bestDealMeta">
+          ${
+            isRoundTripLeg
+              ? "Select both flights to compare the full round-trip booking price."
+              : "Compare portals to see base prices and other available offers."
+          }
+        </div>
       </div>
     `;
   }
@@ -501,13 +509,14 @@ function renderBestDealSummary(bestDeal) {
   const code = bestDeal.code ? safeText(bestDeal.code) : "";
   const payment = bestDeal.paymentLabel ? prettyPaymentLabel(bestDeal.paymentLabel) : "";
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
+  const portalLine = isRoundTripLeg ? `Standalone best via ${portal}` : `Best overall via ${portal}`;
 
   return `
     <div class="bestDealBanner">
       <div class="bestDealTopRow">
         <div>
           <div class="bestDealTop">${finalPrice}</div>
-          <div class="bestDealPortal">Best overall via ${portal}</div>
+          <div class="bestDealPortal">${portalLine}</div>
         </div>
         ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
       </div>
@@ -517,6 +526,7 @@ function renderBestDealSummary(bestDeal) {
         ${code ? ` • Code: ${code}` : ""}
         ${payment ? ` • ${payment}` : ""}
         ${type ? ` • ${type}` : ""}
+        ${isRoundTripLeg ? " • Full trip price after selecting both flights" : ""}
       </div>
     </div>
   `;
@@ -2299,8 +2309,12 @@ function flightCard(f, direction = "out") {
   const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalPrice) : 0;
 
   const bestLine = best
-    ? renderBestDealSummary(best)
-    : `<div class="best">Compare portals to find the best payable price.</div>`;
+    ? renderBestDealSummary(best, isRoundTripModeActive() ? "round-trip-leg" : "default")
+    : `<div class="best">${
+        isRoundTripModeActive()
+          ? "Select both flights to compare the full round-trip booking price."
+          : "Compare portals to find the best payable price."
+      }</div>`;
 
   const key = flightKey(f);
   const isRoundTrip = isRoundTripModeActive();
