@@ -1465,6 +1465,41 @@ function closePaymentModal() {
   paymentModal.classList.remove("open");
 }
 
+function normalizePaymentTabLabel(label) {
+  const raw = String(label || "").trim();
+  const compact = raw.toLowerCase().replace(/[\s_-]+/g, "");
+
+  if (compact === "creditcard") return "Credit Card";
+  if (compact === "debitcard") return "Debit Card";
+  if (compact === "netbanking") return "Net Banking";
+  if (compact === "upi") return "UPI";
+  if (compact === "wallet") return "Wallet";
+  if (compact === "emi") return "EMI";
+
+  return raw;
+}
+
+function cleanupPaymentTabsDom() {
+  if (!pmTabsContainer) return;
+
+  const allowed = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
+  const seen = new Set();
+
+  pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
+    const normalized = normalizePaymentTabLabel(btn.textContent || btn.getAttribute("data-tab"));
+
+    if (!allowed.includes(normalized) || seen.has(normalized)) {
+      btn.remove();
+      return;
+    }
+
+    seen.add(normalized);
+    btn.textContent = normalized;
+    btn.setAttribute("data-tab", normalized);
+    btn.classList.toggle("active", normalized === normalizePaymentTabLabel(activePaymentType));
+  });
+}
+
 function renderPaymentTabs() {
   if (!pmTabsContainer) return;
 
@@ -1497,10 +1532,11 @@ function renderPaymentTabs() {
   `;
 
   pmTabsContainer.innerHTML = tabsHtml + emiToggleHtml;
+  cleanupPaymentTabsDom();
 
   pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
-      activePaymentType = btn.getAttribute("data-tab");
+      activePaymentType = normalizePaymentTabLabel(btn.getAttribute("data-tab"));
       renderPaymentTabs();
       renderPaymentList();
     });
