@@ -2194,6 +2194,19 @@ function renderSelectedTripPanel() {
   });
 }
 
+function slimFlightForTripCompare(f) {
+  if (!f) return null;
+
+  return {
+    airlineName: f.airlineName || null,
+    flightNumber: f.flightNumber || null,
+    departureTime: f.departureTime || null,
+    arrivalTime: f.arrivalTime || null,
+    stops: Number(f.stops || 0),
+    price: Number(f.price || f.basePrice || 0)
+  };
+}
+
 async function compareSelectedRoundTrip() {
   if (!selectedOutboundFlight || !selectedReturnFlight) {
     alert("Please select both outbound and return flights first.");
@@ -2216,17 +2229,32 @@ async function compareSelectedRoundTrip() {
       passengers: lastSearchPayload.passengers || 1,
       travelClass: lastSearchPayload.travelClass || "economy",
       paymentMethods: buildSearchPaymentMethods(),
-      outboundFlight: selectedOutboundFlight,
-      returnFlight: selectedReturnFlight
+      outboundFlight: slimFlightForTripCompare(selectedOutboundFlight),
+      returnFlight: slimFlightForTripCompare(selectedReturnFlight)
     };
 
-    const res = await fetch(`${BACKEND}/compare-selected-trip`, {
+    const compareUrl = `${BACKEND}/compare-selected-trip`;
+    const res = await fetch(compareUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data;
+
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error("[SkyDeal] compare-selected-trip returned non-JSON", {
+        url: compareUrl,
+        status: res.status,
+        contentType: res.headers.get("content-type"),
+        preview: rawText.slice(0, 500)
+      });
+
+      throw new Error(`Trip comparison returned non-JSON from backend. HTTP ${res.status}. Check console for response preview.`);
+    }
 
     if (!res.ok || data?.meta?.error) {
       throw new Error(data?.meta?.error || `Trip comparison failed with HTTP ${res.status}`);
@@ -2386,7 +2414,27 @@ function renderList(el, items, direction = "out") {
   });
 }
 
+function updateFlightSectionHeadings() {
+  const fromRaw = safeText(fromInput?.value, "").trim();
+  const toRaw = safeText(toInput?.value, "").trim();
+
+  const from = lastSearchPayload?.from || resolveLocationToCode(fromRaw) || fromRaw || "Outbound";
+  const to = lastSearchPayload?.to || resolveLocationToCode(toRaw) || toRaw || "Return";
+
+  const outboundTitle = document.querySelector("#outboundResultsPanel .col-head h3");
+  const returnTitle = document.querySelector("#returnResultsPanel .col-head h3");
+
+  if (outboundTitle) {
+    outboundTitle.textContent = from && to ? `${from} → ${to}` : "Outbound Flights";
+  }
+
+  if (returnTitle) {
+    returnTitle.textContent = from && to ? `${to} → ${from}` : "Return Flights";
+  }
+}
+
 function renderOutbound() {
+  updateFlightSectionHeadings();
   const filtered = applyFlightFilters(outboundAll);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
   const pageItems = slicePage(sorted, outPageIdx);
@@ -2395,6 +2443,7 @@ function renderOutbound() {
   renderPager("out");
 }
 function renderReturn() {
+  updateFlightSectionHeadings();
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
   const isRoundTrip = !!roundTripRadio?.checked;
@@ -2419,6 +2468,7 @@ function renderReturn() {
 }
 
 function toggleReturn() {
+  updateFlightSectionHeadings();
   const show = !!roundTripRadio?.checked;
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
