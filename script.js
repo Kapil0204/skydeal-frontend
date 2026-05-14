@@ -280,6 +280,11 @@ let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
 
+// Round-trip manual selection state.
+// This is frontend-only for now; backend comparison will be connected in the next step.
+let selectedOutboundFlight = null;
+let selectedReturnFlight = null;
+
 let activeFilters = {
   nonStop: false,
   bestOffer: false,
@@ -2053,7 +2058,97 @@ function emptyStateHtml(type = "default") {
   `;
 }
 
-function flightCard(f) {
+function isRoundTripModeActive() {
+  return !!roundTripRadio?.checked || lastSearchPayload?.tripType === "round-trip";
+}
+
+function isSameSelectedFlight(a, b) {
+  if (!a || !b) return false;
+  return flightKey(a) === flightKey(b);
+}
+
+function selectedFlightSummary(f) {
+  if (!f) return "Not selected yet";
+
+  return `${safeText(f.airlineName)} ${displayFlightNumber(f)} · ${fmtTime(f.departureTime)} → ${fmtTime(f.arrivalTime)} · ${money(f.price)}`;
+}
+
+function ensureSelectedTripPanel() {
+  let panel = document.getElementById("selectedTripPanel");
+  if (panel) return panel;
+
+  const results = document.querySelector(".results");
+  if (!results) return null;
+
+  panel = document.createElement("section");
+  panel.id = "selectedTripPanel";
+  panel.style.display = "none";
+  panel.style.margin = "18px 0";
+  panel.style.padding = "16px";
+  panel.style.border = "1px solid rgba(37,99,235,0.18)";
+  panel.style.borderRadius = "20px";
+  panel.style.background = "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,212,255,0.08))";
+  panel.style.boxShadow = "0 12px 28px rgba(15,23,42,0.06)";
+
+  results.parentNode.insertBefore(panel, results);
+  return panel;
+}
+
+function renderSelectedTripPanel() {
+  const panel = ensureSelectedTripPanel();
+  if (!panel) return;
+
+  if (!isRoundTripModeActive()) {
+    panel.style.display = "none";
+    return;
+  }
+
+  if (!selectedOutboundFlight && !selectedReturnFlight) {
+    panel.style.display = "none";
+    return;
+  }
+
+  const ready = !!selectedOutboundFlight && !!selectedReturnFlight;
+
+  panel.style.display = "block";
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:13px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:.04em;">Selected round trip</div>
+        <div style="margin-top:8px;font-size:14px;color:#344054;line-height:1.55;">
+          <div><b>Outbound:</b> ${selectedFlightSummary(selectedOutboundFlight)}</div>
+          <div><b>Return:</b> ${selectedFlightSummary(selectedReturnFlight)}</div>
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:#667085;">
+          ${
+            ready
+              ? "Next step: we will compare the best single-portal booking price for this selected trip."
+              : "Select both outbound and return flights to compare the full trip booking price."
+          }
+        </div>
+      </div>
+
+      <button
+        type="button"
+        id="clearSelectedTripBtn"
+        class="btn-ghost"
+        style="white-space:nowrap;"
+      >
+        Clear selection
+      </button>
+    </div>
+  `;
+
+  panel.querySelector("#clearSelectedTripBtn")?.addEventListener("click", () => {
+    selectedOutboundFlight = null;
+    selectedReturnFlight = null;
+    renderOutbound();
+    renderReturn();
+    renderSelectedTripPanel();
+  });
+}
+
+function flightCard(f, direction = "out") {
   const name = safeText(f.airlineName);
   const num = displayFlightNumber(f);
   const dep = fmtTime(f.departureTime);
@@ -2069,8 +2164,37 @@ function flightCard(f) {
     : `<div class="best">Compare portals to find the best payable price.</div>`;
 
   const key = flightKey(f);
+  const isRoundTrip = isRoundTripModeActive();
+  const selectedForDirection = direction === "ret" ? selectedReturnFlight : selectedOutboundFlight;
+  const isSelectedForDirection = isSameSelectedFlight(f, selectedForDirection);
+  const selectLabel = direction === "ret" ? "Select return" : "Select outbound";
+
+  const selectTripButton = isRoundTrip
+    ? `
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+        <button
+          type="button"
+          class="selectTripBtn"
+          data-direction="${direction}"
+          style="
+            border:1px solid ${isSelectedForDirection ? "rgba(5,150,105,.38)" : "rgba(37,99,235,.28)"};
+            background:${isSelectedForDirection ? "rgba(5,150,105,.10)" : "rgba(37,99,235,.08)"};
+            color:${isSelectedForDirection ? "#047857" : "#1d4ed8"};
+            border-radius:999px;
+            padding:8px 12px;
+            font-size:13px;
+            font-weight:900;
+            cursor:pointer;
+          "
+        >
+          ${isSelectedForDirection ? "Selected ✓" : selectLabel}
+        </button>
+      </div>
+    `
+    : "";
+
   return `
-    <div class="card" data-flightkey="${key}">
+    <div class="card ${isSelectedForDirection ? "selected-trip-card" : ""}" data-flightkey="${key}" data-direction="${direction}">
       <div class="row">
         <div class="air">
           ${
@@ -2100,18 +2224,42 @@ function flightCard(f) {
       </div>
 
       ${bestLine}
+      ${selectTripButton}
     </div>
   `;
 }
 
-function renderList(el, items) {
+function renderList(el, items, direction = "out") {
   if (!el) return;
   if (!Array.isArray(items) || items.length === 0) {
     el.innerHTML = emptyStateHtml("default");
     return;
   }
 
-  el.innerHTML = items.map(flightCard).join("");
+  el.innerHTML = items.map((f) => flightCard(f, direction)).join("");
+
+  el.querySelectorAll(".selectTripBtn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".card");
+      const key = card?.getAttribute("data-flightkey");
+      const dir = btn.getAttribute("data-direction") || direction;
+
+      const source = dir === "ret" ? returnAll : outboundAll;
+      const flight = source.find((x) => flightKey(x) === key);
+
+      if (!flight) return;
+
+      if (dir === "ret") {
+        selectedReturnFlight = flight;
+      } else {
+        selectedOutboundFlight = flight;
+      }
+
+      renderOutbound();
+      renderReturn();
+      renderSelectedTripPanel();
+    });
+  });
 
   el.querySelectorAll(".infoBtn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -2130,7 +2278,8 @@ function renderOutbound() {
   const filtered = applyFlightFilters(outboundAll);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
   const pageItems = slicePage(sorted, outPageIdx);
-  renderList(outboundList, pageItems);
+  renderList(outboundList, pageItems, "out");
+  renderSelectedTripPanel();
   renderPager("out");
 }
 function renderReturn() {
@@ -2152,7 +2301,8 @@ function renderReturn() {
   const filtered = applyFlightFilters(returnAll);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(retSortSelect));
   const pageItems = slicePage(sorted, retPageIdx);
-  renderList(returnList, pageItems);
+  renderList(returnList, pageItems, "ret");
+  renderSelectedTripPanel();
   renderPager("ret");
 }
 
@@ -2176,8 +2326,14 @@ function toggleReturn() {
     if (!returnInput.value || returnInput.value < departVal) {
       returnInput.value = addDaysISO(departVal, 7);
     }
-  } else if (returnList) {
-    returnList.innerHTML = emptyStateHtml("return-hidden");
+  } else {
+    selectedOutboundFlight = null;
+    selectedReturnFlight = null;
+    renderSelectedTripPanel();
+
+    if (returnList) {
+      returnList.innerHTML = emptyStateHtml("return-hidden");
+    }
   }
 }
 
@@ -2219,6 +2375,9 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   outPageIdx = 1;
   retPageIdx = 1;
+  selectedOutboundFlight = null;
+  selectedReturnFlight = null;
+  renderSelectedTripPanel();
 
   try {
     const res = await fetch(`${BACKEND}/search`, {
