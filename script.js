@@ -284,6 +284,9 @@ let lastSearchPayload = null;
 // This is frontend-only for now; backend comparison will be connected in the next step.
 let selectedOutboundFlight = null;
 let selectedReturnFlight = null;
+let selectedTripComparison = null;
+let selectedTripComparisonError = "";
+let selectedTripComparisonKey = "";
 let selectedTripCompareLoading = false;
 
 let activeFilters = {
@@ -2149,19 +2152,357 @@ function ensureSelectedTripPanel() {
 }
 
 function scrollAfterTripSelection(direction) {
-  if (direction === "out" && returnResultsPanel) {
-    setTimeout(() => {
-      returnResultsPanel.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-    }, 80);
+  // Keep round-trip page stable. Do not auto-scroll or shift horizontally.
+  return;
+}
+
+function getSelectedTripComparisonKey() {
+  if (!selectedOutboundFlight || !selectedReturnFlight || !lastSearchPayload) return "";
+
+  return [
+    lastSearchPayload.from || "",
+    lastSearchPayload.to || "",
+    lastSearchPayload.passengers || 1,
+    lastSearchPayload.travelClass || "economy",
+    flightKey(selectedOutboundFlight),
+    flightKey(selectedReturnFlight),
+    JSON.stringify(buildSearchPaymentMethods())
+  ].join("|");
+}
+
+function getBestTripPortalInfo() {
+  const comparison = selectedTripComparison;
+  if (!comparison) return null;
+
+  const portalPrices = Array.isArray(comparison.portalPrices)
+    ? comparison.portalPrices
+    : [];
+
+  const bestFromBackend = comparison.bestDeal || null;
+
+  const bestFromPortals = portalPrices
+    .filter((p) => Number.isFinite(Number(p.finalPrice)))
+    .sort((a, b) => Number(a.finalPrice) - Number(b.finalPrice))[0] || null;
+
+  const best = bestFromBackend || bestFromPortals;
+  if (!best) return null;
+
+  const matchingPortal = portalPrices.find(
+    (p) => (p.portal || "").toLowerCase() === (best.portal || "").toLowerCase()
+  );
+
+  const baseTotal = Number(
+    comparison.baseTotal ||
+    best.basePrice ||
+    matchingPortal?.basePrice ||
+    0
+  );
+
+  const finalPrice = Number(
+    best.finalPrice ||
+    matchingPortal?.finalPrice ||
+    baseTotal ||
+    0
+  );
+
+  const savings = Math.max(
+    0,
+    Number(best.actualDiscount || matchingPortal?.actualDiscount || baseTotal - finalPrice || 0)
+  );
+
+  return {
+    portal: best.portal || matchingPortal?.portal || "Best portal",
+    finalPrice,
+    baseTotal,
+    savings,
+    code: best.code || best.couponCode || matchingPortal?.code || matchingPortal?.couponCode || "",
+    paymentLabel: best.paymentLabel || matchingPortal?.paymentLabel || "",
+    offerTitle: best.title || best.offerTitle || matchingPortal?.title || matchingPortal?.offerTitle || "",
+    rawDiscount: best.rawDiscount || matchingPortal?.rawDiscount || "",
+    appliedDiscountText: best.appliedDiscountText || matchingPortal?.appliedDiscountText || "",
+    explain: best.explain || matchingPortal?.explain || "",
+    bookingUrl:
+      best.bookingUrl ||
+      best.url ||
+      matchingPortal?.bookingUrl ||
+      matchingPortal?.url ||
+      matchingPortal?.deepLink ||
+      matchingPortal?.redirectUrl ||
+      ""
+  };
+}
+
+function formatDateForMmtUrl(dateValue) {
+  if (!dateValue) return "";
+
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) {
+    const parts = String(dateValue).split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return "";
+  }
+
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function buildPortalBookingUrl(portalName) {
+  const portal = String(portalName || "").toLowerCase();
+  const from = lastSearchPayload?.from || fromInput?.value || "";
+  const to = lastSearchPayload?.to || toInput?.value || "";
+  const depart = lastSearchPayload?.departureDate || departInput?.value || "";
+  const ret = lastSearchPayload?.returnDate || returnInput?.value || "";
+  const adults = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+
+  if (portal.includes("makemytrip")) {
+    const departMmt = formatDateForMmtUrl(depart);
+    const retMmt = formatDateForMmtUrl(ret);
+
+    if (from && to && departMmt && retMmt) {
+      return `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departMmt}_${to}-${from}-${retMmt}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+    }
+
+    return "https://www.makemytrip.com/flights/";
+  }
+
+  if (portal.includes("goibibo")) {
+    return "https://www.goibibo.com/flights/";
+  }
+
+  if (portal.includes("yatra")) {
+    return "https://www.yatra.com/flights";
+  }
+
+  if (portal.includes("easemytrip")) {
+    return "https://www.easemytrip.com/flights.html";
+  }
+
+  if (portal.includes("cleartrip")) {
+    return "https://www.cleartrip.com/flights";
+  }
+
+  return "";
+}
+
+function bookSelectedRoundTripBestPortal() {
+  const bestInfo = getBestTripPortalInfo();
+  if (!bestInfo) return;
+
+  const url = bestInfo.bookingUrl || buildPortalBookingUrl(bestInfo.portal);
+
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
     return;
   }
 
-  if (direction === "ret") {
-    setTimeout(() => {
-      const panel = document.getElementById("selectedTripPanel");
-      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    }, 80);
+  compareSelectedRoundTrip();
+}
+
+function formatTripBestSummary() {
+  if (!selectedOutboundFlight || !selectedReturnFlight) {
+    return "";
   }
+
+  if (selectedTripCompareLoading) {
+    return `
+      <div class="sky-trip-best-card sky-trip-best-pro is-loading">
+        <div class="trip-rec-head">
+          <div>
+            <div class="trip-rec-eyebrow">Checking offers</div>
+            <div class="trip-rec-title">Finding the best round-trip price...</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (selectedTripComparisonError) {
+    return `
+      <div class="sky-trip-best-card sky-trip-best-pro is-warning">
+        <div class="trip-rec-head">
+          <div>
+            <div class="trip-rec-eyebrow">Offer check failed</div>
+            <div class="trip-rec-title">${selectedTripComparisonError}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const bestInfo = getBestTripPortalInfo();
+
+  if (!bestInfo) {
+    return `
+      <div class="sky-trip-best-card sky-trip-best-pro is-loading">
+        <div class="trip-rec-head">
+          <div>
+            <div class="trip-rec-eyebrow">Checking offers</div>
+            <div class="trip-rec-title">Calculating best portal price...</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Best available payment offer";
+  const discountText = bestInfo.appliedDiscountText || (bestInfo.savings > 0 ? `Applied discount: ${money(bestInfo.savings)}` : "No discount applied");
+  const paymentText = bestInfo.paymentLabel || "Selected payment method";
+
+  return `
+    <div class="sky-trip-best-card sky-trip-best-pro is-ready">
+      <div class="trip-rec-head">
+        <div>
+          <div class="trip-rec-eyebrow">Recommended option</div>
+          <div class="trip-rec-title">${bestInfo.portal}</div>
+        </div>
+        <div class="trip-rec-portal">${bestInfo.portal}</div>
+      </div>
+
+      <div class="trip-rec-body">
+        <div class="trip-rec-price-block">
+          <div class="trip-rec-price">${money(bestInfo.finalPrice)}</div>
+          <div class="trip-rec-base">Base fare <s>${money(bestInfo.baseTotal)}</s></div>
+          ${
+            bestInfo.savings > 0
+              ? `<div class="trip-rec-save-inline">Save ${money(bestInfo.savings)}</div>`
+              : ""
+          }
+        </div>
+
+        <div class="trip-rec-offer">
+          <div class="trip-rec-section-label">Offer applied</div>
+          <div class="trip-rec-offer-title">${offerTitle}</div>
+
+          <div class="trip-rec-meta">
+            <span>${discountText}</span>
+            <span>•</span>
+            <span>${paymentText}</span>
+          </div>
+
+          <div class="trip-rec-coupon-row">
+            <span class="trip-rec-coupon-label">Coupon</span>
+            ${
+              bestInfo.code
+                ? `
+                  <span class="trip-rec-coupon-code">${bestInfo.code}</span>
+                  <button type="button" class="copyTripCouponBtn" data-code="${bestInfo.code}">Copy</button>
+                `
+                : `<span class="trip-rec-no-code">No coupon required</span>`
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function refreshSelectedTripComparison() {
+  if (!selectedOutboundFlight || !selectedReturnFlight || !lastSearchPayload) {
+    selectedTripComparison = null;
+    selectedTripComparisonError = "";
+    selectedTripComparisonKey = "";
+    selectedTripCompareLoading = false;
+    renderSelectedTripPanel();
+    return;
+  }
+
+  const key = getSelectedTripComparisonKey();
+
+  if (selectedTripComparisonKey === key && selectedTripComparison) {
+    return;
+  }
+
+  selectedTripComparisonKey = key;
+  selectedTripComparison = null;
+  selectedTripComparisonError = "";
+  if (selectedTripComparison && selectedTripComparisonKey === getSelectedTripComparisonKey()) {
+    const comparison = selectedTripComparison;
+    const comparisonFlight = {
+      airlineName: "Selected round trip",
+      flightNumber: `${displayFlightNumber(selectedOutboundFlight)} / ${displayFlightNumber(selectedReturnFlight)}`,
+      departureTime: selectedOutboundFlight.departureTime,
+      arrivalTime: selectedReturnFlight.arrivalTime,
+      stops: Number(selectedOutboundFlight.stops || 0) + Number(selectedReturnFlight.stops || 0),
+      price: comparison.baseTotal,
+      bestDeal: comparison.bestDeal || null,
+      portalPrices: comparison.portalPrices || [],
+      tripComparison: comparison
+    };
+
+    showPortalCompare(comparisonFlight);
+    return;
+  }
+
+  selectedTripCompareLoading = true;
+  renderSelectedTripPanel();
+
+  try {
+    const payload = {
+      from: lastSearchPayload.from,
+      to: lastSearchPayload.to,
+      tripType: "round-trip",
+      passengers: lastSearchPayload.passengers || 1,
+      travelClass: lastSearchPayload.travelClass || "economy",
+      paymentMethods: buildSearchPaymentMethods(),
+      outboundFlight: slimFlightForTripCompare(selectedOutboundFlight),
+      returnFlight: slimFlightForTripCompare(selectedReturnFlight)
+    };
+
+    const compareUrl = `${BACKEND}/compare-selected-trip`;
+    const res = await fetch(compareUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const rawText = await res.text();
+    let data;
+
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error("[SkyDeal] compare-selected-trip returned non-JSON", {
+        url: compareUrl,
+        status: res.status,
+        contentType: res.headers.get("content-type"),
+        preview: rawText.slice(0, 500)
+      });
+      throw new Error(`Trip comparison failed with HTTP ${res.status}`);
+    }
+
+    if (!res.ok || data?.meta?.error) {
+      throw new Error(data?.meta?.error || `Trip comparison failed with HTTP ${res.status}`);
+    }
+
+    if (!data?.tripComparison || !Array.isArray(data.tripComparison.portalPrices)) {
+      throw new Error("No full-trip comparison returned.");
+    }
+
+    selectedTripComparison = data.tripComparison;
+    selectedTripComparisonError = "";
+  } catch (err) {
+    selectedTripComparison = null;
+    selectedTripComparisonError = err?.message || "Could not calculate full-trip price.";
+  } finally {
+    selectedTripCompareLoading = false;
+    renderSelectedTripPanel();
+  }
+}
+
+function selectedTripRouteLabel(direction) {
+  const from = lastSearchPayload?.from || fromInput?.value || "";
+  const to = lastSearchPayload?.to || toInput?.value || "";
+
+  if (!from || !to) {
+    return direction === "ret" ? "Return flight" : "Outbound flight";
+  }
+
+  return direction === "ret" ? `${to} → ${from}` : `${from} → ${to}`;
 }
 
 function renderSelectedTripPanel() {
@@ -2179,47 +2520,64 @@ function renderSelectedTripPanel() {
   }
 
   const ready = !!selectedOutboundFlight && !!selectedReturnFlight;
+  const bestTripPortalInfo = ready ? getBestTripPortalInfo() : null;
 
   panel.style.display = "block";
   panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
-      <div style="min-width:260px;flex:1;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div style="font-size:13px;font-weight:950;color:#c084fc;text-transform:uppercase;letter-spacing:.04em;">Selected round trip</div>
-          <div style="font-size:12px;color:#cbd5e1;font-weight:750;">
-            ${ready ? "Ready to compare same-portal trip price" : "Select outbound + return"}
+    <div class="sky-trip-bar">
+      <div class="sky-trip-bar-left">
+        <div class="sky-trip-bar-title-row">
+          <div class="sky-trip-bar-kicker">Selected round trip</div>
+          <div class="sky-trip-bar-status">
+            ${ready ? "Best full-trip price calculated from selected flights." : "Select one outbound and one return flight."}
           </div>
         </div>
 
-        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:#e5e7eb;line-height:1.35;">
-          <div style="min-width:0;"><b>Outbound:</b> ${selectedFlightSummary(selectedOutboundFlight)}</div>
-          <div style="min-width:0;"><b>Return:</b> ${selectedFlightSummary(selectedReturnFlight)}</div>
+        <div class="sky-trip-leg-grid">
+          <div class="sky-trip-leg ${selectedOutboundFlight ? "is-selected" : "is-empty"}">
+            <div class="sky-trip-leg-label">${selectedTripRouteLabel("out")}</div>
+            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedOutboundFlight)}</div>
+          </div>
+
+          <div class="sky-trip-leg ${selectedReturnFlight ? "is-selected" : "is-empty"}">
+            <div class="sky-trip-leg-label">${selectedTripRouteLabel("ret")}</div>
+            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedReturnFlight)}</div>
+          </div>
         </div>
+
+        ${ready ? formatTripBestSummary() : ""}
       </div>
 
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+      <div class="sky-trip-bar-actions">
         ${
           ready
             ? `
               <button
                 type="button"
-                id="compareSelectedTripBtn"
-                class="btn-primary"
-                style="margin-top:0;width:auto;white-space:nowrap;padding:10px 16px;"
+                id="bookSelectedTripBtn"
+                class="btn-primary sky-trip-book-btn"
                 ${selectedTripCompareLoading ? "disabled" : ""}
               >
-                ${selectedTripCompareLoading ? "Comparing..." : "Compare full trip price"}
+                ${
+                  selectedTripCompareLoading
+                    ? "Checking..."
+                    : `Book with ${bestTripPortalInfo?.portal || "portal"}`
+                }
+              </button>
+
+              <button
+                type="button"
+                id="compareSelectedTripBtn"
+                class="sky-trip-compare-btn"
+                ${selectedTripCompareLoading ? "disabled" : ""}
+              >
+                Compare all portals
               </button>
             `
             : ""
         }
 
-        <button
-          type="button"
-          id="clearSelectedTripBtn"
-          class="btn-ghost"
-          style="white-space:nowrap;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.18);color:#ffffff;"
-        >
+        <button type="button" id="clearSelectedTripBtn" class="btn-ghost sky-trip-clear-btn">
           Clear
         </button>
       </div>
@@ -2230,9 +2588,33 @@ function renderSelectedTripPanel() {
     selectedOutboundFlight = null;
     selectedReturnFlight = null;
     selectedTripCompareLoading = false;
+    selectedTripComparison = null;
+    selectedTripComparisonError = "";
+    selectedTripComparisonKey = "";
     renderOutbound();
     renderReturn();
     renderSelectedTripPanel();
+  });
+
+  panel.querySelector("#bookSelectedTripBtn")?.addEventListener("click", () => {
+    bookSelectedRoundTripBestPortal();
+  });
+
+  panel.querySelectorAll(".copyTripCouponBtn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const code = btn.getAttribute("data-code") || "";
+      if (!code) return;
+
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.textContent = "Copied";
+        setTimeout(() => {
+          btn.textContent = "Copy";
+        }, 1200);
+      } catch (err) {
+        alert(`Coupon code: ${code}`);
+      }
+    });
   });
 
   panel.querySelector("#compareSelectedTripBtn")?.addEventListener("click", () => {
@@ -2444,9 +2826,18 @@ function renderList(el, items, direction = "out") {
         selectedOutboundFlight = flight;
       }
 
+      selectedTripComparison = null;
+      selectedTripComparisonError = "";
+      selectedTripComparisonKey = "";
+
       renderOutbound();
       renderReturn();
       renderSelectedTripPanel();
+
+      if (selectedOutboundFlight && selectedReturnFlight) {
+        refreshSelectedTripComparison();
+      }
+
       scrollAfterTripSelection(dir);
     });
   });
@@ -2496,7 +2887,10 @@ function renderReturn() {
   updateFlightSectionHeadings();
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
   const isRoundTrip = !!roundTripRadio?.checked;
+
+  resultsSection?.classList.toggle("round-trip-results-mode", isRoundTrip);
 
   if (!isRoundTrip) {
     returnPanel?.classList.add("is-hidden");
@@ -2522,6 +2916,9 @@ function toggleReturn() {
   const show = !!roundTripRadio?.checked;
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+
+  resultsSection?.classList.toggle("round-trip-results-mode", show);
 
   if (!returnInput) return;
 
