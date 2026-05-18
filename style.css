@@ -5205,3 +5205,23 @@ body {
     z-index: 0 !important;
   }
 }
+
+/* =====================================================
+   Mobile fix: remove duplicate custom calendar icon
+   Keep native iOS/browser date picker icon only
+===================================================== */
+
+@media (max-width: 760px) {
+  .sky-mobile-date-icon {
+    display: none !important;
+  }
+
+  .sky-mobile-date-input {
+    padding-right: 12px !important;
+  }
+
+  .sky-mobile-date-input::-webkit-calendar-picker-indicator {
+    opacity: 0.9 !important;
+    display: block !important;
+  }
+}
