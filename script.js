@@ -2968,6 +2968,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
 setTimeout(bindMobileSearchModeEvents, 0);
 
+function renderSearchLoadingState(message = "Finding your best flight deals") {
+  const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
+  const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
+
+  const loadingHtml = `
+    <div class="sky-search-state-card sky-search-loading-card">
+      <div class="sky-spinner" aria-hidden="true"></div>
+      <div class="sky-search-state-title">${safeText(message)}</div>
+      <div class="sky-search-state-subtitle">
+        Checking live fares and matching them with portal offers.
+      </div>
+    </div>
+  `;
+
+  if (outHost) outHost.innerHTML = loadingHtml;
+
+  if (retHost && isRoundTripModeActive()) {
+    retHost.innerHTML = loadingHtml;
+  }
+
+  renderPager("out");
+  renderPager("ret");
+}
+
+function renderSearchErrorState(errorMessage = "Live flight results are taking longer than expected.") {
+  const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
+  const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
+
+  const cleanMessage = String(errorMessage || "").includes("FlightAPI")
+    ? "Live flight provider is taking longer than expected."
+    : errorMessage;
+
+  const errorHtml = `
+    <div class="sky-search-state-card sky-search-error-card">
+      <div class="sky-error-icon" aria-hidden="true">!</div>
+      <div class="sky-search-state-title">${safeText(cleanMessage)}</div>
+      <div class="sky-search-state-subtitle">
+        Please try again in a few seconds. Your route and payment selections are still saved.
+      </div>
+      <div class="sky-search-state-actions">
+        <button type="button" class="sky-state-primary-btn" id="retrySearchBtn">Try again</button>
+        <button type="button" class="sky-state-secondary-btn" id="editSearchFromErrorBtn">Edit search</button>
+      </div>
+    </div>
+  `;
+
+  if (outHost) outHost.innerHTML = errorHtml;
+  if (retHost) retHost.innerHTML = "";
+
+  document.getElementById("retrySearchBtn")?.addEventListener("click", () => {
+    const btn = document.getElementById("searchBtn");
+    if (btn) btn.click();
+  });
+
+  document.getElementById("editSearchFromErrorBtn")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-results-mode");
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  renderPager("out");
+  renderPager("ret");
+}
+
+function setSearchButtonLoading(isLoading) {
+  const btn = document.getElementById("searchBtn");
+  if (!btn) return;
+
+  if (isLoading) {
+    btn.dataset.originalText = btn.textContent || btn.dataset.originalText || "Search";
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.innerHTML = `<span class="sky-btn-spinner" aria-hidden="true"></span><span>Searching...</span>`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("is-loading");
+    btn.textContent = btn.dataset.originalText || "Search";
+  }
+}
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
@@ -3415,6 +3495,9 @@ function toggleReturn() {
 }
 
 async function handleSearch(e) {
+  setSearchButtonLoading(true);
+  renderSearchLoadingState();
+
   tagMobileSearchFieldWrappers();
   e?.preventDefault?.();
 
@@ -3485,11 +3568,18 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderOutbound();
     renderReturn();
   } catch (err) {
+    console.error("[SkyDeal] search failed", err || e);
+    renderSearchErrorState((err || e)?.message || "Search failed. Please try again.");
+
     console.error(err);
     outboundAll = [];
     returnAll = [];
     outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
     returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
+  }
+
+  finally {
+    setSearchButtonLoading(false);
   }
 }
 
