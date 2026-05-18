@@ -388,15 +388,20 @@ function renderLocationSuggestions(inputEl, boxEl, query) {
     return;
   }
 
-  boxEl.innerHTML = results.map((item) => `
-    <div class="location-option" data-code="${item.code}" data-label="${item.city}">
-      <div>
-        <div class="location-option-main">${item.city} (${item.code})</div>
-<div class="location-option-sub">${item.name}</div>
+  boxEl.innerHTML = results.map((item) => {
+    const city = safeText(item.city || item.code || "");
+    const code = safeText(item.code || "");
+    const airportName = safeText(item.name || "");
+
+    return `
+      <div class="location-option" data-code="${code}" data-label="${city}">
+        <div>
+          <div class="location-option-main">${city} (${code})</div>
+          ${airportName ? `<div class="location-option-sub">${airportName}</div>` : ""}
+        </div>
       </div>
-      <div class="location-option-sub">${item.airport}</div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   boxEl.classList.add("open");
 
