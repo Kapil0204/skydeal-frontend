@@ -2865,6 +2865,109 @@ document.addEventListener("DOMContentLoaded", () => {
 
 setTimeout(tagMobileSearchFieldWrappers, 0);
 
+function formatMobileSummaryDate(dateValue) {
+  if (!dateValue) return "";
+
+  const raw = String(dateValue || "");
+  const parts = raw.split("-");
+
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  return raw;
+}
+
+function ensureMobileSearchSummary() {
+  const results = document.querySelector(".pro-results") || document.querySelector(".results");
+  if (!results) return null;
+
+  let summary = document.getElementById("mobileSearchSummary");
+  if (summary) return summary;
+
+  summary = document.createElement("div");
+  summary.id = "mobileSearchSummary";
+  summary.className = "mobile-search-summary";
+
+  results.parentNode.insertBefore(summary, results);
+
+  return summary;
+}
+
+function renderMobileSearchSummary() {
+  const summary = ensureMobileSearchSummary();
+  if (!summary) return;
+
+  const from = String(lastSearchPayload?.from || fromInput?.value || "From").toUpperCase();
+  const to = String(lastSearchPayload?.to || toInput?.value || "To").toUpperCase();
+
+  const depart = formatMobileSummaryDate(lastSearchPayload?.departureDate || departInput?.value || "");
+  const ret = formatMobileSummaryDate(lastSearchPayload?.returnDate || returnInput?.value || "");
+
+  const passengers = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+  const cabin = lastSearchPayload?.travelClass || cabinInput?.value || "Economy";
+
+  const isRound = isRoundTripModeActive();
+  const dateText = isRound && ret ? `${depart} - ${ret}` : depart;
+
+  summary.innerHTML = `
+    <div class="mobile-search-summary-left">
+      <div class="mobile-search-route">${safeText(from)} → ${safeText(to)}</div>
+      <div class="mobile-search-meta">${safeText(dateText)} · ${passengers} Adult${passengers > 1 ? "s" : ""} · ${safeText(cabin)}</div>
+    </div>
+    <button type="button" id="mobileEditSearchBtn" class="mobile-edit-search-btn">Edit</button>
+  `;
+
+  summary.querySelector("#mobileEditSearchBtn")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-results-mode");
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) {
+      searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+}
+
+function enterMobileResultsMode() {
+  if (!isSkyDealMobileView()) return;
+
+  renderMobileSearchSummary();
+  document.body.classList.add("mobile-results-mode");
+
+  const summary = document.getElementById("mobileSearchSummary");
+  if (summary) {
+    setTimeout(() => {
+      summary.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }
+}
+
+function bindMobileSearchModeEvents() {
+  const searchBtn = document.getElementById("searchBtn");
+  if (!searchBtn || searchBtn.dataset.mobileModeBound === "true") return;
+
+  searchBtn.dataset.mobileModeBound = "true";
+
+  searchBtn.addEventListener("click", () => {
+    if (!isSkyDealMobileView()) return;
+
+    setTimeout(() => {
+      renderMobileSearchSummary();
+      document.body.classList.add("mobile-results-mode");
+
+      const summary = document.getElementById("mobileSearchSummary");
+      if (summary) {
+        summary.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 80);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindMobileSearchModeEvents();
+});
+
+setTimeout(bindMobileSearchModeEvents, 0);
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
@@ -2956,6 +3059,7 @@ function renderSelectedTripPanel() {
     renderReturn();
     renderSelectedTripPanel();
     renderMobileQuickFilters();
+    enterMobileResultsMode();
     renderMobileResultsApp();
   });
 

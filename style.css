@@ -4386,3 +4386,262 @@ body {
     font-size: 12px !important;
   }
 }
+
+/* =====================================================
+   Mobile Phase 1E: optimized selected-trip compare banner
+   CSS only. Desktop untouched.
+===================================================== */
+
+@media (max-width: 760px) {
+  body #selectedTripPanel {
+    padding: 9px !important;
+    border-radius: 18px !important;
+    max-height: 46vh !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar {
+    gap: 8px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar-kicker {
+    font-size: 9px !important;
+    letter-spacing: 0.09em !important;
+    opacity: 0.85 !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar-status {
+    display: none !important;
+  }
+
+  body #selectedTripPanel .sky-trip-leg-grid {
+    gap: 6px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-leg-item {
+    padding: 7px 9px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+  }
+
+  body #selectedTripPanel .sky-trip-leg-label {
+    font-size: 8px !important;
+    letter-spacing: 0.09em !important;
+    opacity: 0.8 !important;
+  }
+
+  body #selectedTripPanel .sky-trip-leg-main {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  body #selectedTripPanel .sky-trip-best-card,
+  body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
+    padding: 10px !important;
+    margin-top: 6px !important;
+    border-radius: 15px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-head {
+    margin-bottom: 6px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-eyebrow {
+    font-size: 8px !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  body #selectedTripPanel .trip-rec-title {
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+  }
+
+  body #selectedTripPanel .trip-rec-portal {
+    font-size: 9px !important;
+    padding: 4px 7px !important;
+    border-radius: 999px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-body {
+    gap: 8px !important;
+    margin-top: 6px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-price {
+    font-size: 27px !important;
+    line-height: 0.95 !important;
+    margin-bottom: 2px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-base {
+    font-size: 10px !important;
+    opacity: 0.78 !important;
+  }
+
+  body #selectedTripPanel .trip-rec-save {
+    font-size: 12px !important;
+    padding: 5px 9px !important;
+    border-radius: 999px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-offer {
+    padding: 8px 9px !important;
+    border-radius: 12px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-offer-title {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+
+  body #selectedTripPanel .trip-rec-meta {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+    margin-top: 4px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-coupon-row {
+    font-size: 10px !important;
+    margin-top: 5px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-coupon {
+    font-size: 10px !important;
+    padding: 4px 7px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-copy {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar-actions {
+    gap: 7px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-book-btn {
+    min-height: 42px !important;
+    border-radius: 13px !important;
+    font-size: 14px !important;
+    font-weight: 950 !important;
+  }
+
+  body #selectedTripPanel .sky-trip-compare-btn,
+  body #selectedTripPanel .sky-trip-clear-btn {
+    min-height: 38px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+  }
+}
+
+/* =====================================================
+   Mobile Phase 2A: app-like search-to-results mode
+   Desktop untouched
+===================================================== */
+
+.mobile-search-summary {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobile-search-summary {
+    display: none;
+    width: calc(100% - 20px);
+    margin: 10px auto 10px;
+    padding: 12px 12px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  body.mobile-results-mode .mobile-search-summary {
+    display: flex;
+  }
+
+  body.mobile-results-mode .search-card {
+    display: none !important;
+  }
+
+  .mobile-search-summary-left {
+    min-width: 0;
+  }
+
+  .mobile-search-route {
+    font-size: 18px;
+    font-weight: 950;
+    line-height: 1.1;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-search-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.25;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-edit-search-btn {
+    flex: 0 0 auto;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    background: rgba(168, 85, 247, 0.10);
+    color: #6d28d9;
+    border-radius: 999px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  body.mobile-results-mode .mobile-quick-filters {
+    margin-top: 0 !important;
+  }
+
+  body.mobile-results-mode .pro-results,
+  body.mobile-results-mode .results {
+    padding-top: 0 !important;
+  }
+}
+
+/* =====================================================
+   Mobile Phase 2B: force app-style results mode on search
+   Desktop untouched
+===================================================== */
+
+@media (max-width: 760px) {
+  body.mobile-results-mode .search-card {
+    display: none !important;
+  }
+
+  body.mobile-results-mode .mobile-search-summary {
+    display: flex !important;
+  }
+
+  body.mobile-results-mode .mobile-quick-filters {
+    display: flex !important;
+  }
+
+  body.mobile-results-mode .pro-results,
+  body.mobile-results-mode .results {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  body.mobile-results-mode .nav,
+  body.mobile-results-mode header.nav {
+    padding-bottom: 10px !important;
+  }
+}
