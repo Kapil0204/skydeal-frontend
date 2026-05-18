@@ -2720,6 +2720,146 @@ function scrollToReturnFlightsOnMobile() {
   }, 250);
 }
 
+function findMobileFilterCheckboxByText(matchText) {
+  const wanted = String(matchText || "").toLowerCase();
+  const labels = Array.from(document.querySelectorAll(".filter-card label, .filter-panel label"));
+
+  for (const label of labels) {
+    const labelText = (label.textContent || "").toLowerCase();
+    if (!labelText.includes(wanted)) continue;
+
+    const input = label.querySelector("input[type='checkbox']");
+    if (input) return input;
+  }
+
+  return null;
+}
+
+function toggleMobileQuickFilter(matchText) {
+  const input = findMobileFilterCheckboxByText(matchText);
+  if (!input) return;
+
+  input.checked = !input.checked;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function ensureMobileQuickFilters() {
+  const results = document.querySelector(".pro-results") || document.querySelector(".results");
+  const workspace = document.querySelector(".flights-workspace");
+
+  if (!results || !workspace) return null;
+
+  let bar = document.getElementById("mobileQuickFilters");
+  if (bar) return bar;
+
+  bar = document.createElement("div");
+  bar.id = "mobileQuickFilters";
+  bar.className = "mobile-quick-filters";
+
+  bar.innerHTML = `
+    <button type="button" class="mobile-chip mobile-chip-sort">Sorted by<br><b>Cheapest</b></button>
+    <button type="button" class="mobile-chip" data-mobile-filter="Non-stop">Non-stop</button>
+    <button type="button" class="mobile-chip" data-mobile-filter="Best offer">Best offer</button>
+    <button type="button" class="mobile-chip mobile-chip-filter">Filter</button>
+  `;
+
+  workspace.parentNode.insertBefore(bar, workspace);
+
+  bar.querySelectorAll("[data-mobile-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      toggleMobileQuickFilter(btn.getAttribute("data-mobile-filter"));
+      btn.classList.toggle("is-active");
+    });
+  });
+
+  bar.querySelector(".mobile-chip-filter")?.addEventListener("click", () => {
+    document.body.classList.toggle("mobile-filter-drawer-open");
+  });
+
+  return bar;
+}
+
+function renderMobileQuickFilters() {
+  ensureMobileQuickFilters();
+}
+
+function setMobileReturnFocusAfterOutbound() {
+  if (!isSkyDealMobileView()) return;
+
+  document.body.classList.add("mobile-return-focus");
+
+  const returnPanel = document.getElementById("returnResultsPanel");
+  if (!returnPanel) return;
+
+  setTimeout(() => {
+    returnPanel.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }, 220);
+}
+
+function tagMobileSearchFieldWrappers() {
+  const card = document.querySelector(".search-card");
+  if (!card) return;
+
+  card.classList.add("mobile-compact-search-card");
+
+  const fieldSelectors = [
+    "#from",
+    "#to",
+    "#departureDate",
+    "#returnDate",
+    "#passengers",
+    "#travelClass",
+    "#fromInput",
+    "#toInput",
+    "#departInput",
+    "#returnInput",
+    "#passengerInput",
+    "#cabinInput"
+  ];
+
+  fieldSelectors.forEach((selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+
+    const wrapper =
+      el.closest("label") ||
+      el.closest(".field") ||
+      el.closest(".form-field") ||
+      el.closest(".input-field") ||
+      el.closest(".search-field") ||
+      el.parentElement;
+
+    if (wrapper && wrapper !== card) {
+      wrapper.classList.add("mobile-search-field");
+    }
+  });
+
+  const fullWidthNodes = [
+    document.querySelector(".trip-toggle"),
+    document.querySelector("#selectedPmSummary"),
+    document.querySelector("#searchBtn"),
+    document.querySelector(".payment-methods-section")
+  ].filter(Boolean);
+
+  fullWidthNodes.forEach((node) => {
+    node.classList.add("mobile-search-full");
+  });
+
+  const searchBtn = document.querySelector("#searchBtn");
+  if (searchBtn?.parentElement && searchBtn.parentElement !== card) {
+    searchBtn.parentElement.classList.add("mobile-search-full");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  tagMobileSearchFieldWrappers();
+});
+
+setTimeout(tagMobileSearchFieldWrappers, 0);
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
@@ -2802,6 +2942,7 @@ function renderSelectedTripPanel() {
   panel.querySelector("#clearSelectedTripBtn")?.addEventListener("click", () => {
     selectedOutboundFlight = null;
     selectedReturnFlight = null;
+    document.body.classList.remove("mobile-return-focus");
     selectedTripCompareLoading = false;
     selectedTripComparison = null;
     selectedTripComparisonError = "";
@@ -2809,6 +2950,7 @@ function renderSelectedTripPanel() {
     renderOutbound();
     renderReturn();
     renderSelectedTripPanel();
+    renderMobileQuickFilters();
     renderMobileResultsApp();
   });
 
@@ -3040,7 +3182,7 @@ function renderList(el, items, direction = "out") {
         selectedReturnFlight = flight;
       } else {
         selectedOutboundFlight = flight;
-        scrollToReturnFlightsOnMobile();
+        setMobileReturnFocusAfterOutbound();
       }
 
       selectedTripComparison = null;
@@ -3164,6 +3306,7 @@ function toggleReturn() {
 }
 
 async function handleSearch(e) {
+  tagMobileSearchFieldWrappers();
   e?.preventDefault?.();
 
   const payload = {
