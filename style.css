@@ -4810,3 +4810,150 @@ body {
   margin-right: 8px;
   vertical-align: -3px;
 }
+
+/* =====================================================
+   Mobile pre-search UX fixes
+   Fixes iPhone input zoom, date overlap, and payment modal footer
+   Desktop untouched
+===================================================== */
+
+@media (max-width: 760px) {
+  /* Prevent iOS Safari zooming into inputs.
+     iOS zooms when input/select font-size is below 16px. */
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px !important;
+  }
+
+  .search-card.mobile-compact-search-card input,
+  .search-card.mobile-compact-search-card select,
+  .search-card input,
+  .search-card select {
+    font-size: 16px !important;
+  }
+
+  /* Keep the compact search grid, but make fields behave properly */
+  .search-card.mobile-compact-search-card {
+    overflow: visible !important;
+  }
+
+  .search-card.mobile-compact-search-card .mobile-search-field {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .search-card.mobile-compact-search-card input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding-left: 10px !important;
+    padding-right: 8px !important;
+    font-size: 15px !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* Date fields need slightly more room on real iPhones */
+  .search-card.mobile-compact-search-card .mobile-search-field:has(input[type="date"]) {
+    min-width: 0 !important;
+  }
+
+  /* If date fields still feel tight, keep them clean and aligned */
+  .search-card.mobile-compact-search-card input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
+
+  .search-card.mobile-compact-search-card input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: 2px;
+    opacity: 0.9;
+  }
+
+  /* Make From/To/date text less likely to overflow */
+  .search-card.mobile-compact-search-card input {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Payment modal should behave like an app bottom sheet on mobile */
+  #paymentModal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  #paymentModal .modal-card,
+  #paymentModal .modal-content,
+  #paymentModal .payment-modal,
+  #paymentModal > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: min(88dvh, 88vh) !important;
+    max-height: min(88dvh, 88vh) !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  /* Keep modal title and tabs visible */
+  #paymentModal .modal-header,
+  #paymentModal .payment-modal-header,
+  #paymentModal .pm-header {
+    flex: 0 0 auto !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5 !important;
+    background: inherit !important;
+  }
+
+  #paymentModal .tabs,
+  #paymentModal .pm-tabs,
+  #paymentModal .payment-tabs {
+    flex: 0 0 auto !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+  }
+
+  #paymentModal .tabs::-webkit-scrollbar,
+  #paymentModal .pm-tabs::-webkit-scrollbar,
+  #paymentModal .payment-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Scroll only the bank/payment list, not the whole modal */
+  #paymentModal .modal-body,
+  #paymentModal .payment-modal-body,
+  #paymentModal .pm-body,
+  #paymentModal .payment-list,
+  #paymentModal .pm-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 96px !important;
+  }
+
+  /* Done/Clear footer should always remain visible */
+  #paymentModal .modal-actions,
+  #paymentModal .payment-modal-actions,
+  #paymentModal .pm-actions,
+  #paymentModal .modal-footer,
+  #paymentModal .payment-modal-footer {
+    flex: 0 0 auto !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    background: rgba(15, 13, 28, 0.98) !important;
+    backdrop-filter: blur(14px) !important;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid rgba(168, 85, 247, 0.25) !important;
+  }
+
+  #paymentModal button {
+    font-size: 15px !important;
+  }
+}
