@@ -820,66 +820,189 @@ function cityMap(iata) {
   return map[x] || x;
 }
 
-function buildPortalSearchUrl(portal, payload) {
-  if (!payload) return null;
+function skydealPortalAirportMeta(iata) {
+  const code = String(iata || "").toUpperCase();
 
-  const from = (payload.from || "").trim().toUpperCase();
-  const to = (payload.to || "").trim().toUpperCase();
-  const depISO = payload.departureDate || "";
-  const retISO = payload.returnDate || "";
-  const tripType = payload.tripType || "one-way";
-  const adults = Number(payload.passengers || 1) || 1;
-  const cabinRaw = payload.travelClass || "economy";
+  const map = {
+    BOM: { emt: "Mumbai-India", cleartrip: "Mumbai, IN", plain: "Mumbai" },
+    DEL: { emt: "Delhi-India", cleartrip: "New Delhi, IN", plain: "New Delhi" },
+    BLR: { emt: "Bangalore-India", cleartrip: "Bangalore, IN", plain: "Bangalore" },
+    HYD: { emt: "Hyderabad-India", cleartrip: "Hyderabad, IN", plain: "Hyderabad" },
+    MAA: { emt: "Chennai-India", cleartrip: "Chennai, IN", plain: "Chennai" },
+    CCU: { emt: "Kolkata-India", cleartrip: "Kolkata, IN", plain: "Kolkata" },
+    PNQ: { emt: "Pune-India", cleartrip: "Pune, IN", plain: "Pune" },
+    GOI: { emt: "Goa-India", cleartrip: "Goa, IN", plain: "Goa" },
+    AMD: { emt: "Ahmedabad-India", cleartrip: "Ahmedabad, IN", plain: "Ahmedabad" },
+    COK: { emt: "Kochi-India", cleartrip: "Kochi, IN", plain: "Kochi" },
+    JAI: { emt: "Jaipur-India", cleartrip: "Jaipur, IN", plain: "Jaipur" },
+    LKO: { emt: "Lucknow-India", cleartrip: "Lucknow, IN", plain: "Lucknow" },
+    IXC: { emt: "Chandigarh-India", cleartrip: "Chandigarh, IN", plain: "Chandigarh" },
+    BBI: { emt: "Bhubaneswar-India", cleartrip: "Bhubaneswar, IN", plain: "Bhubaneswar" },
+    GAU: { emt: "Guwahati-India", cleartrip: "Guwahati, IN", plain: "Guwahati" },
+    TRV: { emt: "Thiruvananthapuram-India", cleartrip: "Thiruvananthapuram, IN", plain: "Thiruvananthapuram" },
+    IXB: { emt: "Bagdogra-India", cleartrip: "Bagdogra, IN", plain: "Bagdogra" },
+    PAT: { emt: "Patna-India", cleartrip: "Patna, IN", plain: "Patna" },
+    IDR: { emt: "Indore-India", cleartrip: "Indore, IN", plain: "Indore" },
+    NAG: { emt: "Nagpur-India", cleartrip: "Nagpur, IN", plain: "Nagpur" }
+  };
 
-  if (!from || !to || !depISO) return null;
-
-  const depDDMMYYYY = isoToDDMMYYYY(depISO);
-  const retDDMMYYYY = isoToDDMMYYYY(retISO);
-
-  if (portal === "Goibibo") {
-    const cabinClass = cabinToGoibibo(cabinRaw);
-    if (tripType === "round-trip" && retDDMMYYYY) {
-      return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}_${to}-${from}-${retDDMMYYYY}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
-    }
-    return `https://www.goibibo.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
-  }
-
-  if (portal === "MakeMyTrip") {
-    const cabinClass = cabinToMMT(cabinRaw);
-    if (tripType === "round-trip" && retDDMMYYYY) {
-      return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}_${to}-${from}-${retDDMMYYYY}&tripType=R&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
-    }
-    return `https://www.makemytrip.com/flight/search?itinerary=${from}-${to}-${depDDMMYYYY}&tripType=O&paxType=A-${adults}_C-0_I-0&intl=false&cabinClass=${cabinClass}&lang=eng`;
-  }
-
-  if (portal === "Yatra") {
-    const cabinLabel = normalizeCabinLabel(cabinRaw);
-    const flight_depart_date = encodeURIComponent(depDDMMYYYY);
-    return `https://flight.yatra.com/air-search-ui/dom2/trigger?flex=0&viewName=normal&source=fresco-flights&type=O&class=${encodeURIComponent(
-      cabinLabel
-    )}&ADT=${adults}&CHD=0&INF=0&noOfSegments=1&origin=${from}&originCountry=IN&destination=${to}&destinationCountry=IN&flight_depart_date=${flight_depart_date}&arrivalDate=`;
-  }
-
-  if (portal === "EaseMyTrip") {
-    const fromCity = cityMap(from);
-    const toCity = cityMap(to);
-    const srch = `${from}-${fromCity}-India|${to}-${toCity}-India|${depDDMMYYYY}`;
-    return `https://flight.easemytrip.com/FlightList/Index?srch=${encodeURIComponent(
-      srch
-    )}&px=${adults}-0-0&cbn=0&ar=undefined&isow=true&isdm=true&lang=en-us&CCODE=IN&curr=INR&apptype=B2C`;
-  }
-
-  if (portal === "Cleartrip") {
-    const cabinLabel = normalizeCabinLabel(cabinRaw);
-    const originText = `${from}%20-%20${encodeURIComponent(cityMap(from))},%20IN`;
-    const destText = `${to}%20-%20${encodeURIComponent(cityMap(to))},%20IN`;
-    return `https://www.cleartrip.com/flights/results?adults=${adults}&childs=0&infants=0&class=${encodeURIComponent(
-      cabinLabel
-    )}&depart_date=${encodeURIComponent(depDDMMYYYY)}&from=${from}&to=${to}&intl=n&origin=${originText}&destination=${destText}&return_date=&rnd_one=O&isCfw=false`;
-  }
-
-  return null;
+  return map[code] || { emt: `${code}-India`, cleartrip: `${code}, IN`, plain: code };
 }
+
+function skydealCompactYmd(dateValue) {
+  if (!dateValue) return "";
+
+  const d = new Date(dateValue);
+
+  if (Number.isNaN(d.getTime())) {
+    const parts = String(dateValue).split("-");
+    if (parts.length === 3) return `${parts[0]}${parts[1]}${parts[2]}`;
+    return "";
+  }
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+
+  return `${yyyy}${mm}${dd}`;
+}
+
+function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
+  const portal = String(portalName || "").toLowerCase();
+
+  const from = String(payload?.from || lastSearchPayload?.from || fromInput?.value || "").toUpperCase();
+  const to = String(payload?.to || lastSearchPayload?.to || toInput?.value || "").toUpperCase();
+
+  const depart =
+    payload?.departureDate ||
+    payload?.departDate ||
+    lastSearchPayload?.departureDate ||
+    departInput?.value ||
+    "";
+
+  const ret =
+    payload?.returnDate ||
+    payload?.retDate ||
+    lastSearchPayload?.returnDate ||
+    returnInput?.value ||
+    "";
+
+  const adults = Number(payload?.passengers || payload?.adults || lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+
+  const departDmy = formatDateForMmtUrl(depart);
+  const retDmy = formatDateForMmtUrl(ret);
+  const departYmd = skydealCompactYmd(depart);
+  const retYmd = skydealCompactYmd(ret);
+
+  const fromMeta = skydealPortalAirportMeta(from);
+  const toMeta = skydealPortalAirportMeta(to);
+
+  const hasRoundTrip = from && to && departDmy && retDmy;
+
+  let url = "";
+
+  if (portal.includes("makemytrip")) {
+    if (hasRoundTrip) {
+      url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${to}-${from}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+    } else {
+      url = "https://www.makemytrip.com/flights/";
+    }
+  } else if (portal.includes("goibibo")) {
+    if (from && to && departYmd && retYmd) {
+      url = `https://www.goibibo.com/flights/air-${from}-${to}-${departYmd}-${retYmd}-${adults}-0-0-E-D/`;
+    } else {
+      url = "https://www.goibibo.com/flights/";
+    }
+  } else if (portal.includes("yatra")) {
+    if (hasRoundTrip) {
+      const params = new URLSearchParams({
+        flex: "0",
+        viewName: "normal",
+        source: "fresco-flights",
+        type: "R",
+        class: "Economy",
+        ADT: String(adults),
+        CHD: "0",
+        INF: "0",
+        noOfSegments: "2",
+        origin: from,
+        originCountry: "IN",
+        destination: to,
+        destinationCountry: "IN",
+        flight_depart_date: departDmy,
+        arrivalDate: retDmy
+      });
+
+      url = `https://flight.yatra.com/air-search-ui/dom2/trigger?${params.toString()}`;
+    } else {
+      url = "https://www.yatra.com/flights";
+    }
+  } else if (portal.includes("easemytrip")) {
+    if (hasRoundTrip) {
+      const params = new URLSearchParams({
+        srch: `${from}-${fromMeta.emt}|${to}-${toMeta.emt}|${departDmy}-${retDmy}`,
+        px: `${adults}-0-0`,
+        cbn: "0",
+        ar: "undefined",
+        isow: "false",
+        isdm: "true",
+        lang: "en-us",
+        IsDoubleSeat: "false",
+        CCODE: "IN",
+        curr: "INR",
+        apptype: "B2C"
+      });
+
+      url = `https://www.easemytrip.com/flight-search/listing?${params.toString()}`;
+    } else {
+      url = "https://www.easemytrip.com/flights.html";
+    }
+  } else if (portal.includes("cleartrip")) {
+    if (hasRoundTrip) {
+      const params = new URLSearchParams({
+        adults: String(adults),
+        childs: "0",
+        infants: "0",
+        class: "Economy",
+        depart_date: departDmy,
+        from,
+        to,
+        intl: "n",
+        origin: `${from} - ${fromMeta.cleartrip}`,
+        destination: `${to} - ${toMeta.cleartrip}`,
+        sft: "",
+        sd: String(Date.now()),
+        rnd_one: "R",
+        isCfw: "false",
+        isFF: "false",
+        sourceCountry: fromMeta.plain,
+        destinationCountry: toMeta.plain,
+        return_date: retDmy,
+        nonStop: ""
+      });
+
+      url = `https://www.cleartrip.com/flights/results?${params.toString()}`;
+    } else {
+      url = "https://www.cleartrip.com/flights";
+    }
+  }
+
+  console.log("[SkyDeal portal URL]", {
+    portal: portalName,
+    from,
+    to,
+    depart,
+    returnDate: ret,
+    url
+  });
+
+  return url;
+}
+
+function buildPortalSearchUrl(portal, payload) {
+  return buildSkyDealPortalRoundTripUrl(portal, payload || lastSearchPayload || {});
+}
+
 function buildSelectedPaymentMethod(type, name) {
   const obj = {
     type,
@@ -2251,42 +2374,88 @@ function formatDateForMmtUrl(dateValue) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function buildPortalBookingUrl(portalName) {
-  const portal = String(portalName || "").toLowerCase();
-  const from = lastSearchPayload?.from || fromInput?.value || "";
-  const to = lastSearchPayload?.to || toInput?.value || "";
-  const depart = lastSearchPayload?.departureDate || departInput?.value || "";
-  const ret = lastSearchPayload?.returnDate || returnInput?.value || "";
-  const adults = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+function formatDateYYYYMMDDCompact(dateValue) {
+  if (!dateValue) return "";
 
-  if (portal.includes("makemytrip")) {
-    const departMmt = formatDateForMmtUrl(depart);
-    const retMmt = formatDateForMmtUrl(ret);
+  const d = new Date(dateValue);
 
-    if (from && to && departMmt && retMmt) {
-      return `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departMmt}_${to}-${from}-${retMmt}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+  if (Number.isNaN(d.getTime())) {
+    const parts = String(dateValue).split("-");
+    if (parts.length === 3) {
+      return `${parts[0]}${parts[1]}${parts[2]}`;
     }
-
-    return "https://www.makemytrip.com/flights/";
+    return "";
   }
 
-  if (portal.includes("goibibo")) {
-    return "https://www.goibibo.com/flights/";
-  }
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
 
-  if (portal.includes("yatra")) {
-    return "https://www.yatra.com/flights";
-  }
+  return `${yyyy}${mm}${dd}`;
+}
 
-  if (portal.includes("easemytrip")) {
-    return "https://www.easemytrip.com/flights.html";
-  }
+function airportCityMeta(iata) {
+  const code = String(iata || "").toUpperCase();
 
-  if (portal.includes("cleartrip")) {
-    return "https://www.cleartrip.com/flights";
-  }
+  const map = {
+    BOM: { emt: "Mumbai-India", cleartrip: "Mumbai, IN" },
+    DEL: { emt: "Delhi-India", cleartrip: "New Delhi, IN" },
+    BLR: { emt: "Bangalore-India", cleartrip: "Bangalore, IN" },
+    HYD: { emt: "Hyderabad-India", cleartrip: "Hyderabad, IN" },
+    MAA: { emt: "Chennai-India", cleartrip: "Chennai, IN" },
+    CCU: { emt: "Kolkata-India", cleartrip: "Kolkata, IN" },
+    PNQ: { emt: "Pune-India", cleartrip: "Pune, IN" },
+    GOI: { emt: "Goa-India", cleartrip: "Goa, IN" },
+    AMD: { emt: "Ahmedabad-India", cleartrip: "Ahmedabad, IN" },
+    COK: { emt: "Kochi-India", cleartrip: "Kochi, IN" },
+    JAI: { emt: "Jaipur-India", cleartrip: "Jaipur, IN" },
+    LKO: { emt: "Lucknow-India", cleartrip: "Lucknow, IN" },
+    IXC: { emt: "Chandigarh-India", cleartrip: "Chandigarh, IN" },
+    BBI: { emt: "Bhubaneswar-India", cleartrip: "Bhubaneswar, IN" },
+    GAU: { emt: "Guwahati-India", cleartrip: "Guwahati, IN" },
+    TRV: { emt: "Thiruvananthapuram-India", cleartrip: "Thiruvananthapuram, IN" },
+    IXB: { emt: "Bagdogra-India", cleartrip: "Bagdogra, IN" },
+    PAT: { emt: "Patna-India", cleartrip: "Patna, IN" },
+    IDR: { emt: "Indore-India", cleartrip: "Indore, IN" },
+    NAG: { emt: "Nagpur-India", cleartrip: "Nagpur, IN" }
+  };
 
-  return "";
+  return map[code] || { emt: `${code}-India`, cleartrip: `${code}, IN` };
+}
+
+
+function airportPlainCity(iata) {
+  const code = String(iata || "").toUpperCase();
+
+  const map = {
+    BOM: "Mumbai",
+    DEL: "New Delhi",
+    BLR: "Bangalore",
+    HYD: "Hyderabad",
+    MAA: "Chennai",
+    CCU: "Kolkata",
+    PNQ: "Pune",
+    GOI: "Goa",
+    AMD: "Ahmedabad",
+    COK: "Kochi",
+    JAI: "Jaipur",
+    LKO: "Lucknow",
+    IXC: "Chandigarh",
+    BBI: "Bhubaneswar",
+    GAU: "Guwahati",
+    TRV: "Thiruvananthapuram",
+    IXB: "Bagdogra",
+    PAT: "Patna",
+    IDR: "Indore",
+    NAG: "Nagpur"
+  };
+
+  return map[code] || code;
+}
+
+
+function buildPortalBookingUrl(portalName) {
+  return buildSkyDealPortalRoundTripUrl(portalName, lastSearchPayload || {});
 }
 
 function bookSelectedRoundTripBestPortal() {
