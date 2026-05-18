@@ -5020,3 +5020,188 @@ body {
     isolation: isolate !important;
   }
 }
+
+/* =====================================================
+   Mobile pre-search fix: date box visibility + autocomplete layering
+   Desktop untouched
+===================================================== */
+
+@media (max-width: 760px) {
+  /* Date fields: make the actual box visible and contained */
+  .search-card.mobile-compact-search-card input[type="date"],
+  .search-card input[type="date"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-color: #090816 !important;
+    border: 1px solid rgba(124, 58, 237, 0.55) !important;
+    color: #ffffff !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 0 0 0 rgba(168, 85, 247, 0) !important;
+  }
+
+  .search-card.mobile-compact-search-card input[type="date"]:focus,
+  .search-card input[type="date"]:focus {
+    border-color: rgba(168, 85, 247, 0.95) !important;
+    box-shadow:
+      0 0 0 3px rgba(168, 85, 247, 0.25),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    outline: none !important;
+  }
+
+  /* Ensure each field is an isolated layer */
+  .search-card.mobile-compact-search-card .mobile-search-field,
+  .search-card .mobile-search-field {
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+  }
+
+  /* Active text/autocomplete field should rise above date fields */
+  .search-card.mobile-compact-search-card .mobile-search-field:focus-within,
+  .search-card .mobile-search-field:focus-within {
+    z-index: 80 !important;
+  }
+
+  /* Airport dropdown: solid clean panel above the form */
+  .location-suggestions,
+  .airport-suggestions,
+  .autocomplete-results,
+  .suggestions,
+  .location-options {
+    position: absolute !important;
+    z-index: 999 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28) !important;
+    overflow: hidden !important;
+    max-height: 260px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .location-option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
+    padding: 10px 12px !important;
+  }
+
+  .location-option:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .location-option-main {
+    color: #0f172a !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+  }
+
+  .location-option-sub {
+    color: #64748b !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    margin-top: 2px !important;
+  }
+
+  /* When suggestions are open, hide date fields underneath from bleeding visually */
+  .search-card.mobile-compact-search-card:has(.location-suggestions:not(:empty)) input[type="date"],
+  .search-card.mobile-compact-search-card:has(.airport-suggestions:not(:empty)) input[type="date"],
+  .search-card.mobile-compact-search-card:has(.autocomplete-results:not(:empty)) input[type="date"],
+  .search-card.mobile-compact-search-card:has(.suggestions:not(:empty)) input[type="date"],
+  .search-card.mobile-compact-search-card:has(.location-options:not(:empty)) input[type="date"] {
+    position: relative !important;
+    z-index: 0 !important;
+  }
+}
+
+/* =====================================================
+   Targeted mobile date + autocomplete fix
+   Uses JS-added classes, so it does not depend on old selectors.
+===================================================== */
+
+@media (max-width: 760px) {
+  .sky-mobile-date-wrap {
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+
+  .sky-mobile-date-input {
+    width: 100% !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(124, 58, 237, 0.72) !important;
+    background: #090816 !important;
+    color: #ffffff !important;
+    padding: 0 42px 0 12px !important;
+    box-sizing: border-box !important;
+    font-size: 15px !important;
+    line-height: 54px !important;
+    text-align: left !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04) !important;
+  }
+
+  .sky-mobile-date-input:focus {
+    outline: none !important;
+    border-color: rgba(168, 85, 247, 1) !important;
+    box-shadow:
+      0 0 0 3px rgba(168, 85, 247, 0.25),
+      inset 0 0 0 1px rgba(255,255,255,0.05) !important;
+  }
+
+  .sky-mobile-date-input::-webkit-calendar-picker-indicator {
+    opacity: 0 !important;
+  }
+
+  .sky-mobile-date-icon {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 22px !important;
+    height: 22px !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.45)) !important;
+  }
+
+  .sky-mobile-location-dropdown {
+    position: absolute !important;
+    z-index: 9999 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(226, 232, 240, 1) !important;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.34) !important;
+    overflow: hidden !important;
+    max-height: 260px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .sky-mobile-location-dropdown .location-option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .sky-mobile-location-dropdown .location-option-main {
+    color: #0f172a !important;
+  }
+
+  .sky-mobile-location-dropdown .location-option-sub {
+    color: #64748b !important;
+  }
+
+  .search-card.mobile-compact-search-card:has(.sky-mobile-location-dropdown .location-option) .sky-mobile-date-wrap {
+    z-index: 0 !important;
+  }
+}

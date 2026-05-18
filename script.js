@@ -3048,6 +3048,69 @@ function setSearchButtonLoading(isLoading) {
   }
 }
 
+function fixMobilePreSearchLayers() {
+  const dateSelectors = [
+    "#departureDate",
+    "#returnDate",
+    "#departInput",
+    "#returnInput",
+    "input[name='departureDate']",
+    "input[name='returnDate']",
+    "input[type='date']"
+  ];
+
+  const seen = new Set();
+
+  dateSelectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((input) => {
+      if (!input || seen.has(input)) return;
+      seen.add(input);
+
+      const wrapper =
+        input.closest(".mobile-search-field") ||
+        input.closest("label") ||
+        input.closest(".field") ||
+        input.closest(".form-field") ||
+        input.parentElement;
+
+      if (!wrapper) return;
+
+      wrapper.classList.add("sky-mobile-date-wrap");
+      input.classList.add("sky-mobile-date-input");
+
+      if (!wrapper.querySelector(".sky-mobile-date-icon")) {
+        const icon = document.createElement("span");
+        icon.className = "sky-mobile-date-icon";
+        icon.textContent = "📅";
+        icon.setAttribute("aria-hidden", "true");
+        wrapper.appendChild(icon);
+      }
+    });
+  });
+
+  document.querySelectorAll(".location-option").forEach((option) => {
+    const dropdown = option.parentElement;
+    if (!dropdown) return;
+    dropdown.classList.add("sky-mobile-location-dropdown");
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fixMobilePreSearchLayers();
+});
+
+document.addEventListener("input", () => {
+  if (typeof isSkyDealMobileView === "function" && !isSkyDealMobileView()) return;
+  setTimeout(fixMobilePreSearchLayers, 0);
+}, true);
+
+document.addEventListener("focusin", () => {
+  if (typeof isSkyDealMobileView === "function" && !isSkyDealMobileView()) return;
+  setTimeout(fixMobilePreSearchLayers, 0);
+}, true);
+
+setTimeout(fixMobilePreSearchLayers, 0);
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
