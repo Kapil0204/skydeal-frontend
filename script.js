@@ -2674,6 +2674,52 @@ function selectedTripRouteLabel(direction) {
   return direction === "ret" ? `${to} → ${from}` : `${from} → ${to}`;
 }
 
+function ensureMobileResultsApp() {
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+  if (!resultsSection) return null;
+
+  let app = document.getElementById("mobileResultsApp");
+  if (app) return app;
+
+  app = document.createElement("section");
+  app.id = "mobileResultsApp";
+  app.className = "mobile-results-app";
+  app.setAttribute("aria-label", "Mobile flight results");
+
+  app.innerHTML = `
+    <div class="mobile-results-shell">
+      <div class="mobile-results-placeholder">
+        Mobile results will appear here.
+      </div>
+    </div>
+  `;
+
+  resultsSection.parentNode.insertBefore(app, resultsSection.nextSibling);
+  return app;
+}
+
+function renderMobileResultsApp() {
+  ensureMobileResultsApp();
+}
+
+function isSkyDealMobileView() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
+
+function scrollToReturnFlightsOnMobile() {
+  if (!isSkyDealMobileView()) return;
+
+  const returnPanel = document.getElementById("returnResultsPanel");
+  if (!returnPanel) return;
+
+  setTimeout(() => {
+    returnPanel.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }, 250);
+}
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
@@ -2763,6 +2809,7 @@ function renderSelectedTripPanel() {
     renderOutbound();
     renderReturn();
     renderSelectedTripPanel();
+    renderMobileResultsApp();
   });
 
   panel.querySelector("#bookSelectedTripBtn")?.addEventListener("click", () => {
@@ -2993,6 +3040,7 @@ function renderList(el, items, direction = "out") {
         selectedReturnFlight = flight;
       } else {
         selectedOutboundFlight = flight;
+        scrollToReturnFlightsOnMobile();
       }
 
       selectedTripComparison = null;
