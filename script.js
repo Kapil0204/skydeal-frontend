@@ -2993,8 +2993,15 @@ function renderSearchLoadingState(message = "Finding your best flight deals") {
 }
 
 function renderSearchErrorState(errorMessage = "Live flight results are taking longer than expected.") {
-  const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
-  const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
+  const outHost =
+    (typeof outboundList !== "undefined" && outboundList) ||
+    document.getElementById("outboundCards") ||
+    document.getElementById("outCards");
+
+  const retHost =
+    (typeof returnList !== "undefined" && returnList) ||
+    document.getElementById("returnCards") ||
+    document.getElementById("retCards");
 
   const cleanMessage = String(errorMessage || "").includes("FlightAPI")
     ? "Live flight provider is taking longer than expected."
@@ -3161,6 +3168,63 @@ function renderSearchNoResultsState(details = {}) {
   renderPager("out");
   renderPager("ret");
 }
+
+function normalizeRawSearchErrorUI() {
+  const hosts = [
+    document.getElementById("outboundCards"),
+    document.getElementById("outCards"),
+    document.getElementById("returnCards"),
+    document.getElementById("retCards")
+  ].filter(Boolean);
+
+  const hasRawError = hosts.some((host) => {
+    const txt = (host.textContent || "").toLowerCase();
+    return (
+      txt.includes("failed to fetch flights") ||
+      txt.includes("network error") ||
+      txt.includes("flightapi request failed") ||
+      txt.includes("flightapi request timed out")
+    );
+  });
+
+  if (!hasRawError) return;
+
+  renderSearchErrorState("Live flight results are taking longer than expected.");
+}
+
+function installSearchErrorUiGuard() {
+  if (window.__skySearchErrorUiGuardInstalled) return;
+  window.__skySearchErrorUiGuardInstalled = true;
+
+  const observer = new MutationObserver(() => {
+    window.clearTimeout(window.__skySearchErrorUiGuardTimer);
+    window.__skySearchErrorUiGuardTimer = window.setTimeout(normalizeRawSearchErrorUI, 30);
+  });
+
+  const targets = [
+    document.getElementById("outboundCards"),
+    document.getElementById("outCards"),
+    document.getElementById("returnCards"),
+    document.getElementById("retCards"),
+    document.body
+  ].filter(Boolean);
+
+  targets.forEach((target) => {
+    observer.observe(target, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  });
+
+  normalizeRawSearchErrorUI();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  installSearchErrorUiGuard();
+});
+
+setTimeout(installSearchErrorUiGuard, 0);
 
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
@@ -3697,13 +3761,17 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderReturn();
   } catch (err) {
     console.error("[SkyDeal] search failed", err || e);
-    renderSearchErrorState((err || e)?.message || "Search failed. Please try again.");
 
-    console.error(err);
     outboundAll = [];
     returnAll = [];
-    outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
-    returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">Failed to fetch flights (network error).</div>`;
+    selectedOutboundFlight = null;
+    selectedReturnFlight = null;
+    selectedTripComparison = null;
+
+    renderSearchErrorState((err || e)?.message || "Live flight results are taking longer than expected.");
+    renderMobileQuickFilters();
+    enterMobileResultsMode();
+    return;
   }
 
   finally {
