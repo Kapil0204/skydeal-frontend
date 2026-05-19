@@ -3236,6 +3236,133 @@ document.addEventListener("DOMContentLoaded", () => {
 
 setTimeout(installSearchErrorUiGuard, 0);
 
+function syncReturnDateAutoRoundTrip() {
+  if (!returnInput || !roundTripRadio) return;
+
+  // Keep return date tappable even when user is currently in one-way mode.
+  // If user interacts with return date, switch to round-trip automatically.
+  returnInput.disabled = false;
+  returnInput.parentElement?.classList?.remove("disabled");
+  returnInput.classList.add("sky-return-date-auto-trip");
+
+  const activateRoundTrip = () => {
+    if (!roundTripRadio.checked) {
+      roundTripRadio.checked = true;
+      if (oneWayRadio) oneWayRadio.checked = false;
+      if (typeof toggleReturn === "function") toggleReturn();
+    }
+  };
+
+  if (!returnInput.dataset.skyAutoRoundTripInstalled) {
+    returnInput.dataset.skyAutoRoundTripInstalled = "true";
+
+    ["pointerdown", "mousedown", "touchstart", "focus", "click", "change"].forEach((evt) => {
+      returnInput.addEventListener(evt, activateRoundTrip, { passive: true });
+    });
+
+    returnInput.parentElement?.addEventListener("click", activateRoundTrip, true);
+  }
+}
+
+function decoratePaymentTabsForMobile() {
+  const modal = document.getElementById("paymentModal");
+  if (!modal) return;
+
+  const possibleTabRows = Array.from(
+    modal.querySelectorAll(".tabs, .pm-tabs, .payment-tabs, [role='tablist'], .tab-row, .modal-tabs")
+  );
+
+  possibleTabRows.forEach((row) => {
+    const text = (row.textContent || "").toLowerCase();
+    if (!text.includes("credit") && !text.includes("debit") && !text.includes("emi")) return;
+
+    row.classList.add("sky-payment-tabs-mobile");
+
+    const buttons = Array.from(row.querySelectorAll("button, .tab, [role='tab'], label, div"));
+    buttons.forEach((btn) => {
+      const label = (btn.textContent || "").trim().toLowerCase();
+      if (!label) return;
+      if (label.includes("emi")) btn.classList.add("sky-payment-tab-emi");
+    });
+
+    if (!row.parentElement?.querySelector(".sky-payment-tabs-hint")) {
+      const hint = document.createElement("div");
+      hint.className = "sky-payment-tabs-hint";
+      hint.innerHTML = `<span>Swipe for more payment types</span><span aria-hidden="true">→</span>`;
+      row.parentElement?.insertBefore(hint, row.nextSibling);
+    }
+  });
+}
+
+function updateSelectedTripMobileClasses() {
+  const hasOut = typeof selectedOutboundFlight !== "undefined" && !!selectedOutboundFlight;
+  const hasRet = typeof selectedReturnFlight !== "undefined" && !!selectedReturnFlight;
+  const isRound = typeof roundTripRadio !== "undefined" && !!roundTripRadio?.checked;
+
+  document.body.classList.toggle("sky-mobile-has-outbound", isRound && hasOut);
+  document.body.classList.toggle("sky-mobile-has-return", isRound && hasRet);
+  document.body.classList.toggle("sky-mobile-focus-return", isRound && hasOut && !hasRet);
+  document.body.classList.toggle("sky-mobile-focus-outbound", isRound && hasRet && !hasOut);
+  document.body.classList.toggle("sky-mobile-trip-complete", isRound && hasOut && hasRet);
+}
+
+function decorateSelectedTripExpandControl() {
+  const panel = document.getElementById("selectedTripPanel");
+  if (!panel) return;
+
+  if (!panel.querySelector(".sky-trip-expand-toggle")) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sky-trip-expand-toggle";
+    btn.setAttribute("aria-label", "Expand selected trip summary");
+    btn.innerHTML = `<span class="sky-trip-expand-chevron" aria-hidden="true">⌃</span>`;
+    btn.addEventListener("click", () => {
+      const expanded = document.body.classList.toggle("sky-trip-panel-expanded");
+      btn.setAttribute(
+        "aria-label",
+        expanded ? "Collapse selected trip summary" : "Expand selected trip summary"
+      );
+      btn.querySelector(".sky-trip-expand-chevron").textContent = expanded ? "⌄" : "⌃";
+    });
+
+    panel.prepend(btn);
+  }
+
+  // Close full-screen compare panel when user clears trip.
+  const clearBtn = panel.querySelector(".sky-trip-clear-btn, .clearTripBtn, [data-action='clear-trip']");
+  if (clearBtn && !clearBtn.dataset.skyCollapseInstalled) {
+    clearBtn.dataset.skyCollapseInstalled = "true";
+    clearBtn.addEventListener("click", () => {
+      document.body.classList.remove("sky-trip-panel-expanded");
+    });
+  }
+}
+
+function installMobileUxPolish() {
+  syncReturnDateAutoRoundTrip();
+  decoratePaymentTabsForMobile();
+  decorateSelectedTripExpandControl();
+  updateSelectedTripMobileClasses();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  installMobileUxPolish();
+});
+
+document.addEventListener("click", () => {
+  setTimeout(installMobileUxPolish, 0);
+}, true);
+
+document.addEventListener("change", () => {
+  setTimeout(installMobileUxPolish, 0);
+}, true);
+
+document.addEventListener("input", () => {
+  setTimeout(installMobileUxPolish, 0);
+}, true);
+
+setInterval(installMobileUxPolish, 700);
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
