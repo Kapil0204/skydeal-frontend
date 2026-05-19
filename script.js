@@ -3111,6 +3111,57 @@ document.addEventListener("focusin", () => {
 
 setTimeout(fixMobilePreSearchLayers, 0);
 
+function renderSearchNoResultsState(details = {}) {
+  const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
+  const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
+
+  const tripType = details.tripType || lastSearchPayload?.tripType || "one-way";
+  const isRound = tripType === "round-trip";
+
+  let title = "No flights found for this search";
+  let subtitle = "Try changing your date, route, or filters and search again.";
+
+  if (isRound && details.missingOutbound && details.missingReturn) {
+    title = "No round-trip flights found";
+    subtitle = "We could not find outbound or return flights for these dates.";
+  } else if (isRound && details.missingOutbound) {
+    title = "No outbound flights found";
+    subtitle = "Try changing the departure date or route.";
+  } else if (isRound && details.missingReturn) {
+    title = "No return flights found";
+    subtitle = "Try changing the return date or route.";
+  }
+
+  const noResultsHtml = `
+    <div class="sky-search-state-card sky-search-no-results-card">
+      <div class="sky-no-results-icon" aria-hidden="true">⌕</div>
+      <div class="sky-search-state-title">${safeText(title)}</div>
+      <div class="sky-search-state-subtitle">${safeText(subtitle)}</div>
+      <div class="sky-search-state-actions">
+        <button type="button" class="sky-state-primary-btn" id="editSearchFromNoResultsBtn">Edit search</button>
+        <button type="button" class="sky-state-secondary-btn" id="retryNoResultsBtn">Try again</button>
+      </div>
+    </div>
+  `;
+
+  if (outHost) outHost.innerHTML = noResultsHtml;
+  if (retHost) retHost.innerHTML = "";
+
+  document.getElementById("editSearchFromNoResultsBtn")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-results-mode");
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("retryNoResultsBtn")?.addEventListener("click", () => {
+    const btn = document.getElementById("searchBtn");
+    if (btn) btn.click();
+  });
+
+  renderPager("out");
+  renderPager("ret");
+}
+
 function renderSelectedTripPanel() {
   const panel = ensureSelectedTripPanel();
   if (!panel) return;
@@ -3624,6 +3675,20 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
        outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
     returnAll = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
+
+    const missingOutbound = outboundAll.length === 0;
+    const missingReturn = payload.tripType === "round-trip" && returnAll.length === 0;
+
+    if (missingOutbound || missingReturn) {
+      activeFilters.airlines = [];
+      renderAirlineFilters();
+      renderSearchNoResultsState({
+        tripType: payload.tripType,
+        missingOutbound,
+        missingReturn
+      });
+      return;
+    }
 
     activeFilters.airlines = [];
     renderAirlineFilters();
