@@ -5631,3 +5631,14 @@ body.search-error-mode .results-top-filter-row {
     display: none !important;
   }
 }
+
+/* =====================================================
+   Mobile payment modal cleanup
+   Payment type pills now wrap into two rows, so swipe hint is no longer needed.
+===================================================== */
+
+@media (max-width: 760px) {
+  .sky-payment-tabs-hint {
+    display: none !important;
+  }
+}
