@@ -5253,3 +5253,81 @@ body {
     margin-top: 8px;
   }
 }
+
+/* =====================================================
+   Desktop clean error-state layout
+   Hide filters and center the error card when search fails.
+   Mobile remains unchanged.
+===================================================== */
+
+@media (min-width: 761px) {
+  /* These quick-filter chips are mobile-only. Keep them hidden on desktop. */
+  .mobile-quick-filters {
+    display: none !important;
+  }
+
+  body.search-error-mode .filters,
+  body.search-error-mode .filters-panel,
+  body.search-error-mode aside,
+  body.search-error-mode #filtersPanel {
+    display: none !important;
+  }
+
+  body.search-error-mode .flights-workspace,
+  body.search-error-mode .results-layout,
+  body.search-error-mode .pro-results {
+    grid-template-columns: minmax(720px, 980px) !important;
+    justify-content: center !important;
+    align-items: start !important;
+  }
+
+  body.search-error-mode #returnResultsPanel {
+    display: none !important;
+  }
+
+  body.search-error-mode #outboundResultsPanel {
+    max-width: 980px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  body.search-error-mode #outboundResultsPanel .col-head {
+    display: none !important;
+  }
+
+  body.search-error-mode .sky-search-error-card {
+    min-height: 300px !important;
+    max-width: 760px !important;
+    margin: 34px auto !important;
+    padding: 42px 34px !important;
+    border-radius: 28px !important;
+  }
+
+  body.search-error-mode .sky-error-icon {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 26px !important;
+  }
+
+  body.search-error-mode .sky-search-state-title {
+    font-size: 28px !important;
+  }
+
+  body.search-error-mode .sky-search-state-subtitle {
+    font-size: 15px !important;
+    max-width: 520px !important;
+  }
+
+  body.search-error-mode .sky-search-state-actions {
+    margin-top: 14px !important;
+  }
+
+  body.search-error-mode .sky-state-primary-btn,
+  body.search-error-mode .sky-state-secondary-btn {
+    min-width: 150px !important;
+  }
+
+  body.search-error-mode .pager {
+    display: none !important;
+  }
+}

@@ -2969,6 +2969,7 @@ document.addEventListener("DOMContentLoaded", () => {
 setTimeout(bindMobileSearchModeEvents, 0);
 
 function renderSearchLoadingState(message = "Finding your best flight deals") {
+  document.body.classList.remove("search-error-mode");
   const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
   const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
 
@@ -2993,6 +2994,7 @@ function renderSearchLoadingState(message = "Finding your best flight deals") {
 }
 
 function renderSearchErrorState(errorMessage = "Live flight results are taking longer than expected.") {
+  document.body.classList.add("search-error-mode");
   const outHost =
     (typeof outboundList !== "undefined" && outboundList) ||
     document.getElementById("outboundCards") ||
@@ -3003,9 +3005,16 @@ function renderSearchErrorState(errorMessage = "Live flight results are taking l
     document.getElementById("returnCards") ||
     document.getElementById("retCards");
 
-  const cleanMessage = String(errorMessage || "").includes("FlightAPI")
-    ? "Live flight provider is taking longer than expected."
-    : errorMessage;
+  const rawErrorText = String(errorMessage || "");
+  const lowerErrorText = rawErrorText.toLowerCase();
+
+  const cleanMessage =
+    lowerErrorText.includes("failed to fetch") ||
+    lowerErrorText.includes("network error") ||
+    lowerErrorText.includes("flightapi") ||
+    lowerErrorText.includes("timed out")
+      ? "We couldn’t load live flights"
+      : rawErrorText || "We couldn’t load live flights";
 
   const errorHtml = `
     <div class="sky-search-state-card sky-search-error-card">
@@ -3119,6 +3128,7 @@ document.addEventListener("focusin", () => {
 setTimeout(fixMobilePreSearchLayers, 0);
 
 function renderSearchNoResultsState(details = {}) {
+  document.body.classList.remove("search-error-mode");
   const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
   const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
 
@@ -3601,6 +3611,7 @@ function updateFlightSectionHeadings() {
 }
 
 function renderOutbound() {
+  document.body.classList.remove("search-error-mode");
   updateFlightSectionHeadings();
   const filtered = applyFlightFilters(outboundAll);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
