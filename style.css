@@ -5331,3 +5331,94 @@ body {
     display: none !important;
   }
 }
+
+/* =====================================================
+   Error mode cleanup
+   When API/search fails, filters are not useful.
+   Show only the clean error card.
+===================================================== */
+
+/* Always hide mobile quick filters during error state */
+body.search-error-mode .mobile-quick-filters,
+body.search-error-mode #mobileQuickFilters,
+body.search-error-mode .mobile-filter-row,
+body.search-error-mode .mobile-filter-bar,
+body.search-error-mode .filter-chips-row,
+body.search-error-mode .results-top-filter-row {
+  display: none !important;
+}
+
+/* Desktop: hide left filters and center the error card */
+@media (min-width: 761px) {
+  body.search-error-mode .filters,
+  body.search-error-mode .filters-panel,
+  body.search-error-mode .filters-card,
+  body.search-error-mode .filter-panel,
+  body.search-error-mode .filter-sidebar,
+  body.search-error-mode .sidebar,
+  body.search-error-mode aside,
+  body.search-error-mode #filtersPanel {
+    display: none !important;
+  }
+
+  body.search-error-mode .pro-results {
+    display: block !important;
+    max-width: 980px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.search-error-mode .flights-workspace,
+  body.search-error-mode .results-layout,
+  body.search-error-mode .results-grid {
+    display: block !important;
+    max-width: 980px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.search-error-mode #returnResultsPanel {
+    display: none !important;
+  }
+
+  body.search-error-mode #outboundResultsPanel {
+    width: 100% !important;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+  }
+
+  body.search-error-mode #outboundResultsPanel .col-head,
+  body.search-error-mode #outboundResultsPanel .pager {
+    display: none !important;
+  }
+
+  body.search-error-mode .sky-search-error-card {
+    max-width: 760px !important;
+    min-height: 300px !important;
+    margin: 34px auto !important;
+  }
+}
+
+/* Mobile: keep compact route bar, hide filter chips, show error card directly */
+@media (max-width: 760px) {
+  body.search-error-mode .mobile-quick-filters,
+  body.search-error-mode #mobileQuickFilters,
+  body.search-error-mode .mobile-filter-row,
+  body.search-error-mode .mobile-filter-bar,
+  body.search-error-mode .filter-chips-row,
+  body.search-error-mode .results-top-filter-row {
+    display: none !important;
+  }
+
+  body.search-error-mode #returnResultsPanel {
+    display: none !important;
+  }
+
+  body.search-error-mode #outboundResultsPanel .col-head {
+    display: none !important;
+  }
+
+  body.search-error-mode .sky-search-error-card {
+    margin-top: 10px !important;
+  }
+}
