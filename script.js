@@ -517,6 +517,7 @@ function renderBestDealSummary(bestDeal, context = "default") {
   const code = bestDeal.code ? safeText(bestDeal.code) : "";
   const payment = getOfferAwarePaymentLabel(bestDeal);
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
+  const showType = type && type.toLowerCase() !== "payment offer";
   const portalLine = isRoundTripLeg ? `Standalone best via ${portal}` : `Best overall via ${portal}`;
 
   return `
@@ -531,9 +532,10 @@ function renderBestDealSummary(bestDeal, context = "default") {
 
       <div class="bestDealMeta">
         Base ${basePrice}
+        ${savings > 0 ? ` • Save ${money(savings)}` : ""}
         ${code ? ` • Code: ${code}` : ""}
         ${payment ? ` • ${payment}` : ""}
-        ${type ? ` • ${type}` : ""}
+        ${showType ? ` • ${type}` : ""}
         ${isRoundTripLeg ? " • Full trip price after selecting both flights" : ""}
       </div>
     </div>
@@ -1510,13 +1512,14 @@ if (!p.applied) {
 }
 
 const offerText = safeText(p.rawDiscount, "Offer available");
+const savings = getSavingsAmount(p.basePrice, p.finalPrice);
 const codeText = p.code
-  ? ` • <button
+  ? `<button
         type="button"
         class="copyCouponBtn inlineCopyCouponBtn"
         data-code="${safeText(p.code)}"
         title="Copy coupon code"
-      >Code: ${safeText(p.code)}</button>`
+      >${safeText(p.code)}</button>`
   : "";
 const termsText = formatTermsForDisplay(p.terms);
 const hasTerms = !!termsText;
@@ -1552,12 +1555,17 @@ const typeLine = showTypeLabel
     : "";
 
   return `
-    <div style="opacity:.85;font-size:13px;">
-      Offer: ${offerText}${codeText}
-      ${pay ? `<div style="opacity:.85;margin-top:4px;">Payment: <b>${safeText(pay)}</b></div>` : ""}
+    <div style="opacity:.9;font-size:13px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:4px;">Applied offer</div>
+      <div>${offerText}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;">
+        ${savings > 0 ? `<span style="color:#86efac;font-weight:800;">You save ${money(savings)}</span>` : ""}
+        ${codeText ? `<span>Coupon: ${codeText}</span>` : ""}
+        ${pay ? `<span>Payment: <b>${safeText(pay)}</b></span>` : ""}
+      </div>
       ${typeLine}
       ${channelLine}
-      ${tncBtn}
+      ${tncBtn ? `<div style="margin-top:8px;">${tncBtn.replace(/^\s*•\s*/, "")}</div>` : ""}
     </div>
   `;
 }
