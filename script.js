@@ -515,7 +515,7 @@ function renderBestDealSummary(bestDeal, context = "default") {
   const finalPrice = money(bestDeal.finalPrice);
   const basePrice = money(bestDeal.basePrice);
   const code = bestDeal.code ? safeText(bestDeal.code) : "";
-  const payment = bestDeal.paymentLabel ? prettyPaymentLabel(bestDeal.paymentLabel) : "";
+  const payment = getOfferAwarePaymentLabel(bestDeal);
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
   const portalLine = isRoundTripLeg ? `Standalone best via ${portal}` : `Best overall via ${portal}`;
 
@@ -542,14 +542,50 @@ function renderBestDealSummary(bestDeal, context = "default") {
 
 function prettyPaymentLabel(label) {
   const s = String(label || "");
-  // purely display: normalize emi/upi/wallet to uppercase tokens
+  // Purely display: normalize payment tokens.
   return s
     .replace(/\bemi\b/gi, "EMI")
     .replace(/\bupi\b/gi, "UPI")
-    .replace(/\bnetbanking\b/gi, "NetBanking")
+    .replace(/\bnetbanking\b/gi, "Net Banking")
+    .replace(/\bnet banking\b/gi, "Net Banking")
     .replace(/\bcreditcard\b/gi, "Credit Card")
-    .replace(/\bdebitcard\b/gi, "Debit Card");
+    .replace(/\bcredit card\b/gi, "Credit Card")
+    .replace(/\bdebitcard\b/gi, "Debit Card")
+    .replace(/\bdebit card\b/gi, "Debit Card")
+    .replace(/\s*•\s*/g, " • ")
+    .trim();
 }
+
+function getOfferAwarePaymentLabel(item = {}) {
+  const baseLabel = prettyPaymentLabel(item.paymentLabel || "");
+  if (!baseLabel) return "";
+
+  const context = [
+    item.offerTypeLabel,
+    item.title,
+    item.offerTitle,
+    item.rawDiscount,
+    item.code,
+    item.couponCode
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const looksLikeEmiOffer = /\bEMI\b/i.test(context);
+
+  if (!looksLikeEmiOffer || /\bEMI\b/i.test(baseLabel)) {
+    return baseLabel;
+  }
+
+  // Some backend rows can carry card-derived labels while the actual offer is EMI.
+  // For display only, show EMI when the applied coupon/offer text is clearly EMI.
+  if (/\bCredit Card\b/i.test(baseLabel)) {
+    return baseLabel.replace(/\bCredit Card\b/i, "EMI");
+  }
+
+  return `${baseLabel} • EMI`;
+}
+
 function getPortalCtaLabel(portal) {
   return `Book on ${safeText(portal)}`;
 }
@@ -1468,7 +1504,7 @@ function formatOfferLine(p) {
 if (!p.applied) {
   return `
     <div style="opacity:.72;font-size:13px;">
-      No eligible offer for selected payment method
+      No matching offer for the selected payment method on this portal.
     </div>
   `;
 }
@@ -1503,7 +1539,7 @@ const tncBtn = hasTerms
       >T&C</button>`
   : "";
 
-  const pay = p.paymentLabel ? prettyPaymentLabel(p.paymentLabel) : "";
+  const pay = getOfferAwarePaymentLabel(p);
   const showTypeLabel =
   p.offerTypeLabel &&
   String(p.offerTypeLabel).trim().toLowerCase() !== "payment offer";
@@ -2525,7 +2561,7 @@ function formatTripBestSummary() {
 
   const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Best available payment offer";
   const discountText = bestInfo.appliedDiscountText || (bestInfo.savings > 0 ? `Applied discount: ${money(bestInfo.savings)}` : "No discount applied");
-  const paymentText = bestInfo.paymentLabel || "Selected payment method";
+  const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment method";
 
   return `
     <div class="sky-trip-best-card sky-trip-best-pro is-ready">
