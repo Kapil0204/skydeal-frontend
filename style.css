@@ -5642,3 +5642,235 @@ body.search-error-mode .results-top-filter-row {
     display: none !important;
   }
 }
+
+/* =====================================================
+   Selected round-trip panel polish: cleaner price/offer layout
+   Desktop + mobile-safe overrides only
+===================================================== */
+
+body #selectedTripPanel .sky-trip-bar {
+  align-items: stretch !important;
+}
+
+body #selectedTripPanel .sky-trip-bar-left {
+  min-width: 0 !important;
+}
+
+body #selectedTripPanel .sky-trip-bar-title-row {
+  margin-bottom: 10px !important;
+}
+
+body #selectedTripPanel .sky-trip-leg-grid {
+  margin-bottom: 10px !important;
+}
+
+body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
+  margin-top: 10px !important;
+  padding: 16px 18px !important;
+  border-radius: 18px !important;
+  background:
+    radial-gradient(circle at top left, rgba(168, 85, 247, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(12, 20, 48, 0.98), rgba(45, 38, 101, 0.95)) !important;
+  border: 1px solid rgba(52, 211, 153, 0.24) !important;
+}
+
+body #selectedTripPanel .trip-rec-head {
+  margin-bottom: 10px !important;
+}
+
+body #selectedTripPanel .trip-rec-portal {
+  display: none !important;
+}
+
+body #selectedTripPanel .trip-rec-title {
+  font-size: 18px !important;
+  letter-spacing: -0.01em !important;
+}
+
+body #selectedTripPanel .trip-rec-body {
+  display: grid !important;
+  grid-template-columns: minmax(170px, 0.6fr) minmax(320px, 1.4fr) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  margin-top: 8px !important;
+}
+
+body #selectedTripPanel .trip-rec-price-block {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  padding: 10px 14px !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body #selectedTripPanel .trip-rec-price {
+  font-size: 38px !important;
+  line-height: 0.95 !important;
+}
+
+body #selectedTripPanel .trip-rec-base {
+  margin-top: 8px !important;
+  font-size: 12px !important;
+  opacity: 0.86 !important;
+}
+
+body #selectedTripPanel .trip-rec-save-inline {
+  margin-top: 10px !important;
+  width: fit-content !important;
+  padding: 7px 12px !important;
+  border-radius: 999px !important;
+  color: #34d399 !important;
+  background: rgba(16, 185, 129, 0.14) !important;
+  border: 1px solid rgba(52, 211, 153, 0.28) !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+body #selectedTripPanel .trip-rec-offer {
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.065) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+}
+
+body #selectedTripPanel .trip-rec-section-label {
+  color: #d8b4fe !important;
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+}
+
+body #selectedTripPanel .trip-rec-offer-title {
+  margin-top: 6px !important;
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+  max-width: 560px !important;
+}
+
+body #selectedTripPanel .trip-rec-meta {
+  margin-top: 10px !important;
+  gap: 8px !important;
+  align-items: center !important;
+  font-size: 13px !important;
+}
+
+body #selectedTripPanel .trip-rec-coupon-row {
+  margin-top: 11px !important;
+  gap: 9px !important;
+}
+
+body #selectedTripPanel .trip-rec-coupon-label {
+  opacity: 0.78 !important;
+  font-size: 12px !important;
+}
+
+body #selectedTripPanel .trip-rec-coupon-code {
+  padding: 6px 11px !important;
+  border-radius: 999px !important;
+}
+
+body #selectedTripPanel .copyTripCouponBtn {
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+body #selectedTripPanel .sky-trip-bar-actions {
+  justify-content: center !important;
+  gap: 12px !important;
+  min-width: 260px !important;
+}
+
+body #selectedTripPanel .sky-trip-book-btn {
+  min-height: 52px !important;
+  border-radius: 18px !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  box-shadow: 0 14px 30px rgba(168, 85, 247, 0.28) !important;
+}
+
+body #selectedTripPanel .sky-trip-compare-btn {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+body #selectedTripPanel .sky-trip-clear-btn {
+  min-height: 38px !important;
+  width: fit-content !important;
+  min-width: 92px !important;
+  align-self: center !important;
+  padding: 8px 16px !important;
+  border-radius: 14px !important;
+  opacity: 0.82 !important;
+}
+
+@media (max-width: 1180px) {
+  body #selectedTripPanel .trip-rec-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar-actions {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
+    padding: 11px !important;
+    border-radius: 15px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-body {
+    gap: 8px !important;
+    margin-top: 6px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-price-block {
+    padding: 9px 10px !important;
+    border-radius: 13px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-price {
+    font-size: 27px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-offer {
+    padding: 9px 10px !important;
+    border-radius: 13px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-offer-title {
+    font-size: 12px !important;
+  }
+
+  body #selectedTripPanel .trip-rec-meta,
+  body #selectedTripPanel .trip-rec-coupon-row {
+    font-size: 10px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-bar-actions {
+    gap: 7px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-book-btn {
+    min-height: 42px !important;
+    border-radius: 13px !important;
+    font-size: 14px !important;
+  }
+
+  body #selectedTripPanel .sky-trip-compare-btn,
+  body #selectedTripPanel .sky-trip-clear-btn {
+    min-height: 38px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+  }
+}
