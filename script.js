@@ -3911,11 +3911,16 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     console.log("[SkyDeal] /search meta", json?.meta);
 
     if (!res.ok) {
-      const msg = json?.meta?.error || `Backend error (${res.status})`;
+      const msg = json?.meta?.error || json?.error || `Backend error (${res.status})`;
       outboundAll = [];
       returnAll = [];
-      outboundList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
-      returnList.innerHTML = `<div class="empty" style="color:#ffb4b4;">${msg}</div>`;
+      selectedOutboundFlight = null;
+      selectedReturnFlight = null;
+      selectedTripComparison = null;
+      renderSelectedTripPanel();
+      renderSearchErrorState(msg);
+      renderMobileQuickFilters();
+      enterMobileResultsMode();
       return;
     }
 
