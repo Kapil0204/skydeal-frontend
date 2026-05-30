@@ -2568,8 +2568,8 @@ function formatTripBestSummary() {
   }
 
   const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Best available payment offer";
-  const discountText = bestInfo.appliedDiscountText || (bestInfo.savings > 0 ? `Applied discount: ${money(bestInfo.savings)}` : "No discount applied");
   const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment method";
+  const saveText = bestInfo.savings > 0 ? `You save ${money(bestInfo.savings)}` : "No discount applied";
 
   return `
     <div class="sky-trip-best-card sky-trip-best-pro is-ready">
@@ -2597,7 +2597,7 @@ function formatTripBestSummary() {
           <div class="trip-rec-offer-title">${offerTitle}</div>
 
           <div class="trip-rec-meta">
-            <span>${discountText}</span>
+            <span style="color:#86efac;font-weight:800;">${saveText}</span>
             <span>•</span>
             <span>${paymentText}</span>
           </div>
