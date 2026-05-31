@@ -8,8 +8,8 @@
 </head>
 <body>
  <header class="nav">
-  <div class="brand"><span class="brand-name">SkyDeal</span>: Your Flight Search Starts Here</div>
-  <div class="sub">Real Prices + Real Portal offers</div>
+  <div class="brand"><span class="brand-name">SkyDeal</span>: Don’t just compare fares. Compare what you’ll pay.</div>
+  <div class="sub">Live fares checked against portal and payment offers.</div>
 </header>
 
   <main class="wrap">
@@ -55,12 +55,12 @@
 
         <div class="pm-holder">
           <button id="paymentBtn" class="btn-ghost">
-            Select Payment Methods (<span id="pmCount">0</span>)
+            Add cards & payment apps (<span id="pmCount">0</span>)
           </button>
         </div>
       </div>
 
-      <button id="searchBtn" class="btn-primary">Search</button>
+      <button id="searchBtn" class="btn-primary">Compare final prices</button>
     </section>
 
     <section class="results pro-results">
@@ -123,8 +123,8 @@
         <div class="col" id="outboundResultsPanel">
           <div class="col-head">
             <div>
-              <h3>Outbound Flights</h3>
-              <div class="section-subtitle">Sorted by your best final payable price</div>
+              <h3>Departure flights</h3>
+              <div class="section-subtitle">Sorted by your best final payable estimate</div>
             </div>
             <div class="sort">
               <label>Sort by</label>
@@ -140,7 +140,7 @@
             <div class="empty-state">
               <div class="empty-icon">✈️</div>
               <div class="empty-title">Ready when you are</div>
-              <div class="empty-copy">Search a route to see real flights, best portals, and payment-based savings.</div>
+              <div class="empty-copy">Search a route to compare live fares, portal prices, and payment-based savings.</div>
             </div>
           </div>
 
@@ -154,7 +154,7 @@
         <div class="col return-panel is-hidden" id="returnResultsPanel">
           <div class="col-head">
             <div>
-              <h3>Return Flights</h3>
+              <h3>Return flights</h3>
               <div class="section-subtitle">Shown only for round trips</div>
             </div>
             <div class="sort">
@@ -171,7 +171,7 @@
             <div class="empty-state">
               <div class="empty-icon">↩️</div>
               <div class="empty-title">Return flights will appear here</div>
-              <div class="empty-copy">Choose round-trip to compare outbound and return options together.</div>
+              <div class="empty-copy">Choose round-trip to compare departure and return options together.</div>
             </div>
           </div>
 
@@ -189,7 +189,7 @@
   <div id="paymentModal" class="modal" aria-hidden="true">
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
       <div class="modal-head">
-        <h2 id="pmTitle">Select Payment Methods</h2>
+        <h2 id="pmTitle">Add your payment options</h2>
         <button id="pmClose" class="x" aria-label="Close">&times;</button>
       </div>
 
@@ -210,7 +210,7 @@
   <div id="priceModal" class="modal" aria-hidden="true">
     <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="priceTitle">
       <div class="modal-head">
-        <h2 id="priceTitle">Portal Price Comparison</h2>
+        <h2 id="priceTitle">Same flight, different final prices</h2>
         <button id="priceClose" class="x" aria-label="Close">&times;</button>
       </div>
       <div id="priceBody" class="price-body"></div>

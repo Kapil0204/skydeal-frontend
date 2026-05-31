@@ -518,7 +518,8 @@ function renderBestDealSummary(bestDeal, context = "default") {
   const payment = getOfferAwarePaymentLabel(bestDeal);
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
   const showType = type && type.toLowerCase() !== "payment offer";
-  const portalLine = isRoundTripLeg ? `Standalone best via ${portal}` : `Best overall via ${portal}`;
+  const showCouponChip = !isRoundTripLeg;
+  const portalLine = `Best price on ${portal}`;
 
   return `
     <div class="bestDealBanner">
@@ -533,11 +534,29 @@ function renderBestDealSummary(bestDeal, context = "default") {
       <div class="bestDealMeta">
         Base ${basePrice}
         ${savings > 0 ? ` • Save ${money(savings)}` : ""}
-        ${code ? ` • Code: ${code}` : ""}
         ${payment ? ` • ${payment}` : ""}
         ${showType ? ` • ${type}` : ""}
-        ${isRoundTripLeg ? " • Full trip price after selecting both flights" : ""}
+        ${isRoundTripLeg ? " • Estimated for this flight" : ""}
       </div>
+
+      ${
+        code && showCouponChip
+          ? `
+            <div class="bestDealCouponRow">
+              <span>Coupon</span>
+              <button
+                type="button"
+                class="bestDealCouponChip"
+                data-code="${code}"
+                title="Copy coupon code"
+              >
+                <strong>${code}</strong>
+                <small>Copy</small>
+              </button>
+            </div>
+          `
+          : ""
+      }
     </div>
   `;
 }
@@ -589,7 +608,7 @@ function getOfferAwarePaymentLabel(item = {}) {
 }
 
 function getPortalCtaLabel(portal) {
-  return `Book on ${safeText(portal)}`;
+  return `Book with ${safeText(portal)}`;
 }
 
 function getOtherOffersButtonLabel(portal, count = 0) {
@@ -1151,6 +1170,39 @@ function paymentMethodDetailSummary(pm) {
   return parts.join(" • ");
 }
 
+function ensurePaymentEducationNudge() {
+  const searchCard = document.querySelector(".search-card");
+  const pmToggle = document.getElementById("pmToggle") || document.getElementById("paymentMethodToggle");
+  if (!searchCard || !pmToggle) return;
+
+  if (localStorage.getItem("skydealPaymentNudgeDismissed") === "true") {
+    const old = document.getElementById("skyPaymentNudge");
+    if (old) old.remove();
+    return;
+  }
+
+  let nudge = document.getElementById("skyPaymentNudge");
+  if (!nudge) {
+    nudge = document.createElement("div");
+    nudge.id = "skyPaymentNudge";
+    nudge.className = "sky-payment-nudge";
+    pmToggle.insertAdjacentElement("afterend", nudge);
+  }
+
+  nudge.innerHTML = `
+    <div>
+      <strong>Quick tip:</strong> The cheapest portal can change after card, EMI, UPI or wallet offers.
+      Add your payment options to compare properly.
+    </div>
+    <button type="button" aria-label="Dismiss payment tip">×</button>
+  `;
+
+  nudge.querySelector("button")?.addEventListener("click", () => {
+    localStorage.setItem("skydealPaymentNudgeDismissed", "true");
+    nudge.remove();
+  });
+}
+
 function renderSelectedPaymentMethodsSummary() {
   let host = document.getElementById("selectedPmSummary");
 
@@ -1360,10 +1412,11 @@ function updatePaymentButtonLabel() {
   if (pmCount) pmCount.textContent = String(n);
   if (paymentBtn) {
   paymentBtn.textContent = includeEmiOffers
-    ? `Payment methods (${n}) + EMI offers`
-    : `Payment methods (${n})`;
+    ? `Payment options (${n}) + EMI offers`
+    : `Payment options (${n})`;
 }
   renderSelectedPaymentMethodsSummary();
+  ensurePaymentEducationNudge();
 }
 function formatTermsForDisplay(terms) {
   if (!terms) return "";
@@ -2015,7 +2068,7 @@ function ensurePortalModal() {
     <div class="portalModalShell">
       <div class="portalModalCard">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-          <div style="font-size:16px;font-weight:700;">Portal price comparison</div>
+          <div style="font-size:16px;font-weight:700;">Same flight, different final prices</div>
           <button id="portalCompareClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
         </div>
         <div id="portalCompareBody" style="margin-top:12px;"></div>
@@ -2052,7 +2105,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
-    body.innerHTML = `<div style="opacity:.85;">No portal price data available.</div>`;
+    body.innerHTML = `<div style="opacity:.85;">No portal-wise price data available.</div>`;
   } else {
     body.innerHTML = `
       <div class="portalCompareFlightHead">
@@ -2143,7 +2196,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
                 <div class="portalHeader">
   <div class="portalHeaderLeft">
     <div class="portalName">${safeText(p.portal)}</div>
-   ${isBest ? `<span class="badge bestPriceBadge">Best overall</span>` : ""}
+   ${isBest ? `<span class="badge bestPriceBadge">Best after payment offer</span>` : ""}
   </div>
 
   <div class="portalHeaderRight">
@@ -2256,7 +2309,7 @@ function emptyStateHtml(type = "default") {
       <div class="empty-state">
         <div class="empty-icon">↩️</div>
         <div class="empty-title">Return flights are off for one-way trips</div>
-        <div class="empty-copy">Switch to round-trip when you want SkyDeal to compare return flights too.</div>
+        <div class="empty-copy">Switch to round-trip when you want SkyDeal to compare departure and return flights together.</div>
       </div>
     `;
   }
@@ -2265,8 +2318,15 @@ function emptyStateHtml(type = "default") {
     return `
       <div class="empty-state">
         <div class="empty-icon">🔎</div>
-        <div class="empty-title">Finding your best flight deals</div>
-        <div class="empty-copy">Checking real fares and matching them with portal offers.</div>
+        <div class="empty-title">Comparing final prices</div>
+        <div class="empty-copy">We check fares, portals, and payment offers before showing your price.</div>
+        <div class="sky-loading-steps" aria-live="polite">
+          <span>Checking live fares</span>
+          <span>Comparing portal prices</span>
+          <span>Matching payment offers</span>
+          <span>Calculating final prices</span>
+          <span>Doing the checkout math</span>
+        </div>
       </div>
     `;
   }
@@ -2274,8 +2334,8 @@ function emptyStateHtml(type = "default") {
   return `
     <div class="empty-state">
       <div class="empty-icon">✈️</div>
-      <div class="empty-title">Search to unlock SkyDeal pricing</div>
-      <div class="empty-copy">Enter your route and payment methods to compare final payable prices across portals.</div>
+      <div class="empty-title">Search to compare final payable prices</div>
+      <div class="empty-copy">Enter your route and payment options to compare final payable prices across portals.</div>
     </div>
   `;
 }
@@ -2289,10 +2349,30 @@ function isSameSelectedFlight(a, b) {
   return flightKey(a) === flightKey(b);
 }
 
-function selectedFlightSummary(f) {
+function selectedTripDateLabel(direction = "out") {
+  const dateValue =
+    direction === "ret"
+      ? (lastSearchPayload?.returnDate || returnInput?.value || "")
+      : (lastSearchPayload?.departureDate || departInput?.value || "");
+
+  if (!dateValue) return "";
+
+  const d = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short"
+  });
+}
+
+function selectedFlightSummary(f, direction = "out") {
   if (!f) return "Not selected yet";
 
-  return `${safeText(f.airlineName)} ${displayFlightNumber(f)} · ${fmtTime(f.departureTime)} → ${fmtTime(f.arrivalTime)} · ${money(f.price)}`;
+  const date = selectedTripDateLabel(direction);
+  const datePrefix = date ? `${date} · ` : "";
+
+  return `${datePrefix}${safeText(f.airlineName)} ${displayFlightNumber(f)} · ${fmtTime(f.departureTime)} → ${fmtTime(f.arrivalTime)} · ${money(f.price)}`;
 }
 
 function ensureSelectedTripPanel() {
@@ -2532,7 +2612,7 @@ function formatTripBestSummary() {
         <div class="trip-rec-head">
           <div>
             <div class="trip-rec-eyebrow">Checking offers</div>
-            <div class="trip-rec-title">Finding the best round-trip price...</div>
+            <div class="trip-rec-title">Finding the best option for your selected flights...</div>
           </div>
         </div>
       </div>
@@ -2560,7 +2640,7 @@ function formatTripBestSummary() {
         <div class="trip-rec-head">
           <div>
             <div class="trip-rec-eyebrow">Checking offers</div>
-            <div class="trip-rec-title">Calculating best portal price...</div>
+            <div class="trip-rec-title">Comparing portal-wise prices...</div>
           </div>
         </div>
       </div>
@@ -2570,6 +2650,7 @@ function formatTripBestSummary() {
   const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Best available payment offer";
   const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment method";
   const saveText = bestInfo.savings > 0 ? `You save ${money(bestInfo.savings)}` : "No discount applied";
+  const bestPortalText = bestInfo.portal ? `Best price on ${bestInfo.portal}` : "Best price for selected flights";
 
   return `
     <div class="sky-trip-best-card sky-trip-best-pro is-ready">
@@ -2593,7 +2674,7 @@ function formatTripBestSummary() {
         </div>
 
         <div class="trip-rec-offer">
-          <div class="trip-rec-section-label">Offer applied</div>
+          <div class="trip-rec-section-label">${bestPortalText}</div>
           <div class="trip-rec-offer-title">${offerTitle}</div>
 
           <div class="trip-rec-meta">
@@ -2614,6 +2695,84 @@ function formatTripBestSummary() {
             }
           </div>
         </div>
+      </div>
+    </div>
+  `;
+}
+
+
+function formatCompactTripBestSummary() {
+  const comparison = selectedTripComparison;
+  const bestInfo = getBestTripPortalInfo();
+
+  if (selectedTripCompareLoading) {
+    return `
+      <div class="sky-trip-compact-summary is-loading">
+        <div class="sky-trip-compact-main">
+          <div class="sky-trip-compact-eyebrow">Checking offers</div>
+          <div class="sky-trip-compact-title">Comparing portal-wise prices...</div>
+          <div class="sky-trip-compact-sub">Checking fares and payment offers for your selected flights.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (selectedTripComparisonError) {
+    return `
+      <div class="sky-trip-compact-summary is-error">
+        <div class="sky-trip-compact-main">
+          <div class="sky-trip-compact-eyebrow">Couldn’t compare portals</div>
+          <div class="sky-trip-compact-title">${selectedTripComparisonError}</div>
+          <div class="sky-trip-compact-sub">You can try again or compare individual flight options.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (!comparison || !bestInfo) {
+    return `
+      <div class="sky-trip-compact-summary is-loading">
+        <div class="sky-trip-compact-main">
+          <div class="sky-trip-compact-eyebrow">Checking offers</div>
+          <div class="sky-trip-compact-title">Calculating selected trip price...</div>
+          <div class="sky-trip-compact-sub">We’ll show the best portal once both flights are checked.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Matching payment offer applied";
+  const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment option";
+  const coupon = bestInfo.code || "";
+  const saveText = bestInfo.savings > 0 ? `Save ${money(bestInfo.savings)}` : "No discount applied";
+
+  return `
+    <div class="sky-trip-compact-summary">
+      <div class="sky-trip-compact-price">
+        <div class="sky-trip-compact-price-label">Best price</div>
+        <div class="sky-trip-compact-price-value">${money(bestInfo.finalPrice)}</div>
+        <div class="sky-trip-compact-base">Base fare <s>${money(bestInfo.baseTotal)}</s></div>
+      </div>
+
+      <div class="sky-trip-compact-main">
+        <div class="sky-trip-compact-eyebrow">Best price on ${safeText(bestInfo.portal)}</div>
+        <div class="sky-trip-compact-title">${offerTitle}</div>
+        <div class="sky-trip-compact-sub">
+          <span class="sky-trip-save-pill">${saveText}</span>
+          <span>${paymentText}</span>
+        </div>
+
+        ${
+          coupon
+            ? `
+              <div class="sky-trip-compact-coupon">
+                <span>Coupon</span>
+                <strong>${safeText(coupon)}</strong>
+                <button type="button" class="copyTripCouponBtn" data-code="${safeText(coupon)}">Copy</button>
+              </div>
+            `
+            : ""
+        }
       </div>
     </div>
   `;
@@ -2641,7 +2800,7 @@ async function refreshSelectedTripComparison() {
   if (selectedTripComparison && selectedTripComparisonKey === getSelectedTripComparisonKey()) {
     const comparison = selectedTripComparison;
     const comparisonFlight = {
-      airlineName: "Selected round trip",
+      airlineName: "Selected trip",
       flightNumber: `${displayFlightNumber(selectedOutboundFlight)} / ${displayFlightNumber(selectedReturnFlight)}`,
       departureTime: selectedOutboundFlight.departureTime,
       arrivalTime: selectedReturnFlight.arrivalTime,
@@ -2717,7 +2876,7 @@ function selectedTripRouteLabel(direction) {
   const to = lastSearchPayload?.to || toInput?.value || "";
 
   if (!from || !to) {
-    return direction === "ret" ? "Return flight" : "Outbound flight";
+    return direction === "ret" ? "Return flight" : "Departure flight";
   }
 
   return direction === "ret" ? `${to} → ${from}` : `${from} → ${to}`;
@@ -3020,7 +3179,7 @@ function removeStandaloneSearchError() {
   if (proResults) proResults.style.removeProperty("display");
 }
 
-function renderSearchLoadingState(message = "Finding your best flight deals") {
+function renderSearchLoadingState(message = "Comparing final prices") {
   document.body.classList.remove("search-error-mode");
   removeStandaloneSearchError();
   const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
@@ -3031,7 +3190,14 @@ function renderSearchLoadingState(message = "Finding your best flight deals") {
       <div class="sky-spinner" aria-hidden="true"></div>
       <div class="sky-search-state-title">${safeText(message)}</div>
       <div class="sky-search-state-subtitle">
-        Checking live fares and matching them with portal offers.
+        We check fares, portals, and payment offers before showing your price.
+      </div>
+      <div class="sky-loading-steps" aria-live="polite">
+        <span>Checking live fares</span>
+        <span>Comparing portal prices</span>
+        <span>Matching payment offers</span>
+        <span>Calculating final prices</span>
+        <span>Doing the checkout math</span>
       </div>
     </div>
   `;
@@ -3046,7 +3212,7 @@ function renderSearchLoadingState(message = "Finding your best flight deals") {
   renderPager("ret");
 }
 
-function renderSearchErrorState(errorMessage = "Live flight results are taking longer than expected.") {
+function renderSearchErrorState(errorMessage = "We couldn’t load live flights.") {
   document.body.classList.add("search-error-mode");
   const outHost =
     (typeof outboundList !== "undefined" && outboundList) ||
@@ -3128,7 +3294,7 @@ function setSearchButtonLoading(isLoading) {
     btn.dataset.originalText = btn.textContent || btn.dataset.originalText || "Search";
     btn.disabled = true;
     btn.classList.add("is-loading");
-    btn.innerHTML = `<span class="sky-btn-spinner" aria-hidden="true"></span><span>Searching...</span>`;
+    btn.innerHTML = `<span class="sky-btn-spinner" aria-hidden="true"></span><span>Checking prices...</span>`;
   } else {
     btn.disabled = false;
     btn.classList.remove("is-loading");
@@ -3212,9 +3378,9 @@ function renderSearchNoResultsState(details = {}) {
 
   if (isRound && details.missingOutbound && details.missingReturn) {
     title = "No round-trip flights found";
-    subtitle = "We could not find outbound or return flights for these dates.";
+    subtitle = "We could not find departure or return flights for these dates.";
   } else if (isRound && details.missingOutbound) {
-    title = "No outbound flights found";
+    title = "No departure flights found";
     subtitle = "Try changing the departure date or route.";
   } else if (isRound && details.missingReturn) {
     title = "No return flights found";
@@ -3271,7 +3437,7 @@ function normalizeRawSearchErrorUI() {
 
   if (!hasRawError) return;
 
-  renderSearchErrorState("Live flight results are taking longer than expected.");
+  renderSearchErrorState("We couldn’t load live flights.");
 }
 
 function installSearchErrorUiGuard() {
@@ -3457,25 +3623,25 @@ function renderSelectedTripPanel() {
     <div class="sky-trip-bar">
       <div class="sky-trip-bar-left">
         <div class="sky-trip-bar-title-row">
-          <div class="sky-trip-bar-kicker">Selected round trip</div>
+          <div class="sky-trip-bar-kicker">Selected trip</div>
           <div class="sky-trip-bar-status">
-            ${ready ? "Best full-trip price calculated from selected flights." : "Select one outbound and one return flight."}
+            ${ready ? "Best price calculated for the flights you selected." : "Select one departure and one return flight."}
           </div>
         </div>
 
         <div class="sky-trip-leg-grid">
           <div class="sky-trip-leg ${selectedOutboundFlight ? "is-selected" : "is-empty"}">
             <div class="sky-trip-leg-label">${selectedTripRouteLabel("out")}</div>
-            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedOutboundFlight)}</div>
+            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedOutboundFlight, "out")}</div>
           </div>
 
           <div class="sky-trip-leg ${selectedReturnFlight ? "is-selected" : "is-empty"}">
             <div class="sky-trip-leg-label">${selectedTripRouteLabel("ret")}</div>
-            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedReturnFlight)}</div>
+            <div class="sky-trip-leg-main">${selectedFlightSummary(selectedReturnFlight, "ret")}</div>
           </div>
         </div>
 
-        ${ready ? formatTripBestSummary() : ""}
+        ${ready ? formatCompactTripBestSummary() : ""}
       </div>
 
       <div class="sky-trip-bar-actions">
@@ -3571,7 +3737,7 @@ function slimFlightForTripCompare(f) {
 
 async function compareSelectedRoundTrip() {
   if (!selectedOutboundFlight || !selectedReturnFlight) {
-    alert("Please select both outbound and return flights first.");
+    alert("Please select both departure and return flights first.");
     return;
   }
 
@@ -3629,7 +3795,7 @@ async function compareSelectedRoundTrip() {
     }
 
     const comparisonFlight = {
-      airlineName: "Selected round trip",
+      airlineName: "Selected trip",
       flightNumber: `${displayFlightNumber(selectedOutboundFlight)} / ${displayFlightNumber(selectedReturnFlight)}`,
       departureTime: selectedOutboundFlight.departureTime,
       arrivalTime: selectedReturnFlight.arrivalTime,
@@ -3672,7 +3838,7 @@ function flightCard(f, direction = "out") {
   const isRoundTrip = isRoundTripModeActive();
   const selectedForDirection = direction === "ret" ? selectedReturnFlight : selectedOutboundFlight;
   const isSelectedForDirection = isSameSelectedFlight(f, selectedForDirection);
-  const selectLabel = direction === "ret" ? "Select return" : "Select outbound";
+  const selectLabel = direction === "ret" ? "Select return" : "Select departure";
 
   const selectTripButton = isRoundTrip
     ? `
@@ -3694,6 +3860,18 @@ function flightCard(f, direction = "out") {
         >
           ${isSelectedForDirection ? "Selected ✓" : selectLabel}
         </button>
+      </div>
+    `
+    : "";
+
+  const oneWayBestPortal = !isRoundTrip && best?.portal ? safeText(best.portal) : "";
+  const oneWayActions = !isRoundTrip && oneWayBestPortal
+    ? `
+      <div class="oneWayCardActions">
+        <button type="button" class="oneWayBookPortalBtn" data-portal="${oneWayBestPortal}">
+          ${getPortalCtaLabel(oneWayBestPortal)}
+        </button>
+        <button type="button" class="oneWayCompareBtn">Compare portals</button>
       </div>
     `
     : "";
@@ -3729,6 +3907,7 @@ function flightCard(f, direction = "out") {
       </div>
 
       ${bestLine}
+      ${oneWayActions}
       ${selectTripButton}
     </div>
   `;
@@ -3777,6 +3956,69 @@ function renderList(el, items, direction = "out") {
     });
   });
 
+  el.querySelectorAll(".bestDealCouponChip, .oneWayCopyCodeBtn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const code = btn.getAttribute("data-code") || "";
+      if (!code) return;
+
+      const small = btn.querySelector("small");
+      const originalText = small ? small.textContent : btn.textContent;
+
+      try {
+        await navigator.clipboard.writeText(code);
+        if (small) {
+          small.textContent = "Copied";
+        } else {
+          btn.textContent = "Copied";
+        }
+
+        setTimeout(() => {
+          if (small) {
+            small.textContent = "Copy";
+          } else {
+            btn.textContent = originalText || "Copy code";
+          }
+        }, 1400);
+      } catch {
+        alert(`Coupon code: ${code}`);
+      }
+    });
+  });
+
+  el.querySelectorAll(".oneWayBookPortalBtn").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const card = btn.closest(".card");
+      const key = card?.getAttribute("data-flightkey");
+      const portal = btn.getAttribute("data-portal") || "";
+
+      const all = [...(outboundAll || []), ...(returnAll || [])];
+      const flight = all.find((x) => flightKey(x) === key);
+      if (!flight || !portal) return;
+
+      const href = buildPortalSearchUrl(portal, lastSearchPayload);
+      if (href) {
+        window.open(href, "_blank", "noopener,noreferrer");
+      } else {
+        showPortalCompare(flight);
+      }
+    });
+  });
+
+  el.querySelectorAll(".oneWayCompareBtn").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const card = btn.closest(".card");
+      const key = card?.getAttribute("data-flightkey");
+
+      const all = [...(outboundAll || []), ...(returnAll || [])];
+      const flight = all.find((x) => flightKey(x) === key);
+
+      showPortalCompare(flight || null);
+    });
+  });
+
   el.querySelectorAll(".infoBtn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const card = btn.closest(".card");
@@ -3794,18 +4036,18 @@ function updateFlightSectionHeadings() {
   const fromRaw = safeText(fromInput?.value, "").trim();
   const toRaw = safeText(toInput?.value, "").trim();
 
-  const from = lastSearchPayload?.from || resolveLocationToCode(fromRaw) || fromRaw || "Outbound";
+  const from = lastSearchPayload?.from || resolveLocationToCode(fromRaw) || fromRaw || "Departure";
   const to = lastSearchPayload?.to || resolveLocationToCode(toRaw) || toRaw || "Return";
 
   const outboundTitle = document.querySelector("#outboundResultsPanel .col-head h3");
   const returnTitle = document.querySelector("#returnResultsPanel .col-head h3");
 
   if (outboundTitle) {
-    outboundTitle.textContent = from && to ? `${from} → ${to}` : "Outbound Flights";
+    outboundTitle.textContent = from && to ? `${from} → ${to}` : "Departure flights";
   }
 
   if (returnTitle) {
-    returnTitle.textContent = from && to ? `${to} → ${from}` : "Return Flights";
+    returnTitle.textContent = from && to ? `${to} → ${from}` : "Return flights";
   }
 }
 
@@ -3983,7 +4225,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedReturnFlight = null;
     selectedTripComparison = null;
 
-    renderSearchErrorState((err || e)?.message || "Live flight results are taking longer than expected.");
+    renderSearchErrorState((err || e)?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
     enterMobileResultsMode();
     return;
@@ -4094,3 +4336,5 @@ updatePaymentButtonLabel();
   console.log("[SkyDeal] frontend ready");
 });
 
+
+setTimeout(ensurePaymentEducationNudge, 0);
