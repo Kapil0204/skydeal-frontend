@@ -2066,12 +2066,16 @@ function ensurePortalModal() {
 
   modal.innerHTML = `
     <div class="portalModalShell">
-      <div class="portalModalCard">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-          <div style="font-size:16px;font-weight:700;">Same flight, different final prices</div>
-          <button id="portalCompareClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+      <div class="portalModalCard portalModalCardV2">
+        <div class="portalModalTop">
+          <div>
+            <div class="portalModalEyebrow">Portal comparison</div>
+            <div class="portalModalTitle">Same flight, different final prices</div>
+            <div class="portalModalSubtitle">We check each portal against your selected payment options.</div>
+          </div>
+          <button id="portalCompareClose" type="button" class="portalModalCloseBtn" aria-label="Close portal comparison">×</button>
         </div>
-        <div id="portalCompareBody" style="margin-top:12px;"></div>
+        <div id="portalCompareBody" class="portalCompareBodyV2"></div>
       </div>
     </div>
   `;
@@ -2105,11 +2109,12 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
 
   if (portalPrices.length === 0) {
-    body.innerHTML = `<div style="opacity:.85;">No portal-wise price data available.</div>`;
+    body.innerHTML = `<div class="portalModalEmpty">No portal-wise price data available for this flight.</div>`;
   } else {
     body.innerHTML = `
-      <div class="portalCompareFlightHead">
-        ${safeText(flight.airlineName)} (${displayFlightNumber(flight)}) • ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}
+      <div class="portalCompareFlightHead portalCompareFlightHeadV2">
+        <span>${safeText(flight.airlineName)} ${displayFlightNumber(flight)}</span>
+        <strong>${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}</strong>
       </div>
 
       <div class="portalCompareList">
@@ -2196,7 +2201,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
                 <div class="portalHeader">
   <div class="portalHeaderLeft">
     <div class="portalName">${safeText(p.portal)}</div>
-   ${isBest ? `<span class="badge bestPriceBadge">Best after payment offer</span>` : ""}
+   ${isBest ? `<span class="badge bestPriceBadge">Best option</span>` : ""}
   </div>
 
   <div class="portalHeaderRight">
