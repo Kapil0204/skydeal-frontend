@@ -5937,3 +5937,55 @@ body.search-error-mode .sky-search-error-card {
     margin: 12px auto !important;
   }
 }
+
+/* =====================================================
+   Standalone search error block
+   Bypasses one-way / round-trip result grid during API failures
+===================================================== */
+
+.sky-standalone-error-wrap {
+  width: 100%;
+  max-width: 980px;
+  margin: 28px auto 40px;
+  padding: 0 16px;
+}
+
+.sky-standalone-error-wrap .sky-search-error-card {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+  .sky-standalone-error-wrap {
+    margin: 16px auto 28px;
+    padding: 0 12px;
+  }
+}
+
+/* =====================================================
+   Final error-state cleanup
+   When standalone error is shown, hide the full results/filter area
+===================================================== */
+
+body.search-error-mode .pro-results {
+  display: none !important;
+}
+
+/* =====================================================
+   Date picker duplicate icon fix
+   Hide the native WebKit date icon; keep our visible in-field icon
+===================================================== */
+
+.search-card input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+  display: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.search-card input[type="date"]::-webkit-inner-spin-button,
+.search-card input[type="date"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}

@@ -3012,8 +3012,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 setTimeout(bindMobileSearchModeEvents, 0);
 
+function removeStandaloneSearchError() {
+  const existing = document.getElementById("skySearchStandaloneError");
+  if (existing) existing.remove();
+
+  const proResults = document.querySelector(".pro-results");
+  if (proResults) proResults.style.removeProperty("display");
+}
+
 function renderSearchLoadingState(message = "Finding your best flight deals") {
   document.body.classList.remove("search-error-mode");
+  removeStandaloneSearchError();
   const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
   const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
 
@@ -3074,15 +3083,34 @@ function renderSearchErrorState(errorMessage = "Live flight results are taking l
     </div>
   `;
 
-  if (outHost) outHost.innerHTML = errorHtml;
+  if (outHost) outHost.innerHTML = "";
   if (retHost) retHost.innerHTML = "";
 
-  document.getElementById("retrySearchBtn")?.addEventListener("click", () => {
+  const proResults = document.querySelector(".pro-results");
+  if (proResults) proResults.style.display = "none";
+
+  let standalone = document.getElementById("skySearchStandaloneError");
+  if (!standalone) {
+    standalone = document.createElement("section");
+    standalone.id = "skySearchStandaloneError";
+    standalone.className = "sky-standalone-error-wrap";
+
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard && searchCard.parentNode) {
+      searchCard.insertAdjacentElement("afterend", standalone);
+    } else {
+      document.body.appendChild(standalone);
+    }
+  }
+
+  standalone.innerHTML = errorHtml;
+
+  standalone.querySelector("#retrySearchBtn")?.addEventListener("click", () => {
     const btn = document.getElementById("searchBtn");
     if (btn) btn.click();
   });
 
-  document.getElementById("editSearchFromErrorBtn")?.addEventListener("click", () => {
+  standalone.querySelector("#editSearchFromErrorBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
     const searchCard = document.querySelector(".search-card");
     if (searchCard) searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
