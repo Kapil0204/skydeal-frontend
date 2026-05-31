@@ -5973,19 +5973,10 @@ body.search-error-mode .pro-results {
 }
 
 /* =====================================================
-   Date picker duplicate icon fix
-   Hide the native WebKit date icon; keep our visible in-field icon
+   Remove duplicate JS-injected date icons
+   Keep the existing in-field date icon only
 ===================================================== */
 
-.search-card input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0 !important;
+.sky-mobile-date-icon {
   display: none !important;
-  -webkit-appearance: none !important;
-  appearance: none !important;
-}
-
-.search-card input[type="date"]::-webkit-inner-spin-button,
-.search-card input[type="date"]::-webkit-clear-button {
-  display: none !important;
-  -webkit-appearance: none !important;
 }
