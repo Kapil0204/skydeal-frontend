@@ -7664,3 +7664,375 @@ body #selectedTripPanel .sky-trip-clear-btn {
     padding-right: 12px !important;
   }
 }
+
+/* =========================================================
+   SkyDeal mobile width fix: reduce side gutters in results mode
+   ========================================================= */
+
+@media (max-width: 760px) {
+  body.sky-mobile-has-outbound,
+  body.sky-mobile-has-return,
+  body.sky-mobile-trip-complete {
+    overflow-x: hidden !important;
+  }
+
+  body.sky-mobile-has-outbound .wrap,
+  body.sky-mobile-has-return .wrap,
+  body.sky-mobile-trip-complete .wrap,
+  body.sky-mobile-has-outbound main.wrap,
+  body.sky-mobile-has-return main.wrap,
+  body.sky-mobile-trip-complete main.wrap {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  body.sky-mobile-has-outbound .pro-results,
+  body.sky-mobile-has-return .pro-results,
+  body.sky-mobile-trip-complete .pro-results,
+  body.sky-mobile-has-outbound .results,
+  body.sky-mobile-has-return .results,
+  body.sky-mobile-trip-complete .results,
+  body.sky-mobile-has-outbound .results-grid,
+  body.sky-mobile-has-return .results-grid,
+  body.sky-mobile-trip-complete .results-grid {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.sky-mobile-has-outbound .results-panel,
+  body.sky-mobile-has-return .results-panel,
+  body.sky-mobile-trip-complete .results-panel,
+  body.sky-mobile-has-outbound .result-panel,
+  body.sky-mobile-has-return .result-panel,
+  body.sky-mobile-trip-complete .result-panel,
+  body.sky-mobile-has-outbound .section-card,
+  body.sky-mobile-has-return .section-card,
+  body.sky-mobile-trip-complete .section-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body.sky-mobile-has-outbound .flight-card,
+  body.sky-mobile-has-return .flight-card,
+  body.sky-mobile-trip-complete .flight-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  body.sky-mobile-has-outbound .mobile-search-summary,
+  body.sky-mobile-has-return .mobile-search-summary,
+  body.sky-mobile-trip-complete .mobile-search-summary {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.sky-mobile-has-outbound .wrap,
+  body.sky-mobile-has-return .wrap,
+  body.sky-mobile-trip-complete .wrap,
+  body.sky-mobile-has-outbound main.wrap,
+  body.sky-mobile-has-return main.wrap,
+  body.sky-mobile-trip-complete main.wrap {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  body.sky-mobile-has-outbound .pro-results,
+  body.sky-mobile-has-return .pro-results,
+  body.sky-mobile-trip-complete .pro-results,
+  body.sky-mobile-has-outbound .results,
+  body.sky-mobile-has-return .results,
+  body.sky-mobile-trip-complete .results,
+  body.sky-mobile-has-outbound .results-grid,
+  body.sky-mobile-has-return .results-grid,
+  body.sky-mobile-trip-complete .results-grid,
+  body.sky-mobile-has-outbound .mobile-search-summary,
+  body.sky-mobile-has-return .mobile-search-summary,
+  body.sky-mobile-trip-complete .mobile-search-summary {
+    width: calc(100vw - 8px) !important;
+    max-width: calc(100vw - 8px) !important;
+  }
+
+  body.sky-mobile-has-outbound .results-panel,
+  body.sky-mobile-has-return .results-panel,
+  body.sky-mobile-trip-complete .results-panel,
+  body.sky-mobile-has-outbound .result-panel,
+  body.sky-mobile-has-return .result-panel,
+  body.sky-mobile-trip-complete .result-panel,
+  body.sky-mobile-has-outbound .section-card {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal stronger mobile width correction
+   Makes mobile search/results use almost full viewport width
+   ========================================================= */
+
+@media (max-width: 760px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  body .wrap,
+  body main.wrap {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  body .search-card,
+  body .mobile-compact-search-card,
+  body .mobile-search-summary,
+  body .pro-results,
+  body .results,
+  body .results-grid,
+  body .results-panel,
+  body .result-panel,
+  body .section-card {
+    width: calc(100vw - 8px) !important;
+    max-width: calc(100vw - 8px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body .results-panel,
+  body .result-panel,
+  body .section-card {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    border-radius: 18px !important;
+  }
+
+  body .flight-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 14px 12px !important;
+    border-radius: 18px !important;
+  }
+
+  body .flight-card .deal-card,
+  body .best-deal-box,
+  body .price-box {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body .wrap,
+  body main.wrap {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  body .search-card,
+  body .mobile-compact-search-card,
+  body .mobile-search-summary,
+  body .pro-results,
+  body .results,
+  body .results-grid,
+  body .results-panel,
+  body .result-panel,
+  body .section-card {
+    width: calc(100vw - 4px) !important;
+    max-width: calc(100vw - 4px) !important;
+  }
+
+  body .results-panel,
+  body .result-panel,
+  body .section-card {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  body .flight-card {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal actual mobile results width fix
+   Targets real results structure: .flights-workspace > .col > .card
+   ========================================================= */
+
+@media (max-width: 760px) {
+  body .pro-results.round-trip-results-mode,
+  body .pro-results,
+  body .results {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .flights-workspace,
+  body .flights-workspace {
+    width: calc(100vw - 8px) !important;
+    max-width: calc(100vw - 8px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 10px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .col,
+  body .flights-workspace .col,
+  body #outboundResultsPanel,
+  body #returnResultsPanel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    border-radius: 20px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .card,
+  body .flights-workspace .card,
+  body #outboundResultsPanel .card,
+  body #returnResultsPanel .card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 16px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .card .best,
+  body .flights-workspace .card .best,
+  body #outboundResultsPanel .card .best,
+  body #returnResultsPanel .card .best {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body .pro-results.round-trip-results-mode,
+  body .pro-results,
+  body .results {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .flights-workspace,
+  body .flights-workspace {
+    width: calc(100vw - 4px) !important;
+    max-width: calc(100vw - 4px) !important;
+  }
+
+  body .pro-results.round-trip-results-mode .col,
+  body .flights-workspace .col,
+  body #outboundResultsPanel,
+  body #returnResultsPanel {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  body .pro-results.round-trip-results-mode .card,
+  body .flights-workspace .card,
+  body #outboundResultsPanel .card,
+  body #returnResultsPanel .card {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal mobile polish: compact quick filters + remove top compare spacing
+   ========================================================= */
+
+@media (max-width: 760px) {
+  /* Compact top filter chips to avoid tiny internal scroll */
+  .mobile-quick-filters,
+  #mobileQuickFilters {
+    width: calc(100vw - 8px) !important;
+    max-width: calc(100vw - 8px) !important;
+    margin: 6px auto 8px !important;
+    padding: 6px 6px !important;
+    gap: 6px !important;
+    overflow-x: visible !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+  }
+
+  .mobile-quick-filters .mobile-chip,
+  #mobileQuickFilters .mobile-chip {
+    min-width: 0 !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    padding: 7px 8px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  .mobile-quick-filters .mobile-chip-filter,
+  #mobileQuickFilters .mobile-chip-filter {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* After removing the top Compare button, let price area breathe */
+  .flights-workspace .card .row,
+  #outboundResultsPanel .card .row,
+  #returnResultsPanel .card .row {
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .flights-workspace .card .price,
+  #outboundResultsPanel .card .price,
+  #returnResultsPanel .card .price {
+    margin-left: auto !important;
+    text-align: right !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-quick-filters,
+  #mobileQuickFilters {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    gap: 5px !important;
+  }
+
+  .mobile-quick-filters .mobile-chip,
+  #mobileQuickFilters .mobile-chip {
+    font-size: 11.5px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+}

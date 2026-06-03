@@ -3908,7 +3908,7 @@ function flightCard(f, direction = "out") {
           }
         </div>
 
-        <button class="infoBtn" title="Compare portal prices">${getCompareButtonLabel()}</button>
+        
       </div>
 
       ${bestLine}
