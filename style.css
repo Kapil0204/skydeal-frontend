@@ -7502,3 +7502,165 @@ body #selectedTripPanel .sky-trip-clear-btn {
     width: 100% !important;
   }
 }
+
+/* =========================================================
+   SkyDeal polish: animated loading cards + tighter mobile results
+   Added after stable UX checkpoint
+   ========================================================= */
+
+/* Full-block loading animation, not just text */
+.sky-search-loading-card,
+.empty-state:has(.sky-loading-steps) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.12), transparent 34%),
+    radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.08), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(250, 245, 255, 0.94));
+  animation: skyLoadingCardPulse 2.4s ease-in-out infinite;
+}
+
+.sky-search-loading-card::before,
+.empty-state:has(.sky-loading-steps)::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 35%,
+      rgba(168, 85, 247, 0.16) 45%,
+      rgba(34, 197, 94, 0.10) 50%,
+      rgba(168, 85, 247, 0.16) 55%,
+      transparent 65%,
+      transparent 100%
+    );
+  transform: translateX(-40%);
+  animation: skyLoadingShimmer 2.8s linear infinite;
+}
+
+.sky-search-loading-card::after,
+.empty-state:has(.sky-loading-steps)::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border-radius: inherit;
+  border: 1px solid rgba(168, 85, 247, 0.18);
+  pointer-events: none;
+}
+
+@keyframes skyLoadingCardPulse {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  }
+  50% {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 60px rgba(88, 28, 135, 0.14);
+  }
+}
+
+@keyframes skyLoadingShimmer {
+  0% {
+    transform: translateX(-45%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(45%) rotate(0deg);
+  }
+}
+
+/* Prevent loading steps from overlapping on narrow mobile */
+.sky-loading-steps {
+  min-height: 28px;
+}
+
+@media (max-width: 760px) {
+  .sky-search-loading-card,
+  .empty-state:has(.sky-loading-steps) {
+    min-height: 230px;
+    padding: 28px 18px;
+  }
+
+  .sky-loading-steps {
+    display: grid;
+    gap: 4px;
+    min-height: 44px;
+    line-height: 1.15;
+  }
+
+  .sky-loading-steps span {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+/* Mobile result width polish: reduce side gutters and make cards less stretched */
+@media (max-width: 760px) {
+  body.mobile-results-mode .wrap {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  body.mobile-results-mode .pro-results,
+  body.mobile-results-mode .results {
+    width: calc(100vw - 16px) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.mobile-results-mode .results-grid {
+    gap: 12px !important;
+  }
+
+  body.mobile-results-mode .results-panel,
+  body.mobile-results-mode .result-panel,
+  body.mobile-results-mode .section-card {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  body.mobile-results-mode .flight-card {
+    padding: 16px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  body.mobile-results-mode .flight-card .deal-card,
+  body.mobile-results-mode .best-deal-box,
+  body.mobile-results-mode .price-box {
+    width: 100% !important;
+  }
+
+  body.mobile-results-mode .mobile-search-summary {
+    width: calc(100vw - 16px) !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.mobile-results-mode .wrap {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  body.mobile-results-mode .pro-results,
+  body.mobile-results-mode .results,
+  body.mobile-results-mode .mobile-search-summary {
+    width: calc(100vw - 12px) !important;
+  }
+
+  body.mobile-results-mode .results-panel,
+  body.mobile-results-mode .result-panel,
+  body.mobile-results-mode .section-card {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
