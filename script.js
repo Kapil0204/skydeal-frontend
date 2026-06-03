@@ -234,10 +234,58 @@ const paxSelect = document.getElementById("paxSelect");
 const cabinSelect = document.getElementById("cabinSelect");
 const oneWayRadio = document.getElementById("oneWay");
 const roundTripRadio = document.getElementById("roundTrip");
+
+function syncReturnDateVisualState() {
+  if (!returnInput) return;
+
+  const wrap =
+    returnInput.closest(".field") ||
+    returnInput.closest(".form-field") ||
+    returnInput.closest("label") ||
+    returnInput.parentElement;
+
+  const isRoundTrip = !!roundTripRadio?.checked;
+  const isFocused = document.activeElement === returnInput;
+  // Keep Return visually muted by default. It becomes normal only when round-trip is active or the field is focused.
+  const isActive = isRoundTrip || isFocused;
+  const isDimmed = !isActive;
+
+  document.body.classList.toggle("sky-return-date-dimmed", isDimmed);
+  document.body.classList.toggle("sky-return-date-active", isActive);
+
+  if (wrap) {
+    wrap.classList.toggle("return-date-dimmed", isDimmed);
+    wrap.classList.toggle("return-date-active", isActive);
+  }
+
+  returnInput.classList.toggle("return-date-input-dimmed", isDimmed);
+  returnInput.classList.toggle("return-date-input-active", isActive);
+}
+
+function activateRoundTripFromReturnDate() {
+  if (roundTripRadio && !roundTripRadio.checked) {
+    roundTripRadio.checked = true;
+    const oneWayRadio = document.getElementById("oneWay");
+    if (oneWayRadio) oneWayRadio.checked = false;
+  }
+  syncReturnDateVisualState();
+}
+
 const searchBtn = document.getElementById("searchBtn");
 
 const outboundList = document.getElementById("outboundList");
 const returnList = document.getElementById("returnList");
+
+returnInput?.addEventListener("focus", activateRoundTripFromReturnDate);
+returnInput?.addEventListener("click", activateRoundTripFromReturnDate);
+returnInput?.addEventListener("change", () => {
+  activateRoundTripFromReturnDate();
+  syncReturnDateVisualState();
+});
+roundTripRadio?.addEventListener("change", syncReturnDateVisualState);
+document.getElementById("oneWay")?.addEventListener("change", syncReturnDateVisualState);
+setTimeout(syncReturnDateVisualState, 0);
+
 
 const outPrev = document.getElementById("outPrev");
 const outNext = document.getElementById("outNext");
@@ -2308,6 +2356,43 @@ function getAirlineInitials(airlineName) {
     .toUpperCase() || "✈";
 }
 
+const SKY_LOADING_STEPS = [
+  "Checking live fares",
+  "Comparing portal prices",
+  "Matching payment offers",
+  "Applying eligible offers",
+  "Calculating final payable price"
+];
+
+let skyLoadingTextTimer = null;
+let skyLoadingTextIndex = 0;
+
+function stopSkyLoadingTextRotation() {
+  if (skyLoadingTextTimer) {
+    clearInterval(skyLoadingTextTimer);
+    skyLoadingTextTimer = null;
+  }
+}
+
+function updateSkyLoadingText() {
+  const nodes = document.querySelectorAll(".sky-loading-active-text");
+  if (!nodes.length) return;
+
+  const text = SKY_LOADING_STEPS[skyLoadingTextIndex % SKY_LOADING_STEPS.length];
+  nodes.forEach((node) => {
+    node.textContent = text;
+  });
+
+  skyLoadingTextIndex += 1;
+}
+
+function startSkyLoadingTextRotation() {
+  stopSkyLoadingTextRotation();
+  skyLoadingTextIndex = 0;
+  updateSkyLoadingText();
+  skyLoadingTextTimer = setInterval(updateSkyLoadingText, 1400);
+}
+
 function emptyStateHtml(type = "default") {
   if (type === "return-hidden") {
     return `
@@ -2326,11 +2411,7 @@ function emptyStateHtml(type = "default") {
         <div class="empty-title">Comparing final prices</div>
         <div class="empty-copy">We check fares, portals, and payment offers before showing your price.</div>
         <div class="sky-loading-steps" aria-live="polite">
-          <span>Checking live fares</span>
-          <span>Comparing portal prices</span>
-          <span>Matching payment offers</span>
-          <span>Calculating final prices</span>
-          <span>Doing the checkout math</span>
+          <span class="sky-loading-active-text">Checking live fares</span>
         </div>
       </div>
     `;
@@ -2347,6 +2428,20 @@ function emptyStateHtml(type = "default") {
 
 function isRoundTripModeActive() {
   return !!roundTripRadio?.checked || lastSearchPayload?.tripType === "round-trip";
+}
+
+function hasRoundTripResultsReady() {
+  return (
+    isRoundTripModeActive() &&
+    Array.isArray(outboundAll) &&
+    outboundAll.length > 0 &&
+    Array.isArray(returnAll) &&
+    returnAll.length > 0
+  );
+}
+
+function getRouteArrowForSearchState() {
+  return isRoundTripModeActive() ? "↔" : "→";
 }
 
 function isSameSelectedFlight(a, b) {
@@ -3120,7 +3215,7 @@ function renderMobileSearchSummary() {
 
   summary.innerHTML = `
     <div class="mobile-search-summary-left">
-      <div class="mobile-search-route">${safeText(from)} → ${safeText(to)}</div>
+      <div class="mobile-search-route">${safeText(from)} ${getRouteArrowForSearchState()} ${safeText(to)}</div>
       <div class="mobile-search-meta">${safeText(dateText)} · ${passengers} Adult${passengers > 1 ? "s" : ""} · ${safeText(cabin)}</div>
     </div>
     <button type="button" id="mobileEditSearchBtn" class="mobile-edit-search-btn">Edit</button>
@@ -3198,11 +3293,7 @@ function renderSearchLoadingState(message = "Comparing final prices") {
         We check fares, portals, and payment offers before showing your price.
       </div>
       <div class="sky-loading-steps" aria-live="polite">
-        <span>Checking live fares</span>
-        <span>Comparing portal prices</span>
-        <span>Matching payment offers</span>
-        <span>Calculating final prices</span>
-        <span>Doing the checkout math</span>
+        <span class="sky-loading-active-text">Checking live fares</span>
       </div>
     </div>
   `;
@@ -3215,9 +3306,11 @@ function renderSearchLoadingState(message = "Comparing final prices") {
 
   renderPager("out");
   renderPager("ret");
+  startSkyLoadingTextRotation();
 }
 
 function renderSearchErrorState(errorMessage = "We couldn’t load live flights.") {
+  stopSkyLoadingTextRotation();
   document.body.classList.add("search-error-mode");
   const outHost =
     (typeof outboundList !== "undefined" && outboundList) ||
@@ -4038,17 +4131,21 @@ function renderList(el, items, direction = "out") {
 }
 
 function updateFlightSectionHeadings() {
-  const fromRaw = safeText(fromInput?.value, "").trim();
-  const toRaw = safeText(toInput?.value, "").trim();
-
-  const from = lastSearchPayload?.from || resolveLocationToCode(fromRaw) || fromRaw || "Departure";
-  const to = lastSearchPayload?.to || resolveLocationToCode(toRaw) || toRaw || "Return";
+  const from = resolveLocationToCode(safeText(fromInput?.value, "").trim()) || "Departure";
+  const to = resolveLocationToCode(safeText(toInput?.value, "").trim()) || "Return";
 
   const outboundTitle = document.querySelector("#outboundResultsPanel .col-head h3");
   const returnTitle = document.querySelector("#returnResultsPanel .col-head h3");
 
+  const shouldSplitRoundTrip = typeof hasRoundTripResultsReady === "function" && hasRoundTripResultsReady();
+  const isRoundTrip = isRoundTripModeActive();
+
   if (outboundTitle) {
-    outboundTitle.textContent = from && to ? `${from} → ${to}` : "Departure flights";
+    if (from && to && isRoundTrip && !shouldSplitRoundTrip) {
+      outboundTitle.textContent = `${from} ↔ ${to}`;
+    } else {
+      outboundTitle.textContent = from && to ? `${from} → ${to}` : "Departure flights";
+    }
   }
 
   if (returnTitle) {
@@ -4071,11 +4168,11 @@ function renderReturn() {
   const returnPanel = document.getElementById("returnResultsPanel");
   const flightsWorkspace = document.querySelector(".flights-workspace");
   const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
-  const isRoundTrip = !!roundTripRadio?.checked;
+  const shouldSplitRoundTrip = hasRoundTripResultsReady();
 
-  resultsSection?.classList.toggle("round-trip-results-mode", isRoundTrip);
+  resultsSection?.classList.toggle("round-trip-results-mode", shouldSplitRoundTrip);
 
-  if (!isRoundTrip) {
+  if (!shouldSplitRoundTrip) {
     returnPanel?.classList.add("is-hidden");
     flightsWorkspace?.classList.add("one-way");
     if (returnList) returnList.innerHTML = emptyStateHtml("return-hidden");
@@ -4101,7 +4198,7 @@ function toggleReturn() {
   const flightsWorkspace = document.querySelector(".flights-workspace");
   const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
 
-  resultsSection?.classList.toggle("round-trip-results-mode", show);
+  resultsSection?.classList.toggle("round-trip-results-mode", hasRoundTripResultsReady());
 
   if (!returnInput) return;
 
@@ -4109,8 +4206,9 @@ function toggleReturn() {
   returnInput.disabled = !show;
   returnInput.parentElement?.classList?.toggle("disabled", !show);
 
-  returnPanel?.classList.toggle("is-hidden", !show);
-  flightsWorkspace?.classList.toggle("one-way", !show);
+  const shouldSplitRoundTrip = hasRoundTripResultsReady();
+  returnPanel?.classList.toggle("is-hidden", !shouldSplitRoundTrip);
+  flightsWorkspace?.classList.toggle("one-way", !shouldSplitRoundTrip);
 
   returnInput.min = departVal;
 
@@ -4161,11 +4259,27 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     return;
   }
 
+  if (
+    payload.tripType === "round-trip" &&
+    payload.departureDate &&
+    payload.returnDate &&
+    payload.returnDate < payload.departureDate
+  ) {
+    alert("Return date cannot be before departure date.");
+    return;
+  }
+
    outboundList.innerHTML = emptyStateHtml("loading");
 
-  if (payload.tripType === "round-trip") {
-    returnList.innerHTML = emptyStateHtml("loading");
-  } else {
+  const returnPanel = document.getElementById("returnResultsPanel");
+  const flightsWorkspace = document.querySelector(".flights-workspace");
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+
+  resultsSection?.classList.remove("round-trip-results-mode");
+  returnPanel?.classList.add("is-hidden");
+  flightsWorkspace?.classList.add("one-way");
+
+  if (returnList) {
     returnList.innerHTML = emptyStateHtml("return-hidden");
   }
 

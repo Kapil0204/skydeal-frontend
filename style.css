@@ -8036,3 +8036,677 @@ body #selectedTripPanel .sky-trip-clear-btn {
     padding-right: 5px !important;
   }
 }
+
+/* =========================================================
+   SkyDeal loading text rotation fix
+   Keeps full-card animation and restores rotating step text
+   ========================================================= */
+
+.sky-loading-steps {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+
+.sky-loading-steps span {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transform: translateY(8px) !important;
+  animation: skyLoadingStepRotate 10s ease-in-out infinite !important;
+  white-space: normal !important;
+  text-align: center !important;
+}
+
+.sky-loading-steps span:nth-child(1) { animation-delay: 0s !important; }
+.sky-loading-steps span:nth-child(2) { animation-delay: 2s !important; }
+.sky-loading-steps span:nth-child(3) { animation-delay: 4s !important; }
+.sky-loading-steps span:nth-child(4) { animation-delay: 6s !important; }
+.sky-loading-steps span:nth-child(5) { animation-delay: 8s !important; }
+
+@keyframes skyLoadingStepRotate {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  6% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  24% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 760px) {
+  .sky-loading-steps {
+    min-height: 38px !important;
+    height: 38px !important;
+  }
+
+  .sky-loading-steps span {
+    line-height: 1.15 !important;
+    padding: 0 8px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal return date state — consolidated theme-safe styles
+   Default Return: muted/inactive
+   Active Return: same visual language as Depart
+   ========================================================= */
+
+.return-date-field {
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* Keep both date boxes aligned */
+#departInput,
+#returnInput {
+  min-height: 58px !important;
+  height: 58px !important;
+  box-sizing: border-box !important;
+}
+
+/* Shared active date look: one source of truth for Depart + active Return */
+#departInput,
+body.sky-return-date-active #returnInput,
+.return-date-field.return-date-active #returnInput,
+#returnInput.return-date-input-active {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: color-mix(in srgb, var(--primary) 72%, var(--line)) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Clean focus state: no glow, just the same theme border */
+#departInput:focus,
+#departInput:focus-visible,
+body.sky-return-date-active #returnInput:focus,
+body.sky-return-date-active #returnInput:focus-visible,
+.return-date-field.return-date-active #returnInput:focus,
+.return-date-field.return-date-active #returnInput:focus-visible,
+#returnInput.return-date-input-active:focus,
+#returnInput.return-date-input-active:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 72%, var(--line)) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Return date inactive/default: muted version of the same search-box theme */
+body.sky-return-date-dimmed .return-date-field,
+.return-date-field.return-date-dimmed {
+  opacity: 0.68 !important;
+  filter: grayscale(1) saturate(0) !important;
+}
+
+body.sky-return-date-dimmed .return-date-field #returnInput,
+.return-date-field.return-date-dimmed #returnInput,
+#returnInput.return-date-input-dimmed {
+  background: color-mix(in srgb, var(--panel2) 78%, var(--bg)) !important;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text)) !important;
+  border-color: color-mix(in srgb, var(--line) 86%, var(--muted)) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: grayscale(1) saturate(0) !important;
+  opacity: 1 !important;
+}
+
+/* Calendar icons: Depart and active Return use the same treatment */
+#departInput::-webkit-calendar-picker-indicator,
+body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-active #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-active::-webkit-calendar-picker-indicator {
+  opacity: 0.82 !important;
+  filter: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Inactive Return calendar icon is muted */
+body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-dimmed #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-dimmed::-webkit-calendar-picker-indicator {
+  opacity: 0.48 !important;
+  filter: grayscale(1) saturate(0) !important;
+}
+
+/* Hard stop: no glow from previous date experiments */
+.return-date-field,
+.return-date-field *,
+#returnInput,
+#returnInput:hover,
+#returnInput:focus,
+#returnInput:focus-visible,
+#returnInput.return-date-input-active,
+#returnInput.return-date-input-active:focus,
+#returnInput.return-date-input-active:focus-visible,
+.return-date-field:focus-within,
+.return-date-field.return-date-active,
+.return-date-field.return-date-active:focus-within,
+.return-date-field.return-date-active #returnInput,
+.return-date-field.return-date-active #returnInput:focus,
+.return-date-field.return-date-active #returnInput:focus-visible {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+@media (max-width: 760px) {
+  #departInput,
+  #returnInput {
+    min-height: 58px !important;
+    height: 58px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal final search-field color consistency
+   Date fields should match other search inputs.
+   Only inactive Return is visually muted.
+   ========================================================= */
+
+/* Normal Depart + active Return should use the same border as other search fields */
+#departInput,
+body.sky-return-date-active #returnInput,
+.return-date-field.return-date-active #returnInput,
+#returnInput.return-date-input-active {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Focus can be slightly themed, but not brighter than the rest of the form */
+#departInput:focus,
+#departInput:focus-visible,
+body.sky-return-date-active #returnInput:focus,
+body.sky-return-date-active #returnInput:focus-visible,
+.return-date-field.return-date-active #returnInput:focus,
+.return-date-field.return-date-active #returnInput:focus-visible,
+#returnInput.return-date-input-active:focus,
+#returnInput.return-date-input-active:focus-visible {
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Inactive Return keeps muted grey state */
+body.sky-return-date-dimmed .return-date-field #returnInput,
+.return-date-field.return-date-dimmed #returnInput,
+#returnInput.return-date-input-dimmed {
+  background: color-mix(in srgb, var(--panel2) 72%, var(--bg)) !important;
+  color: var(--muted) !important;
+  border-color: var(--line) !important;
+  filter: grayscale(1) saturate(0) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Calendar icons should not create a different color impression */
+#departInput::-webkit-calendar-picker-indicator,
+body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-active #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-active::-webkit-calendar-picker-indicator {
+  opacity: 0.75 !important;
+  filter: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-dimmed #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-dimmed::-webkit-calendar-picker-indicator {
+  opacity: 0.45 !important;
+  filter: grayscale(1) saturate(0) !important;
+}
+
+/* =========================================================
+   SkyDeal final loading-step visibility fix
+   Ensures loading text rotates visibly on local + Vercel
+   ========================================================= */
+
+.sky-search-loading-card .sky-loading-steps,
+.empty-state .sky-loading-steps {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  margin-top: 12px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  z-index: 2 !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span,
+.empty-state .sky-loading-steps span {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  opacity: 0 !important;
+  transform: translateY(8px) !important;
+  animation-name: skyLoadingStepRotateFinal !important;
+  animation-duration: 10s !important;
+  animation-timing-function: ease-in-out !important;
+  animation-iteration-count: infinite !important;
+  white-space: normal !important;
+  text-align: center !important;
+  visibility: visible !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span:nth-child(1),
+.empty-state .sky-loading-steps span:nth-child(1) {
+  animation-delay: 0s !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span:nth-child(2),
+.empty-state .sky-loading-steps span:nth-child(2) {
+  animation-delay: 2s !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span:nth-child(3),
+.empty-state .sky-loading-steps span:nth-child(3) {
+  animation-delay: 4s !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span:nth-child(4),
+.empty-state .sky-loading-steps span:nth-child(4) {
+  animation-delay: 6s !important;
+}
+
+.sky-search-loading-card .sky-loading-steps span:nth-child(5),
+.empty-state .sky-loading-steps span:nth-child(5) {
+  animation-delay: 8s !important;
+}
+
+@keyframes skyLoadingStepRotateFinal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  5% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  24% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* Fallback: if animation is paused/unsupported, at least show first step */
+.sky-loading-steps span:first-child {
+  visibility: visible !important;
+}
+
+@media (max-width: 760px) {
+  .sky-search-loading-card .sky-loading-steps,
+  .empty-state .sky-loading-steps {
+    min-height: 42px !important;
+    height: 42px !important;
+    margin-top: 10px !important;
+  }
+
+  .sky-search-loading-card .sky-loading-steps span,
+  .empty-state .sky-loading-steps span {
+    font-size: 13px !important;
+    padding: 0 10px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal mobile hero headline readability
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .skydeal-hero-line {
+    max-width: 100% !important;
+    font-size: clamp(28px, 8.2vw, 38px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.055em !important;
+    margin-top: 8px !important;
+  }
+
+  .skydeal-hero-header .brand-name {
+    font-size: clamp(42px, 13vw, 58px) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.06em !important;
+  }
+
+  .skydeal-hero-header .sub {
+    font-size: clamp(17px, 5vw, 23px) !important;
+    line-height: 1.32 !important;
+    max-width: 92% !important;
+    margin-top: 14px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .skydeal-hero-line {
+    font-size: clamp(27px, 8vw, 34px) !important;
+    line-height: 1.1 !important;
+  }
+
+  .skydeal-hero-header .sub {
+    font-size: clamp(16px, 4.8vw, 20px) !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal mobile hero final correction
+   Subtle, readable, less shouty
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .skydeal-hero-header {
+    padding-top: 28px !important;
+    padding-bottom: 28px !important;
+  }
+
+  .skydeal-hero-header .brand-name {
+    font-size: clamp(38px, 10.8vw, 48px) !important;
+    line-height: 1 !important;
+    letter-spacing: -0.045em !important;
+    font-weight: 850 !important;
+  }
+
+  .skydeal-hero-line {
+    max-width: 92% !important;
+    font-size: clamp(24px, 6.8vw, 31px) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.04em !important;
+    font-weight: 820 !important;
+    margin-top: 10px !important;
+  }
+
+  .skydeal-hero-header .sub {
+    max-width: 88% !important;
+    font-size: clamp(15px, 4.4vw, 18px) !important;
+    line-height: 1.32 !important;
+    font-weight: 700 !important;
+    margin-top: 14px !important;
+    color: color-mix(in srgb, var(--muted) 88%, var(--text)) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .skydeal-hero-header .brand-name {
+    font-size: clamp(38px, 10.4vw, 46px) !important;
+  }
+
+  .skydeal-hero-line {
+    font-size: clamp(23px, 6.5vw, 30px) !important;
+    line-height: 1.13 !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal final loading text display
+   JS rotates this text; CSS keeps it visible and clean
+   ========================================================= */
+
+.sky-search-loading-card .sky-loading-steps,
+.empty-state .sky-loading-steps {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+  height: auto !important;
+  margin-top: 12px !important;
+  overflow: visible !important;
+  text-align: center !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.sky-search-loading-card .sky-loading-steps .sky-loading-active-text,
+.empty-state .sky-loading-steps .sky-loading-active-text {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  animation: skyLoadingTextSoftFade 1.4s ease-in-out infinite !important;
+  color: var(--primary) !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+}
+
+@keyframes skyLoadingTextSoftFade {
+  0%, 100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .sky-search-loading-card .sky-loading-steps,
+  .empty-state .sky-loading-steps {
+    min-height: 38px !important;
+    margin-top: 10px !important;
+  }
+
+  .sky-search-loading-card .sky-loading-steps .sky-loading-active-text,
+  .empty-state .sky-loading-steps .sky-loading-active-text {
+    font-size: 13px !important;
+    padding: 0 10px !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal desktop/tablet layout restore
+   Prevent mobile polish from breaking desktop result layout
+   ========================================================= */
+
+@media (min-width: 761px) {
+  .pro-results,
+  .results.pro-results {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 320px) minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 24px !important;
+    width: min(1180px, calc(100vw - 48px)) !important;
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .pro-results .filter-panel {
+    grid-column: 1 !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 !important;
+  }
+
+  .pro-results .flights-workspace {
+    grid-column: 2 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .pro-results.round-trip-results-mode .flights-workspace {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+  }
+
+  .pro-results.round-trip-results-mode .col,
+  .flights-workspace .col,
+  #outboundResultsPanel,
+  #returnResultsPanel {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+}
+
+/* =========================================================
+   SkyDeal date icon consistency
+   Remove weird calendar-icon box; keep date fields theme-consistent
+   ========================================================= */
+
+#departInput::-webkit-calendar-picker-indicator,
+#returnInput::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  opacity: 0.72 !important;
+}
+
+/* Inactive Return icon stays muted but not boxed */
+body.sky-return-date-dimmed #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-dimmed #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-dimmed::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  opacity: 0.42 !important;
+  filter: grayscale(1) saturate(0) !important;
+}
+
+/* Active Return icon matches Depart treatment */
+body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
+.return-date-field.return-date-active #returnInput::-webkit-calendar-picker-indicator,
+#returnInput.return-date-input-active::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  opacity: 0.72 !important;
+  filter: none !important;
+}
+
+/* =========================================================
+   SkyDeal compact desktop filters
+   Gives more width to flight results for one-way and round-trip.
+   ========================================================= */
+
+@media (min-width: 761px) {
+  .pro-results,
+  .results.pro-results {
+    grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) !important;
+    gap: 18px !important;
+  }
+
+  .pro-results .filter-panel {
+    max-width: 230px !important;
+  }
+
+  .filter-card {
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .filter-head {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .filter-head h3 {
+    font-size: 16px !important;
+  }
+
+  .clear-filter-btn {
+    font-size: 12px !important;
+  }
+
+  .filter-group {
+    padding-top: 11px !important;
+    margin-top: 11px !important;
+  }
+
+  .filter-title {
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .filter-panel label,
+  .filter-card label {
+    font-size: 13px !important;
+    line-height: 1.25 !important;
+    gap: 8px !important;
+  }
+
+  .filter-panel input[type="checkbox"],
+  .filter-card input[type="checkbox"] {
+    width: 15px !important;
+    height: 15px !important;
+    flex: 0 0 15px !important;
+  }
+
+  .filter-tip,
+  .filter-card .tip,
+  .filter-card .skydeal-tip {
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (min-width: 1100px) {
+  .pro-results.round-trip-results-mode,
+  .pro-results,
+  .results.pro-results {
+    grid-template-columns: 220px minmax(0, 1fr) !important;
+  }
+
+  .pro-results.round-trip-results-mode .filter-panel,
+  .pro-results .filter-panel {
+    max-width: 220px !important;
+  }
+
+  .pro-results.round-trip-results-mode .flights-workspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
+}
