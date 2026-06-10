@@ -4243,6 +4243,9 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     passengers: Number(paxSelect?.value || 1),
     travelClass: cabinSelect?.value || "economy",
 
+    // ✅ enable backend checkout/generic offer display layer
+    includeGenericDisplayOffers: true,
+
     // ✅ send structured selections so backend can match bank/type correctly
     paymentMethods: buildSearchPaymentMethods(),
   };
