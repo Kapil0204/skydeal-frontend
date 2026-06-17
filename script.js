@@ -2923,9 +2923,11 @@ async function refreshSelectedTripComparison() {
       from: lastSearchPayload.from,
       to: lastSearchPayload.to,
       tripType: "round-trip",
-      passengers: lastSearchPayload.passengers || 1,
+      adults: lastSearchPayload.adults || lastSearchPayload.passengers || 1,
+      passengers: lastSearchPayload.passengers || lastSearchPayload.adults || 1,
       travelClass: lastSearchPayload.travelClass || "economy",
       paymentMethods: buildSearchPaymentMethods(),
+      includeGenericDisplayOffers: true,
       outboundFlight: slimFlightForTripCompare(selectedOutboundFlight),
       returnFlight: slimFlightForTripCompare(selectedReturnFlight)
     };
@@ -3852,9 +3854,11 @@ async function compareSelectedRoundTrip() {
       from: lastSearchPayload.from,
       to: lastSearchPayload.to,
       tripType: "round-trip",
-      passengers: lastSearchPayload.passengers || 1,
+      adults: lastSearchPayload.adults || lastSearchPayload.passengers || 1,
+      passengers: lastSearchPayload.passengers || lastSearchPayload.adults || 1,
       travelClass: lastSearchPayload.travelClass || "economy",
       paymentMethods: buildSearchPaymentMethods(),
+      includeGenericDisplayOffers: true,
       outboundFlight: slimFlightForTripCompare(selectedOutboundFlight),
       returnFlight: slimFlightForTripCompare(selectedReturnFlight)
     };
