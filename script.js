@@ -9,6 +9,31 @@
 import { AIRPORTS } from "./airports.js";
 const BACKEND = "https://skydeal-backend.onrender.com";
 
+/**
+ * fetch() with a client-side safety-net timeout.
+ *
+ * The backend can legitimately take up to ~40s in the worst case (FlightAPI
+ * retries), so the default here (60s) is deliberately LONGER than that — it
+ * only fires on a genuine hang (dead connection, proxy that never responds),
+ * never on a slow-but-working search. On abort it throws an Error whose
+ * message contains "timed out", which renderSearchErrorState already handles.
+ * A caller-supplied signal is not expected on any current call site.
+ */
+async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const MASTER_PAYMENT_CATALOG = {
   "Credit Card": [
     "HDFC Bank",
@@ -2027,7 +2052,7 @@ function mergeMasterCatalogWithBackend(backendOptions) {
 
 async function loadPaymentOptions() {
   try {
-    const res = await fetch(`${BACKEND}/payment-options`);
+    const res = await fetchWithTimeout(`${BACKEND}/payment-options`, {}, 30000);
     const text = await res.text();
 
     if (!res.ok) {
@@ -2366,12 +2391,31 @@ const SKY_LOADING_STEPS = [
 
 let skyLoadingTextTimer = null;
 let skyLoadingTextIndex = 0;
+let skyLoadingSlowHintTimer = null;
 
 function stopSkyLoadingTextRotation() {
   if (skyLoadingTextTimer) {
     clearInterval(skyLoadingTextTimer);
     skyLoadingTextTimer = null;
   }
+  if (skyLoadingSlowHintTimer) {
+    clearTimeout(skyLoadingSlowHintTimer);
+    skyLoadingSlowHintTimer = null;
+  }
+}
+
+// After ~12s of loading, reassure the user a slow search is still running.
+// Guarded: only acts on a loading card that is still on screen, so it is a
+// no-op once results (or an error) have replaced it.
+function showSkyLoadingSlowHint() {
+  const cards = document.querySelectorAll(".sky-search-loading-card");
+  cards.forEach((card) => {
+    if (card.querySelector(".sky-loading-slow-hint")) return;
+    const hint = document.createElement("div");
+    hint.className = "sky-search-state-subtitle sky-loading-slow-hint";
+    hint.textContent = "Still working — live fares can take a few extra seconds.";
+    card.appendChild(hint);
+  });
 }
 
 function updateSkyLoadingText() {
@@ -2391,6 +2435,7 @@ function startSkyLoadingTextRotation() {
   skyLoadingTextIndex = 0;
   updateSkyLoadingText();
   skyLoadingTextTimer = setInterval(updateSkyLoadingText, 1400);
+  skyLoadingSlowHintTimer = setTimeout(showSkyLoadingSlowHint, 12000);
 }
 
 function emptyStateHtml(type = "default") {
@@ -2933,11 +2978,11 @@ async function refreshSelectedTripComparison() {
     };
 
     const compareUrl = `${BACKEND}/compare-selected-trip`;
-    const res = await fetch(compareUrl, {
+    const res = await fetchWithTimeout(compareUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
-    });
+    }, 60000);
 
     const rawText = await res.text();
     let data;
@@ -3864,11 +3909,11 @@ async function compareSelectedRoundTrip() {
     };
 
     const compareUrl = `${BACKEND}/compare-selected-trip`;
-    const res = await fetch(compareUrl, {
+    const res = await fetchWithTimeout(compareUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
-    });
+    }, 60000);
 
     const rawText = await res.text();
     let data;
@@ -4297,11 +4342,11 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
   renderSelectedTripPanel();
 
   try {
-    const res = await fetch(`${BACKEND}/search`, {
+    const res = await fetchWithTimeout(`${BACKEND}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
+    }, 60000);
 
     const json = await res.json();
     console.log("[SkyDeal] /search meta", json?.meta);
@@ -4343,7 +4388,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderOutbound();
     renderReturn();
   } catch (err) {
-    console.error("[SkyDeal] search failed", err || e);
+    console.error("[SkyDeal] search failed", err);
 
     outboundAll = [];
     returnAll = [];
@@ -4351,7 +4396,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedReturnFlight = null;
     selectedTripComparison = null;
 
-    renderSearchErrorState((err || e)?.message || "We couldn’t load live flights.");
+    renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
     enterMobileResultsMode();
     return;
