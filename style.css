@@ -4644,6 +4644,19 @@ body {
   body.mobile-results-mode header.nav {
     padding-bottom: 10px !important;
   }
+
+  body.mobile-results-mode .skydeal-hero-line,
+  body.mobile-results-mode .skydeal-hero-header .sub {
+    display: none !important;
+  }
+
+  body.mobile-results-mode .skydeal-hero-header {
+    padding: 12px 20px !important;
+  }
+
+  body.mobile-results-mode .skydeal-hero-header .brand-name {
+    font-size: 22px !important;
+  }
 }
 
 /* =====================================================

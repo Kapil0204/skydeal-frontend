@@ -93,7 +93,7 @@ const MASTER_PAYMENT_CATALOG = {
   "Wallet": [
     "Amazon Pay",
     "Paytm Wallet",
-    "Mobikwik",
+    "MobiKwik",
     "Freecharge",
     "Other Wallet"
   ],
@@ -570,7 +570,7 @@ function renderBestDealSummary(bestDeal, context = "default") {
     return `
       <div class="bestDealBanner">
         <div class="bestDealTopRow">
-          <div class="bestDealTop">No eligible offer found</div>
+          <div class="bestDealTop">No extra discount for this flight</div>
         </div>
         <div class="bestDealMeta">
           ${
@@ -1245,7 +1245,7 @@ function paymentMethodDetailSummary(pm) {
 
 function ensurePaymentEducationNudge() {
   const searchCard = document.querySelector(".search-card");
-  const pmToggle = document.getElementById("pmToggle") || document.getElementById("paymentMethodToggle");
+  const pmToggle = document.getElementById("paymentBtn");
   if (!searchCard || !pmToggle) return;
 
   if (localStorage.getItem("skydealPaymentNudgeDismissed") === "true") {
@@ -1264,8 +1264,8 @@ function ensurePaymentEducationNudge() {
 
   nudge.innerHTML = `
     <div>
-      <strong>Quick tip:</strong> The cheapest portal can change after card, EMI, UPI or wallet offers.
-      Add your payment options to compare properly.
+      <strong>Heads up:</strong> the cheapest portal can change depending on how you pay.
+      Add your cards or UPI apps to see your real price.
     </div>
     <button type="button" aria-label="Dismiss payment tip">×</button>
   `;
@@ -1485,8 +1485,8 @@ function updatePaymentButtonLabel() {
   if (pmCount) pmCount.textContent = String(n);
   if (paymentBtn) {
   paymentBtn.textContent = includeEmiOffers
-    ? `Payment options (${n}) + EMI offers`
-    : `Payment options (${n})`;
+    ? `Add cards & payment apps (${n}) + EMI offers`
+    : `Add cards & payment apps (${n})`;
 }
   renderSelectedPaymentMethodsSummary();
   ensurePaymentEducationNudge();
@@ -1632,7 +1632,7 @@ function formatOfferLine(p) {
 if (!p.applied) {
   return `
     <div style="opacity:.72;font-size:13px;">
-      No matching offer for the selected payment method on this portal.
+      No discount available with your selected payment method.
     </div>
   `;
 }
@@ -1673,11 +1673,8 @@ const tncBtn = hasTerms
   p.offerTypeLabel &&
   String(p.offerTypeLabel).trim().toLowerCase() !== "payment offer";
 
-const typeLine = showTypeLabel
-  ? `<div style="opacity:.85;margin-top:4px;">Type: <b>${safeText(p.offerTypeLabel)}</b></div>`
-  : "";
-  const channelLine = p.channelLabel
-    ? `<div style="opacity:.85;margin-top:4px;">Channel: <b>${safeText(p.channelLabel)}</b></div>`
+  const typeSpan = showTypeLabel
+    ? `<span>${safeText(p.offerTypeLabel)}</span>`
     : "";
 
   return `
@@ -1688,9 +1685,8 @@ const typeLine = showTypeLabel
         ${savings > 0 ? `<span style="color:#86efac;font-weight:800;">You save ${money(savings)}</span>` : ""}
         ${codeText ? `<span>Coupon: ${codeText}</span>` : ""}
         ${pay ? `<span>Payment: <b>${safeText(pay)}</b></span>` : ""}
+        ${typeSpan}
       </div>
-      ${typeLine}
-      ${channelLine}
       ${tncBtn ? `<div style="margin-top:8px;">${tncBtn.replace(/^\s*•\s*/, "")}</div>` : ""}
     </div>
   `;
@@ -1984,10 +1980,27 @@ function normalizePmNameForUI(name) {
   if (u === "BANK OF INDIA") return "Bank of India";
   if (u === "DBS") return "DBS";
   if (u === "RUPAY") return "RuPay";
+  if (u === "INDUSIND" || u === "INDUSIND BANK") return "IndusInd Bank";
+  if (u === "BHIM" || u === "BHIM UPI") return "BHIM";
+  if (u === "PHONEPE") return "PhonePe";
+  if (u === "PAYTM" || u === "PAYTM UPI") return "Paytm UPI";
+  if (u === "PAYTM WALLET") return "Paytm Wallet";
+  if (u === "CRED") return "CRED";
+  if (u === "GOOGLE PAY" || u === "GPAY") return "Google Pay";
+  if (u === "MOBIKWIK") return "MobiKwik";
+  if (u === "FREECHARGE") return "Freecharge";
+  if (u === "AMAZON PAY") return "Amazon Pay";
+  if (u === "UPI" || u === "OTHER UPI") return u === "UPI" ? "UPI" : "Other UPI";
+  if (u === "EMI" || u === "OTHER EMI") return u === "EMI" ? "EMI" : "Other EMI";
 
+  const ACRONYMS = new Set(["UPI", "EMI", "CRED", "SBI", "DBS", "HSBC", "AU", "IDFC", "BOB", "RBL", "IDBI", "J&K"]);
   return s
     .split(" ")
-    .map((w) => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
+    .map((w) => {
+      if (w.length <= 2) return w.toUpperCase();
+      if (ACRONYMS.has(w.toUpperCase())) return w.toUpperCase();
+      return w[0].toUpperCase() + w.slice(1).toLowerCase();
+    })
     .join(" ");
 }
 
@@ -2465,8 +2478,8 @@ function emptyStateHtml(type = "default") {
   return `
     <div class="empty-state">
       <div class="empty-icon">✈️</div>
-      <div class="empty-title">Search to compare final payable prices</div>
-      <div class="empty-copy">Enter your route and payment options to compare final payable prices across portals.</div>
+      <div class="empty-title">Search to compare real flight prices</div>
+      <div class="empty-copy">Flight prices change depending on the portal and payment method you use. Enter your route to see live fares and your final price on each.</div>
     </div>
   `;
 }
@@ -3512,8 +3525,8 @@ setTimeout(fixMobilePreSearchLayers, 0);
 
 function renderSearchNoResultsState(details = {}) {
   document.body.classList.remove("search-error-mode");
-  const outHost = document.getElementById("outboundCards") || document.getElementById("outCards");
-  const retHost = document.getElementById("returnCards") || document.getElementById("retCards");
+  const outHost = document.getElementById("outboundList") || document.getElementById("outboundCards") || document.getElementById("outCards");
+  const retHost = document.getElementById("returnList") || document.getElementById("returnCards") || document.getElementById("retCards");
 
   const tripType = details.tripType || lastSearchPayload?.tripType || "one-way";
   const isRound = tripType === "round-trip";
