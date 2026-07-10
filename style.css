@@ -8657,8 +8657,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   line-height: 1.3 !important;
   color: #f3e8ff !important;
   text-align: center !important;
-  white-space: normal !important;
-  max-width: 190px !important;
+  white-space: nowrap !important;
 }
 
 @media (max-width: 760px) {
@@ -8666,6 +8665,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
     width: 100% !important;
   }
   .emiUnlockHint {
-    max-width: none !important;
+    white-space: normal !important;
   }
 }
