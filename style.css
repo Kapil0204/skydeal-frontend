@@ -369,6 +369,18 @@ h3{ margin:0; font-size:18px; }
   border-bottom:1px solid var(--line);
   overflow:auto;
 }
+.pm-emi-hint{
+  display:none;
+  padding:10px 20px;
+  font-size:13px;
+  font-weight:750;
+  color:#1d4ed8;
+  background:rgba(37,99,235,0.08);
+  border-bottom:1px solid var(--line);
+}
+.pm-emi-hint.visible{
+  display:block;
+}
 .tab{
   min-height:42px;
   padding:10px 18px;

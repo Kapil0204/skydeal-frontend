@@ -337,6 +337,7 @@ const pmDone = document.getElementById("pmDone");
 
 // Tabs container
 const pmTabsContainer = document.querySelector(".pm-tabs");
+const pmEmiHint = document.getElementById("pmEmiHint");
 // Payment details editor
 let editingPaymentIndex = null;
 
@@ -1843,7 +1844,41 @@ function renderPaymentTabs() {
     });
   });
 
- 
+  renderPmEmiHint();
+}
+
+// How many EMI-bucket offers exist for banks currently shown on the Credit
+// Card tab but not yet counted there (i.e. only reachable by turning the
+// EMI toggle on). Recomputed from the same live offerCounts data used for
+// the badges, so it updates automatically whenever offer data refreshes.
+function computeEmiUnlockCount() {
+  const ccList = Array.isArray(paymentOptions?.["Credit Card"]) ? paymentOptions["Credit Card"] : [];
+  let total = 0;
+  for (const name of ccList) {
+    const key = String(name).toLowerCase();
+    total += paymentOfferCounts?.EMI?.[key] || 0;
+  }
+  return total;
+}
+
+function renderPmEmiHint() {
+  if (!pmEmiHint) return;
+
+  if (activePaymentType !== "Credit Card" || includeEmiOffers) {
+    pmEmiHint.innerHTML = "";
+    pmEmiHint.classList.remove("visible");
+    return;
+  }
+
+  const unlockCount = computeEmiUnlockCount();
+  if (unlockCount <= 0) {
+    pmEmiHint.innerHTML = "";
+    pmEmiHint.classList.remove("visible");
+    return;
+  }
+
+  pmEmiHint.innerHTML = `Turn on EMI to unlock ${unlockCount} more offer${unlockCount === 1 ? "" : "s"}`;
+  pmEmiHint.classList.add("visible");
 }
 
 function isSelected(type, name) {
@@ -1874,70 +1909,19 @@ function renderPaymentList() {
     pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
     return;
   }
-const emiToggleHtml =
-  type === "Credit Card"
-    ? `
-      <div style="
-        display:flex;
-        justify-content:flex-end;
-        align-items:center;
-        margin:0 0 14px 0;
-      ">
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          padding:8px 12px;
-          border:1px solid rgba(96,165,250,.35);
-          border-radius:999px;
-          background:rgba(37,99,235,.10);
-        ">
-          <span style="font-size:13px;color:#cbd5e1;">Show EMI offers</span>
-
-          <button
-            id="includeEmiOffersToggle"
-            type="button"
-            aria-pressed="${includeEmiOffers ? "true" : "false"}"
-            style="
-              width:48px;
-              height:26px;
-              border-radius:999px;
-              border:1px solid ${includeEmiOffers ? "rgba(34,197,94,.75)" : "rgba(148,163,184,.45)"};
-              background:${includeEmiOffers ? "rgba(34,197,94,.25)" : "rgba(15,23,42,.85)"};
-              position:relative;
-              cursor:pointer;
-              padding:0;
-            "
-          >
-            <span style="
-              position:absolute;
-              top:3px;
-              left:${includeEmiOffers ? "24px" : "4px"};
-              width:18px;
-              height:18px;
-              border-radius:999px;
-              background:${includeEmiOffers ? "#22c55e" : "#94a3b8"};
-              transition:all .18s ease;
-            "></span>
-          </button>
-
-          <span style="
-            font-size:12px;
-            font-weight:700;
-            color:${includeEmiOffers ? "#86efac" : "#94a3b8"};
-            min-width:24px;
-          ">
-            ${includeEmiOffers ? "ON" : "OFF"}
-          </span>
-        </div>
-      </div>
-    `
-    : "";
  pmList.innerHTML = list
     .map((name, idx) => {
       const id = `pm_${type}_${idx}`.replace(/\s+/g, "_");
       const checked = isSelected(type, name) ? "checked" : "";
-      const offerCount = paymentOfferCounts?.[type]?.[String(name).toLowerCase()] || 0;
+      const key = String(name).toLowerCase();
+      const baseCount = paymentOfferCounts?.[type]?.[key] || 0;
+      // On Credit Card, selecting a card with the EMI toggle on also tries
+      // that same card's EMI offers during search (see buildSearchPaymentMethods),
+      // so the badge should reflect that combined total once the toggle is on.
+      const emiCount = (type === "Credit Card" && includeEmiOffers)
+        ? (paymentOfferCounts?.EMI?.[key] || 0)
+        : 0;
+      const offerCount = baseCount + emiCount;
       const badge = offerCount > 0
         ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
         : "";
@@ -1987,7 +1971,7 @@ function normalizePmNameForUI(name) {
   if (u === "CANARA BANK") return "Canara Bank";
   if (u === "J&K BANK" || u === "J AND K BANK") return "J&K Bank";
   if (u === "BANK OF INDIA") return "Bank of India";
-  if (u === "DBS") return "DBS";
+  if (u === "DBS" || u === "DBS BANK") return "DBS Bank";
   if (u === "RUPAY") return "RuPay";
   if (u === "INDUSIND" || u === "INDUSIND BANK") return "IndusInd Bank";
   if (u === "BHIM" || u === "BHIM UPI") return "BHIM";
