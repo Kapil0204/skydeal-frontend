@@ -337,7 +337,6 @@ const pmDone = document.getElementById("pmDone");
 
 // Tabs container
 const pmTabsContainer = document.querySelector(".pm-tabs");
-const pmEmiHint = document.getElementById("pmEmiHint");
 // Payment details editor
 let editingPaymentIndex = null;
 
@@ -1816,20 +1815,29 @@ function renderPaymentTabs() {
     .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${t}</button>`)
     .join("");
 
+  const unlockCount = computeEmiUnlockCount();
+  const showHint = activePaymentType === "Credit Card" && !includeEmiOffers && unlockCount > 0;
+  const emiHintHtml = showHint
+    ? `<div class="emiUnlockHint">Turn on EMI to unlock ${unlockCount} more offer${unlockCount === 1 ? "" : "s"}</div>`
+    : "";
+
   const emiToggleHtml = `
-    <div class="emiToggleWrap">
-      <span class="emiToggleText">Show EMI offers</span>
-      <button
-        id="includeEmiOffersToggle"
-        type="button"
-        class="emiToggle ${includeEmiOffers ? "active" : ""}"
-        aria-pressed="${includeEmiOffers ? "true" : "false"}"
-      >
-        <span class="emiToggleKnob"></span>
-      </button>
-      <span class="emiToggleState ${includeEmiOffers ? "active" : ""}">
-        ${includeEmiOffers ? "ON" : "OFF"}
-      </span>
+    <div class="emiToggleWrap ${showHint ? "has-hint" : ""}">
+      <div class="emiToggleRow">
+        <span class="emiToggleText">Show EMI offers</span>
+        <button
+          id="includeEmiOffersToggle"
+          type="button"
+          class="emiToggle ${includeEmiOffers ? "active" : ""}"
+          aria-pressed="${includeEmiOffers ? "true" : "false"}"
+        >
+          <span class="emiToggleKnob"></span>
+        </button>
+        <span class="emiToggleState ${includeEmiOffers ? "active" : ""}">
+          ${includeEmiOffers ? "ON" : "OFF"}
+        </span>
+      </div>
+      ${emiHintHtml}
     </div>
   `;
 
@@ -1843,8 +1851,6 @@ function renderPaymentTabs() {
       renderPaymentList();
     });
   });
-
-  renderPmEmiHint();
 }
 
 // How many EMI-bucket offers exist for banks currently shown on the Credit
@@ -1859,26 +1865,6 @@ function computeEmiUnlockCount() {
     total += paymentOfferCounts?.EMI?.[key] || 0;
   }
   return total;
-}
-
-function renderPmEmiHint() {
-  if (!pmEmiHint) return;
-
-  if (activePaymentType !== "Credit Card" || includeEmiOffers) {
-    pmEmiHint.innerHTML = "";
-    pmEmiHint.classList.remove("visible");
-    return;
-  }
-
-  const unlockCount = computeEmiUnlockCount();
-  if (unlockCount <= 0) {
-    pmEmiHint.innerHTML = "";
-    pmEmiHint.classList.remove("visible");
-    return;
-  }
-
-  pmEmiHint.innerHTML = `Turn on EMI to unlock ${unlockCount} more offer${unlockCount === 1 ? "" : "s"}`;
-  pmEmiHint.classList.add("visible");
 }
 
 function isSelected(type, name) {
