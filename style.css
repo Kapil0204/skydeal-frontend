@@ -1930,6 +1930,19 @@ h3{
   line-height:1.15;
 }
 
+.pm-item .pm-offer-badge{
+  margin-left:auto !important;
+  flex:0 0 auto !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  color:#059669 !important;
+  background:rgba(5,150,105,0.10) !important;
+  border:1px solid rgba(5,150,105,0.25) !important;
+  border-radius:999px !important;
+  padding:3px 9px !important;
+  white-space:nowrap !important;
+}
+
 .pm-actions{
   padding:14px 20px;
   background:#ffffff;

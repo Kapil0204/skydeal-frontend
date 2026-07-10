@@ -342,6 +342,7 @@ let editingPaymentIndex = null;
 
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
+let paymentOfferCounts = {}; // { "Credit Card": { "HDFC Bank": 3, ... }, ... } — how many live offers back each entry
 let activePaymentType = "Credit Card";
 let includeEmiOffers = false;
 
@@ -1936,10 +1937,15 @@ const emiToggleHtml =
     .map((name, idx) => {
       const id = `pm_${type}_${idx}`.replace(/\s+/g, "_");
       const checked = isSelected(type, name) ? "checked" : "";
+      const offerCount = paymentOfferCounts?.[type]?.[String(name).toLowerCase()] || 0;
+      const badge = offerCount > 0
+        ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
+        : "";
       return `
         <label class="pm-item" for="${id}">
           <input id="${id}" type="checkbox" ${checked} />
           <span>${safeText(name)}</span>
+          ${badge}
         </label>
       `;
     })
@@ -2086,6 +2092,7 @@ async function loadPaymentOptions() {
 
     const backendOptions = dedupePaymentOptions(data?.options || {});
     paymentOptions = mergeMasterCatalogWithBackend(backendOptions);
+    paymentOfferCounts = normalizeOfferCounts(data?.offerCounts || {});
 
     for (const k of Object.keys(paymentOptions)) {
       const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
@@ -2111,9 +2118,28 @@ async function loadPaymentOptions() {
 
     // Safe fallback: still show master catalog even if backend call fails
     paymentOptions = mergeMasterCatalogWithBackend({});
+    paymentOfferCounts = {};
     renderPaymentTabs();
     updatePaymentButtonLabel();
   }
+}
+
+// Re-keys raw backend bank names to the same normalized display name
+// renderPaymentList() shows, summing counts when multiple raw spellings
+// (e.g. "HDFC" / "HDFC Bank") collapse into one displayed entry.
+function normalizeOfferCounts(rawOfferCounts) {
+  const out = {};
+  for (const [type, bankCounts] of Object.entries(rawOfferCounts || {})) {
+    const normalized = {};
+    for (const [rawBank, count] of Object.entries(bankCounts || {})) {
+      const displayName = normalizePmNameForUI(rawBank);
+      if (!displayName) continue;
+      const key = displayName.toLowerCase();
+      normalized[key] = (normalized[key] || 0) + (Number(count) || 0);
+    }
+    out[type] = normalized;
+  }
+  return out;
 }
 
 // ---------- Flight Results Rendering + Pagination ----------
