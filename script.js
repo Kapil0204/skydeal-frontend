@@ -3758,44 +3758,44 @@ function updateSelectedTripMobileClasses() {
   document.body.classList.toggle("sky-mobile-trip-complete", isRound && hasOut && hasRet);
 }
 
-function decorateSelectedTripExpandControl() {
+function ensureSelectedTripFade() {
+  let fade = document.getElementById("selectedTripFade");
+  if (fade) return fade;
+
+  fade = document.createElement("div");
+  fade.id = "selectedTripFade";
+  document.body.appendChild(fade);
+  return fade;
+}
+
+function updateSelectedTripFade() {
   const panel = document.getElementById("selectedTripPanel");
-  if (!panel) return;
+  const fade = ensureSelectedTripFade();
 
-  if (!panel.querySelector(".sky-trip-expand-toggle")) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "sky-trip-expand-toggle";
-    btn.setAttribute("aria-label", "Expand selected trip summary");
-    btn.innerHTML = `<span class="sky-trip-expand-label">View details</span><span class="sky-trip-expand-chevron" aria-hidden="true">⌃</span>`;
-    btn.addEventListener("click", () => {
-      const expanded = document.body.classList.toggle("sky-trip-panel-expanded");
-      btn.setAttribute(
-        "aria-label",
-        expanded ? "Collapse selected trip summary" : "Expand selected trip summary"
-      );
-      btn.querySelector(".sky-trip-expand-label").textContent = expanded ? "Hide details" : "View details";
-      btn.querySelector(".sky-trip-expand-chevron").textContent = expanded ? "⌄" : "⌃";
-    });
-
-    panel.prepend(btn);
+  if (!panel || panel.style.display === "none" || !isSkyDealMobileView()) {
+    fade.style.display = "none";
+    return;
   }
 
-  // Close full-screen compare panel when user clears trip.
-  const clearBtn = panel.querySelector(".sky-trip-clear-btn, .clearTripBtn, [data-action='clear-trip']");
-  if (clearBtn && !clearBtn.dataset.skyCollapseInstalled) {
-    clearBtn.dataset.skyCollapseInstalled = "true";
-    clearBtn.addEventListener("click", () => {
-      document.body.classList.remove("sky-trip-panel-expanded");
-    });
-  }
+  const rect = panel.getBoundingClientRect();
+  const fadeHeight = 56;
+
+  fade.style.display = "block";
+  fade.style.position = "fixed";
+  fade.style.left = "0";
+  fade.style.right = "0";
+  fade.style.top = `${rect.top - fadeHeight}px`;
+  fade.style.height = `${fadeHeight}px`;
+  fade.style.pointerEvents = "none";
+  fade.style.zIndex = "998";
+  fade.style.background = "linear-gradient(to bottom, rgba(245,247,251,0), rgba(245,247,251,0.95))";
 }
 
 function installMobileUxPolish() {
   syncReturnDateAutoRoundTrip();
   decoratePaymentTabsForMobile();
-  decorateSelectedTripExpandControl();
   updateSelectedTripMobileClasses();
+  updateSelectedTripFade();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -3822,11 +3822,13 @@ function renderSelectedTripPanel() {
 
   if (!isRoundTripModeActive()) {
     panel.style.display = "none";
+    updateSelectedTripFade();
     return;
   }
 
   if (!selectedOutboundFlight && !selectedReturnFlight) {
     panel.style.display = "none";
+    updateSelectedTripFade();
     return;
   }
 
@@ -3935,6 +3937,8 @@ function renderSelectedTripPanel() {
   panel.querySelector("#compareSelectedTripBtn")?.addEventListener("click", () => {
     compareSelectedRoundTrip();
   });
+
+  updateSelectedTripFade();
 }
 
 function slimFlightForTripCompare(f) {
