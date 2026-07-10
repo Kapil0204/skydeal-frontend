@@ -374,6 +374,9 @@ const PAGE_SIZE = 20;
 let outPageIdx = 1;
 let retPageIdx = 1;
 
+// Which leg is showing in the mobile round-trip tab toggle ("out" | "ret").
+let mobileRoundTripActiveLeg = "out";
+
 // ---------- Utils ----------
 function toISO(d) {
   if (!d) return "";
@@ -3155,6 +3158,7 @@ function setMobileReturnFocusAfterOutbound() {
   if (!isSkyDealMobileView()) return;
 
   document.body.classList.add("mobile-return-focus");
+  mobileRoundTripActiveLeg = "ret";
 
   const returnPanel = document.getElementById("returnResultsPanel");
   if (!returnPanel) return;
@@ -3165,6 +3169,58 @@ function setMobileReturnFocusAfterOutbound() {
       block: "start"
     });
   }, 220);
+}
+
+function ensureMobileRoundTripTabs() {
+  const workspace = document.querySelector(".flights-workspace");
+  if (!workspace) return null;
+
+  let bar = document.getElementById("mobileRoundTripTabs");
+  if (bar) return bar;
+
+  bar = document.createElement("div");
+  bar.id = "mobileRoundTripTabs";
+  bar.className = "mobile-rt-tabs";
+  bar.innerHTML = `
+    <button type="button" class="mobile-rt-tab-btn" data-leg="out">Departure</button>
+    <button type="button" class="mobile-rt-tab-btn" data-leg="ret">Return</button>
+  `;
+
+  workspace.parentNode.insertBefore(bar, workspace);
+
+  bar.querySelectorAll(".mobile-rt-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      mobileRoundTripActiveLeg = btn.getAttribute("data-leg") === "ret" ? "ret" : "out";
+      updateMobileRoundTripTabs();
+      bar.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  return bar;
+}
+
+function updateMobileRoundTripTabs() {
+  const ready = isSkyDealMobileView() && hasRoundTripResultsReady();
+  const outPanel = document.getElementById("outboundResultsPanel");
+  const retPanel = document.getElementById("returnResultsPanel");
+
+  document.body.classList.toggle("mobile-rt-tabs-on", ready);
+
+  if (!ready) {
+    outPanel?.classList.remove("mobile-tab-hidden");
+    retPanel?.classList.remove("mobile-tab-hidden");
+    return;
+  }
+
+  const bar = ensureMobileRoundTripTabs();
+  if (!bar) return;
+
+  bar.querySelectorAll(".mobile-rt-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-leg") === mobileRoundTripActiveLeg);
+  });
+
+  outPanel?.classList.toggle("mobile-tab-hidden", mobileRoundTripActiveLeg !== "out");
+  retPanel?.classList.toggle("mobile-tab-hidden", mobileRoundTripActiveLeg !== "ret");
 }
 
 function tagMobileSearchFieldWrappers() {
@@ -4224,6 +4280,7 @@ function renderOutbound() {
   renderList(outboundList, pageItems, "out");
   renderSelectedTripPanel();
   renderPager("out");
+  updateMobileRoundTripTabs();
 }
 function renderReturn() {
   updateFlightSectionHeadings();
@@ -4239,6 +4296,7 @@ function renderReturn() {
     flightsWorkspace?.classList.add("one-way");
     if (returnList) returnList.innerHTML = emptyStateHtml("return-hidden");
     renderPager("ret");
+    updateMobileRoundTripTabs();
     return;
   }
 
@@ -4251,6 +4309,7 @@ function renderReturn() {
   renderList(returnList, pageItems, "ret");
   renderSelectedTripPanel();
   renderPager("ret");
+  updateMobileRoundTripTabs();
 }
 
 function toggleReturn() {
@@ -4352,6 +4411,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
   retPageIdx = 1;
   selectedOutboundFlight = null;
   selectedReturnFlight = null;
+  mobileRoundTripActiveLeg = "out";
   renderSelectedTripPanel();
 
   try {

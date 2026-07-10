@@ -4660,6 +4660,59 @@ body {
 }
 
 /* =====================================================
+   Mobile round-trip tab toggle (Departure | Return)
+   Lets users switch between the two lists with one tap
+   instead of scrolling. Desktop untouched.
+===================================================== */
+
+.mobile-rt-tabs {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobile-rt-tabs {
+    display: none;
+    gap: 8px;
+    width: calc(100% - 20px);
+    margin: 0 auto 12px;
+    padding: 8px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  body.mobile-rt-tabs-on .mobile-rt-tabs {
+    display: flex;
+  }
+
+  .mobile-rt-tab-btn {
+    flex: 1;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #64748b;
+    border-radius: 11px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 850;
+    cursor: pointer;
+  }
+
+  .mobile-rt-tab-btn.active {
+    border-color: rgba(168, 85, 247, 0.65);
+    background: rgba(168, 85, 247, 0.10);
+    color: #581c87;
+  }
+
+  body.mobile-rt-tabs-on .flights-workspace .col.mobile-tab-hidden {
+    display: none !important;
+  }
+}
+
+/* =====================================================
    Search loading + clean error states
    Desktop + mobile safe
 ===================================================== */
