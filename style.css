@@ -4229,7 +4229,7 @@ body {
     margin: 0 !important;
     padding: 10px !important;
     border-radius: 20px !important;
-    max-height: 52vh !important;
+    max-height: 78vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     z-index: 999 !important;
@@ -4376,7 +4376,7 @@ body {
   body #selectedTripPanel {
     padding: 9px !important;
     border-radius: 18px !important;
-    max-height: 46vh !important;
+    max-height: 78vh !important;
   }
 
   body #selectedTripPanel .sky-trip-bar {
@@ -5538,12 +5538,13 @@ body.search-error-mode .results-top-filter-row {
   }
 
   .sky-trip-expand-toggle {
-    position: absolute !important;
-    top: -18px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: auto !important;
+    position: sticky !important;
+    top: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    width: fit-content !important;
     height: 34px !important;
+    margin: 0 auto 10px !important;
     padding: 0 16px !important;
     border-radius: 999px !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
