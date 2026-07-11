@@ -4136,38 +4136,40 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Duration is shown up front (below the stop count); WHERE the layover is
-// (airport name only, no code) is reserved for hover - FlightAPI has no
-// terminal-change data anywhere in its schema, so unlike some OTA UIs we
-// don't claim one.
+// Plain stop count only - lives in the card's grid row next to price, same
+// as before the layover feature existed. The detailed "via City" line
+// (hoverable) is a separate full-width block below the row (see
+// stopsViaLineHtml) - keeping this one simple avoids disturbing the row's
+// fixed grid-template-columns.
 function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const label = stops === 0 ? "Non-stop" : `${stops} stop(s)`;
+  return `<div class="stops">${label}</div>`;
+}
 
+// Full-width line below the row, MMT-style: "N stop(s) via City" always
+// visible, hover shows each stop's own "{duration} layover | {City}" line.
+// Airport name only (no code) and no terminal/plane-change claim - checked
+// FlightAPI's full schema and it has neither anywhere, so we don't guess.
+function stopsViaLineHtml(f) {
+  const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
-  if (stops === 0 || layovers.length === 0) {
-    return `<div class="stops">${label}</div>`;
-  }
+  if (stops === 0 || layovers.length === 0) return "";
 
-  const durationText = layovers
-    .map((lo) => formatLayoverDuration(lo?.durationMinutes))
-    .filter(Boolean)
-    .join(" + ");
+  const cityNames = layovers.map((lo) => safeText(lo?.airportName || lo?.airportCode || "Unknown airport"));
+  const viaLabel = `${stops} stop${stops > 1 ? "s" : ""} via ${cityNames.join(", ")}`;
 
-  const airportNames = layovers
-    .map((lo) => safeText(lo?.airportName || lo?.airportCode || "Unknown airport"))
+  const tooltipLines = layovers
+    .map((lo, i) => {
+      const dur = formatLayoverDuration(lo?.durationMinutes);
+      return dur ? `${dur} layover | ${cityNames[i]}` : cityNames[i];
+    })
     .join("<br/>");
 
   return `
-    <div class="stops">
-      ${label}
-      ${durationText
-        ? `<div class="stopsLayoverLine stopsHoverable">
-            ${durationText} layover
-            <div class="stopsTooltip">${airportNames}</div>
-          </div>`
-        : ""
-      }
+    <div class="stopsViaLine stopsHoverable">
+      ${viaLabel}
+      <div class="stopsTooltip">${tooltipLines}</div>
     </div>
   `;
 }
@@ -4259,9 +4261,10 @@ function flightCard(f, direction = "out") {
           }
         </div>
 
-        
+
       </div>
 
+      ${stopsViaLineHtml(f)}
       ${bestLine}
       ${oneWayActions}
       ${selectTripButton}

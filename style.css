@@ -1317,11 +1317,11 @@ h3{
   font-weight:750;
 }
 
-.stopsLayoverLine{
-  font-size:12px;
-  font-weight:600;
-  opacity:.75;
-  margin-top:2px;
+.stopsViaLine{
+  font-size:13px;
+  font-weight:700;
+  color:#475467;
+  margin:2px 0 10px;
 }
 
 .stopsHoverable{
