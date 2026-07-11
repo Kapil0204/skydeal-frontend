@@ -4136,27 +4136,23 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Plain stop count only - lives in the card's grid row next to price, same
-// as before the layover feature existed. The detailed "via City" line
-// (hoverable) is a separate full-width block below the row (see
-// stopsViaLineHtml) - keeping this one simple avoids disturbing the row's
-// fixed grid-template-columns.
+// Lives in the card's grid row next to price - "N stop(s)" on its own
+// line, then (MMT-style) a "via City" line directly below it in the SAME
+// column, short city name only (e.g. "Noida" not "Noida International" -
+// city is resolved backend-side via the airport's parent place). Hover
+// shows each stop's own "{duration} layover | {City}" line. No terminal/
+// plane-change claim - checked FlightAPI's full schema and it has neither
+// anywhere, so we don't guess.
 function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const label = stops === 0 ? "Non-stop" : `${stops} stop(s)`;
-  return `<div class="stops">${label}</div>`;
-}
 
-// Full-width line below the row, MMT-style: "N stop(s) via City" always
-// visible, hover shows each stop's own "{duration} layover | {City}" line.
-// Airport name only (no code) and no terminal/plane-change claim - checked
-// FlightAPI's full schema and it has neither anywhere, so we don't guess.
-function stopsViaLineHtml(f) {
-  const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
-  if (stops === 0 || layovers.length === 0) return "";
+  if (stops === 0 || layovers.length === 0) {
+    return `<div class="stops">${label}</div>`;
+  }
 
-  const cityNames = layovers.map((lo) => safeText(lo?.airportName || lo?.airportCode || "Unknown airport"));
+  const cityNames = layovers.map((lo) => safeText(lo?.cityName || lo?.airportName || lo?.airportCode || "Unknown"));
   const viaLabel = `${stops} stop${stops > 1 ? "s" : ""} via ${cityNames.join(", ")}`;
 
   const tooltipLines = layovers
@@ -4167,9 +4163,12 @@ function stopsViaLineHtml(f) {
     .join("<br/>");
 
   return `
-    <div class="stopsViaLine stopsHoverable">
-      ${viaLabel}
-      <div class="stopsTooltip">${tooltipLines}</div>
+    <div class="stops">
+      ${label}
+      <div class="stopsViaLine stopsHoverable">
+        ${viaLabel}
+        <div class="stopsTooltip">${tooltipLines}</div>
+      </div>
     </div>
   `;
 }
@@ -4264,7 +4263,6 @@ function flightCard(f, direction = "out") {
 
       </div>
 
-      ${stopsViaLineHtml(f)}
       ${bestLine}
       ${oneWayActions}
       ${selectTripButton}
