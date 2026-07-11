@@ -3674,6 +3674,22 @@ function renderSearchNoResultsState(details = {}) {
     subtitle = "Try changing the return date or route.";
   }
 
+  // Some flights existed for this route/date, but only as separate tickets
+  // across two different airlines with no protection if a connection is
+  // missed - we deliberately don't show those as a regular flight (see
+  // CURRENT_BUGS.md item O follow-up). Tell the user that plainly instead
+  // of a generic "no flights" message that reads like the route has
+  // nothing at all.
+  const onlyUnverifiedOptions =
+    (details.missingOutbound && details.outOnlyUnverifiedOptions) ||
+    (details.missingReturn && details.retOnlyUnverifiedOptions);
+
+  if (onlyUnverifiedOptions) {
+    title = "No single-airline options found";
+    subtitle =
+      "We found flights for this route, but only as separate tickets on different airlines with no guaranteed connection between them - so we're not showing them as a regular flight. Try a nearby date, or check airline/travel sites directly for combo fares.";
+  }
+
   const noResultsHtml = `
     <div class="sky-search-state-card sky-search-no-results-card">
       <div class="sky-no-results-icon" aria-hidden="true">⌕</div>
@@ -4523,12 +4539,28 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     const missingReturn = payload.tripType === "round-trip" && returnAll.length === 0;
 
     if (missingOutbound || missingReturn) {
+      // FlightAPI can return real itineraries for a route/date that all get
+      // excluded because none had a verified single-airline price (e.g. the
+      // only "options" were separate tickets across two different airlines,
+      // sold by a global aggregator, not any of our 5 target OTAs, with no
+      // missed-connection protection). That's a different, more specific
+      // situation than "FlightAPI simply has nothing for this route/date" -
+      // see CURRENT_BUGS.md item O follow-up.
+      const outRule = json?.meta?.outCarrierPriceRule;
+      const retRule = json?.meta?.retCarrierPriceRule;
+      const outOnlyUnverifiedOptions =
+        missingOutbound && Number(outRule?.flightApiItineraries || 0) > 0 && Number(outRule?.keptWithCarrierPrice || 0) === 0;
+      const retOnlyUnverifiedOptions =
+        missingReturn && Number(retRule?.flightApiItineraries || 0) > 0 && Number(retRule?.keptWithCarrierPrice || 0) === 0;
+
       activeFilters.airlines = [];
       renderAirlineFilters();
       renderSearchNoResultsState({
         tripType: payload.tripType,
         missingOutbound,
-        missingReturn
+        missingReturn,
+        outOnlyUnverifiedOptions,
+        retOnlyUnverifiedOptions
       });
       return;
     }
