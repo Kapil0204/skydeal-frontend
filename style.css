@@ -1317,6 +1317,36 @@ h3{
   font-weight:750;
 }
 
+.stopsHoverable{
+  position:relative;
+  cursor:help;
+  border-bottom:1px dotted currentColor;
+  display:inline-block;
+  width:fit-content;
+}
+
+.stopsTooltip{
+  display:none;
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:0;
+  max-width:min(260px, 80vw);
+  background:#101828;
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.5;
+  white-space:normal;
+  padding:8px 12px;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(16,24,40,.24);
+  z-index:20;
+}
+
+.stopsHoverable:hover .stopsTooltip{
+  display:block;
+}
+
 .price{
   color:#101828;
   font-size:18px;

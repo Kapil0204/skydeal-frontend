@@ -595,19 +595,20 @@ function displayFlightNumber(f) {
   const fc = (f?.flightCode || f?.flightIata || "").toString().trim();
   if (fc) return fc;
 
-  // Genuine multi-carrier (interline) itineraries: show every leg's own
-  // "CODE NUM", not just the first segment's - otherwise the flight number
-  // silently hides that part of the journey is on a different airline.
-  // segmentAirlineNames is index-aligned with allFlightNumbers (one entry
-  // PER SEGMENT, not deduped like allAirlineNames) so a repeated carrier
-  // across segments still lines up correctly.
-  if (f?.isMixedCarrierItinerary && Array.isArray(f?.segmentAirlineNames) && Array.isArray(f?.allFlightNumbers) && f.allFlightNumbers.length > 1) {
+  // Any connecting (1+ stop) itinerary should show every segment's own
+  // "CODE NUM" (e.g. "6E 911/6E 211"), not just the first leg's - this
+  // applies whether it's the same carrier throughout or a genuine
+  // multi-carrier connection. segmentAirlineNames is index-aligned with
+  // allFlightNumbers (one entry PER SEGMENT, not deduped like
+  // allAirlineNames) so a repeated carrier across segments still lines up
+  // correctly.
+  if (Array.isArray(f?.segmentAirlineNames) && Array.isArray(f?.allFlightNumbers) && f.allFlightNumbers.length > 1) {
     const parts = f.allFlightNumbers.map((num, i) => {
       const airline = f.segmentAirlineNames[i];
       const code = codeForAirlineName(airline);
       return code ? `${code} ${num}` : String(num);
     });
-    if (parts.length > 0) return parts.join(" + ");
+    if (parts.length > 0) return parts.join("/");
   }
 
   let carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
@@ -4125,12 +4126,50 @@ async function compareSelectedRoundTrip() {
   }
 }
 
+function formatLayoverDuration(minutes) {
+  const m = Number(minutes);
+  if (!Number.isFinite(m) || m < 0) return "";
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  if (h > 0 && mm > 0) return `${h}h ${mm}m`;
+  if (h > 0) return `${h}h`;
+  return `${mm}m`;
+}
+
+// Layover city/duration only - FlightAPI has no terminal-change data
+// anywhere in its schema, so unlike some OTA UIs we don't claim one.
+function stopsBadgeHtml(f) {
+  const stops = Number.isFinite(f.stops) ? f.stops : 0;
+  const label = stops === 0 ? "Non-stop" : `${stops} stop(s)`;
+
+  const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
+  if (stops === 0 || layovers.length === 0) {
+    return `<div class="stops">${label}</div>`;
+  }
+
+  const lines = layovers
+    .map((lo) => {
+      const place = lo?.airportName
+        ? `${safeText(lo.airportName)}${lo.airportCode ? ` (${safeText(lo.airportCode)})` : ""}`
+        : (lo?.airportCode ? safeText(lo.airportCode) : "Unknown airport");
+      const dur = formatLayoverDuration(lo?.durationMinutes);
+      return dur ? `${place} · ${dur} layover` : place;
+    })
+    .join("<br/>");
+
+  return `
+    <div class="stops stopsHoverable">
+      ${label}
+      <div class="stopsTooltip">${lines}</div>
+    </div>
+  `;
+}
+
 function flightCard(f, direction = "out") {
   const name = safeText(f.displayAirlineName || f.airlineName);
   const num = displayFlightNumber(f);
   const dep = fmtTime(f.departureTime);
   const arr = fmtTime(f.arrivalTime);
-  const stops = Number.isFinite(f.stops) ? f.stops : 0;
 
   const best = f.bestDeal;
   const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
@@ -4202,7 +4241,7 @@ function flightCard(f, direction = "out") {
         </div>
 
         <div class="times">${dep} → ${arr}</div>
-        <div class="stops">${stops === 0 ? "Non-stop" : `${stops} stop(s)`}</div>
+        ${stopsBadgeHtml(f)}
 
         <div class="price">
           <div>${money(cardFinalPrice)}</div>
