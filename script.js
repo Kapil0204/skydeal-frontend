@@ -4136,8 +4136,10 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Layover city/duration only - FlightAPI has no terminal-change data
-// anywhere in its schema, so unlike some OTA UIs we don't claim one.
+// Duration is shown up front (below the stop count); WHERE the layover is
+// (airport name only, no code) is reserved for hover - FlightAPI has no
+// terminal-change data anywhere in its schema, so unlike some OTA UIs we
+// don't claim one.
 function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const label = stops === 0 ? "Non-stop" : `${stops} stop(s)`;
@@ -4147,20 +4149,25 @@ function stopsBadgeHtml(f) {
     return `<div class="stops">${label}</div>`;
   }
 
-  const lines = layovers
-    .map((lo) => {
-      const place = lo?.airportName
-        ? `${safeText(lo.airportName)}${lo.airportCode ? ` (${safeText(lo.airportCode)})` : ""}`
-        : (lo?.airportCode ? safeText(lo.airportCode) : "Unknown airport");
-      const dur = formatLayoverDuration(lo?.durationMinutes);
-      return dur ? `${place} · ${dur} layover` : place;
-    })
+  const durationText = layovers
+    .map((lo) => formatLayoverDuration(lo?.durationMinutes))
+    .filter(Boolean)
+    .join(" + ");
+
+  const airportNames = layovers
+    .map((lo) => safeText(lo?.airportName || lo?.airportCode || "Unknown airport"))
     .join("<br/>");
 
   return `
-    <div class="stops stopsHoverable">
+    <div class="stops">
       ${label}
-      <div class="stopsTooltip">${lines}</div>
+      ${durationText
+        ? `<div class="stopsLayoverLine stopsHoverable">
+            ${durationText} layover
+            <div class="stopsTooltip">${airportNames}</div>
+          </div>`
+        : ""
+      }
     </div>
   `;
 }
