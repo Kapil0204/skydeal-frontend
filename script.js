@@ -518,25 +518,45 @@ function fmtTime(t) {
   return s;
 }
 
+const AIRLINE_CODE_MAP = [
+  { k: "indigo", c: "6E" },
+  { k: "air india express", c: "IX" },
+  { k: "air india", c: "AI" },
+  { k: "akasa", c: "QP" },
+  { k: "spicejet", c: "SG" },
+  { k: "vistara", c: "UK" },
+  { k: "go first", c: "G8" },
+];
+
+function codeForAirlineName(name) {
+  const n = String(name || "").toLowerCase();
+  const hit = AIRLINE_CODE_MAP.find((x) => n.includes(x.k));
+  return hit ? hit.c : "";
+}
+
 function displayFlightNumber(f) {
   const fc = (f?.flightCode || f?.flightIata || "").toString().trim();
   if (fc) return fc;
 
+  // Genuine multi-carrier (interline) itineraries: show every leg's own
+  // "CODE NUM", not just the first segment's - otherwise the flight number
+  // silently hides that part of the journey is on a different airline.
+  // segmentAirlineNames is index-aligned with allFlightNumbers (one entry
+  // PER SEGMENT, not deduped like allAirlineNames) so a repeated carrier
+  // across segments still lines up correctly.
+  if (f?.isMixedCarrierItinerary && Array.isArray(f?.segmentAirlineNames) && Array.isArray(f?.allFlightNumbers) && f.allFlightNumbers.length > 1) {
+    const parts = f.allFlightNumbers.map((num, i) => {
+      const airline = f.segmentAirlineNames[i];
+      const code = codeForAirlineName(airline);
+      return code ? `${code} ${num}` : String(num);
+    });
+    if (parts.length > 0) return parts.join(" + ");
+  }
+
   let carrier = (f?.carrierCode || f?.airlineCode || f?.iataCode || "").toString().trim();
 
   if (!carrier) {
-    const name = (f?.airlineName || "").toString().toLowerCase();
-    const map = [
-      { k: "indigo", c: "6E" },
-      { k: "air india express", c: "IX" },
-      { k: "air india", c: "AI" },
-      { k: "akasa", c: "QP" },
-      { k: "spicejet", c: "SG" },
-      { k: "vistara", c: "UK" },
-      { k: "go first", c: "G8" },
-    ];
-    const hit = map.find((x) => name.includes(x.k));
-    if (hit) carrier = hit.c;
+    carrier = codeForAirlineName(f?.airlineName);
   }
 
   const num = (f?.flightNumber || "").toString().trim();
@@ -2198,7 +2218,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
   } else {
     body.innerHTML = `
       <div class="portalCompareFlightHead portalCompareFlightHeadV2">
-        <span>${safeText(flight.airlineName)} ${displayFlightNumber(flight)}</span>
+        <span>${safeText(flight.displayAirlineName || flight.airlineName)} ${displayFlightNumber(flight)}</span>
         <strong>${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}</strong>
       </div>
 
@@ -2529,7 +2549,7 @@ function selectedFlightSummary(f, direction = "out") {
   const date = selectedTripDateLabel(direction);
   const datePrefix = date ? `${date} · ` : "";
 
-  return `${datePrefix}${safeText(f.airlineName)} ${displayFlightNumber(f)} · ${fmtTime(f.departureTime)} → ${fmtTime(f.arrivalTime)} · ${money(f.price)}`;
+  return `${datePrefix}${safeText(f.displayAirlineName || f.airlineName)} ${displayFlightNumber(f)} · ${fmtTime(f.departureTime)} → ${fmtTime(f.arrivalTime)} · ${money(f.price)}`;
 }
 
 function ensureSelectedTripPanel() {
@@ -4033,7 +4053,7 @@ async function compareSelectedRoundTrip() {
 }
 
 function flightCard(f, direction = "out") {
-  const name = safeText(f.airlineName);
+  const name = safeText(f.displayAirlineName || f.airlineName);
   const num = displayFlightNumber(f);
   const dep = fmtTime(f.departureTime);
   const arr = fmtTime(f.arrivalTime);
