@@ -4195,9 +4195,9 @@ function stopsBadgeHtml(f) {
   return `
     <div class="stops">
       ${durationHtml}
-      ${stopsLineHtml(stops)}
-      <div class="stopsViaLine stopsHoverable">
-        ${viaLabel}
+      <div class="stopsHoverable">
+        ${stopsLineHtml(stops)}
+        <div class="stopsViaLine">${viaLabel}</div>
         <div class="stopsTooltip">${tooltipLines}</div>
       </div>
     </div>

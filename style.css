@@ -1353,9 +1353,6 @@ h3{
 .stopsHoverable{
   position:relative;
   cursor:help;
-  border-bottom:1px dotted currentColor;
-  display:inline-block;
-  width:fit-content;
 }
 
 .stopsTooltip{
