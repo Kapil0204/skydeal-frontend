@@ -486,6 +486,13 @@ function resolveLocationToCode(value) {
   return partial ? partial.code : upper;
 }
 
+function cityNameForCode(code) {
+  const upper = String(code || "").trim().toUpperCase();
+  if (!upper) return "";
+  const match = AIRPORTS.find((x) => x.code === upper);
+  return match?.city || upper;
+}
+
 function popularCitySuggestions() {
   return POPULAR_CITY_CODES
     .map((code) => AIRPORTS.find((a) => a.code === code))
@@ -1405,7 +1412,7 @@ function ensurePaymentEducationNudge() {
 
   nudge.innerHTML = `
     <div>
-      <strong>Heads up:</strong> the cheapest portal can change depending on how you pay.
+      <strong>Heads up:</strong> your final price can change depending on how you pay.
       Add your cards or UPI apps to see your real price.
     </div>
     <button type="button" aria-label="Dismiss payment tip">×</button>
@@ -1625,10 +1632,9 @@ function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
   if (pmCount) pmCount.textContent = String(n);
   if (paymentBtn) {
-  paymentBtn.textContent = includeEmiOffers
-    ? `Add cards & payment apps (${n}) + EMI offers`
-    : `Add cards & payment apps (${n})`;
-}
+    const base = n === 0 ? "Add how you pay" : `${n} payment method${n === 1 ? "" : "s"} added`;
+    paymentBtn.textContent = includeEmiOffers ? `${base} + EMI offers` : base;
+  }
   renderSelectedPaymentMethodsSummary();
   ensurePaymentEducationNudge();
 }
@@ -2291,12 +2297,14 @@ function computeTopOfferBanks(limit = 4) {
 // few real, live offer counts instead of leaving it blank once Filters
 // hid itself - reuses paymentOfferCounts, already fetched by
 // loadPaymentOptions() on page load, so this needs no new backend call.
+// Purple-toned shades only (varying depth), so bank avatars don't compete
+// with the primary SkyDeal brand color with unrelated hues.
 const OFFER_AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #4c1d95, #7c3aed)",
+  "linear-gradient(135deg, #6d28d9, #a855f7)",
   "linear-gradient(135deg, #7c3aed, #c084fc)",
-  "linear-gradient(135deg, #0891b2, #22d3ee)",
-  "linear-gradient(135deg, #ea580c, #fb923c)",
-  "linear-gradient(135deg, #be185d, #f472b6)",
-  "linear-gradient(135deg, #15803d, #4ade80)",
+  "linear-gradient(135deg, #581c87, #9333ea)",
+  "linear-gradient(135deg, #86198f, #c026d3)",
 ];
 
 function bankInitials(name) {
@@ -2311,19 +2319,20 @@ function renderPreSearchOffers() {
   if (!host) return;
 
   const total = computeTotalLiveOfferCount();
-  const topBanks = computeTopOfferBanks(4);
+  const topBanks = computeTopOfferBanks(3);
 
   if (total === 0 || topBanks.length === 0) {
-    host.innerHTML = `<div class="filter-placeholder">Add your cards to see live offers.</div>`;
+    host.innerHTML = `<div class="filter-placeholder">Add how you pay to find the offers available to you.</div>`;
     return;
   }
 
   host.innerHTML = `
     <div class="offers-hero">
       <div class="offers-hero-number">${total}</div>
-      <div class="offers-hero-label">live offers waiting across 5 portals</div>
+      <div class="offers-hero-label">active payment offer${total === 1 ? "" : "s"}</div>
     </div>
-    <div class="offers-panel-subhead">Top banks with live deals</div>
+    <div class="offers-panel-desc">Add how you pay to find the offers available to you.</div>
+    <div class="offers-panel-subhead">Payment methods with active offers</div>
     ${topBanks.map((b, i) => `
       <div class="offer-bank-chip" data-open-payment-modal="1">
         <div class="offer-bank-avatar" style="background:${OFFER_AVATAR_GRADIENTS[i % OFFER_AVATAR_GRADIENTS.length]}">${bankInitials(b.name)}</div>
@@ -2331,7 +2340,7 @@ function renderPreSearchOffers() {
         <span class="offer-bank-count">${b.count}</span>
       </div>
     `).join("")}
-    <button type="button" class="offers-panel-cta" data-open-payment-modal="1">Unlock your price with these →</button>
+    <button type="button" class="offers-panel-cta" data-open-payment-modal="1">Add how you pay</button>
   `;
 
   host.querySelectorAll("[data-open-payment-modal]").forEach((el) => {
@@ -4578,26 +4587,53 @@ function renderList(el, items, direction = "out") {
   });
 }
 
+// Heading text is keyed off the SAME "pre-search" signal that already
+// gates the Filters/offers-panel swap and the sort/pagination visibility
+// (setResultsPreSearch) - so a no-results or error search correctly falls
+// back to the pre-search copy too, not just the initial page load.
 function updateFlightSectionHeadings() {
-  const from = resolveLocationToCode(safeText(fromInput?.value, "").trim()) || "Departure";
-  const to = resolveLocationToCode(safeText(toInput?.value, "").trim()) || "Return";
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+  const hasRealResults = !!resultsSection && !resultsSection.classList.contains("pre-search");
+
+  const from = resolveLocationToCode(safeText(fromInput?.value, "").trim());
+  const to = resolveLocationToCode(safeText(toInput?.value, "").trim());
 
   const outboundTitle = document.querySelector("#outboundResultsPanel .col-head h3");
+  const outboundSubtitle = document.querySelector("#outboundResultsPanel .col-head .section-subtitle");
+  const outboundRouteDate = document.getElementById("outRouteDateLabel");
   const returnTitle = document.querySelector("#returnResultsPanel .col-head h3");
+  const returnSubtitle = document.querySelector("#returnResultsPanel .col-head .section-subtitle");
+  const returnRouteDate = document.getElementById("retRouteDateLabel");
+
+  if (!hasRealResults || !from || !to) {
+    if (outboundTitle) outboundTitle.textContent = "The flight stays the same. The final price may not.";
+    if (outboundSubtitle) outboundSubtitle.textContent = "Search a route to see the best final payable price available with your payment methods.";
+    if (outboundRouteDate) outboundRouteDate.textContent = "";
+    if (returnTitle) returnTitle.textContent = "Return flights";
+    if (returnSubtitle) returnSubtitle.textContent = "Shown only for round trips";
+    if (returnRouteDate) returnRouteDate.textContent = "";
+    return;
+  }
 
   const shouldSplitRoundTrip = typeof hasRoundTripResultsReady === "function" && hasRoundTripResultsReady();
   const isRoundTrip = isRoundTripModeActive();
+  const outDateLabel = selectedTripDateLabel("out");
+  const retDateLabel = selectedTripDateLabel("ret");
+  const fromCity = cityNameForCode(from);
+  const toCity = cityNameForCode(to);
 
-  if (outboundTitle) {
-    if (from && to && isRoundTrip && !shouldSplitRoundTrip) {
-      outboundTitle.textContent = `${from} ↔ ${to}`;
-    } else {
-      outboundTitle.textContent = from && to ? `${from} → ${to}` : "Departure flights";
-    }
+  if (outboundTitle) outboundTitle.textContent = "Your final price options";
+  if (outboundSubtitle) outboundSubtitle.textContent = "Based on your selected payment methods";
+  if (outboundRouteDate) {
+    const routeLabel = isRoundTrip && !shouldSplitRoundTrip ? `${fromCity} ↔ ${toCity}` : `${fromCity} → ${toCity}`;
+    outboundRouteDate.textContent = outDateLabel ? `${routeLabel} · ${outDateLabel}` : routeLabel;
   }
 
-  if (returnTitle) {
-    returnTitle.textContent = from && to ? `${to} → ${from}` : "Return flights";
+  if (returnTitle) returnTitle.textContent = "Your final price options";
+  if (returnSubtitle) returnSubtitle.textContent = "Based on your selected payment methods";
+  if (returnRouteDate) {
+    const routeLabel = `${toCity} → ${fromCity}`;
+    returnRouteDate.textContent = retDateLabel ? `${routeLabel} · ${retDateLabel}` : routeLabel;
   }
 }
 
@@ -4792,6 +4828,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       activeFilters.airlines = [];
       renderAirlineFilters();
       setResultsPreSearch(true);
+      updateFlightSectionHeadings();
       renderSearchNoResultsState({
         tripType: payload.tripType,
         missingOutbound,
@@ -4818,6 +4855,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedTripComparison = null;
 
     setResultsPreSearch(true);
+    updateFlightSectionHeadings();
     renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
     enterMobileResultsMode();

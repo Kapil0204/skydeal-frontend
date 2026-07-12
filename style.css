@@ -1079,7 +1079,7 @@ select:focus{
 
 .pro-results{
   display:grid;
-  grid-template-columns:280px minmax(0, 1fr);
+  grid-template-columns:240px minmax(0, 1fr);
   gap:18px;
   align-items:start;
   margin-top:18px;
@@ -1229,13 +1229,13 @@ h3{
   border:1px dashed #cbd5e1;
   background:linear-gradient(135deg, #f8fbff, #ffffff);
   border-radius:20px;
-  padding:28px 20px;
+  padding:20px 20px;
   text-align:center;
 }
 
 .empty-icon{
-  font-size:30px;
-  margin-bottom:8px;
+  font-size:26px;
+  margin-bottom:6px;
 }
 
 .empty-title{
@@ -1264,6 +1264,29 @@ h3{
 
 .pro-results:not(.pre-search) .offers-panel-content{
   display:none;
+}
+
+/* Sort/pagination have nothing to act on until a real search has real
+   results - completely hidden (not just disabled) pre-search, and on a
+   no-results/error search too, since both also carry the "pre-search"
+   class (see setResultsPreSearch in script.js). */
+.pro-results.pre-search .sort,
+.pro-results.pre-search .pager{
+  display:none;
+}
+
+.route-date-label{
+  font-size:12.5px;
+  font-weight:750;
+  color:#7c3aed;
+  margin-top:4px;
+}
+
+.offers-panel-desc{
+  font-size:12.5px;
+  color:#667085;
+  line-height:1.45;
+  margin-bottom:14px;
 }
 
 .offers-hero{
@@ -1375,8 +1398,8 @@ h3{
 }
 
 .popular-routes{
-  margin-top:22px;
-  padding-top:20px;
+  margin-top:16px;
+  padding-top:14px;
   border-top:1px solid rgba(15,23,42,0.08);
 }
 
@@ -1405,7 +1428,8 @@ h3{
   border-radius:999px;
   padding:9px 16px;
   cursor:pointer;
-  transition:background .15s ease, border-color .15s ease, transform .15s ease;
+  box-shadow:0 2px 6px rgba(124,58,237,0.06);
+  transition:background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }
 
 .popular-route-pill span{
@@ -1418,6 +1442,12 @@ h3{
   background:#faf5ff;
   border-color:#a855f7;
   transform:translateY(-1px);
+  box-shadow:0 6px 14px rgba(124,58,237,0.14);
+}
+
+.popular-route-pill:focus-visible{
+  outline:2px solid #7c3aed;
+  outline-offset:2px;
 }
 
 .card{

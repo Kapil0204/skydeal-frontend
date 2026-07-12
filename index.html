@@ -10,9 +10,9 @@
  <header class="nav skydeal-hero-header">
   <div class="skydeal-brand-lockup">
     <div class="brand"><span class="brand-name">SkyDeal</span></div>
-    <div class="skydeal-hero-line">Don’t just compare fares. Compare what you’ll pay.</div>
+    <div class="skydeal-hero-line">One flight. More than one final price.</div>
   </div>
-  <div class="sub">Live fares checked against portal and payment offers.</div>
+  <div class="sub">The way you pay can change what you finally pay. Add your cards and payment apps to find the best price available to you.</div>
 </header>
 
   <main class="wrap">
@@ -58,12 +58,12 @@
 
         <div class="pm-holder">
           <button id="paymentBtn" class="btn-ghost">
-            Add cards & payment apps (<span id="pmCount">0</span>)
+            Add how you pay (<span id="pmCount">0</span>)
           </button>
         </div>
       </div>
 
-      <button id="searchBtn" class="btn-primary">Compare final prices</button>
+      <button id="searchBtn" class="btn-primary">Find my best final price</button>
     </section>
 
     <section class="results pro-results pre-search">
@@ -71,10 +71,10 @@
         <div class="filter-card">
           <div class="offers-panel-content">
             <div class="filter-head">
-              <h3>Live offers</h3>
+              <h3>More ways to lower your fare</h3>
             </div>
             <div id="preSearchOffers">
-              <div class="filter-placeholder">Loading live offers…</div>
+              <div class="filter-placeholder">Loading offers…</div>
             </div>
           </div>
 
@@ -126,7 +126,7 @@
             <div class="filter-group">
               <div class="filter-title">SkyDeal tip</div>
               <div class="deal-tip">
-                Add your cards or UPI apps to see real savings based on how you pay.
+                Add how you pay to see your best final price, based on your cards and payment apps.
               </div>
             </div>
           </div>
@@ -139,6 +139,7 @@
             <div>
               <h3>Departure flights</h3>
               <div class="section-subtitle">Sorted by your best final payable estimate</div>
+              <div class="route-date-label" id="outRouteDateLabel"></div>
             </div>
             <div class="sort">
               <label>Sort by</label>
@@ -153,11 +154,9 @@
           <div id="outboundList" class="cards empty">
             <div class="empty-state">
               <div class="empty-icon">✈️</div>
-              <div class="empty-title">Search to compare real flight prices</div>
-              <div class="empty-copy">Flight prices change depending on the portal and payment method you use. Search a route to see live fares and your final price on each.</div>
 
               <div class="popular-routes">
-                <div class="popular-routes-title">Popular routes</div>
+                <div class="popular-routes-title">Popular searches</div>
                 <div class="popular-routes-list">
                   <button type="button" class="popular-route-pill" data-from="BOM" data-to="DEL">Mumbai <span>→</span> Delhi</button>
                   <button type="button" class="popular-route-pill" data-from="DEL" data-to="BLR">Delhi <span>→</span> Bengaluru</button>
@@ -180,6 +179,7 @@
             <div>
               <h3>Return flights</h3>
               <div class="section-subtitle">Shown only for round trips</div>
+              <div class="route-date-label" id="retRouteDateLabel"></div>
             </div>
             <div class="sort">
               <label>Sort by</label>
