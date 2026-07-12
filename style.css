@@ -1328,7 +1328,7 @@ h3{
   width:56px;
   height:1px;
   background:#cbd2e0;
-  margin:6px 0;
+  margin:6px auto;
   display:flex;
   align-items:center;
   justify-content:space-evenly;
@@ -1622,6 +1622,7 @@ h3{
   color:#667085;
   font-weight:750;
   white-space:nowrap;
+  text-align:center;
 }
 
 .price{
