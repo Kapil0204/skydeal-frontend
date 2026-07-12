@@ -1637,6 +1637,7 @@ function updatePaymentButtonLabel() {
   }
   renderSelectedPaymentMethodsSummary();
   ensurePaymentEducationNudge();
+  renderPaymentProfileCard();
 }
 function formatTermsForDisplay(terms) {
   if (!terms) return "";
@@ -2271,81 +2272,35 @@ function computeTotalLiveOfferCount() {
   return total;
 }
 
-function computeTopOfferBanks(limit = 4) {
-  const nameByKey = {};
-  for (const type of OFFER_COUNT_CANONICAL_TYPES) {
-    const arr = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
-    arr.forEach((name) => { nameByKey[String(name).toLowerCase()] = name; });
-  }
-
-  const totals = {};
-  for (const type of OFFER_COUNT_CANONICAL_TYPES) {
-    const bankCounts = paymentOfferCounts?.[type] || {};
-    for (const [key, count] of Object.entries(bankCounts)) {
-      if (!count) continue;
-      totals[key] = (totals[key] || 0) + count;
-    }
-  }
-
-  return Object.entries(totals)
-    .map(([key, count]) => ({ name: nameByKey[key] || key, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
-}
-
 // Fills the pre-search left panel (where Filters normally lives) with a
-// few real, live offer counts instead of leaving it blank once Filters
-// hid itself - reuses paymentOfferCounts, already fetched by
-// loadPaymentOptions() on page load, so this needs no new backend call.
-// Purple-toned shades only (varying depth), so bank avatars don't compete
-// with the primary SkyDeal brand color with unrelated hues.
-const OFFER_AVATAR_GRADIENTS = [
-  "linear-gradient(135deg, #4c1d95, #7c3aed)",
-  "linear-gradient(135deg, #6d28d9, #a855f7)",
-  "linear-gradient(135deg, #7c3aed, #c084fc)",
-  "linear-gradient(135deg, #581c87, #9333ea)",
-  "linear-gradient(135deg, #86198f, #c026d3)",
-];
+// simple, quiet payment-profile status card instead of the Filters
+// checkboxes that have nothing to filter yet. Status line and footer
+// count are both dynamic (selectedPaymentMethods.length and
+// paymentOfferCounts respectively) - reuses data already fetched by
+// loadPaymentOptions() on page load, no new backend call. Called both on
+// initial load and every time updatePaymentButtonLabel() runs, so it
+// stays in sync live as the user adds/removes payment methods, not just
+// once at page load.
+function renderPaymentProfileCard() {
+  const statusEl = document.getElementById("paymentProfileStatus");
+  const footerEl = document.getElementById("paymentProfileFooter");
+  const btnEl = document.getElementById("paymentProfileBtn");
+  if (!statusEl && !footerEl && !btnEl) return;
 
-function bankInitials(name) {
-  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return "?";
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
-
-function renderPreSearchOffers() {
-  const host = document.getElementById("preSearchOffers");
-  if (!host) return;
+  const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
+  if (statusEl) {
+    statusEl.textContent = n === 0 ? "No payment methods added" : `${n} payment method${n === 1 ? "" : "s"} added`;
+  }
 
   const total = computeTotalLiveOfferCount();
-  const topBanks = computeTopOfferBanks(3);
-
-  if (total === 0 || topBanks.length === 0) {
-    host.innerHTML = `<div class="filter-placeholder">Add how you pay to find the offers available to you.</div>`;
-    return;
+  if (footerEl) {
+    footerEl.textContent = total > 0 ? `${total} payment offer${total === 1 ? "" : "s"} active today` : "";
   }
 
-  host.innerHTML = `
-    <div class="offers-hero">
-      <div class="offers-hero-number">${total}</div>
-      <div class="offers-hero-label">active payment offer${total === 1 ? "" : "s"}</div>
-    </div>
-    <div class="offers-panel-desc">Add how you pay to find the offers available to you.</div>
-    <div class="offers-panel-subhead">Payment methods with active offers</div>
-    ${topBanks.map((b, i) => `
-      <div class="offer-bank-chip" data-open-payment-modal="1">
-        <div class="offer-bank-avatar" style="background:${OFFER_AVATAR_GRADIENTS[i % OFFER_AVATAR_GRADIENTS.length]}">${bankInitials(b.name)}</div>
-        <span class="offer-bank-name">${safeText(b.name)}</span>
-        <span class="offer-bank-count">${b.count}</span>
-      </div>
-    `).join("")}
-    <button type="button" class="offers-panel-cta" data-open-payment-modal="1">Add how you pay</button>
-  `;
-
-  host.querySelectorAll("[data-open-payment-modal]").forEach((el) => {
-    el.addEventListener("click", () => openPaymentModal());
-  });
+  if (btnEl && !btnEl.dataset.wired) {
+    btnEl.dataset.wired = "1";
+    btnEl.addEventListener("click", () => openPaymentModal());
+  }
 }
 
 // ---------- Flight Results Rendering + Pagination ----------
@@ -4959,7 +4914,7 @@ if (returnInput) {
 }
 
   await loadPaymentOptions();
-renderPreSearchOffers();
+renderPaymentProfileCard();
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);

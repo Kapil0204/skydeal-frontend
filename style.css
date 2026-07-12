@@ -1081,13 +1081,15 @@ select:focus{
   display:grid;
   grid-template-columns:240px minmax(0, 1fr);
   gap:18px;
-  align-items:start;
+  align-items:stretch;
   margin-top:18px;
 }
 
 .filter-panel{
   position:sticky;
   top:92px;
+  display:flex;
+  flex-direction:column;
 }
 
 .filter-card{
@@ -1096,6 +1098,10 @@ select:focus{
   border-radius:22px;
   padding:16px;
   box-shadow:var(--shadow);
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
 }
 
 .filter-head{
@@ -1254,12 +1260,18 @@ h3{
 }
 
 /* Filters have nothing to filter until a real search has real results, so
-   the left panel shows real live-offer data instead pre-search (swapped
-   via the "pre-search" class on .pro-results, see setResultsPreSearch and
-   renderPreSearchOffers in script.js) rather than either inert checkboxes
-   or an empty gap. */
+   the left panel shows a quiet payment-profile status card instead
+   pre-search (swapped via the "pre-search" class on .pro-results, see
+   setResultsPreSearch and renderPaymentProfileCard in script.js) rather
+   than either inert checkboxes or an empty gap. */
 .pro-results.pre-search .filters-content{
   display:none;
+}
+
+.offers-panel-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
 .pro-results:not(.pre-search) .offers-panel-content{
@@ -1282,119 +1294,60 @@ h3{
   margin-top:4px;
 }
 
-.offers-panel-desc{
-  font-size:12.5px;
-  color:#667085;
-  line-height:1.45;
-  margin-bottom:14px;
-}
-
-.offers-hero{
-  background:linear-gradient(135deg, #1e1147, #4c1d95 45%, #7c3aed);
-  border-radius:16px;
-  padding:18px 16px;
-  text-align:center;
-  margin-bottom:16px;
-  box-shadow:0 12px 28px rgba(124,58,237,0.28);
-}
-
-.offers-hero-number{
-  font-size:34px;
-  font-weight:950;
-  line-height:1;
-  color:#ffffff;
-  letter-spacing:-.02em;
-}
-
-.offers-hero-label{
-  margin-top:6px;
-  font-size:12.5px;
-  font-weight:700;
-  color:rgba(255,255,255,0.82);
-  line-height:1.4;
-}
-
-.offers-panel-subhead{
-  font-size:11.5px;
+/* Payment-profile card (pre-search left panel) - deliberately quiet/
+   muted so it doesn't compete with the main results area; see
+   renderPaymentProfileCard in script.js. */
+.payment-profile-heading{
+  font-size:15px;
   font-weight:800;
-  color:#9ca3af;
-  text-transform:uppercase;
-  letter-spacing:.06em;
+  color:#111827;
   margin-bottom:10px;
 }
 
-.offer-bank-chip{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  background:#ffffff;
-  border:1px solid #ece9f3;
-  border-radius:14px;
-  padding:9px 12px;
-  margin-bottom:8px;
-  cursor:pointer;
-  box-shadow:0 2px 6px rgba(15,23,42,0.04);
-  transition:background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
-}
-
-.offer-bank-chip:hover{
-  background:#faf5ff;
-  border-color:#c084fc;
-  transform:translateY(-1px);
-  box-shadow:0 8px 18px rgba(124,58,237,0.14);
-}
-
-.offer-bank-avatar{
-  width:30px;
-  height:30px;
-  border-radius:9px;
-  flex:0 0 auto;
-  display:grid;
-  place-items:center;
-  color:#ffffff;
-  font-size:11px;
-  font-weight:900;
-}
-
-.offer-bank-chip .offer-bank-name{
-  flex:1;
+.payment-profile-status{
   font-size:13px;
   font-weight:750;
-  color:#1f2430;
-  min-width:0;
-}
-
-.offer-bank-chip .offer-bank-count{
-  font-size:11px;
-  font-weight:900;
   color:#7c3aed;
-  background:rgba(124,58,237,0.1);
-  border-radius:999px;
-  padding:3px 9px;
-  white-space:nowrap;
+  margin-bottom:8px;
 }
 
-.offers-panel-cta{
-  display:block;
-  width:100%;
-  margin-top:10px;
+.payment-profile-body{
   font-size:13px;
-  font-weight:800;
-  color:#ffffff;
-  text-align:center;
-  cursor:pointer;
-  padding:11px;
-  border-radius:12px;
-  border:none;
-  background:linear-gradient(135deg, #7c3aed, #a855f7);
-  box-shadow:0 8px 18px rgba(124,58,237,0.28);
-  transition:transform .15s ease, box-shadow .15s ease;
+  color:#667085;
+  line-height:1.5;
+  margin-bottom:16px;
 }
 
-.offers-panel-cta:hover{
-  transform:translateY(-1px);
-  box-shadow:0 12px 24px rgba(124,58,237,0.34);
+.payment-profile-btn{
+  width:100%;
+  font-size:13px;
+  font-weight:750;
+  color:#374151;
+  background:#ffffff;
+  border:1px solid rgba(168,85,247,0.28);
+  border-radius:12px;
+  padding:10px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease;
+}
+
+.payment-profile-btn:hover{
+  background:#faf5ff;
+  border-color:#a855f7;
+}
+
+.payment-profile-btn:focus-visible{
+  outline:2px solid #7c3aed;
+  outline-offset:2px;
+}
+
+.payment-profile-footer{
+  margin-top:auto;
+  padding-top:14px;
+  font-size:12px;
+  font-weight:700;
+  color:#9ca3af;
+  text-align:center;
 }
 
 .popular-routes{
@@ -1748,7 +1701,7 @@ h3{
 }
 
 .filter-card{
-  padding:18px;
+  padding:16px;
 }
 
 .filter-option{
@@ -8726,7 +8679,7 @@ body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-pi
   .results.pro-results {
     display: grid !important;
     grid-template-columns: minmax(250px, 320px) minmax(0, 1fr) !important;
-    align-items: start !important;
+    align-items: stretch !important;
     gap: 24px !important;
     width: min(1180px, calc(100vw - 48px)) !important;
     max-width: 1180px !important;
@@ -8825,8 +8778,8 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   }
 
   .filter-card {
-    padding: 14px !important;
-    border-radius: 20px !important;
+    padding: 16px !important;
+    border-radius: 22px !important;
   }
 
   .filter-head {
