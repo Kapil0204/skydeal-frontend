@@ -4136,24 +4136,29 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Lives in the card's grid row next to price - "N stop(s)" on its own
-// line, then (MMT-style) a "via City" line directly below it in the SAME
-// column, short city name only (e.g. "Noida" not "Noida International" -
-// city is resolved backend-side via the airport's parent place). Hover
-// shows each stop's own "{duration} layover | {City}" line. No terminal/
-// plane-change claim - checked FlightAPI's full schema and it has neither
-// anywhere, so we don't guess.
+// Lives in the card's grid row next to price - just "via City[, City]" for
+// a connection (the stop count is implied by how many cities are listed,
+// so we don't separately say "N stop(s)" too), short city name only (e.g.
+// "New Delhi" not "Delhi Indira Gandhi International" - resolved
+// backend-side via the airport's parent place). Hover shows each stop's
+// own "{duration} layover | {City}" line. No terminal/plane-change claim -
+// checked FlightAPI's full schema and it has no terminal data anywhere;
+// "plane change" is technically inferable (different flight number per
+// segment) but true for ~98% of all connections in a live sample, so it
+// would say "yes" almost every time while still occasionally being wrong
+// - not worth the false precision.
 function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
-  const label = stops === 0 ? "Non-stop" : `${stops} stop(s)`;
 
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
   if (stops === 0 || layovers.length === 0) {
-    return `<div class="stops">${label}</div>`;
+    return `<div class="stops">Non-stop</div>`;
   }
 
   const cityNames = layovers.map((lo) => safeText(lo?.cityName || lo?.airportName || lo?.airportCode || "Unknown"));
-  const viaLabel = `${stops} stop${stops > 1 ? "s" : ""} via ${cityNames.join(", ")}`;
+  const viaLabel = cityNames.length > 1
+    ? `via ${cityNames.slice(0, -1).join(", ")} and ${cityNames[cityNames.length - 1]}`
+    : `via ${cityNames[0]}`;
 
   const tooltipLines = layovers
     .map((lo, i) => {
@@ -4164,7 +4169,6 @@ function stopsBadgeHtml(f) {
 
   return `
     <div class="stops">
-      ${label}
       <div class="stopsViaLine stopsHoverable">
         ${viaLabel}
         <div class="stopsTooltip">${tooltipLines}</div>
