@@ -1317,6 +1317,31 @@ h3{
   font-weight:750;
 }
 
+.flightDuration{
+  font-size:12px;
+  font-weight:700;
+  color:#475467;
+}
+
+.flightStopsLine{
+  position:relative;
+  width:56px;
+  height:1px;
+  background:#cbd2e0;
+  margin:6px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-evenly;
+}
+
+.stopDot{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#7c3aed;
+  flex:0 0 auto;
+}
+
 .stopsViaLine{
   font-size:12px;
   font-weight:700;

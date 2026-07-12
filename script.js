@@ -4136,25 +4136,47 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Lives in the card's grid row next to price - ONE combined line "N
-// stop(s) via City[, City]" for a connection (previously this was two
-// separate lines - "N stop(s)" AND "N stop via City" right below it,
-// which was a real duplication bug; fixed to a single line, not to drop
-// the stop-count wording entirely). Short city name only (e.g. "New
-// Delhi" not "Delhi Indira Gandhi International" - resolved backend-side
-// via the airport's parent place). Hover shows each stop's own
-// "{duration} layover | {City}" line. No terminal/plane-change claim -
-// checked FlightAPI's full schema and it has no terminal data anywhere;
-// "plane change" is technically inferable (different flight number per
-// segment) but true for ~98% of all connections in a live sample, so it
-// would say "yes" almost every time while still occasionally being wrong
-// - not worth the false precision.
+function totalFlightDurationMinutes(f) {
+  if (!f?.departureTime || !f?.arrivalTime) return null;
+  const dep = new Date(f.departureTime).getTime();
+  const arr = new Date(f.arrivalTime).getTime();
+  if (!Number.isFinite(dep) || !Number.isFinite(arr) || arr < dep) return null;
+  return Math.round((arr - dep) / 60000);
+}
+
+// MMT-style: a short line with one dot per stop (no dots for non-stop).
+function stopsLineHtml(stops) {
+  const dots = Array.from({ length: stops }, () => `<span class="stopDot"></span>`).join("");
+  return `<div class="flightStopsLine">${dots}</div>`;
+}
+
+// Lives in the card's grid row next to price, stacked MMT-style: total
+// flight duration on top, a line with one dot per stop below that, then
+// "N stop(s) via City[, City]" (or "Non-stop") at the bottom. Short city
+// name only (e.g. "New Delhi" not "Delhi Indira Gandhi International" -
+// resolved backend-side via the airport's parent place). Hover shows each
+// stop's own "{duration} layover | {City}" line. No terminal/plane-change
+// claim - checked FlightAPI's full schema and it has no terminal data
+// anywhere; "plane change" is technically inferable (different flight
+// number per segment) but true for ~98% of all connections in a live
+// sample, so it would say "yes" almost every time while still
+// occasionally being wrong - not worth the false precision.
 function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
+  const durationMinutes = totalFlightDurationMinutes(f);
+  const durationHtml = durationMinutes != null
+    ? `<div class="flightDuration">${formatLayoverDuration(durationMinutes)}</div>`
+    : "";
 
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
   if (stops === 0 || layovers.length === 0) {
-    return `<div class="stops">Non-stop</div>`;
+    return `
+      <div class="stops">
+        ${durationHtml}
+        ${stopsLineHtml(0)}
+        <div>Non-stop</div>
+      </div>
+    `;
   }
 
   const cityNames = layovers.map((lo) => safeText(lo?.cityName || lo?.airportName || lo?.airportCode || "Unknown"));
@@ -4172,6 +4194,8 @@ function stopsBadgeHtml(f) {
 
   return `
     <div class="stops">
+      ${durationHtml}
+      ${stopsLineHtml(stops)}
       <div class="stopsViaLine stopsHoverable">
         ${viaLabel}
         <div class="stopsTooltip">${tooltipLines}</div>
