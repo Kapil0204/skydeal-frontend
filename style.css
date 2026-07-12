@@ -1253,6 +1253,59 @@ h3{
   margin:0 auto;
 }
 
+/* Filters have nothing to filter until a real search has real results -
+   hidden pre-search / no-results / error so the page doesn't read as
+   half-built (see setResultsPreSearch in script.js). */
+.pro-results.pre-search .filter-panel{
+  display:none;
+}
+
+.popular-routes{
+  margin-top:22px;
+  padding-top:20px;
+  border-top:1px solid rgba(15,23,42,0.08);
+}
+
+.popular-routes-title{
+  font-size:13px;
+  font-weight:800;
+  color:#667085;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:12px;
+}
+
+.popular-routes-list{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+}
+
+.popular-route-pill{
+  font-size:14px;
+  font-weight:700;
+  color:#374151;
+  background:#ffffff;
+  border:1px solid rgba(168,85,247,0.28);
+  border-radius:999px;
+  padding:9px 16px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.popular-route-pill span{
+  color:#a855f7;
+  font-weight:900;
+  margin:0 2px;
+}
+
+.popular-route-pill:hover{
+  background:#faf5ff;
+  border-color:#a855f7;
+  transform:translateY(-1px);
+}
+
 .card{
   background:#ffffff;
   border:1px solid #e6eaf2;

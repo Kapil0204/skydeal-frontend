@@ -552,6 +552,24 @@ function wireLocationAutocomplete(inputEl, boxEl) {
   });
 }
 
+// One-click "Popular routes" pills shown on the pre-search empty state -
+// fills From/To and runs the search immediately, same as MMT's "recent
+// searches" quick-pick behavior, since SkyDeal has no search history of
+// its own to show instead.
+function wirePopularRoutes() {
+  document.querySelectorAll(".popular-route-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const from = btn.getAttribute("data-from") || "";
+      const to = btn.getAttribute("data-to") || "";
+      if (!from || !to || !fromInput || !toInput) return;
+
+      fromInput.value = from;
+      toInput.value = to;
+      handleSearch();
+    });
+  });
+}
+
 function fmtTime(t) {
   if (!t) return "—";
   const s = String(t);
@@ -3694,6 +3712,15 @@ document.addEventListener("focusin", () => {
 
 setTimeout(fixMobilePreSearchLayers, 0);
 
+// The Filters sidebar has nothing to filter until a search actually
+// returns real flights - showing it beforehand (or after a no-results/
+// error search) reads as broken rather than just empty, so it stays
+// hidden via the "pre-search" class until there's something to filter.
+function setResultsPreSearch(isPreSearch) {
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+  resultsSection?.classList.toggle("pre-search", isPreSearch);
+}
+
 function renderSearchNoResultsState(details = {}) {
   document.body.classList.remove("search-error-mode");
   const outHost = document.getElementById("outboundList") || document.getElementById("outboundCards") || document.getElementById("outCards");
@@ -4674,6 +4701,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
       activeFilters.airlines = [];
       renderAirlineFilters();
+      setResultsPreSearch(true);
       renderSearchNoResultsState({
         tripType: payload.tripType,
         missingOutbound,
@@ -4686,6 +4714,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     activeFilters.airlines = [];
     renderAirlineFilters();
+    setResultsPreSearch(false);
 
     renderOutbound();
     renderReturn();
@@ -4698,6 +4727,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedReturnFlight = null;
     selectedTripComparison = null;
 
+    setResultsPreSearch(true);
     renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
     enterMobileResultsMode();
@@ -4804,6 +4834,7 @@ if (returnInput) {
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);
+wirePopularRoutes();
 updatePaymentButtonLabel();
 
   console.log("[SkyDeal] frontend ready");
