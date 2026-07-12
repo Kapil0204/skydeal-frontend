@@ -4136,12 +4136,14 @@ function formatLayoverDuration(minutes) {
   return `${mm}m`;
 }
 
-// Lives in the card's grid row next to price - just "via City[, City]" for
-// a connection (the stop count is implied by how many cities are listed,
-// so we don't separately say "N stop(s)" too), short city name only (e.g.
-// "New Delhi" not "Delhi Indira Gandhi International" - resolved
-// backend-side via the airport's parent place). Hover shows each stop's
-// own "{duration} layover | {City}" line. No terminal/plane-change claim -
+// Lives in the card's grid row next to price - ONE combined line "N
+// stop(s) via City[, City]" for a connection (previously this was two
+// separate lines - "N stop(s)" AND "N stop via City" right below it,
+// which was a real duplication bug; fixed to a single line, not to drop
+// the stop-count wording entirely). Short city name only (e.g. "New
+// Delhi" not "Delhi Indira Gandhi International" - resolved backend-side
+// via the airport's parent place). Hover shows each stop's own
+// "{duration} layover | {City}" line. No terminal/plane-change claim -
 // checked FlightAPI's full schema and it has no terminal data anywhere;
 // "plane change" is technically inferable (different flight number per
 // segment) but true for ~98% of all connections in a live sample, so it
@@ -4156,9 +4158,10 @@ function stopsBadgeHtml(f) {
   }
 
   const cityNames = layovers.map((lo) => safeText(lo?.cityName || lo?.airportName || lo?.airportCode || "Unknown"));
-  const viaLabel = cityNames.length > 1
-    ? `via ${cityNames.slice(0, -1).join(", ")} and ${cityNames[cityNames.length - 1]}`
-    : `via ${cityNames[0]}`;
+  const cityList = cityNames.length > 1
+    ? `${cityNames.slice(0, -1).join(", ")} and ${cityNames[cityNames.length - 1]}`
+    : cityNames[0];
+  const viaLabel = `${stops} stop${stops > 1 ? "s" : ""} via ${cityList}`;
 
   const tooltipLines = layovers
     .map((lo, i) => {
