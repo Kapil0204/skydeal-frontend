@@ -2291,6 +2291,21 @@ function computeTopOfferBanks(limit = 4) {
 // few real, live offer counts instead of leaving it blank once Filters
 // hid itself - reuses paymentOfferCounts, already fetched by
 // loadPaymentOptions() on page load, so this needs no new backend call.
+const OFFER_AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #7c3aed, #c084fc)",
+  "linear-gradient(135deg, #0891b2, #22d3ee)",
+  "linear-gradient(135deg, #ea580c, #fb923c)",
+  "linear-gradient(135deg, #be185d, #f472b6)",
+  "linear-gradient(135deg, #15803d, #4ade80)",
+];
+
+function bankInitials(name) {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
 function renderPreSearchOffers() {
   const host = document.getElementById("preSearchOffers");
   if (!host) return;
@@ -2304,14 +2319,19 @@ function renderPreSearchOffers() {
   }
 
   host.innerHTML = `
-    <div class="offers-panel-total"><b>${total} live offer${total === 1 ? "" : "s"}</b> across our 5 portals right now</div>
-    ${topBanks.map((b) => `
+    <div class="offers-hero">
+      <div class="offers-hero-number">${total}</div>
+      <div class="offers-hero-label">live offers waiting across 5 portals</div>
+    </div>
+    <div class="offers-panel-subhead">Top banks with live deals</div>
+    ${topBanks.map((b, i) => `
       <div class="offer-bank-chip" data-open-payment-modal="1">
-        <span>${safeText(b.name)}</span>
-        <span class="offer-bank-count">${b.count} offer${b.count === 1 ? "" : "s"}</span>
+        <div class="offer-bank-avatar" style="background:${OFFER_AVATAR_GRADIENTS[i % OFFER_AVATAR_GRADIENTS.length]}">${bankInitials(b.name)}</div>
+        <span class="offer-bank-name">${safeText(b.name)}</span>
+        <span class="offer-bank-count">${b.count}</span>
       </div>
     `).join("")}
-    <div class="offers-panel-cta" data-open-payment-modal="1">Add your cards to see these apply →</div>
+    <button type="button" class="offers-panel-cta" data-open-payment-modal="1">Unlock your price with these →</button>
   `;
 
   host.querySelectorAll("[data-open-payment-modal]").forEach((el) => {
