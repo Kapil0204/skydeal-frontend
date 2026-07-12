@@ -9,6 +9,29 @@
 import { AIRPORTS } from "./airports.js";
 const BACKEND = "https://skydeal-backend.onrender.com";
 
+// No explicit "country" field exists on AIRPORTS entries (see airports.js -
+// a worldwide dataset with no country property), so domestic-vs-
+// international is determined by an explicit IATA code list instead of
+// guessing from name/city text. Merges the original 37-airport curated
+// list (airports.js lines 2-38) with skydeal-backend's INDIAN_IATA_AIRPORTS
+// set (index.js) so codes present in only one of the two are still covered.
+const INDIAN_IATA_CODES = new Set([
+  "DEL","BOM","BLR","MAA","HYD","CCU","PNQ","AMD","GOI","GOX","COK","TRV",
+  "IXC","JAI","LKO","PAT","RPR","NAG","IXR","IXB","BDQ","STV","IDR","BHO",
+  "CJB","TRZ","IXM","TIR","VTZ","VGA","GAU","IMF","IXZ","SXR","IXJ","DED",
+  "IXD","ATQ","BBI","BHU","CCJ","DMU","GOP","GWL","HBX","IXA","IXE","IXG",
+  "IXL","IXS","IXU","JDH","JGA","JLR","JRG","JSA","IXY","JGB","KNU","MYQ",
+  "RJA","SAG","SLV","SXV","UDR","VNS","PNY","AGX","DIB","SHL","AIP","NDC",
+  "RDP","JRH","TEZ","TCR","COH","DHM","KUU","LEH","SBI","BEP","HJR","JLG",
+  "AJL","IXK","ISK","NMI"
+]);
+
+// A few popular Indian cities shown by default when a From/To box is
+// clicked/focused with nothing typed yet - matches MMT's "recent
+// searches" panel, except SkyDeal has no search history to draw on, so
+// this is a fixed shortlist instead.
+const POPULAR_CITY_CODES = ["BOM", "DEL", "BLR", "MAA"];
+
 /**
  * fetch() with a client-side safety-net timeout.
  *
@@ -427,6 +450,15 @@ function searchLocations(query) {
     return hay.includes(q);
   })
   .sort((a, b) => {
+    // Domestic (Indian) results outrank international ones outright, even
+    // if an international city name happens to match the typed text more
+    // literally (e.g. typing "BOM" should surface Mumbai before "Bom Jesus
+    // Da Lapa") - only within the same domestic/international group does
+    // an exact city-prefix match break the tie.
+    const aIndia = INDIAN_IATA_CODES.has(String(a.code || "").toUpperCase());
+    const bIndia = INDIAN_IATA_CODES.has(String(b.code || "").toUpperCase());
+    if (aIndia !== bIndia) return aIndia ? -1 : 1;
+
     const aStarts = a.city.toLowerCase().startsWith(q);
     const bStarts = b.city.toLowerCase().startsWith(q);
     return bStarts - aStarts;
@@ -454,12 +486,21 @@ function resolveLocationToCode(value) {
   return partial ? partial.code : upper;
 }
 
+function popularCitySuggestions() {
+  return POPULAR_CITY_CODES
+    .map((code) => AIRPORTS.find((a) => a.code === code))
+    .filter(Boolean);
+}
+
 function renderLocationSuggestions(inputEl, boxEl, query) {
   if (!boxEl) return;
 
-  const results = searchLocations(query);
+  // Nothing typed yet: show a small default shortlist (MMT shows recent
+  // searches here; SkyDeal has no search history to draw on, so a fixed
+  // popular-cities list stands in for it) instead of an empty dropdown.
+  const results = query.trim() ? searchLocations(query) : popularCitySuggestions();
 
-  if (!query.trim() || results.length === 0) {
+  if (results.length === 0) {
     boxEl.innerHTML = "";
     boxEl.classList.remove("open");
     return;
