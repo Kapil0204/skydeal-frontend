@@ -2249,6 +2249,76 @@ function normalizeOfferCounts(rawOfferCounts) {
   return out;
 }
 
+// The 5 UI-facing payment tabs (matches renderPaymentTabs' canonical list).
+// paymentOfferCounts also carries legacy camelCase duplicate keys
+// (CreditCard/DebitCard/NetBanking) pointing at the exact same underlying
+// counts as their spaced equivalents - summing only these 5 avoids
+// double-counting the same offers twice.
+const OFFER_COUNT_CANONICAL_TYPES = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
+
+function computeTotalLiveOfferCount() {
+  let total = 0;
+  for (const type of OFFER_COUNT_CANONICAL_TYPES) {
+    const bankCounts = paymentOfferCounts?.[type] || {};
+    total += Object.values(bankCounts).reduce((sum, c) => sum + (Number(c) || 0), 0);
+  }
+  return total;
+}
+
+function computeTopOfferBanks(limit = 4) {
+  const nameByKey = {};
+  for (const type of OFFER_COUNT_CANONICAL_TYPES) {
+    const arr = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
+    arr.forEach((name) => { nameByKey[String(name).toLowerCase()] = name; });
+  }
+
+  const totals = {};
+  for (const type of OFFER_COUNT_CANONICAL_TYPES) {
+    const bankCounts = paymentOfferCounts?.[type] || {};
+    for (const [key, count] of Object.entries(bankCounts)) {
+      if (!count) continue;
+      totals[key] = (totals[key] || 0) + count;
+    }
+  }
+
+  return Object.entries(totals)
+    .map(([key, count]) => ({ name: nameByKey[key] || key, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+// Fills the pre-search left panel (where Filters normally lives) with a
+// few real, live offer counts instead of leaving it blank once Filters
+// hid itself - reuses paymentOfferCounts, already fetched by
+// loadPaymentOptions() on page load, so this needs no new backend call.
+function renderPreSearchOffers() {
+  const host = document.getElementById("preSearchOffers");
+  if (!host) return;
+
+  const total = computeTotalLiveOfferCount();
+  const topBanks = computeTopOfferBanks(4);
+
+  if (total === 0 || topBanks.length === 0) {
+    host.innerHTML = `<div class="filter-placeholder">Add your cards to see live offers.</div>`;
+    return;
+  }
+
+  host.innerHTML = `
+    <div class="offers-panel-total"><b>${total} live offer${total === 1 ? "" : "s"}</b> across our 5 portals right now</div>
+    ${topBanks.map((b) => `
+      <div class="offer-bank-chip" data-open-payment-modal="1">
+        <span>${safeText(b.name)}</span>
+        <span class="offer-bank-count">${b.count} offer${b.count === 1 ? "" : "s"}</span>
+      </div>
+    `).join("")}
+    <div class="offers-panel-cta" data-open-payment-modal="1">Add your cards to see these apply →</div>
+  `;
+
+  host.querySelectorAll("[data-open-payment-modal]").forEach((el) => {
+    el.addEventListener("click", () => openPaymentModal());
+  });
+}
+
 // ---------- Flight Results Rendering + Pagination ----------
 function slicePage(items, pageIdx) {
   const start = (pageIdx - 1) * PAGE_SIZE;
@@ -4831,6 +4901,7 @@ if (returnInput) {
 }
 
   await loadPaymentOptions();
+renderPreSearchOffers();
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);

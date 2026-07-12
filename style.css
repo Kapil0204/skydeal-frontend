@@ -1253,11 +1253,77 @@ h3{
   margin:0 auto;
 }
 
-/* Filters have nothing to filter until a real search has real results -
-   hidden pre-search / no-results / error so the page doesn't read as
-   half-built (see setResultsPreSearch in script.js). */
-.pro-results.pre-search .filter-panel{
+/* Filters have nothing to filter until a real search has real results, so
+   the left panel shows real live-offer data instead pre-search (swapped
+   via the "pre-search" class on .pro-results, see setResultsPreSearch and
+   renderPreSearchOffers in script.js) rather than either inert checkboxes
+   or an empty gap. */
+.pro-results.pre-search .filters-content{
   display:none;
+}
+
+.pro-results:not(.pre-search) .offers-panel-content{
+  display:none;
+}
+
+.offer-bank-chip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+  background:#ffffff;
+  border:1px solid rgba(168,85,247,0.24);
+  border-radius:12px;
+  padding:10px 12px;
+  margin-bottom:8px;
+  font-size:13px;
+  font-weight:700;
+  color:#374151;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease;
+}
+
+.offer-bank-chip:hover{
+  background:#faf5ff;
+  border-color:#a855f7;
+}
+
+.offer-bank-chip .offer-bank-count{
+  font-size:12px;
+  font-weight:800;
+  color:#a855f7;
+  background:rgba(168,85,247,0.1);
+  border-radius:999px;
+  padding:2px 9px;
+  white-space:nowrap;
+}
+
+.offers-panel-total{
+  font-size:13px;
+  color:#667085;
+  line-height:1.4;
+  margin-bottom:14px;
+}
+
+.offers-panel-total b{
+  color:#111827;
+}
+
+.offers-panel-cta{
+  margin-top:4px;
+  font-size:12px;
+  font-weight:700;
+  color:#a855f7;
+  text-align:center;
+  cursor:pointer;
+  padding:8px;
+  border-radius:10px;
+  border:1px dashed rgba(168,85,247,0.3);
+}
+
+.offers-panel-cta:hover{
+  background:#faf5ff;
 }
 
 .popular-routes{
