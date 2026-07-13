@@ -2660,6 +2660,14 @@ function renderGuideAcceptedHtml() {
       <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
       ${priceLine}
     `;
+  } else {
+    // Once the transient success note fades (see applyPaymentSuggestion's
+    // 4s timer), this is the resting state until the user explicitly
+    // checks again - give it quiet framing instead of a bare button.
+    notePart = `
+      <div class="payment-guide-success-heading">You're on a good price right now</div>
+      <div class="payment-guide-success-message payment-guide-resting-message">Want us to check for other ways to pay?</div>
+    `;
   }
 
   return `
