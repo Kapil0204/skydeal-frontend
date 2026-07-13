@@ -1530,6 +1530,47 @@ h3{
   color:#667085;
 }
 
+/* Shown after accepting a guide suggestion (applyPaymentSuggestion in
+   script.js) - a transient success note plus a persistent "Check for
+   more options" action, replacing the auto-refreshing suggestion list
+   until the user explicitly asks to check again. */
+.payment-guide-success-heading{
+  font-size:13px;
+  font-weight:800;
+  color:#059669;
+  margin-bottom:4px;
+}
+
+.payment-guide-success-message{
+  font-size:12.5px;
+  color:#4b5563;
+  line-height:1.45;
+  margin-bottom:12px;
+}
+
+.payment-guide-check-more-btn{
+  width:100%;
+  font-size:12.5px;
+  font-weight:700;
+  color:#7c3aed;
+  background:#ffffff;
+  border:1px solid rgba(168,85,247,0.28);
+  border-radius:10px;
+  padding:9px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease;
+}
+
+.payment-guide-check-more-btn:hover{
+  background:#faf5ff;
+  border-color:#a855f7;
+}
+
+.payment-guide-check-more-btn:focus-visible{
+  outline:2px solid #7c3aed;
+  outline-offset:2px;
+}
+
 /* Brief flash on a flight card's price after a payment-guide reprice
    (syncPaymentMethodsPostSearch in script.js) so the user notices which
    prices changed, without any layout shift. */

@@ -382,6 +382,13 @@ let paymentGuideState = "idle"; // idle | loading | ready | error
 let paymentSuggestions = [];
 const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
 
+// After the user accepts a suggestion, the automatic recommendation loop
+// stops (no auto re-fetch) until they explicitly click "Check for more
+// options" - see applyPaymentSuggestion/renderPaymentGuideCard.
+let guideAwaitingManualRecheck = false;
+let guideAcceptedNote = null; // { heading, message } - transient success banner
+let guideAcceptedNoteTimer = null;
+
 // Round-trip manual selection state.
 // This is frontend-only for now; backend comparison will be connected in the next step.
 let selectedOutboundFlight = null;
@@ -2375,11 +2382,12 @@ async function fetchPaymentSuggestions() {
   renderPaymentGuideCard();
 }
 
-// Shared by both the guide's own "Add" action and the normal payment
-// modal's Done/Clear actions - reprices already-loaded flights in place
-// (no /search call) and refreshes the guide. No-op before a search, so
-// pre-search modal behaviour is unchanged.
-async function syncPaymentMethodsPostSearch() {
+// Core reprice step, shared by the guide's own "Add" action and the
+// normal payment modal's Done/Clear actions - reprices already-loaded
+// flights in place (no /search call), updates the visible cards, and
+// briefly flashes the prices that changed. Does NOT touch the
+// recommendation guide itself - callers decide whether to refresh it.
+async function repriceAndRenderFlights() {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
   try {
@@ -2439,7 +2447,16 @@ async function syncPaymentMethodsPostSearch() {
   } catch (e) {
     console.error("[SkyDeal] reprice-flights failed", e);
   }
+}
 
+// Used by the normal payment modal's Done/Clear actions only. Re-entering
+// the modal is treated as a deliberate new engagement, so it resumes the
+// normal auto-refreshing guide (unlike accepting a guide suggestion
+// directly, which intentionally stops the auto-loop - see
+// applyPaymentSuggestion).
+async function syncPaymentMethodsPostSearch() {
+  guideAwaitingManualRecheck = false;
+  await repriceAndRenderFlights();
   await fetchPaymentSuggestions();
 }
 
@@ -2459,6 +2476,11 @@ function flashUpdatedPrices(changedFlightKeys) {
   });
 }
 
+// Accepting a suggestion directly (as opposed to going through the normal
+// payment modal) intentionally stops the automatic recommendation loop:
+// reprice and update prices, show a one-time success note, and require an
+// explicit "Check for more options" click before running another
+// suggestion calculation - see renderPaymentGuideCard/wireGuideCheckMoreButton.
 async function applyPaymentSuggestion(suggestion) {
   const pm = suggestion?.paymentMethod;
   if (!pm) return;
@@ -2473,7 +2495,25 @@ async function applyPaymentSuggestion(suggestion) {
   if (!already) selectedPaymentMethods.push({ ...pm });
 
   updatePaymentButtonLabel();
-  await syncPaymentMethodsPostSearch();
+
+  const shortLabel = String(suggestion.primaryActionLabel || "").replace(/^Add\s+/i, "") || paymentMethodDisplayLabel(pm);
+
+  guideAwaitingManualRecheck = true;
+  guideAcceptedNote = {
+    heading: "Your prices are updated",
+    message: `Adding ${shortLabel} reduced your best final price by ₹${suggestion.additionalSaving}.`
+  };
+  paymentSuggestions = [];
+
+  if (guideAcceptedNoteTimer) clearTimeout(guideAcceptedNoteTimer);
+  guideAcceptedNoteTimer = setTimeout(() => {
+    guideAcceptedNote = null;
+    guideAcceptedNoteTimer = null;
+    renderPaymentGuideCard();
+  }, 4000);
+
+  renderPaymentGuideCard();
+  await repriceAndRenderFlights();
 }
 
 function dismissPaymentSuggestion(suggestion) {
@@ -2527,6 +2567,36 @@ function renderGuideSuggestionsHtml(visible) {
   `;
 }
 
+function renderGuideAcceptedHtml() {
+  const notePart = guideAcceptedNote
+    ? `
+      <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
+      <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
+    `
+    : "";
+
+  return `
+    ${notePart}
+    <button type="button" class="payment-guide-check-more-btn">Check for more options</button>
+  `;
+}
+
+function wireGuideCheckMoreButton(host) {
+  const btn = host.querySelector(".payment-guide-check-more-btn");
+  if (!btn || btn.dataset.wired) return;
+  btn.dataset.wired = "1";
+
+  btn.addEventListener("click", () => {
+    if (guideAcceptedNoteTimer) {
+      clearTimeout(guideAcceptedNoteTimer);
+      guideAcceptedNoteTimer = null;
+    }
+    guideAwaitingManualRecheck = false;
+    guideAcceptedNote = null;
+    fetchPaymentSuggestions();
+  });
+}
+
 function wireGuideSuggestionButtons(host, visible) {
   if (host.dataset.wired) return;
   host.dataset.wired = "1";
@@ -2554,6 +2624,13 @@ function renderPaymentGuideCard() {
   if (!hasActiveSearchResults()) {
     container.classList.remove("guide-replacing");
     dynamicHost.innerHTML = "";
+    return;
+  }
+
+  if (guideAwaitingManualRecheck) {
+    container.classList.add("guide-replacing");
+    dynamicHost.innerHTML = renderGuideAcceptedHtml();
+    wireGuideCheckMoreButton(dynamicHost);
     return;
   }
 
@@ -5088,6 +5165,12 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     dismissedSuggestionKeys.clear();
     paymentSuggestions = [];
+    guideAwaitingManualRecheck = false;
+    guideAcceptedNote = null;
+    if (guideAcceptedNoteTimer) {
+      clearTimeout(guideAcceptedNoteTimer);
+      guideAcceptedNoteTimer = null;
+    }
     fetchPaymentSuggestions();
   } catch (err) {
     console.error("[SkyDeal] search failed", err);
