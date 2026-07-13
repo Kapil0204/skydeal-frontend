@@ -382,6 +382,12 @@ let paymentGuideState = "idle"; // idle | loading | ready | error
 let paymentSuggestions = [];
 const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
 
+// Phase 3 - timing insights from the same /payment-suggestions response
+// (at most one "urgent" + one "future", see backend PAYMENT_TIMING_CONFIG).
+// Rendered as a small, separate section - never replaces the Phase 1/2
+// suggestion/optimised/success states above it.
+let paymentTimingInsights = [];
+
 // After the user accepts a suggestion, the automatic recommendation loop
 // stops (no auto re-fetch) until they explicitly click "Check for more
 // options" - see applyPaymentSuggestion/renderPaymentGuideCard.
@@ -2385,6 +2391,10 @@ async function fetchPaymentSuggestions() {
       selectedPaymentMethods,
       outboundFlights: outboundAll.map(tripFlightForGuideRequest),
       returnFlights: returnAll.map(tripFlightForGuideRequest),
+      // Phase 3: used only to bound the timing-insight lookahead horizon
+      // and check travel-period eligibility - never for pricing itself.
+      outboundTravelDate: lastSearchPayload.departureDate || null,
+      returnTravelDate: lastSearchPayload.returnDate || null,
     };
 
     const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
@@ -2397,6 +2407,7 @@ async function fetchPaymentSuggestions() {
 
     const json = await res.json();
     paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
+    paymentTimingInsights = Array.isArray(json?.timingInsights) ? json.timingInsights : [];
     lastGuideSummary = json?.summary || null;
     lastGuideCurrentBestPrice = Number.isFinite(json?.currentBestPrice) ? json.currentBestPrice : null;
 
@@ -2410,6 +2421,7 @@ async function fetchPaymentSuggestions() {
   } catch (e) {
     console.error("[SkyDeal] payment-suggestions failed", e);
     paymentSuggestions = [];
+    paymentTimingInsights = [];
     paymentGuideState = "error";
   }
 
@@ -2700,8 +2712,14 @@ function renderPaymentGuideCard() {
   if (!hasActiveSearchResults()) {
     container.classList.remove("guide-replacing");
     dynamicHost.innerHTML = "";
+    renderTimingInsights();
     return;
   }
+
+  // Timing insights render into their own container regardless of which
+  // Phase 1/2 state is showing above - a separate, secondary section,
+  // never replacing the primary suggestion/optimised/success/error state.
+  renderTimingInsights();
 
   if (guideAwaitingManualRecheck) {
     container.classList.add("guide-replacing");
@@ -2739,6 +2757,38 @@ function renderPaymentGuideCard() {
 
   container.classList.remove("guide-replacing");
   dynamicHost.innerHTML = "";
+}
+
+// Phase 3 - a small, separate, informational section (no add/dismiss
+// actions - these are read-only "when" signals, not new suggestions to
+// accept). Never shown pre-search; empty when the backend has nothing to
+// say (no timing opportunity is not an error and gets no messaging at all).
+function renderTimingInsightCardHtml(insight) {
+  const labelBadge = insight.label ? `<div class="payment-timing-label-badge">${insight.label}</div>` : "";
+  const disclaimerPart = insight.disclaimer
+    ? `<div class="payment-timing-disclaimer">${insight.disclaimer}</div>`
+    : "";
+
+  return `
+    <div class="payment-timing-insight">
+      ${labelBadge}
+      <div class="payment-timing-heading">${insight.heading || ""}</div>
+      <div class="payment-timing-message">${insight.message || ""}</div>
+      ${disclaimerPart}
+    </div>
+  `;
+}
+
+function renderTimingInsights() {
+  const host = document.getElementById("paymentTimingDynamic");
+  if (!host) return;
+
+  if (!hasActiveSearchResults() || !Array.isArray(paymentTimingInsights) || paymentTimingInsights.length === 0) {
+    host.innerHTML = "";
+    return;
+  }
+
+  host.innerHTML = paymentTimingInsights.map(renderTimingInsightCardHtml).join("");
 }
 
 // ---------- Flight Results Rendering + Pagination ----------
@@ -5241,6 +5291,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     dismissedSuggestionKeys.clear();
     paymentSuggestions = [];
+    paymentTimingInsights = [];
     guideAwaitingManualRecheck = false;
     guideAcceptedNote = null;
     lastGuideSummary = null;
