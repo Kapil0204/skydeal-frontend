@@ -283,6 +283,20 @@ const cabinSelect = document.getElementById("cabinSelect");
 const oneWayRadio = document.getElementById("oneWay");
 const roundTripRadio = document.getElementById("roundTrip");
 
+function openNativeDatePicker(input) {
+  if (!input || input.disabled) return;
+  if (typeof input.showPicker === "function") {
+    try {
+      input.showPicker();
+    } catch (err) {
+      // Ignore - e.g. not triggered by a user gesture, or unsupported browser.
+    }
+  }
+}
+
+departInput?.addEventListener("click", () => openNativeDatePicker(departInput));
+returnInput?.addEventListener("click", () => openNativeDatePicker(returnInput));
+
 function syncReturnDateVisualState() {
   if (!returnInput) return;
 
