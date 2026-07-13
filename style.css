@@ -3244,16 +3244,17 @@ body {
   }
 
   .pro-results.round-trip-results-mode .col-head h3 {
-    font-size: 20px !important;
+    font-size: 15px !important;
     line-height: 1.1 !important;
     margin: 0 !important;
     white-space: nowrap !important;
   }
 
-  .pro-results.round-trip-results-mode .col-sub {
-    font-size: 12px !important;
-    line-height: 1.25 !important;
-    max-width: 210px !important;
+  /* The subtitle just repeats "based on your selected payment methods"
+     identically in both side-by-side columns - drop it here and let the
+     route-date-label (which actually differs per column) carry the line. */
+  .pro-results.round-trip-results-mode .section-subtitle {
+    display: none !important;
   }
 
   .pro-results.round-trip-results-mode .sort-label,
