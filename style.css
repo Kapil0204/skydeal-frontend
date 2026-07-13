@@ -4574,6 +4574,17 @@ body {
     display: none !important;
   }
 
+  /* Price intelligence is relocated by JS (ensureMobilePriceIntelPlacement,
+     script.js) to sit directly in the results flow above the flight list,
+     outside .filter-panel, so it stays visible on mobile instead of only
+     appearing inside the Filters drawer above. */
+  .pro-results > .smart-guide-card,
+  .results > .smart-guide-card {
+    display: flex !important;
+    width: 100%;
+    margin: 0 0 14px;
+  }
+
   body.mobile-filter-drawer-open .filter-panel {
     display: block !important;
     position: fixed !important;

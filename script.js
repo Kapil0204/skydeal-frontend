@@ -3851,6 +3851,37 @@ function renderMobileQuickFilters() {
   ensureMobileQuickFilters();
 }
 
+// Price intelligence lives inside .filter-panel in the markup (so desktop
+// keeps its existing two-box left column), but on mobile .filter-panel is
+// hidden entirely and only reappears inside the Filters drawer - which
+// made the guide invisible on mobile. Here we physically relocate the
+// card to sit in the normal results flow (above the flight list) on
+// mobile, and move it back into the filter panel above Filters on
+// desktop/tablet, so each breakpoint gets its native layout rather than
+// one compromising for the other.
+function ensureMobilePriceIntelPlacement() {
+  const card = document.querySelector(".smart-guide-card");
+  const proResults = document.querySelector(".pro-results") || document.querySelector(".results");
+  const workspace = document.querySelector(".flights-workspace");
+  if (!card || !proResults || !workspace) return;
+
+  if (isSkyDealMobileView()) {
+    const anchor = document.getElementById("mobileQuickFilters") || workspace;
+    if (card.parentElement !== proResults || card.nextElementSibling !== anchor) {
+      proResults.insertBefore(card, anchor);
+    }
+    return;
+  }
+
+  const filterPanel = document.querySelector(".filter-panel");
+  const filterCard = document.querySelector(".filter-card");
+  if (filterPanel && card.parentElement !== filterPanel) {
+    filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
+  }
+}
+
+window.addEventListener("resize", () => ensureMobilePriceIntelPlacement(), { passive: true });
+
 function setMobileReturnFocusAfterOutbound() {
   if (!isSkyDealMobileView()) return;
 
@@ -5060,6 +5091,8 @@ function updateFlightSectionHeadings() {
   const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
   const hasRealResults = !!resultsSection && !resultsSection.classList.contains("pre-search");
 
+  ensureMobilePriceIntelPlacement();
+
   const from = resolveLocationToCode(safeText(fromInput?.value, "").trim());
   const to = resolveLocationToCode(safeText(toInput?.value, "").trim());
 
@@ -5445,6 +5478,7 @@ if (returnInput) {
 
   await loadPaymentOptions();
 renderPaymentProfileCard();
+ensureMobilePriceIntelPlacement();
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);
