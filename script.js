@@ -386,8 +386,33 @@ const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
 // stops (no auto re-fetch) until they explicitly click "Check for more
 // options" - see applyPaymentSuggestion/renderPaymentGuideCard.
 let guideAwaitingManualRecheck = false;
-let guideAcceptedNote = null; // { heading, message } - transient success banner
+let guideAcceptedNote = null; // { heading, message, previousBestPrice, newBestPrice, flightsImproved } - transient success banner
 let guideAcceptedNoteTimer = null;
+
+// Phase 2 - the backend's own summary from the most recent
+// /payment-suggestions response (selectedPaymentMethodCount,
+// matchedOfferCount, isOptimised), used to enrich the "already optimised"
+// state. Backend-authoritative; not recomputed client-side.
+let lastGuideSummary = null;
+let lastGuideCurrentBestPrice = null;
+
+// Phase 2 - a small running summary of this search's guide activity
+// (item 10). Reset on every new search; updated as suggestions are
+// accepted or the user manually re-checks. Not fully surfaced in the UI
+// yet (today's States only need per-event data), kept so future states
+// can show session-wide totals without new plumbing.
+let guideSearchSummary = null;
+
+function resetGuideSearchSummary(initialBestPrice) {
+  guideSearchSummary = {
+    initialBestPrice,
+    currentBestPrice: initialBestPrice,
+    totalSavingAchieved: 0,
+    methodsAddedViaGuide: [],
+    flightsImprovedTotal: 0,
+    manuallyCheckedForMore: false
+  };
+}
 
 // Round-trip manual selection state.
 // This is frontend-only for now; backend comparison will be connected in the next step.
@@ -2372,6 +2397,15 @@ async function fetchPaymentSuggestions() {
 
     const json = await res.json();
     paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
+    lastGuideSummary = json?.summary || null;
+    lastGuideCurrentBestPrice = Number.isFinite(json?.currentBestPrice) ? json.currentBestPrice : null;
+
+    if (!guideSearchSummary && lastGuideCurrentBestPrice != null) {
+      resetGuideSearchSummary(lastGuideCurrentBestPrice);
+    } else if (guideSearchSummary && lastGuideCurrentBestPrice != null) {
+      guideSearchSummary.currentBestPrice = lastGuideCurrentBestPrice;
+    }
+
     paymentGuideState = "ready";
   } catch (e) {
     console.error("[SkyDeal] payment-suggestions failed", e);
@@ -2497,13 +2531,30 @@ async function applyPaymentSuggestion(suggestion) {
   updatePaymentButtonLabel();
 
   const shortLabel = String(suggestion.primaryActionLabel || "").replace(/^Add\s+/i, "") || paymentMethodDisplayLabel(pm);
+  const flightsImproved = Number.isFinite(suggestion.affectedFlights)
+    ? suggestion.affectedFlights
+    : (suggestion.affectedOutboundFlights || 0) + (suggestion.affectedReturnFlights || 0);
+  const previousBestPrice = suggestion.newBestPrice + suggestion.additionalSaving;
 
   guideAwaitingManualRecheck = true;
   guideAcceptedNote = {
     heading: "Your prices are updated",
-    message: `Adding ${shortLabel} reduced your best final price by ₹${suggestion.additionalSaving}.`
+    message: `Adding ${shortLabel} lowered your best final price by ₹${suggestion.additionalSaving}${
+      flightsImproved > 0 ? ` and improved ${flightsImproved} flight option${flightsImproved === 1 ? "" : "s"}` : ""
+    }.`,
+    previousBestPrice,
+    newBestPrice: suggestion.newBestPrice,
+    additionalSaving: suggestion.additionalSaving,
+    flightsImproved
   };
   paymentSuggestions = [];
+
+  if (guideSearchSummary) {
+    guideSearchSummary.totalSavingAchieved += suggestion.additionalSaving || 0;
+    guideSearchSummary.methodsAddedViaGuide.push(shortLabel);
+    guideSearchSummary.flightsImprovedTotal += flightsImproved;
+    guideSearchSummary.currentBestPrice = suggestion.newBestPrice;
+  }
 
   if (guideAcceptedNoteTimer) clearTimeout(guideAcceptedNoteTimer);
   guideAcceptedNoteTimer = setTimeout(() => {
@@ -2531,11 +2582,25 @@ function renderGuideLoadingHtml() {
   `;
 }
 
+// Phase 2 - "already optimised" is backed by the backend's own summary
+// (current best price / selected-method count / matched-offer count) for
+// this exact loaded search, never a claim about the wider live catalog.
 function renderGuideOptimisedHtml() {
+  const summaryLine = lastGuideSummary
+    ? `
+      <div class="payment-guide-optimised-facts">
+        ${lastGuideCurrentBestPrice != null ? `<span>Best final price: ₹${lastGuideCurrentBestPrice}</span>` : ""}
+        <span>${lastGuideSummary.selectedPaymentMethodCount} payment method${lastGuideSummary.selectedPaymentMethodCount === 1 ? "" : "s"} selected</span>
+        ${Number.isFinite(lastGuideSummary.matchedOfferCount) ? `<span>${lastGuideSummary.matchedOfferCount} offer${lastGuideSummary.matchedOfferCount === 1 ? "" : "s"} matched</span>` : ""}
+      </div>
+    `
+    : "";
+
   return `
     <div class="payment-guide-optimised">
-      <div class="payment-guide-optimised-title">You're already using your best options</div>
-      <div class="payment-guide-optimised-sub">We didn't find another payment method that would lower the current best final price.</div>
+      <div class="payment-guide-optimised-title">You're already well optimised</div>
+      <div class="payment-guide-optimised-sub">We didn't find another realistic payment method that lowers your current best final price.</div>
+      ${summaryLine}
     </div>
   `;
 }
@@ -2545,8 +2610,10 @@ function renderGuideErrorHtml() {
 }
 
 function renderGuideSuggestionCardHtml(s, idx) {
+  const labelBadge = s.label ? `<div class="payment-guide-label-badge">${s.label}</div>` : "";
   return `
     <div class="payment-guide-suggestion">
+      ${labelBadge}
       <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
       <div class="payment-guide-suggestion-message">${s.message || ""}</div>
       <div class="payment-guide-suggestion-actions">
@@ -2568,12 +2635,20 @@ function renderGuideSuggestionsHtml(visible) {
 }
 
 function renderGuideAcceptedHtml() {
-  const notePart = guideAcceptedNote
-    ? `
+  let notePart = "";
+
+  if (guideAcceptedNote) {
+    const priceLine =
+      guideAcceptedNote.previousBestPrice != null && guideAcceptedNote.newBestPrice != null
+        ? `<div class="payment-guide-success-prices">₹${guideAcceptedNote.previousBestPrice} → ₹${guideAcceptedNote.newBestPrice}</div>`
+        : "";
+
+    notePart = `
       <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
       <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
-    `
-    : "";
+      ${priceLine}
+    `;
+  }
 
   return `
     ${notePart}
@@ -2593,6 +2668,7 @@ function wireGuideCheckMoreButton(host) {
     }
     guideAwaitingManualRecheck = false;
     guideAcceptedNote = null;
+    if (guideSearchSummary) guideSearchSummary.manuallyCheckedForMore = true;
     fetchPaymentSuggestions();
   });
 }
@@ -5167,6 +5243,9 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     paymentSuggestions = [];
     guideAwaitingManualRecheck = false;
     guideAcceptedNote = null;
+    lastGuideSummary = null;
+    lastGuideCurrentBestPrice = null;
+    guideSearchSummary = null;
     if (guideAcceptedNoteTimer) {
       clearTimeout(guideAcceptedNoteTimer);
       guideAcceptedNoteTimer = null;
@@ -5247,6 +5326,10 @@ toggleReturn();
     selectedPaymentMethods = [];
     updatePaymentButtonLabel();
     renderPaymentList();
+    // Clearing all payment methods is a "major payment-profile change"
+    // (Phase 2 item 9) - give the user a clean dismissal slate rather
+    // than keeping suggestions hidden from a now-irrelevant prior state.
+    dismissedSuggestionKeys.clear();
     syncPaymentMethodsPostSearch();
   });
 
