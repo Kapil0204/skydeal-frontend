@@ -377,6 +377,11 @@ let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
 
+// Phase 1 intelligent payment guide state.
+let paymentGuideState = "idle"; // idle | loading | ready | error
+let paymentSuggestions = [];
+const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
+
 // Round-trip manual selection state.
 // This is frontend-only for now; backend comparison will be connected in the next step.
 let selectedOutboundFlight = null;
@@ -2301,6 +2306,286 @@ function renderPaymentProfileCard() {
     btnEl.dataset.wired = "1";
     btnEl.addEventListener("click", () => openPaymentModal());
   }
+}
+
+// ---------- Phase 1: Intelligent payment guide ----------
+
+// Reuses the same "pre-search" flag setResultsPreSearch() already manages -
+// no new search-state tracking is introduced.
+function hasActiveSearchResults() {
+  const resultsSection = document.querySelector(".pro-results") || document.querySelector(".results");
+  return !!resultsSection && !resultsSection.classList.contains("pre-search");
+}
+
+function suggestionKey(s) {
+  const pm = s?.paymentMethod || {};
+  return `${pm.type || ""}|${pm.name || ""}|${pm.tenureMonths ?? ""}`.toLowerCase();
+}
+
+function visiblePaymentSuggestions() {
+  return paymentSuggestions.filter((s) => !dismissedSuggestionKeys.has(suggestionKey(s)));
+}
+
+// Cheapest-known-price snapshot per flight, mirroring the backend's own
+// bestFinalPriceOf() so the /payment-suggestions request carries the exact
+// baseline the backend will trust (nothing has changed since /search produced it).
+function tripFlightForGuideRequest(f) {
+  return { price: f.price, airlineName: f.airlineName, bestDeal: f.bestDeal || null };
+}
+
+function tripFlightForRepriceRequest(f) {
+  return { price: f.price, airlineName: f.airlineName };
+}
+
+async function fetchPaymentSuggestions() {
+  if (!hasActiveSearchResults() || !lastSearchPayload) return;
+
+  paymentGuideState = "loading";
+  renderPaymentGuideCard();
+
+  try {
+    const body = {
+      from: lastSearchPayload.from,
+      to: lastSearchPayload.to,
+      travelClass: lastSearchPayload.travelClass,
+      tripType: lastSearchPayload.tripType,
+      passengers: lastSearchPayload.passengers,
+      selectedPaymentMethods,
+      outboundFlights: outboundAll.map(tripFlightForGuideRequest),
+      returnFlights: returnAll.map(tripFlightForGuideRequest),
+    };
+
+    const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }, 30000);
+
+    if (!res.ok) throw new Error(`payment-suggestions failed: ${res.status}`);
+
+    const json = await res.json();
+    paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
+    paymentGuideState = "ready";
+  } catch (e) {
+    console.error("[SkyDeal] payment-suggestions failed", e);
+    paymentSuggestions = [];
+    paymentGuideState = "error";
+  }
+
+  renderPaymentGuideCard();
+}
+
+// Shared by both the guide's own "Add" action and the normal payment
+// modal's Done/Clear actions - reprices already-loaded flights in place
+// (no /search call) and refreshes the guide. No-op before a search, so
+// pre-search modal behaviour is unchanged.
+async function syncPaymentMethodsPostSearch() {
+  if (!hasActiveSearchResults() || !lastSearchPayload) return;
+
+  try {
+    const body = {
+      from: lastSearchPayload.from,
+      to: lastSearchPayload.to,
+      travelClass: lastSearchPayload.travelClass,
+      tripType: lastSearchPayload.tripType,
+      passengers: lastSearchPayload.passengers,
+      selectedPaymentMethods,
+      outboundFlights: outboundAll.map(tripFlightForRepriceRequest),
+      returnFlights: returnAll.map(tripFlightForRepriceRequest),
+    };
+
+    const res = await fetchWithTimeout(`${BACKEND}/reprice-flights`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }, 30000);
+
+    if (!res.ok) throw new Error(`reprice-flights failed: ${res.status}`);
+
+    const json = await res.json();
+    const repricedOutbound = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
+    const repricedReturn = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
+
+    // flightKey() is derived from airline/flight-number/times/base-price -
+    // none of which change during a reprice - so it stays stable and can
+    // be computed before mutating each flight's portalPrices/bestDeal.
+    const changedFlightKeys = new Set();
+
+    outboundAll.forEach((f, i) => {
+      const r = repricedOutbound[i];
+      if (!r) return;
+      const key = flightKey(f);
+      const oldFinal = f?.bestDeal?.applied ? f.bestDeal.finalPrice : f.price;
+      f.portalPrices = r.portalPrices || [];
+      f.bestDeal = r.bestDeal || null;
+      const newFinal = f?.bestDeal?.applied ? f.bestDeal.finalPrice : f.price;
+      if (newFinal !== oldFinal) changedFlightKeys.add(key);
+    });
+
+    returnAll.forEach((f, i) => {
+      const r = repricedReturn[i];
+      if (!r) return;
+      const key = flightKey(f);
+      const oldFinal = f?.bestDeal?.applied ? f.bestDeal.finalPrice : f.price;
+      f.portalPrices = r.portalPrices || [];
+      f.bestDeal = r.bestDeal || null;
+      const newFinal = f?.bestDeal?.applied ? f.bestDeal.finalPrice : f.price;
+      if (newFinal !== oldFinal) changedFlightKeys.add(key);
+    });
+
+    renderOutbound();
+    renderReturn();
+    flashUpdatedPrices(changedFlightKeys);
+  } catch (e) {
+    console.error("[SkyDeal] reprice-flights failed", e);
+  }
+
+  await fetchPaymentSuggestions();
+}
+
+// Reuses the data-flightkey attribute flightCard() already sets on every
+// card - no new DOM hooks needed to know which cards to flash.
+function flashUpdatedPrices(changedFlightKeys) {
+  if (!changedFlightKeys || changedFlightKeys.size === 0) return;
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".card[data-flightkey]").forEach((cardEl) => {
+      const key = cardEl.dataset.flightkey;
+      if (!key || !changedFlightKeys.has(key)) return;
+      const priceEl = cardEl.querySelector(".price");
+      if (!priceEl) return;
+      priceEl.classList.add("price-updated");
+      setTimeout(() => priceEl.classList.remove("price-updated"), 1200);
+    });
+  });
+}
+
+async function applyPaymentSuggestion(suggestion) {
+  const pm = suggestion?.paymentMethod;
+  if (!pm) return;
+
+  const already = selectedPaymentMethods.some(
+    (existing) =>
+      String(existing?.type || "").toLowerCase() === String(pm.type || "").toLowerCase() &&
+      String(existing?.name || "").toLowerCase() === String(pm.name || "").toLowerCase() &&
+      (existing?.tenureMonths ?? null) === (pm.tenureMonths ?? null)
+  );
+
+  if (!already) selectedPaymentMethods.push({ ...pm });
+
+  updatePaymentButtonLabel();
+  await syncPaymentMethodsPostSearch();
+}
+
+function dismissPaymentSuggestion(suggestion) {
+  dismissedSuggestionKeys.add(suggestionKey(suggestion));
+  renderPaymentGuideCard();
+}
+
+function renderGuideLoadingHtml() {
+  return `
+    <div class="payment-guide-loading">
+      <div class="payment-guide-skeleton"></div>
+      <div class="payment-guide-loading-title">Checking for a better way to pay…</div>
+      <div class="payment-guide-loading-sub">We're testing your selected payment methods against available offers.</div>
+    </div>
+  `;
+}
+
+function renderGuideOptimisedHtml() {
+  return `
+    <div class="payment-guide-optimised">
+      <div class="payment-guide-optimised-title">You're already using your best options</div>
+      <div class="payment-guide-optimised-sub">We didn't find another payment method that would lower the current best final price.</div>
+    </div>
+  `;
+}
+
+function renderGuideErrorHtml() {
+  return `<div class="payment-guide-error-note">We couldn't check for additional savings right now.</div>`;
+}
+
+function renderGuideSuggestionCardHtml(s, idx) {
+  return `
+    <div class="payment-guide-suggestion">
+      <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
+      <div class="payment-guide-suggestion-message">${s.message || ""}</div>
+      <div class="payment-guide-suggestion-actions">
+        <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${s.primaryActionLabel || "Add"}</button>
+        <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not applicable to me</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderGuideSuggestionsHtml(visible) {
+  if (visible.length === 1) {
+    return renderGuideSuggestionCardHtml(visible[0], 0);
+  }
+  return `
+    <div class="payment-guide-multi-heading">More ways to lower your price</div>
+    ${visible.map((s, i) => renderGuideSuggestionCardHtml(s, i)).join("")}
+  `;
+}
+
+function wireGuideSuggestionButtons(host, visible) {
+  if (host.dataset.wired) return;
+  host.dataset.wired = "1";
+
+  host.addEventListener("click", (e) => {
+    const addBtn = e.target.closest(".payment-guide-add-btn");
+    const dismissBtn = e.target.closest(".payment-guide-dismiss-btn");
+    if (!addBtn && !dismissBtn) return;
+
+    const idx = Number((addBtn || dismissBtn).dataset.suggestionIdx);
+    const current = visiblePaymentSuggestions();
+    const suggestion = current[idx];
+    if (!suggestion) return;
+
+    if (addBtn) applyPaymentSuggestion(suggestion);
+    else dismissPaymentSuggestion(suggestion);
+  });
+}
+
+function renderPaymentGuideCard() {
+  const container = document.querySelector(".offers-panel-content");
+  const dynamicHost = document.getElementById("paymentGuideDynamic");
+  if (!container || !dynamicHost) return;
+
+  if (!hasActiveSearchResults()) {
+    container.classList.remove("guide-replacing");
+    dynamicHost.innerHTML = "";
+    return;
+  }
+
+  if (paymentGuideState === "loading") {
+    container.classList.add("guide-replacing");
+    dynamicHost.innerHTML = renderGuideLoadingHtml();
+    return;
+  }
+
+  if (paymentGuideState === "error") {
+    container.classList.remove("guide-replacing");
+    dynamicHost.innerHTML = renderGuideErrorHtml();
+    return;
+  }
+
+  if (paymentGuideState === "ready") {
+    const visible = visiblePaymentSuggestions();
+
+    if (visible.length === 0) {
+      container.classList.add("guide-replacing");
+      dynamicHost.innerHTML = renderGuideOptimisedHtml();
+      return;
+    }
+
+    container.classList.add("guide-replacing");
+    dynamicHost.innerHTML = renderGuideSuggestionsHtml(visible);
+    wireGuideSuggestionButtons(dynamicHost, visible);
+    return;
+  }
+
+  container.classList.remove("guide-replacing");
+  dynamicHost.innerHTML = "";
 }
 
 // ---------- Flight Results Rendering + Pagination ----------
@@ -4800,6 +5085,10 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     renderOutbound();
     renderReturn();
+
+    dismissedSuggestionKeys.clear();
+    paymentSuggestions = [];
+    fetchPaymentSuggestions();
   } catch (err) {
     console.error("[SkyDeal] search failed", err);
 
@@ -4875,11 +5164,13 @@ toggleReturn();
     selectedPaymentMethods = [];
     updatePaymentButtonLabel();
     renderPaymentList();
+    syncPaymentMethodsPostSearch();
   });
 
   pmDone?.addEventListener("click", () => {
     updatePaymentButtonLabel();
     closePaymentModal();
+    syncPaymentMethodsPostSearch();
   });
 outSortSelect?.addEventListener("change", () => {
   outPageIdx = 1;

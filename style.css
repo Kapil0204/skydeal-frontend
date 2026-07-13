@@ -1268,14 +1268,31 @@ h3{
   display:none;
 }
 
+/* Once real results exist, Filters sits directly below the payment guide
+   card in the same left column - a subtle divider keeps the two visually
+   distinct without any structural change. */
+.pro-results:not(.pre-search) .filters-content{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid rgba(15,23,42,0.08);
+}
+
+/* .offers-panel-content now stays visible in both pre-search and
+   post-search states: pre-search it shows .payment-profile-static;
+   post-search it hosts the intelligent payment guide
+   (#paymentGuideDynamic, see renderPaymentGuideCard in script.js),
+   stacked above the real Filters once those become useful. */
 .offers-panel-content{
-  flex:1;
   display:flex;
   flex-direction:column;
 }
 
-.pro-results:not(.pre-search) .offers-panel-content{
-  display:none;
+/* flex:1 (grow to fill .filter-card's stretched height) is scoped to
+   pre-search only - see the note on .payment-profile-static below for why
+   applying it post-search (when .filter-card is stretched to match a long
+   flights list) would push Filters far down the page. */
+.pro-results.pre-search .offers-panel-content{
+  flex:1;
 }
 
 /* Sort/pagination have nothing to act on until a real search has real
@@ -1348,6 +1365,182 @@ h3{
   font-weight:700;
   color:#9ca3af;
   text-align:center;
+}
+
+/* .payment-profile-static wraps the pre-search card content so
+   #paymentGuideDynamic (the post-search smart-guide states) can sit
+   alongside it inside the same flex column and swap visibility via the
+   "guide-replacing" class - see renderPaymentGuideCard in script.js.
+   flex:1 (needed for the footer's margin-top:auto bottom-alignment
+   against the right-side empty-state card) is scoped to pre-search only -
+   .pro-results has an unconditional align-items:stretch that matches
+   .filter-card's height to the flights column, which post-search is a
+   long real result list; letting this element flex:1-grow into that
+   full height would push Filters far below the fold. */
+.payment-profile-static{
+  display:flex;
+  flex-direction:column;
+}
+
+.pro-results.pre-search .payment-profile-static{
+  flex:1;
+}
+
+.offers-panel-content.guide-replacing .payment-profile-static{
+  display:none;
+}
+
+#paymentGuideDynamic:empty{
+  display:none;
+}
+
+#paymentGuideDynamic{
+  display:flex;
+  flex-direction:column;
+}
+
+.payment-guide-loading{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.payment-guide-skeleton{
+  height:10px;
+  width:60%;
+  border-radius:6px;
+  background:linear-gradient(90deg, rgba(168,85,247,0.14) 25%, rgba(168,85,247,0.28) 37%, rgba(168,85,247,0.14) 63%);
+  background-size:400% 100%;
+  animation:paymentGuideSkeletonPulse 1.4s ease infinite;
+  margin-bottom:4px;
+}
+
+@keyframes paymentGuideSkeletonPulse{
+  0%{ background-position:100% 50%; }
+  100%{ background-position:0 50%; }
+}
+
+.payment-guide-loading-title{
+  font-size:13px;
+  font-weight:750;
+  color:#7c3aed;
+}
+
+.payment-guide-loading-sub{
+  font-size:12.5px;
+  color:#667085;
+  line-height:1.5;
+}
+
+.payment-guide-optimised-title{
+  font-size:13px;
+  font-weight:750;
+  color:#111827;
+  margin-bottom:6px;
+}
+
+.payment-guide-optimised-sub{
+  font-size:12.5px;
+  color:#667085;
+  line-height:1.5;
+}
+
+.payment-guide-error-note{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(15,23,42,0.08);
+  font-size:12px;
+  color:#9ca3af;
+  line-height:1.5;
+}
+
+.payment-guide-multi-heading{
+  font-size:13.5px;
+  font-weight:800;
+  color:#111827;
+  margin-bottom:10px;
+}
+
+.payment-guide-suggestion{
+  border:1px solid rgba(168,85,247,0.22);
+  border-radius:14px;
+  padding:12px;
+  background:#faf7ff;
+}
+
+.payment-guide-suggestion + .payment-guide-suggestion{
+  margin-top:10px;
+}
+
+.payment-guide-suggestion-heading{
+  font-size:13px;
+  font-weight:800;
+  color:#7c3aed;
+  margin-bottom:4px;
+}
+
+.payment-guide-suggestion-message{
+  font-size:12.5px;
+  color:#4b5563;
+  line-height:1.45;
+  margin-bottom:10px;
+}
+
+.payment-guide-suggestion-actions{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.payment-guide-add-btn{
+  width:100%;
+  font-size:12.5px;
+  font-weight:750;
+  color:#ffffff;
+  background:#7c3aed;
+  border:none;
+  border-radius:10px;
+  padding:9px;
+  cursor:pointer;
+  transition:background .15s ease;
+}
+
+.payment-guide-add-btn:hover{
+  background:#6d28d9;
+}
+
+.payment-guide-add-btn:focus-visible{
+  outline:2px solid #7c3aed;
+  outline-offset:2px;
+}
+
+.payment-guide-dismiss-btn{
+  width:100%;
+  font-size:12px;
+  font-weight:650;
+  color:#9ca3af;
+  background:transparent;
+  border:none;
+  padding:4px;
+  cursor:pointer;
+  text-decoration:underline;
+}
+
+.payment-guide-dismiss-btn:hover{
+  color:#667085;
+}
+
+/* Brief flash on a flight card's price after a payment-guide reprice
+   (syncPaymentMethodsPostSearch in script.js) so the user notices which
+   prices changed, without any layout shift. */
+.price.price-updated{
+  animation:paymentGuidePriceFlash 1.2s ease;
+  border-radius:8px;
+}
+
+@keyframes paymentGuidePriceFlash{
+  0%{ background:rgba(168,85,247,0.32); }
+  100%{ background:transparent; }
 }
 
 .popular-routes{
