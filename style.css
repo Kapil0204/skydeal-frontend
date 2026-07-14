@@ -22,13 +22,34 @@
   --pink:#ec4899;
   --pink2:#ff2d95;
   --shadow:0 24px 70px rgba(0,0,0,0.45);
+
+  /* Design-token color pass (phase 2/5): the 100+ near-duplicate hex
+     colors scattered through this file collapse onto this fixed set.
+     Brand purple keeps --primary/--primary2/--accent2 (already-live
+     names); everything else is new. */
+  --white:#ffffff;
+  --gray-900:#101828;
+  --gray-700:#344054;
+  --gray-500:#667085;
+  --gray-200:#cbd5e1;
+  --gray-50:#f8fafc;
+  --brand-900:#581c87;
+  --brand-700:#6d28d9;
+  --brand-200:#d8b4fe;
+  --brand-100:#faf5ff;
+  --danger:#dc2626;
+  --danger-light:#fee2e2;
+  --warning-light:#fef3c7;
+  --success-light:#86efac;
+  --info:#2563eb;
+  --info-light:#eef4ff;
 }
 
 *{ box-sizing:border-box; }
 body{
   margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: radial-gradient(1200px 800px at 30% 0%, #152449 0%, var(--bg) 55%);
+  background: radial-gradient(1200px 800px at 30% 0%, var(--panel2) 0%, var(--bg) 55%);
   color:var(--text);
 }
 
@@ -77,7 +98,7 @@ label{
   left:0;
   right:0;
   margin-top:6px;
-  background:#0f1730;
+  background:var(--panel2);
   border:1px solid var(--line);
   border-radius:12px;
   box-shadow: var(--shadow);
@@ -285,7 +306,7 @@ h3{ margin:0; font-size:18px; }
   margin-top:4px;
   font-size:13px;
   font-weight:700;
-  color:#86efac;
+  color:var(--success-light);
 }
 
 .bestDealMeta{
@@ -332,7 +353,7 @@ h3{ margin:0; font-size:18px; }
   overflow:hidden;
   border-radius:18px;
   border:1px solid var(--line);
-  background: #0f1730;
+  background: var(--panel2);
   box-shadow: var(--shadow);
   display:flex;
   flex-direction:column;
@@ -367,11 +388,11 @@ h3{ margin:0; font-size:18px; }
 .portalModalCard{
   max-width:720px;
   margin:0 auto;
-  background:#0f172a;
+  background:var(--gray-900);
   border:1px solid rgba(255,255,255,.12);
   border-radius:14px;
   padding:16px;
-  color:#e5e7eb;
+  color:var(--gray-200);
 }
 
 .pm-tabs{
@@ -524,7 +545,7 @@ h3{ margin:0; font-size:18px; }
 }
 
 .mainOffer b{
-  color:#86efac;
+  color:var(--success-light);
 }
 
 .offerMeta{
@@ -555,7 +576,7 @@ h3{ margin:0; font-size:18px; }
 }
 
 .otherOfferItem span{
-  color:#facc15;
+  color:var(--warning);
 }
 .otherOfferHead{
   display:flex;
@@ -573,7 +594,7 @@ h3{ margin:0; font-size:18px; }
   font-size:11px;
   font-weight:700;
   background:rgba(250,204,21,0.12);
-  color:#facc15;
+  color:var(--warning);
   border:1px solid rgba(250,204,21,0.22);
 }
 
@@ -674,7 +695,7 @@ h3{ margin:0; font-size:18px; }
   border-radius:10px;
   border:1px solid rgba(47,107,255,0.42);
   background:rgba(47,107,255,0.18);
-  color:#dbe7ff;
+  color:var(--info-light);
   cursor:pointer;
   font-weight:700;
   font-size:12px;
@@ -836,7 +857,7 @@ h3{ margin:0; font-size:18px; }
 }
 
 .otherOfferItem span{
-  color:#facc15;
+  color:var(--warning);
   font-weight:700;
 }
 
@@ -890,7 +911,7 @@ h3{ margin:0; font-size:18px; }
 
 .emiToggleText{
   font-size:13px;
-  color:#cbd5e1;
+  color:var(--gray-200);
   font-weight:600;
 }
 
@@ -918,24 +939,24 @@ h3{ margin:0; font-size:18px; }
   width:16px;
   height:16px;
   border-radius:999px;
-  background:#94a3b8;
+  background:var(--gray-500);
   transition:all .18s ease;
 }
 
 .emiToggle.active .emiToggleKnob{
   left:23px;
-  background:#22c55e;
+  background:var(--success);
 }
 
 .emiToggleState{
   font-size:12px;
   font-weight:800;
-  color:#94a3b8;
+  color:var(--gray-500);
   min-width:24px;
 }
 
 .emiToggleState.active{
-  color:#86efac;
+  color:var(--success-light);
 }
 
 @media (max-width: 760px){
@@ -981,11 +1002,11 @@ body{
 .brand{
   font-size:24px;
   letter-spacing:-0.04em;
-  color:#111827;
+  color:var(--gray-900);
 }
 
 .sub{
-  color:#667085;
+  color:var(--gray-500);
   font-weight:500;
 }
 
@@ -995,7 +1016,7 @@ body{
 }
 
 .search-card{
-  background:linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  background:linear-gradient(135deg, var(--white) 0%, var(--info-light) 100%);
   border:1px solid rgba(37,99,235,0.12);
   border-radius:24px;
   box-shadow:var(--shadow);
@@ -1003,15 +1024,15 @@ body{
 }
 
 label{
-  color:#475467;
+  color:var(--gray-500);
   font-weight:700;
 }
 
 input,
 select{
-  background:#ffffff;
-  color:#111827;
-  border:1px solid #d9e1ef;
+  background:var(--white);
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
   border-radius:14px;
   min-height:44px;
   font-weight:650;
@@ -1024,34 +1045,34 @@ select:focus{
 }
 
 .location-suggestions{
-  background:#ffffff;
-  border:1px solid #d9e1ef;
+  background:var(--white);
+  border:1px solid var(--gray-200);
   box-shadow:0 18px 40px rgba(15,23,42,0.14);
 }
 
 .location-option{
-  border-bottom:1px solid #eef2f7;
+  border-bottom:1px solid var(--info-light);
 }
 
 .location-option:hover{
-  background:#f3f7ff;
+  background:var(--info-light);
 }
 
 .location-option-main{
-  color:#111827;
+  color:var(--gray-900);
 }
 
 .location-option-sub{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 .trip-toggle{
-  color:#344054;
+  color:var(--gray-700);
   font-weight:700;
 }
 
 .btn-primary{
-  background:linear-gradient(135deg, #2563eb, #00a6ff);
+  background:linear-gradient(135deg, var(--info), var(--info));
   box-shadow:0 12px 30px rgba(37,99,235,0.24);
   border-radius:16px;
   min-height:48px;
@@ -1063,16 +1084,16 @@ select:focus{
 }
 
 .btn-ghost{
-  background:#eef4ff;
-  border:1px solid #c7d7fe;
-  color:#1d4ed8;
+  background:var(--info-light);
+  border:1px solid var(--info-light);
+  color:var(--info);
   font-weight:800;
 }
 
 .btn-sm{
-  background:#ffffff;
-  border:1px solid #d9e1ef;
-  color:#344054;
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  color:var(--gray-700);
 }
 
 .pro-results{
@@ -1099,7 +1120,7 @@ select:focus{
    .filter-card at natural height means the extra space just shows as page
    background beneath both cards, not as a tall card with a blank bottom. */
 .filter-card{
-  background:#ffffff;
+  background:var(--white);
   border:1px solid var(--line);
   border-radius:22px;
   padding:16px;
@@ -1114,7 +1135,7 @@ select:focus{
    Filters receding to a plain box below it (see the mockup this was
    approved from). */
 .smart-guide-card{
-  background:#ffffff;
+  background:var(--white);
   border:1.5px solid rgba(168,85,247,0.55);
   border-radius:22px;
   padding:16px;
@@ -1135,7 +1156,7 @@ select:focus{
   gap:6px;
   font-size:11px;
   font-weight:700;
-  color:#7c3aed;
+  color:var(--accent2);
   text-transform:uppercase;
   letter-spacing:.03em;
   margin-bottom:12px;
@@ -1145,7 +1166,7 @@ select:focus{
   width:6px;
   height:6px;
   border-radius:50%;
-  background:#a855f7;
+  background:var(--primary2);
   flex:0 0 auto;
 }
 
@@ -1177,13 +1198,13 @@ select:focus{
 .clear-filter-btn{
   border:0;
   background:transparent;
-  color:#2563eb;
+  color:var(--info);
   font-weight:800;
   cursor:pointer;
 }
 
 .filter-group{
-  border-top:1px solid #eef2f7;
+  border-top:1px solid var(--info-light);
   padding-top:14px;
   margin-top:14px;
 }
@@ -1197,7 +1218,7 @@ select:focus{
 .filter-title{
   font-size:13px;
   font-weight:900;
-  color:#101828;
+  color:var(--gray-900);
   margin-bottom:10px;
 }
 
@@ -1207,7 +1228,7 @@ select:focus{
   align-items:center;
   justify-content:flex-start;
   gap:10px;
-  color:#344054;
+  color:var(--gray-700);
   font-size:14px;
   font-weight:650;
   margin:10px 0;
@@ -1216,13 +1237,13 @@ select:focus{
 .filter-option input{
   width:18px;
   min-height:18px;
-  accent-color:#2563eb;
+  accent-color:var(--info);
 }
 
 .deal-tip{
   background:linear-gradient(135deg, rgba(37,99,235,0.10), rgba(0,212,255,0.10));
   border:1px solid rgba(37,99,235,0.16);
-  color:#344054;
+  color:var(--gray-700);
   border-radius:16px;
   padding:12px;
   font-size:13px;
@@ -1246,7 +1267,7 @@ select:focus{
 }
 
 .col{
-  background:#ffffff;
+  background:var(--white);
   border:1px solid var(--line);
   border-radius:22px;
   box-shadow:var(--shadow);
@@ -1255,29 +1276,29 @@ select:focus{
 
 .col-head{
   padding-bottom:12px;
-  border-bottom:1px solid #eef2f7;
+  border-bottom:1px solid var(--info-light);
 }
 
 .section-subtitle{
   margin-top:4px;
   font-size:13px;
-  color:#667085;
+  color:var(--gray-500);
   font-weight:650;
 }
 
 h3{
-  color:#101828;
+  color:var(--gray-900);
   letter-spacing:-0.03em;
 }
 
 .sort{
-  color:#667085;
+  color:var(--gray-500);
   font-weight:700;
 }
 
 .sort select{
-  background:#ffffff;
-  color:#111827;
+  background:var(--white);
+  color:var(--gray-900);
 }
 
 .cards{
@@ -1285,12 +1306,12 @@ h3{
 }
 
 .empty{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 .empty-state{
-  border:1px dashed #cbd5e1;
-  background:linear-gradient(135deg, #f8fbff, #ffffff);
+  border:1px dashed var(--gray-200);
+  background:linear-gradient(135deg, var(--info-light), var(--white));
   border-radius:20px;
   padding:20px 20px;
   text-align:center;
@@ -1304,12 +1325,12 @@ h3{
 .empty-title{
   font-size:18px;
   font-weight:900;
-  color:#101828;
+  color:var(--gray-900);
   margin-bottom:6px;
 }
 
 .empty-copy{
-  color:#667085;
+  color:var(--gray-500);
   font-size:14px;
   line-height:1.45;
   max-width:420px;
@@ -1354,7 +1375,7 @@ h3{
 .route-date-label{
   font-size:12.5px;
   font-weight:750;
-  color:#7c3aed;
+  color:var(--accent2);
   margin-top:4px;
 }
 
@@ -1364,20 +1385,20 @@ h3{
 .payment-profile-heading{
   font-size:15px;
   font-weight:800;
-  color:#111827;
+  color:var(--gray-900);
   margin-bottom:10px;
 }
 
 .payment-profile-status{
   font-size:13px;
   font-weight:750;
-  color:#7c3aed;
+  color:var(--accent2);
   margin-bottom:8px;
 }
 
 .payment-profile-body{
   font-size:13px;
-  color:#667085;
+  color:var(--gray-500);
   line-height:1.5;
   margin-bottom:16px;
 }
@@ -1386,8 +1407,8 @@ h3{
   width:100%;
   font-size:13px;
   font-weight:750;
-  color:#374151;
-  background:#ffffff;
+  color:var(--gray-700);
+  background:var(--white);
   border:1px solid rgba(168,85,247,0.28);
   border-radius:12px;
   padding:10px;
@@ -1396,12 +1417,12 @@ h3{
 }
 
 .payment-profile-btn:hover{
-  background:#faf5ff;
-  border-color:#a855f7;
+  background:var(--brand-100);
+  border-color:var(--primary2);
 }
 
 .payment-profile-btn:focus-visible{
-  outline:2px solid #7c3aed;
+  outline:2px solid var(--accent2);
   outline-offset:2px;
 }
 
@@ -1410,7 +1431,7 @@ h3{
   padding-top:14px;
   font-size:12px;
   font-weight:700;
-  color:#9ca3af;
+  color:var(--gray-500);
   text-align:center;
 }
 
@@ -1470,25 +1491,25 @@ h3{
 .payment-guide-loading-title{
   font-size:13px;
   font-weight:750;
-  color:#7c3aed;
+  color:var(--accent2);
 }
 
 .payment-guide-loading-sub{
   font-size:12.5px;
-  color:#667085;
+  color:var(--gray-500);
   line-height:1.5;
 }
 
 .payment-guide-optimised-title{
   font-size:13px;
   font-weight:750;
-  color:#111827;
+  color:var(--gray-900);
   margin-bottom:6px;
 }
 
 .payment-guide-optimised-sub{
   font-size:12.5px;
-  color:#667085;
+  color:var(--gray-500);
   line-height:1.5;
 }
 
@@ -1503,7 +1524,7 @@ h3{
   padding-top:10px;
   border-top:1px solid rgba(15,23,42,0.08);
   font-size:12px;
-  color:#9ca3af;
+  color:var(--gray-500);
 }
 
 /* Truncated-check "Check again" button sits after the facts row, which
@@ -1518,14 +1539,14 @@ h3{
   padding-top:10px;
   border-top:1px solid rgba(15,23,42,0.08);
   font-size:12px;
-  color:#9ca3af;
+  color:var(--gray-500);
   line-height:1.5;
 }
 
 .payment-guide-multi-heading{
   font-size:13.5px;
   font-weight:800;
-  color:#111827;
+  color:var(--gray-900);
   margin-bottom:10px;
 }
 
@@ -1533,7 +1554,7 @@ h3{
   border:1px solid rgba(168,85,247,0.22);
   border-radius:14px;
   padding:12px;
-  background:#faf7ff;
+  background:var(--brand-100);
 }
 
 .payment-guide-suggestion + .payment-guide-suggestion{
@@ -1546,7 +1567,7 @@ h3{
   display:inline-block;
   font-size:10.5px;
   font-weight:750;
-  color:#7c3aed;
+  color:var(--accent2);
   background:rgba(168,85,247,0.12);
   border-radius:999px;
   padding:2px 8px;
@@ -1557,13 +1578,13 @@ h3{
 .payment-guide-suggestion-heading{
   font-size:13px;
   font-weight:800;
-  color:#7c3aed;
+  color:var(--accent2);
   margin-bottom:4px;
 }
 
 .payment-guide-suggestion-message{
   font-size:12.5px;
-  color:#4b5563;
+  color:var(--gray-700);
   line-height:1.45;
   margin-bottom:10px;
 }
@@ -1578,8 +1599,8 @@ h3{
   width:100%;
   font-size:12.5px;
   font-weight:750;
-  color:#ffffff;
-  background:#7c3aed;
+  color:var(--white);
+  background:var(--accent2);
   border:none;
   border-radius:10px;
   padding:9px;
@@ -1588,11 +1609,11 @@ h3{
 }
 
 .payment-guide-add-btn:hover{
-  background:#6d28d9;
+  background:var(--brand-700);
 }
 
 .payment-guide-add-btn:focus-visible{
-  outline:2px solid #7c3aed;
+  outline:2px solid var(--accent2);
   outline-offset:2px;
 }
 
@@ -1600,7 +1621,7 @@ h3{
   width:100%;
   font-size:12px;
   font-weight:650;
-  color:#9ca3af;
+  color:var(--gray-500);
   background:transparent;
   border:none;
   padding:4px;
@@ -1609,7 +1630,7 @@ h3{
 }
 
 .payment-guide-dismiss-btn:hover{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 /* Shown after accepting a guide suggestion (applyPaymentSuggestion in
@@ -1619,25 +1640,25 @@ h3{
 .payment-guide-success-heading{
   font-size:13px;
   font-weight:800;
-  color:#059669;
+  color:var(--success);
   margin-bottom:4px;
 }
 
 .payment-guide-success-message{
   font-size:12.5px;
-  color:#4b5563;
+  color:var(--gray-700);
   line-height:1.45;
   margin-bottom:8px;
 }
 
 .payment-guide-resting-message{
-  color:#9ca3af;
+  color:var(--gray-500);
 }
 
 .payment-guide-success-prices{
   font-size:12.5px;
   font-weight:750;
-  color:#059669;
+  color:var(--success);
   margin-bottom:12px;
 }
 
@@ -1645,8 +1666,8 @@ h3{
   width:100%;
   font-size:12.5px;
   font-weight:700;
-  color:#7c3aed;
-  background:#ffffff;
+  color:var(--accent2);
+  background:var(--white);
   border:1px solid rgba(168,85,247,0.28);
   border-radius:10px;
   padding:9px;
@@ -1655,12 +1676,12 @@ h3{
 }
 
 .payment-guide-check-more-btn:hover{
-  background:#faf5ff;
-  border-color:#a855f7;
+  background:var(--brand-100);
+  border-color:var(--primary2);
 }
 
 .payment-guide-check-more-btn:focus-visible{
-  outline:2px solid #7c3aed;
+  outline:2px solid var(--accent2);
   outline-offset:2px;
 }
 
@@ -1683,7 +1704,7 @@ h3{
   display:inline-block;
   font-size:10.5px;
   font-weight:750;
-  color:#b45309;
+  color:var(--warning);
   background:rgba(217,119,6,0.12);
   border-radius:999px;
   padding:2px 8px;
@@ -1694,19 +1715,19 @@ h3{
 .payment-timing-heading{
   font-size:12.5px;
   font-weight:800;
-  color:#92400e;
+  color:var(--warning);
   margin-bottom:4px;
 }
 
 .payment-timing-message{
   font-size:12px;
-  color:#4b5563;
+  color:var(--gray-700);
   line-height:1.45;
 }
 
 .payment-timing-disclaimer{
   font-size:11px;
-  color:#9ca3af;
+  color:var(--gray-500);
   margin-top:6px;
   font-style:italic;
 }
@@ -1746,7 +1767,7 @@ h3{
   height:18px;
   margin-top:-9px;
   border:2.5px solid rgba(124,58,237,0.22);
-  border-top-color:#7c3aed;
+  border-top-color:var(--accent2);
   border-radius:50%;
   animation:priceLoadingSpin 0.7s linear infinite;
 }
@@ -1764,7 +1785,7 @@ h3{
 .popular-routes-title{
   font-size:13px;
   font-weight:800;
-  color:#667085;
+  color:var(--gray-500);
   text-transform:uppercase;
   letter-spacing:.04em;
   margin-bottom:12px;
@@ -1780,8 +1801,8 @@ h3{
 .popular-route-pill{
   font-size:14px;
   font-weight:700;
-  color:#374151;
-  background:#ffffff;
+  color:var(--gray-700);
+  background:var(--white);
   border:1px solid rgba(168,85,247,0.28);
   border-radius:999px;
   padding:9px 16px;
@@ -1791,26 +1812,26 @@ h3{
 }
 
 .popular-route-pill span{
-  color:#a855f7;
+  color:var(--primary2);
   font-weight:900;
   margin:0 2px;
 }
 
 .popular-route-pill:hover{
-  background:#faf5ff;
-  border-color:#a855f7;
+  background:var(--brand-100);
+  border-color:var(--primary2);
   transform:translateY(-1px);
   box-shadow:0 6px 14px rgba(124,58,237,0.14);
 }
 
 .popular-route-pill:focus-visible{
-  outline:2px solid #7c3aed;
+  outline:2px solid var(--accent2);
   outline-offset:2px;
 }
 
 .card{
-  background:#ffffff;
-  border:1px solid #e6eaf2;
+  background:var(--white);
+  border:1px solid var(--gray-200);
   border-radius:20px;
   box-shadow:0 10px 24px rgba(15,23,42,0.05);
   padding:14px;
@@ -1830,7 +1851,7 @@ h3{
   display:flex;
   align-items:center;
   gap:10px;
-  color:#101828;
+  color:var(--gray-900);
 }
 
 .airline-logo{
@@ -1839,50 +1860,50 @@ h3{
   border-radius:12px;
   display:grid;
   place-items:center;
-  color:#ffffff;
+  color:var(--white);
   font-weight:950;
   font-size:13px;
   flex:0 0 auto;
   box-shadow:0 10px 20px rgba(15,23,42,0.12);
 }
 
-.logo-indigo{ background:linear-gradient(135deg, #123c9c, #2563eb); }
-.logo-air-india{ background:linear-gradient(135deg, #b91c1c, #ef4444); }
-.logo-akasa{ background:linear-gradient(135deg, #f97316, #fb923c); }
-.logo-spicejet{ background:linear-gradient(135deg, #dc2626, #f59e0b); }
-.logo-vistara{ background:linear-gradient(135deg, #4c1d95, #7c3aed); }
-.logo-default{ background:linear-gradient(135deg, #334155, #64748b); }
+.logo-indigo{ background:linear-gradient(135deg, var(--info), var(--info)); }
+.logo-air-india{ background:linear-gradient(135deg, var(--danger), var(--danger)); }
+.logo-akasa{ background:linear-gradient(135deg, var(--warning), var(--warning)); }
+.logo-spicejet{ background:linear-gradient(135deg, var(--danger), var(--warning)); }
+.logo-vistara{ background:linear-gradient(135deg, var(--brand-900), var(--accent2)); }
+.logo-default{ background:linear-gradient(135deg, var(--gray-700), var(--gray-500)); }
 
 .airline-name{
   font-weight:950;
-  color:#101828;
+  color:var(--gray-900);
   line-height:1.05;
 }
 
 .flight-number{
   font-size:12px;
-  color:#667085;
+  color:var(--gray-500);
   margin-top:3px;
   font-weight:750;
 }
 
 .times,
 .stops{
-  color:#475467;
+  color:var(--gray-500);
   font-weight:750;
 }
 
 .flightDuration{
   font-size:12px;
   font-weight:700;
-  color:#475467;
+  color:var(--gray-500);
 }
 
 .flightStopsLine{
   position:relative;
   width:56px;
   height:1px;
-  background:#cbd2e0;
+  background:var(--gray-200);
   margin:6px auto;
   display:flex;
   align-items:center;
@@ -1893,14 +1914,14 @@ h3{
   width:5px;
   height:5px;
   border-radius:50%;
-  background:#7c3aed;
+  background:var(--accent2);
   flex:0 0 auto;
 }
 
 .stopsViaLine{
   font-size:12px;
   font-weight:700;
-  color:#475467;
+  color:var(--gray-500);
   margin-top:2px;
   white-space:normal;
 }
@@ -1918,8 +1939,8 @@ h3{
   transform:translateX(-50%);
   width:max-content;
   max-width:min(340px, 92vw);
-  background:#101828;
-  color:#fff;
+  background:var(--gray-900);
+  color:var(--white);
   font-size:13px;
   font-weight:600;
   line-height:1.7;
@@ -1936,7 +1957,7 @@ h3{
 }
 
 .price{
-  color:#101828;
+  color:var(--gray-900);
   font-size:18px;
 }
 
@@ -1947,74 +1968,74 @@ h3{
 }
 
 .bestDealTop{
-  color:#101828;
+  color:var(--gray-900);
 }
 
 .bestDealPortal,
 .bestDealMeta{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 .bestDealSave{
-  color:#059669;
+  color:var(--success);
 }
 
 .infoBtn{
-  background:#101828;
-  color:#ffffff;
+  background:var(--gray-900);
+  color:var(--white);
   border:0;
   border-radius:12px;
 }
 
 .infoBtn:hover{
-  background:#2563eb;
+  background:var(--info);
 }
 
 .pager{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 .modal-content,
 .portalModalCard{
-  background:#ffffff;
-  color:#101828;
-  border:1px solid #e6eaf2;
+  background:var(--white);
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
 }
 
 .modal-head{
-  border-bottom:1px solid #eef2f7;
+  border-bottom:1px solid var(--info-light);
 }
 
 .x{
-  color:#101828;
-  border:1px solid #d9e1ef;
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
 }
 
 .tab{
-  background:#f8fafc;
-  color:#344054;
-  border:1px solid #d9e1ef;
+  background:var(--gray-50);
+  color:var(--gray-700);
+  border:1px solid var(--gray-200);
 }
 
 .tab.active{
-  background:#eef4ff;
-  color:#1d4ed8;
-  border-color:#93b4ff;
+  background:var(--info-light);
+  color:var(--info);
+  border-color:var(--info-light);
 }
 
 .pm-item{
-  background:#ffffff;
-  color:#101828;
-  border:1px solid #e6eaf2;
+  background:var(--white);
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
 }
 
 .portalRow{
-  background:#ffffff;
-  border:1px solid #e6eaf2;
+  background:var(--white);
+  border:1px solid var(--gray-200);
 }
 
 .portalRow:hover{
-  background:#f8fbff;
+  background:var(--info-light);
 }
 
 .portalRow.best{
@@ -2025,22 +2046,22 @@ h3{
 .portalName,
 .portalPrice,
 .mainOffer{
-  color:#101828;
+  color:var(--gray-900);
 }
 
 .otherOfferItem,
 .otherOffersDrawer{
-  background:#f8fafc;
-  color:#344054;
-  border:1px solid #eef2f7;
+  background:var(--gray-50);
+  color:var(--gray-700);
+  border:1px solid var(--info-light);
 }
 
 .copyCouponBtn,
 .otherOffersInlineBtn,
 .tncBtn{
-  background:#ffffff;
-  color:#1d4ed8;
-  border:1px solid #c7d7fe;
+  background:var(--white);
+  color:var(--info);
+  border:1px solid var(--info-light);
 }
 
 @media (max-width: 1080px){
@@ -2121,9 +2142,9 @@ h3{
 
 .filter-placeholder{
   font-size:13px;
-  color:#667085;
-  background:#f8fafc;
-  border:1px dashed #cbd5e1;
+  color:var(--gray-500);
+  background:var(--gray-50);
+  border:1px dashed var(--gray-200);
   border-radius:12px;
   padding:10px;
 }
@@ -2165,14 +2186,14 @@ h3{
 
 .times{
   font-size:15px;
-  color:#344054;
+  color:var(--gray-700);
   font-weight:850;
   white-space:nowrap;
 }
 
 .stops{
   font-size:13px;
-  color:#667085;
+  color:var(--gray-500);
   font-weight:750;
   white-space:nowrap;
   text-align:center;
@@ -2216,7 +2237,7 @@ h3{
 }
 
 .portalCompareFlightHead{
-  color:#344054;
+  color:var(--gray-700);
   font-weight:800;
   margin-bottom:16px;
 }
@@ -2231,32 +2252,32 @@ h3{
 }
 
 .portalPrice{
-  color:#101828;
+  color:var(--gray-900);
 }
 
 .mainOffer{
-  color:#344054;
+  color:var(--gray-700);
   line-height:1.55;
 }
 
 .mainOffer b{
-  color:#047857;
+  color:var(--success);
 }
 
 .otherOfferItem{
-  color:#344054;
-  background:#ffffff;
-  border:1px solid #e6eaf2;
+  color:var(--gray-700);
+  background:var(--white);
+  border:1px solid var(--gray-200);
 }
 
 .otherOfferDiscount{
-  color:#475467;
+  color:var(--gray-500);
 }
 
 .otherOfferBadge{
-  background:#fff7ed;
-  color:#c2410c;
-  border-color:#fed7aa;
+  background:var(--warning-light);
+  color:var(--warning);
+  border-color:var(--warning-light);
 }
 
 .modal-content{
@@ -2273,11 +2294,11 @@ h3{
   min-height:48px;
   padding:12px 28px;
   font-size:15px;
-  color:#344054;
+  color:var(--gray-700);
 }
 
 .tab.active{
-  color:#1d4ed8;
+  color:var(--info);
   font-weight:900;
 }
 
@@ -2291,7 +2312,7 @@ h3{
   padding:12px 16px;
   justify-content:flex-start;
   gap:12px;
-  color:#101828;
+  color:var(--gray-900);
   font-weight:800;
 }
 
@@ -2302,20 +2323,20 @@ h3{
 }
 
 .emiToggleWrap{
-  background:#eef4ff;
-  border-color:#93b4ff;
+  background:var(--info-light);
+  border-color:var(--info-light);
 }
 
 .emiToggleText{
-  color:#344054;
+  color:var(--gray-700);
 }
 
 .emiToggleState{
-  color:#475467;
+  color:var(--gray-500);
 }
 
 .emiToggleState.active{
-  color:#059669;
+  color:var(--success);
 }
 
 .emiToggle.active{
@@ -2323,7 +2344,7 @@ h3{
 }
 
 .pm-actions{
-  background:#ffffff;
+  background:var(--white);
   box-shadow:0 -14px 30px rgba(15,23,42,0.08);
 }
 
@@ -2375,7 +2396,7 @@ h3{
 .pm-item span{
   font-size:14px;
   line-height:1.2;
-  color:#101828;
+  color:var(--gray-900);
 }
 
 .emiToggleWrap{
@@ -2384,17 +2405,17 @@ h3{
 }
 
 .emiToggleText{
-  color:#101828 !important;
+  color:var(--gray-900) !important;
   opacity:1 !important;
 }
 
 .emiToggleState{
-  color:#344054 !important;
+  color:var(--gray-700) !important;
   opacity:1 !important;
 }
 
 .emiToggleState.active{
-  color:#059669 !important;
+  color:var(--success) !important;
 }
 /* =========================
    Compact trip type buttons
@@ -2412,7 +2433,7 @@ h3{
   gap:6px;
   font-size:12px;
   font-weight:700;
-  color:#344054;
+  color:var(--gray-700);
 }
 
 .trip-toggle input[type="radio"]{
@@ -2434,7 +2455,7 @@ h3{
 
 .modal-head{
   padding:18px 22px;
-  background:linear-gradient(135deg, #ffffff, #f7fbff);
+  background:linear-gradient(135deg, var(--white), var(--info-light));
 }
 
 .modal-head h2{
@@ -2445,8 +2466,8 @@ h3{
 .pm-tabs{
   padding:14px 20px;
   gap:10px;
-  background:#ffffff;
-  border-bottom:1px solid #e6eaf2;
+  background:var(--white);
+  border-bottom:1px solid var(--gray-200);
 }
 
 .tab{
@@ -2454,15 +2475,15 @@ h3{
   padding:9px 18px;
   font-size:14px;
   border-radius:999px;
-  background:#f8fafc;
-  color:#344054;
-  border:1px solid #d9e1ef;
+  background:var(--gray-50);
+  color:var(--gray-700);
+  border:1px solid var(--gray-200);
 }
 
 .tab.active{
-  background:linear-gradient(135deg, #eef4ff, #eaf8ff);
-  border-color:#7da2ff;
-  color:#1d4ed8;
+  background:linear-gradient(135deg, var(--info-light), var(--info-light));
+  border-color:var(--info-light);
+  color:var(--info);
   box-shadow:0 8px 18px rgba(37,99,235,0.12);
 }
 
@@ -2470,24 +2491,24 @@ h3{
   min-height:40px;
   padding:7px 12px;
   margin-left:auto;
-  background:linear-gradient(135deg, #eef4ff, #eaf8ff);
-  border:1px solid #8fb0ff;
+  background:linear-gradient(135deg, var(--info-light), var(--info-light));
+  border:1px solid var(--info-light);
 }
 
 .emiToggleText{
-  color:#101828 !important;
+  color:var(--gray-900) !important;
   font-weight:900;
   font-size:13px;
 }
 
 .emiToggleState{
-  color:#475467 !important;
+  color:var(--gray-500) !important;
   font-weight:900;
   font-size:12px;
 }
 
 .emiToggleState.active{
-  color:#059669 !important;
+  color:var(--success) !important;
 }
 
 .emiToggle{
@@ -2501,7 +2522,7 @@ h3{
   overflow:auto;
   background:
     radial-gradient(600px 240px at 10% 0%, rgba(37,99,235,0.06), transparent 60%),
-    #ffffff;
+    var(--white);
 }
 
 .pm-list{
@@ -2514,9 +2535,9 @@ h3{
   height:52px;
   padding:10px 14px;
   border-radius:16px;
-  background:#ffffff;
-  border:1px solid #e1e8f5;
-  color:#101828;
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  color:var(--gray-900);
   font-weight:850;
   flex-direction:row;
   align-items:center;
@@ -2526,14 +2547,14 @@ h3{
 }
 
 .pm-item:hover{
-  border-color:#8fb0ff;
-  background:#f7fbff;
+  border-color:var(--info-light);
+  background:var(--info-light);
   transform:translateY(-1px);
 }
 
 .pm-item:has(input:checked){
-  border-color:#2563eb;
-  background:linear-gradient(135deg, #eef4ff, #f0fbff);
+  border-color:var(--info);
+  background:linear-gradient(135deg, var(--info-light), var(--info-light));
   box-shadow:0 8px 18px rgba(37,99,235,0.10);
 }
 
@@ -2541,12 +2562,12 @@ h3{
   width:17px;
   height:17px;
   min-height:17px;
-  accent-color:#2563eb;
+  accent-color:var(--info);
 }
 
 .pm-item span{
   font-size:14px;
-  color:#101828;
+  color:var(--gray-900);
   line-height:1.15;
 }
 
@@ -2555,7 +2576,7 @@ h3{
   flex:0 0 auto !important;
   font-size:11px !important;
   font-weight:800 !important;
-  color:#059669 !important;
+  color:var(--success) !important;
   background:rgba(5,150,105,0.10) !important;
   border:1px solid rgba(5,150,105,0.25) !important;
   border-radius:999px !important;
@@ -2565,8 +2586,8 @@ h3{
 
 .pm-actions{
   padding:14px 20px;
-  background:#ffffff;
-  border-top:1px solid #e6eaf2;
+  background:var(--white);
+  border-top:1px solid var(--gray-200);
   box-shadow:0 -12px 30px rgba(15,23,42,0.06);
 }
 
@@ -2607,7 +2628,7 @@ h3{
 .portalCompareFlightHead{
   margin-bottom:12px;
   font-size:15px;
-  color:#475467;
+  color:var(--gray-500);
 }
 
 .portalCompareList{
@@ -2656,8 +2677,8 @@ h3{
   align-items:center;
   min-height:24px;
   opacity:1 !important;
-  color:#1d4ed8 !important;
-  background:#ffffff !important;
+  color:var(--info) !important;
+  background:var(--white) !important;
 }
 
 .otherOffersInline{
@@ -2695,7 +2716,7 @@ body{
   background:
     radial-gradient(900px 420px at 12% -8%, rgba(139,92,246,0.28), transparent 60%),
     radial-gradient(700px 360px at 86% 0%, rgba(236,72,153,0.18), transparent 55%),
-    linear-gradient(180deg, #080812 0%, #10101d 100%);
+    linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
   color:var(--text);
 }
 
@@ -2706,7 +2727,7 @@ body{
 }
 
 .brand{
-  color:#f8fafc;
+  color:var(--gray-50);
 }
 
 .brand-name{
@@ -2715,7 +2736,7 @@ body{
 }
 
 .sub{
-  color:#b7bed7;
+  color:var(--muted);
 }
 
 .search-card,
@@ -2756,23 +2777,23 @@ h3,
 
 input,
 select{
-  background:#0c0c18;
+  background:var(--bg);
   color:var(--text);
   border:1px solid rgba(139,92,246,0.24);
 }
 
 input:focus,
 select:focus{
-  border-color:#a855f7;
+  border-color:var(--primary2);
   box-shadow:0 0 0 3px rgba(168,85,247,0.25);
 }
 
 .btn-primary{
-  background:#a855f7;
+  background:var(--primary2);
   box-shadow:0 12px 30px rgba(168,85,247,0.35);
 }
 .btn-primary:hover{
-  background:#9333ea;
+  background:var(--brand-700);
   box-shadow:0 16px 36px rgba(168,85,247,0.45);
 }
 
@@ -2780,7 +2801,7 @@ select:focus{
 .btn-sm,
 .clear-filter-btn{
   background:rgba(139,92,246,0.10);
-  color:#f2e9ff;
+  color:var(--brand-100);
   border:1px solid rgba(139,92,246,0.32);
 }
 
@@ -2809,9 +2830,9 @@ select:focus{
 }
 
 .infoBtn{
-  background:linear-gradient(135deg, #111827, #201238);
+  background:linear-gradient(135deg, var(--gray-900), var(--panel2));
   border:1px solid rgba(236,72,153,0.35);
-  color:#ffffff;
+  color:var(--white);
 }
 
 .infoBtn:hover{
@@ -2820,7 +2841,7 @@ select:focus{
 
 .filter-title,
 .filter-option{
-  color:#f8fafc;
+  color:var(--gray-50);
 }
 
 .filter-group,
@@ -2834,20 +2855,20 @@ select:focus{
 .deal-tip{
   background:linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
   border:1px solid rgba(236,72,153,0.24);
-  color:#f3e8ff;
+  color:var(--brand-100);
 }
 
 .filter-placeholder,
 .otherOfferItem,
 .otherOffersDrawer{
   background:rgba(255,255,255,0.05);
-  color:#cbd5e1;
+  color:var(--gray-200);
   border-color:rgba(255,255,255,0.10);
 }
 
 .tab{
-  background:#11111f;
-  color:#d8d6ff;
+  background:var(--panel);
+  color:var(--brand-200);
   border-color:rgba(139,92,246,0.28);
 }
 
@@ -2855,18 +2876,18 @@ select:focus{
 .pm-item:has(input:checked){
   background:linear-gradient(135deg, rgba(139,92,246,0.24), rgba(236,72,153,0.16));
   border-color:rgba(236,72,153,0.55);
-  color:#ffffff;
+  color:var(--white);
 }
 
 .pm-body,
 .pm-tabs,
 .pm-actions,
 .modal-head{
-  background:#10101d;
+  background:var(--panel);
 }
 
 .pm-item span{
-  color:#f8fafc;
+  color:var(--gray-50);
 }
 
 .emiToggleWrap{
@@ -2876,7 +2897,7 @@ select:focus{
 
 .emiToggleText,
 .emiToggleState{
-  color:#f8fafc !important;
+  color:var(--gray-50) !important;
 }
 
 .copyCouponBtn,
@@ -2884,7 +2905,7 @@ select:focus{
 .tncBtn,
 .portalLinkBelowPrice{
   background:rgba(255,255,255,0.06) !important;
-  color:#f3e8ff !important;
+  color:var(--brand-100) !important;
   border:1px solid rgba(139,92,246,0.30) !important;
 }
 /* SkyDeal gradient logo text */
@@ -2893,7 +2914,7 @@ select:focus{
   background:none;
   -webkit-background-clip:initial;
   background-clip:initial;
-  color:#a855f7;
+  color:var(--primary2);
   text-shadow:0 0 14px rgba(168,85,247,0.38);
   font-weight:950;
 }
@@ -2905,7 +2926,7 @@ select:focus{
 body{
   background:
     radial-gradient(900px 420px at 12% -8%, rgba(168,85,247,0.22), transparent 60%),
-    linear-gradient(180deg, #080812 0 360px, #f6f7fb 360px 100%);
+    linear-gradient(180deg, var(--bg) 0 360px, var(--gray-50) 360px 100%);
 }
 
 /* Keep top/search area premium dark */
@@ -2918,17 +2939,17 @@ body{
 /* Results area becomes clean and trustworthy */
 .filter-card,
 .col{
-  background:#ffffff;
-  color:#111827;
-  border:1px solid #e5e7eb;
+  background:var(--white);
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
   box-shadow:0 18px 44px rgba(15,23,42,0.08);
 }
 
 /* Same treatment, but keeps its own purple accent border (see the base
    .smart-guide-card rule) instead of the plain gray one above. */
 .smart-guide-card{
-  background:#ffffff;
-  color:#111827;
+  background:var(--white);
+  color:var(--gray-900);
   box-shadow:0 18px 44px rgba(15,23,42,0.08);
 }
 
@@ -2942,7 +2963,7 @@ body{
 .price,
 .bestDealTop,
 .empty-title{
-  color:#111827;
+  color:var(--gray-900);
 }
 
 .section-subtitle,
@@ -2954,24 +2975,24 @@ body{
 .bestDealPortal,
 .pager,
 .empty-copy{
-  color:#667085;
+  color:var(--gray-500);
 }
 
 /* Results separators */
 .filter-group,
 .col-head{
-  border-color:#eef2f7;
+  border-color:var(--info-light);
 }
 
 /* Filter inputs on light cards */
 .filter-option input{
-  accent-color:#a855f7;
+  accent-color:var(--primary2);
 }
 
 /* Light result flight cards */
 .card{
-  background:#ffffff;
-  border:1px solid #e6eaf2;
+  background:var(--white);
+  border:1px solid var(--gray-200);
   box-shadow:0 10px 24px rgba(15,23,42,0.05);
 }
 
@@ -2983,63 +3004,63 @@ body{
 /* Best deal / no offer block */
 .bestDealBanner,
 .empty-state{
-  background:linear-gradient(135deg, #faf5ff, #ffffff);
+  background:linear-gradient(135deg, var(--brand-100), var(--white));
   border:1px solid rgba(168,85,247,0.22);
 }
 
 .bestDealSave,
 .mainOffer b{
-  color:#059669;
+  color:var(--success);
 }
 
 /* Compare button remains brand-led */
 .infoBtn{
-  background:#111827;
-  color:#ffffff;
+  background:var(--gray-900);
+  color:var(--white);
   border:1px solid rgba(168,85,247,0.28);
 }
 
 .infoBtn:hover{
-  background:#a855f7;
+  background:var(--primary2);
 }
 
 /* Sort dropdown in light section */
 .sort select{
-  background:#ffffff;
-  color:#111827;
-  border:1px solid #d9e1ef;
+  background:var(--white);
+  color:var(--gray-900);
+  border:1px solid var(--gray-200);
 }
 
 /* Filter placeholder and tip */
 .filter-placeholder{
-  background:#fafafa;
-  color:#667085;
-  border:1px dashed #d1d5db;
+  background:var(--gray-50);
+  color:var(--gray-500);
+  border:1px dashed var(--gray-200);
 }
 
 .deal-tip{
-  background:linear-gradient(135deg, #faf5ff, #ffffff);
+  background:linear-gradient(135deg, var(--brand-100), var(--white));
   border:1px solid rgba(168,85,247,0.22);
-  color:#374151;
+  color:var(--gray-700);
 }
 
 /* Pager buttons on light area */
 .btn-sm{
-  background:#ffffff;
-  color:#374151;
-  border:1px solid #d9e1ef;
+  background:var(--white);
+  color:var(--gray-700);
+  border:1px solid var(--gray-200);
 }
 
 .btn-sm:not(:disabled):hover{
-  border-color:#a855f7;
-  color:#7e22ce;
+  border-color:var(--primary2);
+  color:var(--brand-700);
 }
 
 /* Keep payment and comparison modals dark/premium for now */
 .modal-content,
 .portalModalCard{
-  background:#10101d;
-  color:#f8fafc;
+  background:var(--panel);
+  color:var(--gray-50);
   border:1px solid rgba(168,85,247,0.28);
 }
 
@@ -3047,7 +3068,7 @@ body{
 .pm-tabs,
 .pm-body,
 .pm-actions{
-  background:#10101d;
+  background:var(--panel);
   border-color:rgba(255,255,255,0.10);
 }
 
@@ -3055,7 +3076,7 @@ body{
 .portalName,
 .portalPrice,
 .mainOffer{
-  color:#f8fafc;
+  color:var(--gray-50);
 }
 
 .portalRow{
@@ -3075,7 +3096,7 @@ body{
 .x{
   background:rgba(255,255,255,0.08) !important;
   border:1px solid rgba(168,85,247,0.55) !important;
-  color:#ffffff !important;
+  color:var(--white) !important;
   font-size:22px !important;
   font-weight:800 !important;
   line-height:1 !important;
@@ -3085,8 +3106,8 @@ body{
 }
 
 .x:hover{
-  background:#a855f7 !important;
-  color:#ffffff !important;
+  background:var(--primary2) !important;
+  color:var(--white) !important;
   box-shadow:0 0 16px rgba(168,85,247,0.55);
 }
 
@@ -3109,8 +3130,8 @@ body{
 
 /* Clear all button in filter panel */
 .clear-filter-btn{
-  background:#faf5ff !important;
-  color:#7e22ce !important;
+  background:var(--brand-100) !important;
+  color:var(--brand-700) !important;
   border:1px solid rgba(168,85,247,0.35) !important;
   border-radius:8px !important;
   padding:4px 8px !important;
@@ -3119,8 +3140,8 @@ body{
 }
 
 .clear-filter-btn:hover{
-  background:#a855f7 !important;
-  color:#ffffff !important;
+  background:var(--primary2) !important;
+  color:var(--white) !important;
 }
 /* =========================
    Fix portal hover + date picker visibility
@@ -3130,20 +3151,20 @@ body{
 .portalRow:hover{
   background:rgba(168,85,247,0.10) !important;
   border-color:rgba(168,85,247,0.45) !important;
-  color:#f8fafc !important;
+  color:var(--gray-50) !important;
 }
 
 .portalRow:hover .portalName,
 .portalRow:hover .portalPrice,
 .portalRow:hover .mainOffer,
 .portalRow:hover .offerMeta{
-  color:#f8fafc !important;
+  color:var(--gray-50) !important;
 }
 
 .portalRow:hover .portalLinkBelowPrice,
 .portalRow:hover .otherOffersInlineBtn{
   background:rgba(255,255,255,0.08) !important;
-  color:#f8fafc !important;
+  color:var(--gray-50) !important;
   border-color:rgba(168,85,247,0.45) !important;
 }
 
@@ -3198,9 +3219,9 @@ input[type="date"]::after{
   height: 40px;
   object-fit: contain;
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--white);
   padding: 5px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--gray-200);
   flex-shrink: 0;
 }
 
@@ -3407,7 +3428,7 @@ body {
 }
 
 .sky-trip-bar-kicker {
-  color: #c084fc;
+  color: var(--primary2);
   font-size: 12px;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -3415,7 +3436,7 @@ body {
 }
 
 .sky-trip-bar-status {
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 800;
 }
@@ -3440,7 +3461,7 @@ body {
 }
 
 .sky-trip-leg-label {
-  color: #d8b4fe;
+  color: var(--brand-200);
   font-size: 11px;
   font-weight: 950;
   text-transform: uppercase;
@@ -3450,7 +3471,7 @@ body {
 
 .sky-trip-leg-main {
   min-width: 0;
-  color: #ffffff;
+  color: var(--white);
   font-size: 12px;
   font-weight: 850;
   overflow: hidden;
@@ -3479,7 +3500,7 @@ body {
   white-space: nowrap;
   background: rgba(255,255,255,0.08) !important;
   border-color: rgba(255,255,255,0.18) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
 }
 
 @media (max-width: 980px) {
@@ -3538,7 +3559,7 @@ body {
 }
 
 .sky-trip-best-label {
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 11px;
   font-weight: 950;
   text-transform: uppercase;
@@ -3547,7 +3568,7 @@ body {
 
 .sky-trip-best-main {
   margin-top: 3px;
-  color: #ffffff;
+  color: var(--white);
   font-size: 15px;
   font-weight: 950;
   line-height: 1.2;
@@ -3555,7 +3576,7 @@ body {
 
 .sky-trip-best-sub {
   margin-top: 3px;
-  color: #d8b4fe;
+  color: var(--brand-200);
   font-size: 12px;
   font-weight: 750;
   white-space: nowrap;
@@ -3564,7 +3585,7 @@ body {
 }
 
 .sky-trip-best-save {
-  color: #34d399;
+  color: var(--success);
   font-size: 13px;
   font-weight: 950;
   white-space: nowrap;
@@ -3616,7 +3637,7 @@ body {
   font-weight: 950;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #d8b4fe;
+  color: var(--brand-200);
 }
 
 .sky-trip-best-context,
@@ -3624,7 +3645,7 @@ body {
   margin-top: 3px;
   font-size: 12px;
   font-weight: 750;
-  color: #cbd5e1;
+  color: var(--gray-200);
 }
 
 .sky-trip-best-portal-chip {
@@ -3632,7 +3653,7 @@ body {
   border-radius: 999px;
   background: rgba(168, 85, 247, 0.18);
   border: 1px solid rgba(196, 181, 253, 0.24);
-  color: #f5f3ff;
+  color: var(--brand-100);
   font-size: 12px;
   font-weight: 900;
   white-space: nowrap;
@@ -3650,7 +3671,7 @@ body {
   font-size: 32px;
   font-weight: 950;
   line-height: 1;
-  color: #ffffff;
+  color: var(--white);
 }
 
 .sky-trip-best-save {
@@ -3658,7 +3679,7 @@ body {
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.16);
   border: 1px solid rgba(52, 211, 153, 0.3);
-  color: #34d399;
+  color: var(--success);
   font-size: 14px;
   font-weight: 950;
   white-space: nowrap;
@@ -3670,7 +3691,7 @@ body {
   flex-wrap: wrap;
   gap: 6px 8px;
   align-items: center;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 750;
 }
@@ -3680,7 +3701,7 @@ body {
   margin-top: 8px;
   font-size: 12px;
   line-height: 1.45;
-  color: #dbe4ff;
+  color: var(--info-light);
 }
 
 .sky-trip-bar-actions {
@@ -3705,7 +3726,7 @@ body {
   font-weight: 900;
   font-size: 14px;
   background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: var(--white);
   border: 1px solid rgba(196, 181, 253, 0.22);
   cursor: pointer;
 }
@@ -3765,12 +3786,12 @@ body {
   font-weight: 950;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #d8b4fe;
+  color: var(--brand-200);
 }
 
 .sky-trip-best-context {
   margin-top: 3px;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 750;
 }
@@ -3781,7 +3802,7 @@ body {
   padding: 7px 11px;
   background: rgba(168, 85, 247, 0.20);
   border: 1px solid rgba(216, 180, 254, 0.28);
-  color: #ffffff;
+  color: var(--white);
   font-size: 12px;
   font-weight: 950;
 }
@@ -3795,7 +3816,7 @@ body {
 }
 
 .sky-trip-best-final {
-  color: #ffffff;
+  color: var(--white);
   font-size: 34px;
   font-weight: 950;
   line-height: 1;
@@ -3803,7 +3824,7 @@ body {
 
 .sky-trip-best-base {
   margin-top: 5px;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 750;
 }
@@ -3813,7 +3834,7 @@ body {
   padding: 7px 11px;
   background: rgba(16, 185, 129, 0.17);
   border: 1px solid rgba(52, 211, 153, 0.32);
-  color: #34d399;
+  color: var(--success);
   font-size: 14px;
   font-weight: 950;
   white-space: nowrap;
@@ -3828,7 +3849,7 @@ body {
 }
 
 .sky-trip-offer-title {
-  color: #ffffff;
+  color: var(--white);
   font-size: 13px;
   font-weight: 950;
 }
@@ -3838,7 +3859,7 @@ body {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 750;
 }
@@ -3849,7 +3870,7 @@ body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 800;
 }
@@ -3861,7 +3882,7 @@ body {
   padding: 5px 9px;
   background: rgba(168, 85, 247, 0.22);
   border: 1px solid rgba(216, 180, 254, 0.30);
-  color: #ffffff;
+  color: var(--white);
   font-weight: 950;
   letter-spacing: 0.02em;
 }
@@ -3869,7 +3890,7 @@ body {
 .copyTripCouponBtn {
   border: 1px solid rgba(216, 180, 254, 0.25);
   background: rgba(255,255,255,0.08);
-  color: #ffffff;
+  color: var(--white);
   border-radius: 999px;
   padding: 5px 9px;
   font-size: 11px;
@@ -3883,7 +3904,7 @@ body {
 
 .sky-trip-best-footnote {
   margin-top: 9px;
-  color: #dbe4ff;
+  color: var(--info-light);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -3910,7 +3931,7 @@ body {
   font-weight: 900;
   font-size: 14px;
   background: rgba(255,255,255,0.08);
-  color: #ffffff;
+  color: var(--white);
   border: 1px solid rgba(216,180,254,0.22);
   cursor: pointer;
 }
@@ -3955,7 +3976,7 @@ body {
 }
 
 .trip-rec-eyebrow {
-  color: #c084fc;
+  color: var(--primary2);
   font-size: 11px;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -3964,7 +3985,7 @@ body {
 
 .trip-rec-title {
   margin-top: 4px;
-  color: #ffffff;
+  color: var(--white);
   font-size: 15px;
   font-weight: 950;
   line-height: 1.25;
@@ -3974,7 +3995,7 @@ body {
   flex-shrink: 0;
   padding: 7px 11px;
   border-radius: 999px;
-  color: #ffffff;
+  color: var(--white);
   background: rgba(168, 85, 247, 0.18);
   border: 1px solid rgba(216, 180, 254, 0.28);
   font-size: 12px;
@@ -3996,7 +4017,7 @@ body {
 }
 
 .trip-rec-price {
-  color: #ffffff;
+  color: var(--white);
   font-size: 36px;
   font-weight: 950;
   line-height: 1;
@@ -4005,7 +4026,7 @@ body {
 
 .trip-rec-base {
   margin-top: 7px;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 800;
 }
@@ -4016,7 +4037,7 @@ body {
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.16);
   border: 1px solid rgba(52, 211, 153, 0.32);
-  color: #34d399;
+  color: var(--success);
   font-size: 14px;
   font-weight: 950;
   white-space: nowrap;
@@ -4031,7 +4052,7 @@ body {
 }
 
 .trip-rec-section-label {
-  color: #d8b4fe;
+  color: var(--brand-200);
   font-size: 10px;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -4040,7 +4061,7 @@ body {
 
 .trip-rec-offer-title {
   margin-top: 5px;
-  color: #ffffff;
+  color: var(--white);
   font-size: 13px;
   font-weight: 950;
   line-height: 1.25;
@@ -4051,7 +4072,7 @@ body {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 750;
 }
@@ -4065,7 +4086,7 @@ body {
 }
 
 .trip-rec-coupon-label {
-  color: #cbd5e1;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 850;
 }
@@ -4077,14 +4098,14 @@ body {
   border-radius: 999px;
   background: rgba(168, 85, 247, 0.22);
   border: 1px solid rgba(216, 180, 254, 0.30);
-  color: #ffffff;
+  color: var(--white);
   font-size: 12px;
   font-weight: 950;
   letter-spacing: 0.03em;
 }
 
 .trip-rec-no-code {
-  color: #e5e7eb;
+  color: var(--gray-200);
   font-size: 12px;
   font-weight: 850;
 }
@@ -4093,7 +4114,7 @@ body {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
-  color: #dbe4ff;
+  color: var(--info-light);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -4101,7 +4122,7 @@ body {
 .copyTripCouponBtn {
   border: 1px solid rgba(216, 180, 254, 0.25);
   background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: var(--white);
   border-radius: 999px;
   padding: 5px 9px;
   font-size: 11px;
@@ -4134,7 +4155,7 @@ body {
   font-weight: 900 !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(216, 180, 254, 0.24) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
 }
 
 @media (max-width: 1180px) {
@@ -4160,7 +4181,7 @@ body {
 }
 
 .sky-trip-leg-label {
-  color: #d8b4fe !important;
+  color: var(--brand-200) !important;
   font-size: 11px !important;
   font-weight: 950 !important;
   text-transform: uppercase !important;
@@ -4197,7 +4218,7 @@ body {
 
 .trip-rec-base {
   margin-top: 7px !important;
-  color: #cbd5e1 !important;
+  color: var(--gray-200) !important;
   font-size: 12px !important;
   font-weight: 800 !important;
 }
@@ -4210,7 +4231,7 @@ body {
   padding: 7px 11px;
   background: rgba(16, 185, 129, 0.16);
   border: 1px solid rgba(52, 211, 153, 0.32);
-  color: #34d399;
+  color: var(--success);
   font-size: 13px;
   font-weight: 950;
   white-space: nowrap;
@@ -4570,9 +4591,9 @@ body {
 
   .mobile-chip {
     flex: 0 0 auto;
-    border: 1px solid #d7dce5;
-    background: #ffffff;
-    color: #111827;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-900);
     border-radius: 13px;
     min-height: 42px;
     padding: 8px 12px;
@@ -4587,18 +4608,18 @@ body {
   }
 
   .mobile-chip-sort {
-    border-color: #38bdf8;
+    border-color: var(--info);
   }
 
   .mobile-chip-filter {
     border-color: rgba(168, 85, 247, 0.4);
-    color: #6d28d9;
+    color: var(--brand-700);
   }
 
   .mobile-chip.is-active {
     border-color: rgba(168, 85, 247, 0.65);
     background: rgba(168, 85, 247, 0.10);
-    color: #581c87;
+    color: var(--brand-900);
   }
 
   /* Filter drawer only when user taps Filter chip */
@@ -4633,7 +4654,7 @@ body {
     z-index: 45;
     align-items: center;
     gap: 10px;
-    background: linear-gradient(120deg, #7c3aed, #9333ea 55%, #a855f7);
+    background: linear-gradient(120deg, var(--accent2), var(--brand-700) 55%, var(--primary2));
     border-radius: 14px;
     padding: 11px 12px;
     box-shadow: 0 14px 30px rgba(124, 85, 247, 0.35);
@@ -4663,7 +4684,7 @@ body {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #ffffff;
+    background: var(--white);
     flex: 0 0 auto;
   }
 
@@ -4684,7 +4705,7 @@ body {
   .price-intel-frozen-line {
     font-size: 14px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--white);
     line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
@@ -4696,7 +4717,7 @@ body {
     flex: 0 0 auto;
     width: 18px;
     height: 18px;
-    color: #ffffff;
+    color: var(--white);
   }
 
   body.mobile-filter-drawer-open .filter-panel {
@@ -4922,7 +4943,7 @@ body {
     font-size: 12px !important;
     line-height: 1.1 !important;
     white-space: nowrap !important;
-    color: #cbd5e1 !important;
+    color: var(--gray-200) !important;
   }
 
   .search-card.mobile-compact-search-card .trip-toggle input[type="radio"],
@@ -4933,7 +4954,7 @@ body {
     min-height: 14px !important;
     margin: 0 !important;
     padding: 0 !important;
-    accent-color: #a855f7 !important;
+    accent-color: var(--primary2) !important;
     box-shadow: none !important;
   }
 
@@ -5251,7 +5272,7 @@ body {
     margin: 10px auto 10px;
     padding: 12px 12px;
     border-radius: 16px;
-    background: #ffffff;
+    background: var(--white);
     border: 1px solid rgba(226, 232, 240, 0.95);
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
     align-items: center;
@@ -5278,7 +5299,7 @@ body {
     font-size: 18px;
     font-weight: 950;
     line-height: 1.1;
-    color: #0f172a;
+    color: var(--gray-900);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5289,7 +5310,7 @@ body {
     font-size: 12px;
     font-weight: 750;
     line-height: 1.25;
-    color: #64748b;
+    color: var(--gray-500);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5299,7 +5320,7 @@ body {
     flex: 0 0 auto;
     border: 1px solid rgba(168, 85, 247, 0.35);
     background: rgba(168, 85, 247, 0.10);
-    color: #6d28d9;
+    color: var(--brand-700);
     border-radius: 999px;
     padding: 9px 12px;
     font-size: 13px;
@@ -5378,7 +5399,7 @@ body {
     margin: 0 auto 12px;
     padding: 8px;
     border-radius: 16px;
-    background: #ffffff;
+    background: var(--white);
     border: 1px solid rgba(226, 232, 240, 0.95);
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
     position: sticky;
@@ -5394,7 +5415,7 @@ body {
     flex: 1;
     border: 1px solid transparent;
     background: transparent;
-    color: #64748b;
+    color: var(--gray-500);
     border-radius: 11px;
     padding: 10px 12px;
     font-size: 14px;
@@ -5405,7 +5426,7 @@ body {
   .mobile-rt-tab-btn.active {
     border-color: rgba(168, 85, 247, 0.65);
     background: rgba(168, 85, 247, 0.10);
-    color: #581c87;
+    color: var(--brand-900);
   }
 
   body.mobile-rt-tabs-on .flights-workspace .col.mobile-tab-hidden {
@@ -5433,14 +5454,14 @@ body {
 }
 
 .sky-search-loading-card {
-  color: #111827;
+  color: var(--gray-900);
 }
 
 .sky-spinner {
   width: 42px;
   height: 42px;
   border: 4px solid rgba(168, 85, 247, 0.18);
-  border-top-color: #a855f7;
+  border-top-color: var(--primary2);
   border-radius: 999px;
   animation: skySpin 0.85s linear infinite;
 }
@@ -5449,7 +5470,7 @@ body {
   width: 15px;
   height: 15px;
   border: 2px solid rgba(255,255,255,0.35);
-  border-top-color: #ffffff;
+  border-top-color: var(--white);
   border-radius: 999px;
   display: inline-block;
   animation: skySpin 0.85s linear infinite;
@@ -5467,14 +5488,14 @@ body {
   font-size: 20px;
   font-weight: 950;
   line-height: 1.15;
-  color: #111827;
+  color: var(--gray-900);
 }
 
 .sky-search-state-subtitle {
   max-width: 420px;
   font-size: 14px;
   line-height: 1.45;
-  color: #64748b;
+  color: var(--gray-500);
   font-weight: 700;
 }
 
@@ -5489,8 +5510,8 @@ body {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--danger-light);
+  color: var(--danger);
   font-weight: 950;
   font-size: 22px;
 }
@@ -5514,13 +5535,13 @@ body {
 }
 
 .sky-state-primary-btn {
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  background: linear-gradient(135deg, var(--primary2), var(--accent2));
   color: white;
 }
 
 .sky-state-secondary-btn {
   background: white;
-  color: #6d28d9;
+  color: var(--brand-700);
   border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
@@ -5570,7 +5591,7 @@ body {
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: #ffffff;
+  border-top-color: var(--white);
   border-radius: 999px;
   display: inline-block;
   animation: skySpin 0.85s linear infinite;
@@ -5799,9 +5820,9 @@ body {
   .search-card input[type="date"] {
     appearance: none !important;
     -webkit-appearance: none !important;
-    background-color: #090816 !important;
+    background-color: var(--bg) !important;
     border: 1px solid rgba(124, 58, 237, 0.55) !important;
-    color: #ffffff !important;
+    color: var(--white) !important;
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.03),
       0 0 0 0 rgba(168, 85, 247, 0) !important;
@@ -5838,8 +5859,8 @@ body {
   .location-options {
     position: absolute !important;
     z-index: 999 !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
+    background: var(--white) !important;
+    color: var(--gray-900) !important;
     border: 1px solid rgba(226, 232, 240, 0.95) !important;
     border-radius: 14px !important;
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28) !important;
@@ -5850,8 +5871,8 @@ body {
   }
 
   .location-option {
-    background: #ffffff !important;
-    color: #0f172a !important;
+    background: var(--white) !important;
+    color: var(--gray-900) !important;
     border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
     padding: 10px 12px !important;
   }
@@ -5861,13 +5882,13 @@ body {
   }
 
   .location-option-main {
-    color: #0f172a !important;
+    color: var(--gray-900) !important;
     font-weight: 900 !important;
     line-height: 1.15 !important;
   }
 
   .location-option-sub {
-    color: #64748b !important;
+    color: var(--gray-500) !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
     margin-top: 2px !important;
@@ -5903,8 +5924,8 @@ body {
     min-height: 54px !important;
     border-radius: 14px !important;
     border: 1px solid rgba(124, 58, 237, 0.72) !important;
-    background: #090816 !important;
-    color: #ffffff !important;
+    background: var(--bg) !important;
+    color: var(--white) !important;
     padding: 0 42px 0 12px !important;
     box-sizing: border-box !important;
     font-size: 15px !important;
@@ -5944,8 +5965,8 @@ body {
   .sky-mobile-location-dropdown {
     position: absolute !important;
     z-index: 9999 !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
+    background: var(--white) !important;
+    color: var(--gray-900) !important;
     border-radius: 14px !important;
     border: 1px solid rgba(226, 232, 240, 1) !important;
     box-shadow: 0 22px 60px rgba(15, 23, 42, 0.34) !important;
@@ -5956,16 +5977,16 @@ body {
   }
 
   .sky-mobile-location-dropdown .location-option {
-    background: #ffffff !important;
-    color: #0f172a !important;
+    background: var(--white) !important;
+    color: var(--gray-900) !important;
   }
 
   .sky-mobile-location-dropdown .location-option-main {
-    color: #0f172a !important;
+    color: var(--gray-900) !important;
   }
 
   .sky-mobile-location-dropdown .location-option-sub {
-    color: #64748b !important;
+    color: var(--gray-500) !important;
   }
 
   .search-card.mobile-compact-search-card:has(.sky-mobile-location-dropdown .location-option) .sky-mobile-date-wrap {
@@ -6008,8 +6029,8 @@ body {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warning-light);
+  color: var(--warning);
   font-weight: 950;
   font-size: 24px;
 }
@@ -6242,7 +6263,7 @@ body.search-error-mode .results-top-filter-row {
     margin: 0 18px 10px !important;
     padding: 8px 12px !important;
     border-radius: 999px !important;
-    color: #c4b5fd !important;
+    color: var(--brand-200) !important;
     background: rgba(168, 85, 247, 0.12) !important;
     border: 1px solid rgba(168, 85, 247, 0.24) !important;
     font-size: 12px !important;
@@ -6353,7 +6374,7 @@ body #selectedTripPanel .trip-rec-save-inline {
   width: fit-content !important;
   padding: 7px 12px !important;
   border-radius: 999px !important;
-  color: #34d399 !important;
+  color: var(--success) !important;
   background: rgba(16, 185, 129, 0.14) !important;
   border: 1px solid rgba(52, 211, 153, 0.28) !important;
   font-size: 13px !important;
@@ -6368,7 +6389,7 @@ body #selectedTripPanel .trip-rec-offer {
 }
 
 body #selectedTripPanel .trip-rec-section-label {
-  color: #d8b4fe !important;
+  color: var(--brand-200) !important;
   font-size: 10px !important;
   letter-spacing: 0.12em !important;
 }
@@ -6405,7 +6426,7 @@ body #selectedTripPanel .trip-rec-coupon-code {
 body #selectedTripPanel .copyTripCouponBtn {
   border: 1px solid rgba(255, 255, 255, 0.16) !important;
   background: rgba(255, 255, 255, 0.08) !important;
-  color: #fff !important;
+  color: var(--white) !important;
   border-radius: 999px !important;
   padding: 6px 12px !important;
   font-size: 12px !important;
@@ -6635,7 +6656,7 @@ body.search-error-mode .pro-results {
 }
 
 .sky-payment-nudge strong {
-  color: #ffffff;
+  color: var(--white);
 }
 
 .sky-payment-nudge button {
@@ -6649,7 +6670,7 @@ body.search-error-mode .pro-results {
 }
 
 .sky-payment-nudge button:hover {
-  color: #ffffff;
+  color: var(--white);
 }
 
 @media (max-width: 760px) {
@@ -6671,7 +6692,7 @@ body.search-error-mode .pro-results {
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.01em;
-  color: #7c3aed;
+  color: var(--accent2);
 }
 
 .sky-loading-steps span {
@@ -6753,19 +6774,19 @@ body.search-error-mode .pro-results {
 .oneWayCopyCodeBtn {
   border: 1px solid rgba(168, 85, 247, 0.34);
   background: rgba(168, 85, 247, 0.10);
-  color: #6d28d9;
+  color: var(--brand-700);
 }
 
 .oneWayBookPortalBtn {
   border: 1px solid rgba(16, 185, 129, 0.34);
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(34, 197, 94, 0.10));
-  color: #047857;
+  color: var(--success);
 }
 
 .oneWayCompareBtn {
   border: 1px solid rgba(37, 99, 235, 0.25);
   background: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
+  color: var(--info);
 }
 
 .oneWayCardActions button:hover {
@@ -6807,7 +6828,7 @@ body.search-error-mode .pro-results {
   gap: 8px;
   border: 1px solid rgba(168, 85, 247, 0.35);
   background: rgba(168, 85, 247, 0.09);
-  color: #5b21b6;
+  color: var(--brand-700);
   border-radius: 999px;
   padding: 5px 9px;
   cursor: pointer;
@@ -6886,7 +6907,7 @@ body #selectedTripPanel .sky-trip-bar-title-row > div:first-child {
   font-size: 11px !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
-  color: #d8b4fe !important;
+  color: var(--brand-200) !important;
   font-weight: 900 !important;
 }
 
@@ -6916,7 +6937,7 @@ body #selectedTripPanel .sky-trip-leg-label {
   font-size: 10px !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  color: #c4b5fd !important;
+  color: var(--brand-200) !important;
   font-weight: 900 !important;
   margin-bottom: 4px !important;
 }
@@ -6965,7 +6986,7 @@ body #selectedTripPanel .trip-rec-price {
   font-size: 31px !important;
   line-height: 0.95 !important;
   letter-spacing: -0.04em !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
 }
 
 body #selectedTripPanel .trip-rec-base {
@@ -6981,7 +7002,7 @@ body #selectedTripPanel .trip-rec-save-inline {
   padding: 5px 9px !important;
   border-radius: 999px !important;
   background: rgba(16, 185, 129, 0.15) !important;
-  color: #86efac !important;
+  color: var(--success-light) !important;
   font-size: 12px !important;
   font-weight: 900 !important;
 }
@@ -6997,7 +7018,7 @@ body #selectedTripPanel .trip-rec-section-label {
   font-size: 10px !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
-  color: #d8b4fe !important;
+  color: var(--brand-200) !important;
   font-weight: 900 !important;
   margin-bottom: 5px !important;
 }
@@ -7005,7 +7026,7 @@ body #selectedTripPanel .trip-rec-section-label {
 body #selectedTripPanel .trip-rec-offer-title {
   font-size: 13px !important;
   line-height: 1.3 !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-weight: 900 !important;
 }
 
@@ -7036,7 +7057,7 @@ body #selectedTripPanel .trip-rec-coupon-code {
   padding: 6px 10px !important;
   background: rgba(168, 85, 247, 0.18) !important;
   border: 1px solid rgba(216, 180, 254, 0.20) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-weight: 900 !important;
   letter-spacing: 0.03em !important;
 }
@@ -7208,7 +7229,7 @@ body #selectedTripPanel .trip-rec-offer {
 }
 
 body #selectedTripPanel .trip-rec-section-label {
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-size: 13px !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
@@ -7358,7 +7379,7 @@ body #selectedTripPanel .trip-rec-offer {
 body #selectedTripPanel .trip-rec-section-label {
   font-size: 15px !important;
   line-height: 1.2 !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-weight: 950 !important;
   margin: 0 0 3px !important;
 }
@@ -7514,7 +7535,7 @@ body #selectedTripPanel .sky-trip-compact-price-label {
   font-size: 10px !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  color: #d8b4fe !important;
+  color: var(--brand-200) !important;
   font-weight: 950 !important;
   margin-bottom: 2px !important;
 }
@@ -7523,7 +7544,7 @@ body #selectedTripPanel .sky-trip-compact-price-value {
   font-size: 32px !important;
   line-height: 0.95 !important;
   letter-spacing: -0.05em !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-weight: 950 !important;
 }
 
@@ -7541,7 +7562,7 @@ body #selectedTripPanel .sky-trip-compact-main {
 body #selectedTripPanel .sky-trip-compact-eyebrow {
   font-size: 14px !important;
   line-height: 1.2 !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-weight: 950 !important;
   margin-bottom: 3px !important;
 }
@@ -7570,7 +7591,7 @@ body #selectedTripPanel .sky-trip-save-pill {
   padding: 4px 8px !important;
   border-radius: 999px !important;
   background: rgba(16, 185, 129, 0.14) !important;
-  color: #86efac !important;
+  color: var(--success-light) !important;
   font-weight: 950 !important;
 }
 
@@ -7589,7 +7610,7 @@ body #selectedTripPanel .sky-trip-compact-coupon strong {
   border-radius: 999px !important;
   background: rgba(168, 85, 247, 0.18) !important;
   border: 1px solid rgba(216, 180, 254, 0.20) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   letter-spacing: 0.03em !important;
 }
 
@@ -7804,7 +7825,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
   display: inline-flex;
   width: clamp(24px, 2.4vw, 34px);
   height: clamp(24px, 2.4vw, 34px);
-  color: #a855f7;
+  color: var(--primary2);
   filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.45));
 }
 
@@ -7819,13 +7840,13 @@ body #selectedTripPanel .sky-trip-clear-btn {
   line-height: 0.95 !important;
   letter-spacing: -0.055em !important;
   font-weight: 950 !important;
-  color: #a855f7 !important;
+  color: var(--primary2) !important;
   text-shadow: 0 0 26px rgba(168, 85, 247, 0.28) !important;
 }
 
 .skydeal-hero-line {
   max-width: 780px;
-  color: #ffffff;
+  color: var(--white);
   font-size: clamp(22px, 2.35vw, 34px);
   line-height: 1.02;
   letter-spacing: -0.045em;
@@ -7897,7 +7918,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalModalEyebrow {
-  color: #d8b4fe;
+  color: var(--brand-200);
   font-size: 11px;
   font-weight: 950;
   letter-spacing: 0.16em;
@@ -7906,7 +7927,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalModalTitle {
-  color: #ffffff;
+  color: var(--white);
   font-size: 23px;
   line-height: 1.05;
   letter-spacing: -0.035em;
@@ -7936,7 +7957,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 
 .portalModalCloseBtn:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: var(--white);
 }
 
 .portalCompareBodyV2 {
@@ -7959,7 +7980,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalCompareFlightHeadV2 strong {
-  color: #ffffff;
+  color: var(--white);
   font-weight: 950;
 }
 
@@ -7994,7 +8015,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalName {
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-size: 18px !important;
   font-weight: 950 !important;
   letter-spacing: -0.02em !important;
@@ -8006,7 +8027,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
   margin-top: 7px !important;
   border: 1px solid rgba(52, 211, 153, 0.30) !important;
   background: rgba(16, 185, 129, 0.14) !important;
-  color: #86efac !important;
+  color: var(--success-light) !important;
   border-radius: 999px !important;
   padding: 5px 9px !important;
   font-size: 11px !important;
@@ -8025,7 +8046,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalPrice > div:first-child {
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-size: 24px !important;
   line-height: 1 !important;
   letter-spacing: -0.035em !important;
@@ -8039,7 +8060,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
   border-radius: 999px !important;
   padding: 8px 12px !important;
   background: rgba(168, 85, 247, 0.92) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-size: 12px !important;
   font-weight: 950 !important;
   border: 0 !important;
@@ -8075,7 +8096,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .otherOffersTitle {
-  color: #ffffff !important;
+  color: var(--white) !important;
   font-size: 12px !important;
   font-weight: 950 !important;
 }
@@ -8090,7 +8111,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
   border-radius: 999px !important;
   padding: 7px 10px !important;
   background: rgba(168, 85, 247, 0.15) !important;
-  color: #ffffff !important;
+  color: var(--white) !important;
   border: 1px solid rgba(216, 180, 254, 0.20) !important;
   font-size: 11px !important;
   font-weight: 900 !important;
@@ -9379,7 +9400,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   font-size: 11.5px !important;
   font-weight: 750 !important;
   line-height: 1.3 !important;
-  color: #f3e8ff !important;
+  color: var(--brand-100) !important;
   text-align: center !important;
   white-space: nowrap !important;
 }
@@ -9402,7 +9423,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 .skydeal-footer {
   margin-top: 48px;
-  background: #070711;
+  background: var(--bg);
   border-top: 1px solid rgba(168, 85, 247, 0.28);
 }
 
@@ -9433,7 +9454,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   display: inline-flex;
   width: 20px;
   height: 20px;
-  color: #a855f7;
+  color: var(--primary2);
 }
 
 .skydeal-footer-logo svg {
@@ -9445,12 +9466,12 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   font-size: 18px !important;
   font-weight: 900 !important;
   letter-spacing: -0.04em !important;
-  color: #a855f7 !important;
+  color: var(--primary2) !important;
   text-shadow: none !important;
 }
 
 .skydeal-footer-contact a {
-  color: #d8b4fe;
+  color: var(--brand-200);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
