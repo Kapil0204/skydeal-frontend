@@ -3286,10 +3286,22 @@ input[type="date"]::after{
    Keeps filters + two flight columns
 ================================ */
 
-html,
-body {
+/* overflow-x:hidden lives on html only, not body: setting it on both
+   silently made body a valid position:sticky containing block too (per
+   the CSS overflow spec, overflow-x:hidden alone forces the paired
+   overflow-y to compute as "auto", which is enough to count as a
+   scroll container) - but body never actually scrolls internally
+   (document.scrollingElement is html; confirmed body's own scrollTop
+   never changes), so any element sticky relative to body was anchored
+   to a reference frame that never moves, and never appeared to stick.
+   html alone still fully prevents horizontal overflow/scrollbars. */
+html {
   max-width: 100% !important;
   overflow-x: hidden !important;
+}
+
+body {
+  max-width: 100% !important;
 }
 
 .results,
@@ -4345,11 +4357,16 @@ body {
 ===================================================== */
 
 @media (max-width: 760px) {
-  /* Keep page app-like and prevent accidental horizontal squeeze */
-  html,
-  body {
+  /* Keep page app-like and prevent accidental horizontal squeeze.
+     overflow-x on html only - see the note at the first occurrence of
+     this pattern (~line 3289) for why body must not have it. */
+  html {
     max-width: 100%;
     overflow-x: hidden;
+  }
+
+  body {
+    max-width: 100%;
   }
 
   /* Reduce top search banner height */
@@ -8400,12 +8417,12 @@ body #selectedTripPanel .sky-trip-clear-btn {
    ========================================================= */
 
 @media (max-width: 760px) {
-  body.sky-mobile-has-outbound,
-  body.sky-mobile-has-return,
-  body.sky-mobile-trip-complete {
-    overflow-x: hidden !important;
-  }
-
+  /* overflow-x removed here: html already clips horizontal overflow
+     unconditionally (see ~line 3289), so this was redundant for that
+     purpose - and being scoped to body specifically, conditionally
+     broke position:sticky (the mobile search-summary bar) for exactly
+     the states most likely to actually use it: outbound/return
+     selected on mobile. */
   body.sky-mobile-has-outbound .wrap,
   body.sky-mobile-has-return .wrap,
   body.sky-mobile-trip-complete .wrap,
@@ -8516,11 +8533,17 @@ body #selectedTripPanel .sky-trip-clear-btn {
    ========================================================= */
 
 @media (max-width: 760px) {
-  html,
-  body {
+  /* overflow-x on html only - see the note at the first occurrence of
+     this pattern (~line 3289) for why body must not have it. */
+  html {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
+  }
+
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   body .wrap,
