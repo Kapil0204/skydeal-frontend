@@ -10,33 +10,51 @@
   --text:#f8fafc;
   --muted:#a5adcb;
   --line:rgba(255,255,255,0.12);
-  --btn:#8b5cf6;
   --btn2:#19192d;
   --radius:18px;
   --accent:#00d4ff;
-  --accent2:#7c3aed;
   --warning:#f59e0b;
   --success:#22c55e;
-  --primary:#8b5cf6;
-  --primary2:#a855f7;
-  --pink:#ec4899;
-  --pink2:#ff2d95;
   --shadow:0 24px 70px rgba(0,0,0,0.45);
+
+  /* SkyDeal brand palette: one committed hue (258.5, the already-shipped
+     --primary button color), not the ~258-274 spread the file drifted
+     into across past redesign passes (violet buttons next to slightly
+     different-hued "purple" badges/text/tints). Full 11-step scale,
+     mathematically generated (constant hue, smooth saturation/lightness
+     ramp) rather than picked by eye, so every step is deliberately
+     related to every other. --brand-500 is pinned to the exact existing
+     #8b5cf6 so the color everyone already recognizes doesn't move.
+     Semantic aliases below (--primary etc.) are what call sites actually
+     use - this primitive scale is the source of truth they point to. */
+  --brand-50:#f6f2ff;
+  --brand-100:#ece4fe;
+  --brand-200:#d5c4fd;
+  --brand-300:#ba9efa;
+  --brand-400:#a27cf8;
+  --brand-500:#8b5cf6;
+  --brand-600:#723bed;
+  --brand-700:#5b20df;
+  --brand-800:#4d21b0;
+  --brand-900:#412287;
+  --brand-950:#26144d;
+
+  --primary:var(--brand-500);
+  --primary2:var(--brand-400);
+  --accent2:var(--brand-600);
+  --btn:var(--brand-500);
 
   /* Design-token color pass (phase 2/5): the 100+ near-duplicate hex
      colors scattered through this file collapse onto this fixed set.
-     Brand purple keeps --primary/--primary2/--accent2 (already-live
-     names); everything else is new. */
+     Everything below (other than the brand scale above) is unrelated
+     to brand hue - plain neutrals plus success/danger/warning/info,
+     which stay their own colors on purpose (see palette note above). */
   --white:#ffffff;
   --gray-900:#101828;
   --gray-700:#344054;
   --gray-500:#667085;
   --gray-200:#cbd5e1;
   --gray-50:#f8fafc;
-  --brand-900:#581c87;
-  --brand-700:#6d28d9;
-  --brand-200:#d8b4fe;
-  --brand-100:#faf5ff;
   --danger:#dc2626;
   --danger-light:#fee2e2;
   --warning-light:#fef3c7;
@@ -2855,12 +2873,12 @@ select:focus{
 
 .infoBtn{
   background:linear-gradient(135deg, var(--gray-900), var(--panel2));
-  border:1px solid rgba(236,72,153,0.35);
+  border:1px solid rgba(139,92,246,0.35);
   color:var(--white);
 }
 
 .infoBtn:hover{
-  background:linear-gradient(135deg, var(--primary), var(--pink2));
+  background:linear-gradient(135deg, var(--primary), var(--brand-700));
 }
 
 .filter-title,
