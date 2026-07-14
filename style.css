@@ -3023,7 +3023,7 @@ body{
 /* Results separators */
 .filter-group,
 .col-head{
-  border-color:var(--info-light);
+  border-color:var(--gray-200);
 }
 
 /* Filter inputs on light cards */
@@ -3043,8 +3043,15 @@ body{
   box-shadow:0 18px 38px rgba(168,85,247,0.10);
 }
 
-/* Best deal / no offer block */
-.bestDealBanner,
+/* Best deal / no offer block. Deliberately neutral, not brand-tinted -
+   this box sits next to purple buttons/badges/coupon pills in the same
+   card, and giving all four the same lavender treatment made them hard
+   to tell apart at a glance. */
+.bestDealBanner{
+  background:var(--gray-50);
+  border:1px solid var(--gray-200);
+}
+
 .empty-state{
   background:linear-gradient(135deg, var(--brand-100), var(--white));
   border:1px solid rgba(168,85,247,0.22);
@@ -6864,22 +6871,27 @@ body.search-error-mode .pro-results {
   font-weight: 800;
 }
 
+/* Dashed border + monospace code, not another solid purple pill -
+   reads as "a code to copy" rather than competing visually with the
+   Book/Compare buttons right below it. */
 .bestDealCouponChip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  background: rgba(168, 85, 247, 0.09);
-  color: var(--brand-700);
-  border-radius: var(--radius-pill);
+  border: 1px dashed var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  border-radius: var(--radius-sm);
   padding: 5px 9px;
   cursor: pointer;
   line-height: 1;
 }
 
 .bestDealCouponChip strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--fs-sm);
   letter-spacing: 0.03em;
+  color: var(--brand-700);
 }
 
 .bestDealCouponChip small {
@@ -6889,8 +6901,8 @@ body.search-error-mode .pro-results {
 }
 
 .bestDealCouponChip:hover {
-  border-color: rgba(168, 85, 247, 0.55);
-  background: rgba(168, 85, 247, 0.14);
+  border-color: var(--primary2);
+  background: var(--brand-50);
 }
 
 .oneWayCardActions {
