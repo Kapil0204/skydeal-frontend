@@ -9429,12 +9429,15 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   padding: 32px 28px 28px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 14px;
 }
 
 .skydeal-footer-brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
