@@ -4648,14 +4648,24 @@ body {
     padding: 11px 12px;
     box-shadow: 0 14px 30px rgba(124, 85, 247, 0.35);
     opacity: 0;
-    transform: translateY(-10px);
+    /* translate3d (not translateY) keeps this on its own GPU layer in
+       both states, rather than promoting/demoting a layer mid-transition
+       - position:fixed + a 2D transform that toggles is a known trigger
+       for iOS/Android WebKit to occasionally fail to repaint a fixed
+       element during momentum scrolling, which is the likely cause of
+       reports that this banner "sometimes doesn't appear" on a phone
+       even though its state was verified correct via automated testing. */
+    transform: translate3d(0, -10px, 0);
+    will-change: opacity, transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
   .price-intel-frozen-banner.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     pointer-events: auto;
   }
 
