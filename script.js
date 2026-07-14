@@ -2726,7 +2726,14 @@ function wireGuideSuggestionButtons(host, visible) {
   });
 }
 
+// Thin wrapper so every render path also keeps the mobile frozen banner's
+// hero line in sync, regardless of which early-return branch below fires.
 function renderPaymentGuideCard() {
+  renderPaymentGuideCardInner();
+  updatePriceIntelFrozenBannerText();
+}
+
+function renderPaymentGuideCardInner() {
   const container = document.querySelector(".offers-panel-content");
   const dynamicHost = document.getElementById("paymentGuideDynamic");
   if (!container || !dynamicHost) return;
@@ -3851,6 +3858,112 @@ function renderMobileQuickFilters() {
   ensureMobileQuickFilters();
 }
 
+// Mirrors whichever headline renderPaymentGuideCard() is currently
+// showing inside the full card, condensed to one line, for the frozen
+// mobile banner below - reuses the same state, never a second source
+// of truth for what the guide is currently saying.
+function getPriceIntelHeroLine() {
+  if (!hasActiveSearchResults()) {
+    const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
+    return n === 0
+      ? "Add how you pay to see your best final price"
+      : "We'll check your payment methods against today's live offers";
+  }
+
+  if (guideAwaitingManualRecheck) {
+    return guideAcceptedNote?.heading || "You're on a good price right now";
+  }
+
+  if (paymentGuideState === "loading") {
+    return "Checking for a better way to pay…";
+  }
+
+  if (paymentGuideState === "error") {
+    return "We couldn't check for additional savings right now";
+  }
+
+  if (paymentGuideState === "ready") {
+    const visible = visiblePaymentSuggestions();
+    return visible.length === 0
+      ? "You're already well optimised"
+      : (visible[0]?.heading || "You could save more on this trip");
+  }
+
+  return "Price intelligence";
+}
+
+function ensureMobilePriceIntelFrozenBanner() {
+  let banner = document.getElementById("priceIntelFrozenBanner");
+  if (banner) return banner;
+
+  banner = document.createElement("div");
+  banner.id = "priceIntelFrozenBanner";
+  banner.className = "price-intel-frozen-banner";
+  banner.innerHTML = `
+    <span class="price-intel-frozen-dot"></span>
+    <div class="price-intel-frozen-text">
+      <div class="price-intel-frozen-eyebrow">Price intelligence</div>
+      <div class="price-intel-frozen-line" id="priceIntelFrozenLine"></div>
+    </div>
+    <svg class="price-intel-frozen-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 5V15M10 15L5 10M10 15L15 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  `;
+  banner.addEventListener("click", () => {
+    const card = document.querySelector(".smart-guide-card");
+    // "smooth" silently no-ops on this page (html/body both carry a
+    // non-default overflow, which the rest of the codebase's own
+    // scrollIntoView({behavior:"smooth"}) calls appear to hit too -
+    // flagged separately, not fixed here) - "instant" is unaffected.
+    card?.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+
+  document.body.appendChild(banner);
+  return banner;
+}
+
+function updatePriceIntelFrozenBannerText() {
+  const line = document.getElementById("priceIntelFrozenLine");
+  if (line) line.textContent = getPriceIntelHeroLine();
+}
+
+// The banner anchors to a small fixed offset from the real viewport top
+// rather than to .mobile-search-summary's height - that bar declares
+// position:sticky but doesn't actually stay pinned while scrolling (a
+// separate, pre-existing bug, confirmed on the live site too), so
+// depending on it would have positioned this banner over mid-page
+// content once scrolled instead of near the top. --pi-banner-top stays
+// a plain CSS constant (see style.css) rather than a computed value.
+const PRICE_INTEL_BANNER_TOP_OFFSET = 10;
+
+let priceIntelObserver = null;
+
+function observePriceIntelSentinel(sentinel) {
+  if (priceIntelObserver) {
+    priceIntelObserver.disconnect();
+  }
+
+  priceIntelObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const banner = document.getElementById("priceIntelFrozenBanner");
+      if (!banner) return;
+
+      if (entry.isIntersecting) {
+        banner.classList.remove("is-visible");
+      } else if (entry.boundingClientRect.top < 0) {
+        // Only freeze the banner in once the full card has scrolled PAST
+        // the top of the viewport (going down) - not before it's been
+        // reached in the first place.
+        updatePriceIntelFrozenBannerText();
+        banner.classList.add("is-visible");
+      }
+    });
+  }, {
+    threshold: 0,
+    rootMargin: `-${PRICE_INTEL_BANNER_TOP_OFFSET}px 0px 0px 0px`
+  });
+
+  priceIntelObserver.observe(sentinel);
+}
+
 // Price intelligence lives inside .filter-panel in the markup (so desktop
 // keeps its existing two-box left column), but on mobile .filter-panel is
 // hidden entirely and only reappears inside the Filters drawer - which
@@ -3858,20 +3971,43 @@ function renderMobileQuickFilters() {
 // card to sit in the normal results flow (above the flight list) on
 // mobile, and move it back into the filter panel above Filters on
 // desktop/tablet, so each breakpoint gets its native layout rather than
-// one compromising for the other.
+// one compromising for the other. On mobile it also grows a 1px sentinel
+// right after itself, watched by an IntersectionObserver, so a frozen
+// one-line "hero banner" version can take over once the full card has
+// scrolled out of view (see ensureMobilePriceIntelFrozenBanner above).
 function ensureMobilePriceIntelPlacement() {
   const card = document.querySelector(".smart-guide-card");
   const proResults = document.querySelector(".pro-results") || document.querySelector(".results");
   const workspace = document.querySelector(".flights-workspace");
   if (!card || !proResults || !workspace) return;
 
+  let sentinel = document.getElementById("priceIntelSentinel");
+  if (!sentinel) {
+    sentinel = document.createElement("div");
+    sentinel.id = "priceIntelSentinel";
+    sentinel.className = "price-intel-sentinel";
+  }
+
   if (isSkyDealMobileView()) {
     const anchor = document.getElementById("mobileQuickFilters") || workspace;
     if (card.parentElement !== proResults || card.nextElementSibling !== anchor) {
       proResults.insertBefore(card, anchor);
     }
+    if (sentinel.previousElementSibling !== card) {
+      card.after(sentinel);
+    }
+    ensureMobilePriceIntelFrozenBanner();
+    observePriceIntelSentinel(sentinel);
     return;
   }
+
+  sentinel.remove();
+  if (priceIntelObserver) {
+    priceIntelObserver.disconnect();
+    priceIntelObserver = null;
+  }
+  const banner = document.getElementById("priceIntelFrozenBanner");
+  if (banner) banner.classList.remove("is-visible");
 
   const filterPanel = document.querySelector(".filter-panel");
   const filterCard = document.querySelector(".filter-card");

@@ -1151,6 +1151,18 @@ select:focus{
   flex:0 0 auto;
 }
 
+/* Mobile-only frozen banner (see ensureMobilePriceIntelFrozenBanner,
+   script.js) - hidden by default; only shown/positioned inside the
+   max-width:760px block below. Lives as a direct child of <body>, fixed
+   to the viewport, so it isn't affected by the page's normal scroll. */
+.price-intel-frozen-banner{
+  display:none;
+}
+
+.price-intel-sentinel{
+  height:1px;
+}
+
 .filter-head{
   display:flex;
   justify-content:space-between;
@@ -4583,6 +4595,77 @@ body {
     display: flex !important;
     width: 100%;
     margin: 0 0 14px;
+  }
+
+  /* Frozen "hero banner" that takes over once the full card (above)
+     scrolls past the top of the screen - see observePriceIntelSentinel
+     in script.js for the IntersectionObserver driving .is-visible.
+     Deliberately a filled purple surface (not the white/bordered look
+     used elsewhere) so it keeps reading as the same featured surface
+     even in its condensed, one-line form. */
+  .price-intel-frozen-banner {
+    display: flex;
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    z-index: 45;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(120deg, #7c3aed, #9333ea 55%, #a855f7);
+    border-radius: 14px;
+    padding: 11px 12px;
+    box-shadow: 0 14px 30px rgba(124, 85, 247, 0.35);
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .price-intel-frozen-banner.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .price-intel-frozen-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    flex: 0 0 auto;
+  }
+
+  .price-intel-frozen-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .price-intel-frozen-eyebrow {
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.78);
+    margin-bottom: 2px;
+  }
+
+  .price-intel-frozen-line {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+
+  .price-intel-frozen-chevron {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: #ffffff;
   }
 
   body.mobile-filter-drawer-open .filter-panel {
