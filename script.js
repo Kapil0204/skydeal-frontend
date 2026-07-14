@@ -1526,7 +1526,7 @@ function renderSelectedPaymentMethodsSummary() {
                   type="button"
                   class="pm-edit-btn"
                   data-pm-index="${idx}"
-                  style="background:transparent;border:0;color:#93c5fd;cursor:pointer;font-size:12px;"
+                  style="background:transparent;border:0;color:#d8b4fe;cursor:pointer;font-size:12px;"
                 >
                   ${detail ? "Edit optional details" : "Add optional details"}
                 </button>
@@ -1561,17 +1561,17 @@ function ensurePaymentDetailModal() {
   modal.style.zIndex = "10001";
 
   modal.innerHTML = `
-    <div style="max-width:520px;margin:8vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+    <div style="max-width:520px;margin:8vh auto;background:#11111f;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#f8fafc;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
         <div id="pmDetailTitle" style="font-size:16px;font-weight:700;">Payment details</div>
-        <button id="pmDetailClose" type="button" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+        <button id="pmDetailClose" type="button" style="background:transparent;border:0;color:#f8fafc;font-size:20px;cursor:pointer;">×</button>
       </div>
 
       <div id="pmDetailBody" style="margin-top:14px;"></div>
 
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
-        <button id="pmDetailCancel" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e5e7eb;cursor:pointer;">Cancel</button>
-        <button id="pmDetailSave" type="button" style="padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer;">Save</button>
+        <button id="pmDetailCancel" type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#f8fafc;cursor:pointer;">Cancel</button>
+        <button id="pmDetailSave" type="button" style="padding:8px 12px;border-radius:8px;border:0;background:#8b5cf6;color:#fff;cursor:pointer;">Save</button>
       </div>
     </div>
   `;
@@ -1646,7 +1646,7 @@ function openPaymentDetailEditor(index) {
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more accurate EMI offer matching.</div>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">EMI tenure</label>
-      <select id="pmDetailTenure" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+      <select id="pmDetailTenure" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);">
         <option value="">Not specified</option>
         ${EMI_TENURE_OPTIONS.map((n) => `<option value="${n}" ${pm.tenureMonths === n ? "selected" : ""}>${n} months</option>`).join("")}
       </select>
@@ -1656,7 +1656,7 @@ function openPaymentDetailEditor(index) {
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">This is optional. Add it only if you want more precise UPI-offer matching.</div>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">UPI provider</label>
-      <select id="pmDetailProvider" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+      <select id="pmDetailProvider" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);">
         ${UPI_PROVIDER_OPTIONS.map((name) => `<option value="${name}" ${pm.provider === name || paymentMethodDisplayLabel(pm) === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
     `;
@@ -1667,19 +1667,19 @@ function openPaymentDetailEditor(index) {
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">All details below are optional.</div>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card network</label>
-      <select id="pmDetailNetwork" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
+      <select id="pmDetailNetwork" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
         <option value="">Not specified</option>
         ${CARD_NETWORK_OPTIONS.map((name) => `<option value="${name}" ${pm.network === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card type / card family</label>
-      <select id="pmDetailCardType" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
+      <select id="pmDetailCardType" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
         <option value="">Not specified</option>
         ${cardTypeOptions.map((name) => `<option value="${name}" ${pm.cardFamily === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">Personal vs corporate</label>
-      <select id="pmDetailCorporate" style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);">
+      <select id="pmDetailCorporate" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);">
         <option value="" ${pm.isCorporate == null ? "selected" : ""}>Not specified</option>
         ${CORPORATE_OPTIONS.map((opt) => `<option value="${opt.value}" ${pm.isCorporate === opt.value ? "selected" : ""}>${opt.label}</option>`).join("")}
       </select>
@@ -1871,7 +1871,7 @@ const tncBtn = hasTerms
         style="
           background:transparent;
           border:1px solid rgba(255,255,255,.25);
-          color:#e5e7eb;
+          color:#f8fafc;
           border-radius:10px;
           padding:2px 8px;
           font-size:12px;
@@ -1917,10 +1917,10 @@ function openTncModal(title, terms) {
     modal.style.display = "none";
     modal.style.zIndex = "10000";
     modal.innerHTML = `
-      <div style="max-width:900px;margin:7vh auto;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#e5e7eb;">
+      <div style="max-width:900px;margin:7vh auto;background:#11111f;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;color:#f8fafc;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div id="tncTitle" style="font-size:16px;font-weight:700;"></div>
-          <button id="tncClose" style="background:transparent;border:0;color:#e5e7eb;font-size:20px;cursor:pointer;">×</button>
+          <button id="tncClose" style="background:transparent;border:0;color:#f8fafc;font-size:20px;cursor:pointer;">×</button>
         </div>
         <div id="tncBody" style="margin-top:12px;white-space:pre-wrap;line-height:1.45;max-height:65vh;overflow:auto;opacity:.92;"></div>
       </div>
@@ -5089,9 +5089,9 @@ function flightCard(f, direction = "out") {
           class="selectTripBtn"
           data-direction="${direction}"
           style="
-            border:1px solid ${isSelectedForDirection ? "rgba(5,150,105,.38)" : "rgba(37,99,235,.28)"};
-            background:${isSelectedForDirection ? "rgba(5,150,105,.10)" : "rgba(37,99,235,.08)"};
-            color:${isSelectedForDirection ? "#047857" : "#1d4ed8"};
+            border:1px solid ${isSelectedForDirection ? "rgba(34,197,94,.38)" : "rgba(168,85,247,.34)"};
+            background:${isSelectedForDirection ? "rgba(34,197,94,.10)" : "rgba(168,85,247,.10)"};
+            color:${isSelectedForDirection ? "#22c55e" : "#6d28d9"};
             border-radius:999px;
             padding:8px 12px;
             font-size:13px;
