@@ -2442,6 +2442,15 @@ async function fetchPaymentSuggestions() {
   renderPaymentGuideCard();
 }
 
+// Applies to every rendered card regardless of screen size (desktop's
+// two-column layout and mobile's single-column list both use the same
+// .card/.price markup), so this covers both views with one query.
+function setFlightPricesLoading(isLoading) {
+  document.querySelectorAll(".card[data-flightkey] .price").forEach((priceEl) => {
+    priceEl.classList.toggle("price-loading", isLoading);
+  });
+}
+
 // Core reprice step, shared by the guide's own "Add" action and the
 // normal payment modal's Done/Clear actions - reprices already-loaded
 // flights in place (no /search call), updates the visible cards, and
@@ -2449,6 +2458,8 @@ async function fetchPaymentSuggestions() {
 // recommendation guide itself - callers decide whether to refresh it.
 async function repriceAndRenderFlights() {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
+
+  setFlightPricesLoading(true);
 
   try {
     const body = {
@@ -2506,6 +2517,11 @@ async function repriceAndRenderFlights() {
     flashUpdatedPrices(changedFlightKeys);
   } catch (e) {
     console.error("[SkyDeal] reprice-flights failed", e);
+    // renderOutbound()/renderReturn() above (which would otherwise clear
+    // the loading spinner via their full re-render) never ran on this
+    // path, so the spinner needs an explicit clear back to the
+    // still-valid, unchanged prices.
+    setFlightPricesLoading(false);
   }
 }
 
@@ -3935,8 +3951,24 @@ function updatePriceIntelFrozenBannerText() {
 const PRICE_INTEL_BANNER_TOP_OFFSET = 10;
 
 let priceIntelObserver = null;
+let priceIntelObservedSentinel = null;
 
+// ensureMobilePriceIntelPlacement() (below) re-runs on every render pass -
+// sort/filter/pagination changes, every renderOutbound()/renderReturn()
+// call, and window resize (including the resize events mobile Chrome/
+// Safari fire when the URL bar hides/shows mid-scroll). Previously this
+// disconnected and recreated the IntersectionObserver every single time,
+// which discards its in-flight state; a new observer's first callback is
+// asynchronous, so if calls arrived faster than that callback could fire
+// (e.g. during a scroll on a real phone triggering repeated resize
+// events), the banner could miss an update and appear stuck - this is
+// the root cause behind "the banner sometimes doesn't show up". Skipping
+// recreation when already watching the same sentinel node fixes it.
 function observePriceIntelSentinel(sentinel) {
+  if (priceIntelObserver && priceIntelObservedSentinel === sentinel) {
+    return;
+  }
+
   if (priceIntelObserver) {
     priceIntelObserver.disconnect();
   }
@@ -3962,6 +3994,7 @@ function observePriceIntelSentinel(sentinel) {
   });
 
   priceIntelObserver.observe(sentinel);
+  priceIntelObservedSentinel = sentinel;
 }
 
 // Price intelligence lives inside .filter-panel in the markup (so desktop
@@ -3989,13 +4022,16 @@ function ensureMobilePriceIntelPlacement() {
   }
 
   if (isSkyDealMobileView()) {
+    // Reassert both nodes' order unconditionally rather than only when a
+    // stale equality check trips - the anchor (mobileQuickFilters, when
+    // present) can appear on some renders and not others depending on
+    // search state, and a guard keyed off the old anchor could reinsert
+    // just the card and momentarily invert card/sentinel order. Plain
+    // insertBefore calls are safe to repeat even when nothing needs to
+    // move.
     const anchor = document.getElementById("mobileQuickFilters") || workspace;
-    if (card.parentElement !== proResults || card.nextElementSibling !== anchor) {
-      proResults.insertBefore(card, anchor);
-    }
-    if (sentinel.previousElementSibling !== card) {
-      card.after(sentinel);
-    }
+    proResults.insertBefore(card, anchor);
+    proResults.insertBefore(sentinel, anchor);
     ensureMobilePriceIntelFrozenBanner();
     observePriceIntelSentinel(sentinel);
     return;
@@ -4005,6 +4041,7 @@ function ensureMobilePriceIntelPlacement() {
   if (priceIntelObserver) {
     priceIntelObserver.disconnect();
     priceIntelObserver = null;
+    priceIntelObservedSentinel = null;
   }
   const banner = document.getElementById("priceIntelFrozenBanner");
   if (banner) banner.classList.remove("is-visible");
@@ -4016,7 +4053,17 @@ function ensureMobilePriceIntelPlacement() {
   }
 }
 
-window.addEventListener("resize", () => ensureMobilePriceIntelPlacement(), { passive: true });
+// Mobile Chrome/Safari fire resize events when the URL bar hides/shows
+// mid-scroll, not just on a genuine breakpoint change - only re-run
+// placement when isSkyDealMobileView()'s actual result flips, so normal
+// scrolling on a real phone doesn't repeatedly touch the DOM/observer.
+let lastKnownMobilePriceIntelView = null;
+window.addEventListener("resize", () => {
+  const nowMobile = isSkyDealMobileView();
+  if (lastKnownMobilePriceIntelView === nowMobile) return;
+  lastKnownMobilePriceIntelView = nowMobile;
+  ensureMobilePriceIntelPlacement();
+}, { passive: true });
 
 function setMobileReturnFocusAfterOutbound() {
   if (!isSkyDealMobileView()) return;

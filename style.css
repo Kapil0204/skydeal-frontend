@@ -1719,6 +1719,37 @@ h3{
   100%{ background:transparent; }
 }
 
+/* While a reprice request is in flight (setFlightPricesLoading in
+   script.js, called from repriceAndRenderFlights) - hide the price
+   figures on every visible card and spin a small loader in their place,
+   so it reads as "recalculating" rather than the page looking stuck. */
+.price.price-loading{
+  position:relative;
+  min-height:34px;
+}
+
+.price.price-loading > *{
+  visibility:hidden;
+}
+
+.price.price-loading::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  right:0;
+  width:18px;
+  height:18px;
+  margin-top:-9px;
+  border:2.5px solid rgba(124,58,237,0.22);
+  border-top-color:#7c3aed;
+  border-radius:50%;
+  animation:priceLoadingSpin 0.7s linear infinite;
+}
+
+@keyframes priceLoadingSpin{
+  to{ transform:rotate(360deg); }
+}
+
 .popular-routes{
   margin-top:16px;
   padding-top:14px;
