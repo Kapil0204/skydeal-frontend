@@ -5533,6 +5533,12 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     renderOutbound();
     renderReturn();
+    // The error/catch paths below already render this; the normal
+    // success path never did, leaving the mobile quick-filter chip row
+    // (Non-stop/Best offer/Filter) unreachable after an ordinary
+    // successful search - the only path a mobile user actually takes
+    // most of the time.
+    renderMobileQuickFilters();
 
     dismissedSuggestionKeys.clear();
     paymentSuggestions = [];
