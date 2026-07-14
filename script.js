@@ -3950,52 +3950,39 @@ function updatePriceIntelFrozenBannerText() {
 // a plain CSS constant (see style.css) rather than a computed value.
 const PRICE_INTEL_BANNER_TOP_OFFSET = 10;
 
-let priceIntelObserver = null;
-let priceIntelObservedSentinel = null;
+// Originally an IntersectionObserver watching the sentinel, but that
+// consistently failed to fire on slow/deliberate scrolls while working
+// on fast flicks - mobile Chrome/Safari gradually resize the layout
+// viewport as the URL bar collapses over the course of a slow scroll
+// (vs. an almost-instant snap on a fast one), and the observer's
+// geometry appears to get recomputed against that moving target
+// unreliably. A plain scroll-listener + getBoundingClientRect check,
+// rAF-throttled, doesn't depend on the same viewport-resize timing and
+// is the classic, dependable mechanism for this exact "sticky past X"
+// pattern.
+function checkPriceIntelScrollFreeze() {
+  if (!isSkyDealMobileView()) return;
 
-// ensureMobilePriceIntelPlacement() (below) re-runs on every render pass -
-// sort/filter/pagination changes, every renderOutbound()/renderReturn()
-// call, and window resize (including the resize events mobile Chrome/
-// Safari fire when the URL bar hides/shows mid-scroll). Previously this
-// disconnected and recreated the IntersectionObserver every single time,
-// which discards its in-flight state; a new observer's first callback is
-// asynchronous, so if calls arrived faster than that callback could fire
-// (e.g. during a scroll on a real phone triggering repeated resize
-// events), the banner could miss an update and appear stuck - this is
-// the root cause behind "the banner sometimes doesn't show up". Skipping
-// recreation when already watching the same sentinel node fixes it.
-function observePriceIntelSentinel(sentinel) {
-  if (priceIntelObserver && priceIntelObservedSentinel === sentinel) {
-    return;
-  }
+  const sentinel = document.getElementById("priceIntelSentinel");
+  const banner = document.getElementById("priceIntelFrozenBanner");
+  if (!sentinel || !banner) return;
 
-  if (priceIntelObserver) {
-    priceIntelObserver.disconnect();
-  }
-
-  priceIntelObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const banner = document.getElementById("priceIntelFrozenBanner");
-      if (!banner) return;
-
-      if (entry.isIntersecting) {
-        banner.classList.remove("is-visible");
-      } else if (entry.boundingClientRect.top < 0) {
-        // Only freeze the banner in once the full card has scrolled PAST
-        // the top of the viewport (going down) - not before it's been
-        // reached in the first place.
-        updatePriceIntelFrozenBannerText();
-        banner.classList.add("is-visible");
-      }
-    });
-  }, {
-    threshold: 0,
-    rootMargin: `-${PRICE_INTEL_BANNER_TOP_OFFSET}px 0px 0px 0px`
-  });
-
-  priceIntelObserver.observe(sentinel);
-  priceIntelObservedSentinel = sentinel;
+  const pastTop = sentinel.getBoundingClientRect().top < PRICE_INTEL_BANNER_TOP_OFFSET;
+  banner.classList.toggle("is-visible", pastTop);
+  if (pastTop) updatePriceIntelFrozenBannerText();
 }
+
+let priceIntelScrollTicking = false;
+function schedulePriceIntelScrollCheck() {
+  if (priceIntelScrollTicking) return;
+  priceIntelScrollTicking = true;
+  requestAnimationFrame(() => {
+    priceIntelScrollTicking = false;
+    checkPriceIntelScrollFreeze();
+  });
+}
+
+window.addEventListener("scroll", schedulePriceIntelScrollCheck, { passive: true });
 
 // Price intelligence lives inside .filter-panel in the markup (so desktop
 // keeps its existing two-box left column), but on mobile .filter-panel is
@@ -4005,9 +3992,9 @@ function observePriceIntelSentinel(sentinel) {
 // mobile, and move it back into the filter panel above Filters on
 // desktop/tablet, so each breakpoint gets its native layout rather than
 // one compromising for the other. On mobile it also grows a 1px sentinel
-// right after itself, watched by an IntersectionObserver, so a frozen
-// one-line "hero banner" version can take over once the full card has
-// scrolled out of view (see ensureMobilePriceIntelFrozenBanner above).
+// right after itself, checked on scroll (see checkPriceIntelScrollFreeze
+// above), so a frozen one-line "hero banner" version can take over once
+// the full card has scrolled out of view.
 function ensureMobilePriceIntelPlacement() {
   const card = document.querySelector(".smart-guide-card");
   const proResults = document.querySelector(".pro-results") || document.querySelector(".results");
@@ -4033,16 +4020,11 @@ function ensureMobilePriceIntelPlacement() {
     proResults.insertBefore(card, anchor);
     proResults.insertBefore(sentinel, anchor);
     ensureMobilePriceIntelFrozenBanner();
-    observePriceIntelSentinel(sentinel);
+    checkPriceIntelScrollFreeze();
     return;
   }
 
   sentinel.remove();
-  if (priceIntelObserver) {
-    priceIntelObserver.disconnect();
-    priceIntelObserver = null;
-    priceIntelObservedSentinel = null;
-  }
   const banner = document.getElementById("priceIntelFrozenBanner");
   if (banner) banner.classList.remove("is-visible");
 
