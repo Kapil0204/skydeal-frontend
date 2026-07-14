@@ -3299,7 +3299,7 @@ function ensureSelectedTripPanel() {
   panel.style.padding = "16px 18px";
   panel.style.border = "1px solid rgba(168,85,247,0.34)";
   panel.style.borderRadius = "24px";
-  panel.style.background = "linear-gradient(135deg, rgba(17,24,39,0.98), rgba(49,26,92,0.98))";
+  panel.style.background = "linear-gradient(135deg, rgba(16,24,40,0.98), rgba(88,28,135,0.98))";
   panel.style.backdropFilter = "blur(18px)";
   panel.style.boxShadow = "0 22px 60px rgba(17,24,39,0.34), 0 0 0 1px rgba(255,255,255,0.06) inset";
   panel.style.zIndex = "120";
@@ -4731,7 +4731,7 @@ function updateSelectedTripFade() {
   fade.style.height = `${fadeHeight}px`;
   fade.style.pointerEvents = "none";
   fade.style.zIndex = "998";
-  fade.style.background = "linear-gradient(to bottom, rgba(245,247,251,0), rgba(245,247,251,0.95))";
+  fade.style.background = "linear-gradient(to bottom, rgba(248,250,252,0), rgba(248,250,252,0.95))";
 }
 
 function installMobileUxPolish() {
