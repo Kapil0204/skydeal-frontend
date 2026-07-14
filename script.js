@@ -415,6 +415,13 @@ let guideAcceptedNoteTimer = null;
 // state. Backend-authoritative; not recomputed client-side.
 let lastGuideSummary = null;
 let lastGuideCurrentBestPrice = null;
+// meta.truncated from /payment-suggestions - true when the backend's
+// candidate-evaluation loop hit its time budget before testing every
+// candidate. When this is true and nothing cleared the savings bar,
+// the "already optimised" claim would be dishonest (the check never
+// actually finished) - renderGuideOptimisedHtml() softens its copy
+// accordingly instead of asserting a confident conclusion.
+let lastGuideTruncated = false;
 
 // Phase 2 - a small running summary of this search's guide activity
 // (item 10). Reset on every new search; updated as suggestions are
@@ -2424,6 +2431,7 @@ async function fetchPaymentSuggestions() {
     paymentTimingInsights = Array.isArray(json?.timingInsights) ? json.timingInsights : [];
     lastGuideSummary = json?.summary || null;
     lastGuideCurrentBestPrice = Number.isFinite(json?.currentBestPrice) ? json.currentBestPrice : null;
+    lastGuideTruncated = json?.meta?.truncated === true;
 
     if (!guideSearchSummary && lastGuideCurrentBestPrice != null) {
       resetGuideSearchSummary(lastGuideCurrentBestPrice);
@@ -2437,6 +2445,7 @@ async function fetchPaymentSuggestions() {
     paymentSuggestions = [];
     paymentTimingInsights = [];
     paymentGuideState = "error";
+    lastGuideTruncated = false;
   }
 
   renderPaymentGuideCard();
@@ -2638,6 +2647,21 @@ function renderGuideOptimisedHtml() {
     `
     : "";
 
+  // The backend's candidate loop hit its time budget before testing
+  // every option (meta.truncated) - claiming "already optimised" here
+  // would be asserting a conclusion the check never actually reached.
+  // Say so honestly and offer a retry instead.
+  if (lastGuideTruncated) {
+    return `
+      <div class="payment-guide-optimised">
+        <div class="payment-guide-optimised-title">We couldn't finish checking in time</div>
+        <div class="payment-guide-optimised-sub">We checked what we could before timing out, but didn't get through every option - there may still be a better way to pay.</div>
+        ${summaryLine}
+        <button type="button" class="payment-guide-check-more-btn">Check again</button>
+      </div>
+    `;
+  }
+
   return `
     <div class="payment-guide-optimised">
       <div class="payment-guide-optimised-title">You're already well optimised</div>
@@ -2791,6 +2815,7 @@ function renderPaymentGuideCardInner() {
     if (visible.length === 0) {
       container.classList.add("guide-replacing");
       dynamicHost.innerHTML = renderGuideOptimisedHtml();
+      wireGuideCheckMoreButton(dynamicHost);
       return;
     }
 
@@ -5516,6 +5541,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     guideAcceptedNote = null;
     lastGuideSummary = null;
     lastGuideCurrentBestPrice = null;
+    lastGuideTruncated = false;
     guideSearchSummary = null;
     if (guideAcceptedNoteTimer) {
       clearTimeout(guideAcceptedNoteTimer);

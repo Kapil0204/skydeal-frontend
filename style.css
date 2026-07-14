@@ -1508,6 +1508,13 @@ h3{
   color:#9ca3af;
 }
 
+/* Truncated-check "Check again" button sits after the facts row, which
+   (unlike the success-note usage of this same button elsewhere) has no
+   bottom margin of its own. */
+.payment-guide-optimised .payment-guide-check-more-btn{
+  margin-top:10px;
+}
+
 .payment-guide-error-note{
   margin-top:10px;
   padding-top:10px;
