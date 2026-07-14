@@ -8805,11 +8805,13 @@ body #selectedTripPanel .sky-trip-clear-btn {
   transition: opacity 0.2s ease, filter 0.2s ease;
 }
 
-/* Keep both date boxes aligned */
+/* Keep both date boxes aligned - and matching the rest of the search
+   row (From/To/Passengers/Cabin are all 44px; this used to be 58px,
+   its own consistent height but mismatched with every other field). */
 #departInput,
 #returnInput {
-  min-height: 58px !important;
-  height: 58px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   box-sizing: border-box !important;
 }
 
@@ -8902,8 +8904,8 @@ body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-pi
 @media (max-width: 760px) {
   #departInput,
   #returnInput {
-    min-height: 58px !important;
-    height: 58px !important;
+    min-height: 40px !important;
+    height: 40px !important;
   }
 }
 
