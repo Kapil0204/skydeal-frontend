@@ -4720,7 +4720,18 @@ body {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    /* opacity is a hard cut, not animated: this banner is a fully
+       opaque fixed-position surface, and the full .smart-guide-card
+       it replaces is still in normal document flow directly behind it
+       at the exact moment is-visible toggles (that's the definition of
+       the trigger). A 0.2s opacity fade meant there was a real window
+       where the banner sat at e.g. 50% opacity with the card's text
+       showing straight through it - a ghosted double-exposure look,
+       worse on a slow/paused scroll where that mid-fade frame lingers.
+       Keeping the transform transition (the slide-in motion) but
+       cutting opacity instantly removes that see-through window
+       entirely while still feeling like an animated entrance. */
+    transition: transform 0.2s ease;
   }
 
   .price-intel-frozen-banner.is-visible {
