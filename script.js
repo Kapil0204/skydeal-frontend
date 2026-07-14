@@ -3830,7 +3830,7 @@ function scrollToReturnFlightsOnMobile() {
 
   setTimeout(() => {
     returnPanel.scrollIntoView({
-      behavior: "smooth",
+      behavior: "instant",
       block: "start"
     });
   }, 250);
@@ -3950,10 +3950,10 @@ function ensureMobilePriceIntelFrozenBanner() {
   `;
   banner.addEventListener("click", () => {
     const card = document.querySelector(".smart-guide-card");
-    // "smooth" silently no-ops on this page (html/body both carry a
-    // non-default overflow, which the rest of the codebase's own
-    // scrollIntoView({behavior:"smooth"}) calls appear to hit too -
-    // flagged separately, not fixed here) - "instant" is unaffected.
+    // "smooth" silently no-op'd here (and at every other scrollIntoView
+    // call site in this file - all since switched to "instant" too,
+    // see style.css's overflow-x notes for the root cause that made
+    // body a phantom, never-scrolling position:sticky/scroll target).
     card?.scrollIntoView({ behavior: "instant", block: "start" });
   });
 
@@ -4083,7 +4083,7 @@ function setMobileReturnFocusAfterOutbound() {
 
   setTimeout(() => {
     returnPanel.scrollIntoView({
-      behavior: "smooth",
+      behavior: "instant",
       block: "start"
     });
   }, 220);
@@ -4110,7 +4110,7 @@ function ensureMobileRoundTripTabs() {
     btn.addEventListener("click", () => {
       mobileRoundTripActiveLeg = btn.getAttribute("data-leg") === "ret" ? "ret" : "out";
       updateMobileRoundTripTabs();
-      bar.scrollIntoView({ behavior: "smooth", block: "start" });
+      bar.scrollIntoView({ behavior: "instant", block: "start" });
     });
   });
 
@@ -4259,7 +4259,7 @@ function renderMobileSearchSummary() {
     document.body.classList.remove("mobile-results-mode");
     const searchCard = document.querySelector(".search-card");
     if (searchCard) {
-      searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      searchCard.scrollIntoView({ behavior: "instant", block: "start" });
     }
   });
 }
@@ -4273,7 +4273,7 @@ function enterMobileResultsMode() {
   const summary = document.getElementById("mobileSearchSummary");
   if (summary) {
     setTimeout(() => {
-      summary.scrollIntoView({ behavior: "smooth", block: "start" });
+      summary.scrollIntoView({ behavior: "instant", block: "start" });
     }, 150);
   }
 }
@@ -4293,7 +4293,7 @@ function bindMobileSearchModeEvents() {
 
       const summary = document.getElementById("mobileSearchSummary");
       if (summary) {
-        summary.scrollIntoView({ behavior: "smooth", block: "start" });
+        summary.scrollIntoView({ behavior: "instant", block: "start" });
       }
     }, 80);
   });
@@ -4411,7 +4411,7 @@ function renderSearchErrorState(errorMessage = "We couldn’t load live flights.
   standalone.querySelector("#editSearchFromErrorBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
     const searchCard = document.querySelector(".search-card");
-    if (searchCard) searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
   });
 
   renderPager("out");
@@ -4562,7 +4562,7 @@ function renderSearchNoResultsState(details = {}) {
   document.getElementById("editSearchFromNoResultsBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
     const searchCard = document.querySelector(".search-card");
-    if (searchCard) searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
   });
 
   document.getElementById("retryNoResultsBtn")?.addEventListener("click", () => {
