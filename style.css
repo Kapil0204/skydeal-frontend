@@ -1,14 +1,27 @@
+/* Consolidated 2026-07 from 3 previously-overlapping :root blocks (this one,
+   plus ones formerly at "SkyDeal Pro UI Refresh" and "SkyDeal Dark Neon
+   Brand Refresh" below) into one. Values below are the ones that were
+   actually live (last-declared-wins per property, per the old cascade) -
+   this consolidation is value-preserving, not a redesign. */
 :root{
-  --bg:#0b1220;
-  --panel:#111b2f;
-  --panel2:#0f1730;
-  --text:#eaf0ff;
-  --muted:#aab6d6;
-  --line:rgba(255,255,255,0.10);
-  --btn:#2f6bff;
-  --btn2:#1f2a44;
-  --shadow:0 20px 60px rgba(0,0,0,0.45);
-  --radius:14px;
+  --bg:#070711;
+  --panel:#11111f;
+  --panel2:#17172a;
+  --text:#f8fafc;
+  --muted:#a5adcb;
+  --line:rgba(255,255,255,0.12);
+  --btn:#8b5cf6;
+  --btn2:#19192d;
+  --radius:18px;
+  --accent:#00d4ff;
+  --accent2:#7c3aed;
+  --warning:#f59e0b;
+  --success:#22c55e;
+  --primary:#8b5cf6;
+  --primary2:#a855f7;
+  --pink:#ec4899;
+  --pink2:#ff2d95;
+  --shadow:0 24px 70px rgba(0,0,0,0.45);
 }
 
 *{ box-sizing:border-box; }
@@ -944,24 +957,9 @@ h3{ margin:0; font-size:18px; }
 /* =========================
    SkyDeal Pro UI Refresh
    Light theme + filters + airline badges
+   (this section's own :root block was consolidated into the single
+   top-of-file :root — see note there)
    ========================= */
-
-:root{
-  --bg:#f5f7fb;
-  --panel:#ffffff;
-  --panel2:#f8fafc;
-  --text:#172033;
-  --muted:#667085;
-  --line:#e6eaf2;
-  --btn:#2563eb;
-  --btn2:#eef4ff;
-  --accent:#00d4ff;
-  --accent2:#7c3aed;
-  --success:#059669;
-  --warning:#f59e0b;
-  --shadow:0 18px 45px rgba(15,23,42,0.08);
-  --radius:18px;
-}
 
 body{
   background:
@@ -2689,24 +2687,9 @@ h3{
    SkyDeal Dark Neon Brand Refresh
    Primary: Neon Purple
    Accent: Hot Pink
+   (this section's own :root block was consolidated into the single
+   top-of-file :root — see note there)
    ========================= */
-
-:root{
-  --bg:#070711;
-  --panel:#11111f;
-  --panel2:#17172a;
-  --text:#f8fafc;
-  --muted:#a5adcb;
-  --line:rgba(255,255,255,0.12);
-  --btn:#8b5cf6;
-  --btn2:#19192d;
-  --primary:#8b5cf6;
-  --primary2:#a855f7;
-  --pink:#ec4899;
-  --pink2:#ff2d95;
-  --success:#22c55e;
-  --shadow:0 24px 70px rgba(0,0,0,0.45);
-}
 
 body{
   background:
