@@ -1601,10 +1601,10 @@ h3{
 }
 
 .payment-guide-suggestion{
-  border:1px solid rgba(168,85,247,0.22);
+  border:1px solid var(--gray-200);
   border-radius:var(--radius-md);
   padding:12px;
-  background:var(--brand-100);
+  background:var(--gray-50);
 }
 
 .payment-guide-suggestion + .payment-guide-suggestion{
@@ -1612,13 +1612,14 @@ h3{
 }
 
 /* Phase 2 - one compact category badge per suggestion (never more than
-   one - see pickSuggestionLabel in index.js). */
+   one - see pickSuggestionLabel in index.js). Deliberately neutral, not
+   brand-tinted - purple is reserved for the single Add button below. */
 .payment-guide-label-badge{
   display:inline-block;
   font-size:var(--fs-3xs);
   font-weight:750;
-  color:var(--accent2);
-  background:rgba(168,85,247,0.12);
+  color:var(--gray-700);
+  background:var(--gray-200);
   border-radius:var(--radius-pill);
   padding:2px 8px;
   margin-bottom:6px;
@@ -1628,7 +1629,7 @@ h3{
 .payment-guide-suggestion-heading{
   font-size:var(--fs-base);
   font-weight:800;
-  color:var(--accent2);
+  color:var(--success);
   margin-bottom:4px;
 }
 
