@@ -17,27 +17,25 @@
   --success:#22c55e;
   --shadow:0 24px 70px rgba(0,0,0,0.45);
 
-  /* SkyDeal brand palette: one committed hue (258.5, the already-shipped
-     --primary button color), not the ~258-274 spread the file drifted
-     into across past redesign passes (violet buttons next to slightly
-     different-hued "purple" badges/text/tints). Full 11-step scale,
-     mathematically generated (constant hue, smooth saturation/lightness
-     ramp) rather than picked by eye, so every step is deliberately
-     related to every other. --brand-500 is pinned to the exact existing
-     #8b5cf6 so the color everyone already recognizes doesn't move.
-     Semantic aliases below (--primary etc.) are what call sites actually
-     use - this primitive scale is the source of truth they point to. */
-  --brand-50:#f6f2ff;
-  --brand-100:#ece4fe;
-  --brand-200:#d5c4fd;
-  --brand-300:#ba9efa;
-  --brand-400:#a27cf8;
-  --brand-500:#8b5cf6;
-  --brand-600:#723bed;
-  --brand-700:#5b20df;
-  --brand-800:#4d21b0;
-  --brand-900:#412287;
-  --brand-950:#26144d;
+  /* SkyDeal brand palette (2026-07-15, "option B" experiment): one
+     committed hue (270, electric ultraviolet), pushed to near-max
+     saturation throughout the whole scale for a more neon/unorthodox
+     feel than the original 258.5-hue version - same mathematically
+     generated 11-step structure, just a different, more saturated
+     hue/ramp. Semantic aliases below (--primary etc.) are what call
+     sites actually use - this primitive scale is the source of truth
+     they point to, so this single edit re-themes the whole site. */
+  --brand-50:#f7f0ff;
+  --brand-100:#eddbff;
+  --brand-200:#dbb8ff;
+  --brand-300:#c48aff;
+  --brand-400:#a852ff;
+  --brand-500:#8f1fff;
+  --brand-600:#7a06ef;
+  --brand-700:#660ac2;
+  --brand-800:#520c97;
+  --brand-900:#400d73;
+  --brand-950:#24093e;
 
   --primary:var(--brand-500);
   --primary2:var(--brand-400);
@@ -9771,4 +9769,40 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   .skydeal-footer-legal {
     border-top-color: var(--gray-200) !important;
   }
+}
+
+/* =====================================================
+   EXPERIMENT (2026-07-15): "Option C" header treatment
+   Near-black surface + neon accent, header only - everything
+   below (search card, results, footer) stays the light theme
+   from the earlier brand refresh. A live side-by-side to
+   compare against the all-light header, not a final decision.
+   To remove: delete this block, header reverts to light.
+===================================================== */
+
+.skydeal-hero-header {
+  background: #110b1e !important;
+  border-bottom: 1px solid rgba(174, 61, 255, 0.28) !important;
+}
+
+.skydeal-hero-header .brand {
+  color: #ffffff !important;
+}
+
+.skydeal-hero-header .brand-name {
+  color: #ae3dff !important;
+  text-shadow: 0 0 26px rgba(174, 61, 255, 0.45) !important;
+}
+
+.skydeal-logo-mark {
+  color: #ae3dff !important;
+  filter: drop-shadow(0 0 12px rgba(174, 61, 255, 0.5)) !important;
+}
+
+.skydeal-hero-line {
+  color: #ffffff !important;
+}
+
+.skydeal-hero-header .sub {
+  color: rgba(255, 255, 255, 0.65) !important;
 }
