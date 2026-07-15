@@ -308,6 +308,9 @@ h3{ margin:0; font-size:var(--fs-lg); }
 }
 .air{ font-weight:800; }
 .times, .stops{ color:var(--muted); font-size:var(--fs-base); }
+/* Wraps .times + the stops badge so mobile can lay them out as one
+   inline row without touching desktop's existing 5-column grid. */
+.timeStopsRow{ display:contents; }
 .price{ font-weight:900; font-size:var(--fs-md); }
 .best{
   margin-top:8px;
@@ -4529,8 +4532,7 @@ body {
     grid-template-columns: minmax(0, 1fr) auto !important;
     grid-template-areas:
       "air price"
-      "time compare"
-      "stops compare" !important;
+      "time compare" !important;
     gap: 8px 10px !important;
     align-items: center !important;
   }
@@ -4540,22 +4542,59 @@ body {
     min-width: 0 !important;
   }
 
-  .times {
+  .timeStopsRow {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
     grid-area: time !important;
+    min-width: 0 !important;
+  }
+
+  .times {
     font-size: var(--fs-lg) !important;
     font-weight: 900 !important;
     white-space: nowrap !important;
   }
 
+  /* Non-stop/duration sits inline next to the time instead of its own
+     row - reclaims the vertical space that row used to take. */
   .stops {
-    grid-area: stops !important;
-    font-size: var(--fs-sm) !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+    min-width: 0 !important;
     white-space: nowrap !important;
-    text-align: left !important;
+  }
+
+  .flightDuration {
+    font-size: var(--fs-2xs) !important;
   }
 
   .flightStopsLine {
-    margin: 6px 0 !important;
+    display: none !important;
+  }
+
+  .stopsHoverable {
+    display: flex !important;
+    align-items: baseline !important;
+    min-width: 0 !important;
+  }
+
+  .stops > div:last-child {
+    font-size: var(--fs-2xs) !important;
+    font-weight: 800 !important;
+    border-left: 1px solid var(--gray-200) !important;
+    padding-left: 6px !important;
+  }
+
+  .stopsViaLine {
+    font-size: var(--fs-2xs) !important;
+    font-weight: 800 !important;
+    margin-top: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100px !important;
   }
 
   .price {
@@ -8794,6 +8833,16 @@ body #selectedTripPanel .sky-trip-clear-btn {
   #mobileQuickFilters .mobile-chip-filter {
     padding-left: 8px !important;
     padding-right: 8px !important;
+  }
+
+  /* The sort chip's "Sorted by<br><b>Cheapest</b>" content needs a
+     column flex direction - a flex row (the default above) puts the
+     <br>-separated text and the bold label side by side instead of
+     stacked, which is what caused them to visually overlap. */
+  .mobile-quick-filters .mobile-chip-sort,
+  #mobileQuickFilters .mobile-chip-sort {
+    flex-direction: column !important;
+    gap: 1px !important;
   }
 
   /* After removing the top Compare button, let price area breathe */

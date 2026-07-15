@@ -5116,8 +5116,10 @@ function flightCard(f, direction = "out") {
           </div>
         </div>
 
-        <div class="times">${dep} → ${arr}</div>
-        ${stopsBadgeHtml(f)}
+        <div class="timeStopsRow">
+          <div class="times">${dep} → ${arr}</div>
+          ${stopsBadgeHtml(f)}
+        </div>
 
         <div class="price">
           <div>${money(cardFinalPrice)}</div>
