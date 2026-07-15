@@ -4788,7 +4788,13 @@ body {
     left: 10px;
     right: 10px;
     top: 10px;
-    z-index: 45;
+    /* Above .mobile-search-summary's sticky bar (z-index:50) - this
+       banner is meant to take over that same top-of-screen slot once
+       the full price-intelligence card scrolls past, not sit behind
+       it. Regressed silently when the summary bar's sticky fix gave
+       it z-index:50 (it previously covered this banner completely,
+       even though .is-visible was toggling correctly underneath). */
+    z-index: 55;
     align-items: center;
     gap: 10px;
     background: linear-gradient(120deg, var(--accent2), var(--brand-700) 55%, var(--primary2));
