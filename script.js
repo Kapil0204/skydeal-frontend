@@ -5041,7 +5041,8 @@ function stopsBadgeHtml(f) {
   const cityList = cityNames.length > 1
     ? `${cityNames.slice(0, -1).join(", ")} and ${cityNames[cityNames.length - 1]}`
     : cityNames[0];
-  const viaLabel = `${stops} stop${stops > 1 ? "s" : ""} via ${cityList}`;
+  const stopsCountLabel = `${stops} stop${stops > 1 ? "s" : ""}`;
+  const viaLabel = `${stopsCountLabel}<span class="stopsViaCities"> via ${cityList}</span>`;
 
   const tooltipLines = layovers
     .map((lo, i) => {

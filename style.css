@@ -4591,10 +4591,13 @@ body {
     font-size: var(--fs-2xs) !important;
     font-weight: 800 !important;
     margin-top: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-    max-width: 100px !important;
+  }
+
+  /* "via <city>" was getting ellipsis-cropped in this tight inline
+     spot - just show "1 stop" and let the existing tap/hover tooltip
+     (.stopsTooltip) carry the layover city + duration instead. */
+  .stopsViaCities {
+    display: none !important;
   }
 
   .price {
