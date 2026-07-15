@@ -5089,9 +5089,9 @@ function flightCard(f, direction = "out") {
           class="selectTripBtn"
           data-direction="${direction}"
           style="
-            border:1px solid ${isSelectedForDirection ? "rgba(34,197,94,.38)" : "rgba(168,85,247,.34)"};
-            background:${isSelectedForDirection ? "rgba(34,197,94,.10)" : "rgba(168,85,247,.10)"};
-            color:${isSelectedForDirection ? "#22c55e" : "#6d28d9"};
+            border:1px solid ${isSelectedForDirection ? "rgba(34,197,94,.38)" : "#cbd5e1"};
+            background:${isSelectedForDirection ? "rgba(34,197,94,.10)" : "#ffffff"};
+            color:${isSelectedForDirection ? "#22c55e" : "#344054"};
             border-radius:999px;
             padding:8px 12px;
             font-size:13px;

@@ -2845,12 +2845,22 @@ select:focus{
   box-shadow:0 16px 36px rgba(168,85,247,0.45);
 }
 
+/* Secondary/ghost actions are neutral, not a purple pill - purple stays
+   reserved for the one primary action per screen (see brand.md). This
+   base rule is the dark-surface version (payment modal etc, still dark
+   per the light-theme flip's explicit scope); .clear-filter-btn is
+   split out below since the Filters panel is a light surface. */
 .btn-ghost,
-.btn-sm,
+.btn-sm{
+  background:rgba(255,255,255,0.06);
+  color:var(--muted);
+  border:1px solid rgba(255,255,255,0.16);
+}
+
 .clear-filter-btn{
-  background:rgba(139,92,246,0.10);
-  color:var(--brand-100);
-  border:1px solid rgba(139,92,246,0.32);
+  background:var(--white);
+  color:var(--gray-700);
+  border:1px solid var(--gray-200);
 }
 
 .card,
@@ -3185,9 +3195,9 @@ body{
 
 /* Clear all button in filter panel */
 .clear-filter-btn{
-  background:var(--brand-100) !important;
-  color:var(--brand-700) !important;
-  border:1px solid rgba(168,85,247,0.35) !important;
+  background:var(--white) !important;
+  color:var(--gray-700) !important;
+  border:1px solid var(--gray-200) !important;
   border-radius:var(--radius-sm) !important;
   padding:4px 8px !important;
   font-size:var(--fs-sm) !important;
@@ -3195,8 +3205,8 @@ body{
 }
 
 .clear-filter-btn:hover{
-  background:var(--primary2) !important;
-  color:var(--white) !important;
+  background:var(--gray-50) !important;
+  color:var(--gray-900) !important;
 }
 /* =========================
    Fix portal hover + date picker visibility
@@ -6862,10 +6872,14 @@ body.search-error-mode .pro-results {
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
+/* Book = savings/positive signal, stays green (semantic). Compare and
+   the legacy copy-code button are supporting actions, not a second
+   brand color - neutral outline, matching every other secondary
+   action site-wide (see brand.md). */
 .oneWayCopyCodeBtn {
-  border: 1px solid rgba(168, 85, 247, 0.34);
-  background: rgba(168, 85, 247, 0.10);
-  color: var(--brand-700);
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
 }
 
 .oneWayBookPortalBtn {
@@ -6875,9 +6889,9 @@ body.search-error-mode .pro-results {
 }
 
 .oneWayCompareBtn {
-  border: 1px solid rgba(168, 85, 247, 0.34);
-  background: rgba(168, 85, 247, 0.10);
-  color: var(--brand-700);
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
 }
 
 .oneWayCardActions button:hover {
