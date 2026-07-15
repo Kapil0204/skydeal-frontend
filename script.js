@@ -1514,10 +1514,10 @@ function renderSelectedPaymentMethodsSummary() {
       const detail = paymentMethodDetailSummary(pm);
       const supportsOptionalDetails = ["Credit Card", "Debit Card", "EMI"].includes(pm.type);
       return `
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#ffffff;">
           <div style="display:flex;flex-direction:column;line-height:1.1;">
-            <span style="font-size:12px;font-weight:600;">${safeText(label)}</span>
-            ${detail ? `<span style="font-size:11px;opacity:.75;">${safeText(detail)}</span>` : ""}
+            <span style="font-size:12px;font-weight:600;color:#101828;">${safeText(label)}</span>
+            ${detail ? `<span style="font-size:11px;opacity:.75;color:#667085;">${safeText(detail)}</span>` : ""}
           </div>
           ${
             supportsOptionalDetails
@@ -1526,7 +1526,7 @@ function renderSelectedPaymentMethodsSummary() {
                   type="button"
                   class="pm-edit-btn"
                   data-pm-index="${idx}"
-                  style="background:transparent;border:0;color:#d8b4fe;cursor:pointer;font-size:12px;"
+                  style="background:transparent;border:0;color:#5b20df;cursor:pointer;font-size:12px;"
                 >
                   ${detail ? "Edit optional details" : "Add optional details"}
                 </button>

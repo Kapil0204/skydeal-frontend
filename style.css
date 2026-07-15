@@ -8768,6 +8768,9 @@ body #selectedTripPanel .sky-trip-clear-btn {
 
   .mobile-quick-filters .mobile-chip,
   #mobileQuickFilters .mobile-chip {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     min-width: 0 !important;
     width: 100% !important;
     min-height: 38px !important;
