@@ -5079,28 +5079,13 @@ function flightCard(f, direction = "out") {
   const isRoundTrip = isRoundTripModeActive();
   const selectedForDirection = direction === "ret" ? selectedReturnFlight : selectedOutboundFlight;
   const isSelectedForDirection = isSameSelectedFlight(f, selectedForDirection);
-  const selectLabel = direction === "ret" ? "Select return" : "Select departure";
+  const selectLabel = direction === "ret" ? "Select this return flight" : "Select this departure flight";
 
   const selectTripButton = isRoundTrip
     ? `
-      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-        <button
-          type="button"
-          class="selectTripBtn"
-          data-direction="${direction}"
-          style="
-            border:1px solid ${isSelectedForDirection ? "rgba(34,197,94,.38)" : "#cbd5e1"};
-            background:${isSelectedForDirection ? "rgba(34,197,94,.10)" : "#ffffff"};
-            color:${isSelectedForDirection ? "#22c55e" : "#344054"};
-            border-radius:999px;
-            padding:8px 12px;
-            font-size:13px;
-            font-weight:900;
-            cursor:pointer;
-          "
-        >
-          ${isSelectedForDirection ? "Selected ✓" : selectLabel}
-        </button>
+      <div class="selectTripRow${isSelectedForDirection ? " is-selected" : ""}" data-direction="${direction}" role="radio" aria-checked="${isSelectedForDirection ? "true" : "false"}" aria-label="${selectLabel}">
+        <span class="selectTripRadio" aria-hidden="true"></span>
+        <span class="selectTripLabel">${isSelectedForDirection ? "Selected" : "Select this flight"}</span>
       </div>
     `
     : "";
@@ -5163,11 +5148,12 @@ function renderList(el, items, direction = "out") {
 
   el.innerHTML = items.map((f) => flightCard(f, direction)).join("");
 
-  el.querySelectorAll(".selectTripBtn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const card = btn.closest(".card");
-      const key = card?.getAttribute("data-flightkey");
-      const dir = btn.getAttribute("data-direction") || direction;
+  el.querySelectorAll(".card:has(.selectTripRow)").forEach((card) => {
+    card.classList.add("card-selectable");
+    card.addEventListener("click", () => {
+      const key = card.getAttribute("data-flightkey");
+      const row = card.querySelector(".selectTripRow");
+      const dir = row?.getAttribute("data-direction") || direction;
 
       const source = dir === "ret" ? returnAll : outboundAll;
       const flight = source.find((x) => flightKey(x) === key);
