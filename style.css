@@ -2967,8 +2967,8 @@ select:focus{
 
 body{
   background:
-    radial-gradient(900px 420px at 12% -8%, rgba(168,85,247,0.22), transparent 60%),
-    linear-gradient(180deg, var(--bg) 0 360px, var(--gray-50) 360px 100%);
+    radial-gradient(900px 420px at 12% -8%, rgba(139,92,246,0.10), transparent 60%),
+    var(--gray-50);
 }
 
 /* Keep top/search area premium dark */
@@ -8884,9 +8884,9 @@ body #selectedTripPanel .sky-trip-clear-btn {
 body.sky-return-date-active #returnInput,
 .return-date-field.return-date-active #returnInput,
 #returnInput.return-date-input-active {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  border-color: color-mix(in srgb, var(--primary) 72%, var(--line)) !important;
+  background: var(--white) !important;
+  color: var(--gray-900) !important;
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--gray-200)) !important;
   box-shadow: none !important;
   outline: none !important;
   filter: none !important;
@@ -8917,9 +8917,9 @@ body.sky-return-date-dimmed .return-date-field,
 body.sky-return-date-dimmed .return-date-field #returnInput,
 .return-date-field.return-date-dimmed #returnInput,
 #returnInput.return-date-input-dimmed {
-  background: color-mix(in srgb, var(--panel2) 78%, var(--bg)) !important;
-  color: color-mix(in srgb, var(--muted) 82%, var(--text)) !important;
-  border-color: color-mix(in srgb, var(--line) 86%, var(--muted)) !important;
+  background: var(--gray-50) !important;
+  color: var(--gray-500) !important;
+  border-color: var(--gray-200) !important;
   box-shadow: none !important;
   outline: none !important;
   filter: grayscale(1) saturate(0) !important;
@@ -8984,9 +8984,9 @@ body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-pi
 body.sky-return-date-active #returnInput,
 .return-date-field.return-date-active #returnInput,
 #returnInput.return-date-input-active {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  border-color: var(--line) !important;
+  background: var(--white) !important;
+  color: var(--gray-900) !important;
+  border-color: var(--gray-200) !important;
   box-shadow: none !important;
   outline: none !important;
   filter: none !important;
@@ -9011,9 +9011,9 @@ body.sky-return-date-active #returnInput:focus-visible,
 body.sky-return-date-dimmed .return-date-field #returnInput,
 .return-date-field.return-date-dimmed #returnInput,
 #returnInput.return-date-input-dimmed {
-  background: color-mix(in srgb, var(--panel2) 72%, var(--bg)) !important;
-  color: var(--muted) !important;
-  border-color: var(--line) !important;
+  background: var(--gray-50) !important;
+  color: var(--gray-500) !important;
+  border-color: var(--gray-200) !important;
   filter: grayscale(1) saturate(0) !important;
   box-shadow: none !important;
   outline: none !important;
@@ -9617,5 +9617,127 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   .skydeal-footer-legal p {
     max-width: 100%;
     margin-left: 0;
+  }
+}
+
+/* =====================================================
+   Brand refresh (2026-07-15): purple as accent, not zone
+   Header, search card, and footer were the last dark
+   surfaces on an otherwise light site - a hard seam where
+   dark met light, and purple used as a big background
+   fill rather than an accent. This section makes them
+   light like everything else; --primary/--primary2 now
+   only appear on the logo, the one primary button, active
+   states, and links. Deliberately does NOT touch the
+   payment modal / portal-compare modal / T&C modal - those
+   stay dark for now, flagged separately.
+===================================================== */
+
+.skydeal-hero-header {
+  background: var(--white) !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  backdrop-filter: none !important;
+}
+
+.skydeal-hero-header .brand {
+  color: var(--gray-900) !important;
+}
+
+.skydeal-hero-line {
+  color: var(--gray-900) !important;
+}
+
+.skydeal-hero-header .sub {
+  color: var(--gray-500) !important;
+}
+
+.search-card {
+  background: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+}
+
+.search-card label {
+  color: var(--gray-700) !important;
+}
+
+.search-card input,
+.search-card select {
+  background: var(--white) !important;
+  color: var(--gray-900) !important;
+  border: 1px solid var(--gray-200) !important;
+}
+
+.search-card input::placeholder {
+  color: var(--gray-500) !important;
+  opacity: 1 !important;
+}
+
+.search-card input:focus,
+.search-card select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+
+#departInput,
+#returnInput {
+  color-scheme: light !important;
+}
+
+.trip-toggle input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+/* "Add how you pay" is a supporting action, not the page's one
+   primary CTA - neutral outline, not a purple pill. */
+.search-card .btn-ghost {
+  background: var(--white) !important;
+  color: var(--gray-700) !important;
+  border: 1px solid var(--gray-200) !important;
+}
+
+.search-card .btn-ghost:hover {
+  background: var(--gray-50) !important;
+  border-color: var(--gray-500) !important;
+}
+
+.sky-payment-nudge {
+  background: var(--brand-50) !important;
+  border: 1px solid var(--brand-200) !important;
+  color: var(--gray-700) !important;
+}
+
+.sky-payment-nudge strong {
+  color: var(--gray-900) !important;
+}
+
+.sky-payment-nudge button {
+  color: var(--gray-500) !important;
+}
+
+.sky-payment-nudge button:hover {
+  color: var(--gray-900) !important;
+}
+
+.skydeal-footer {
+  background: var(--gray-50) !important;
+  border-top: 1px solid var(--gray-200) !important;
+}
+
+.skydeal-footer-contact a {
+  color: var(--primary) !important;
+}
+
+.skydeal-footer-legal {
+  border-top-color: var(--gray-200) !important;
+}
+
+.skydeal-footer-legal p {
+  color: var(--gray-500) !important;
+}
+
+@media (max-width: 760px) {
+  .skydeal-footer-legal {
+    border-top-color: var(--gray-200) !important;
   }
 }
