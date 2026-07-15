@@ -1364,6 +1364,12 @@ h3{
   margin-bottom:6px;
 }
 
+.empty-icon svg{
+  width:32px;
+  height:32px;
+  color:var(--brand-300);
+}
+
 .empty-title{
   font-size:var(--fs-lg);
   font-weight:900;
@@ -3249,18 +3255,26 @@ input[type="date"]::-webkit-calendar-picker-indicator{
   z-index:3;
 }
 
-/* create our visible calendar button area */
+/* create our visible calendar button area - a masked SVG (not the 📅
+   emoji) so it's a controllable brand color instead of an OS-drawn
+   glyph. Placeholder line style pending the real logo (see brand.md). */
 input[type="date"]::after{
-  content:"📅";
+  content:"";
   position:absolute;
   right:12px;
   top:50%;
+  width:16px;
+  height:16px;
   transform:translateY(-50%);
-  font-size:var(--fs-lg);
-  line-height:1;
   pointer-events:none;
   opacity:0.95;
-  filter:drop-shadow(0 0 6px rgba(168,85,247,0.45));
+  background-color:var(--gray-500);
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cline x1='16' y1='3' x2='16' y2='7'/%3E%3Cline x1='8' y1='3' x2='8' y2='7'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cline x1='16' y1='3' x2='16' y2='7'/%3E%3Cline x1='8' y1='3' x2='8' y2='7'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+  -webkit-mask-size:contain;
+  mask-size:contain;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
 }
 /* Airline logo image (MMT style) */
 .airline-logo-img {

@@ -3203,7 +3203,7 @@ function emptyStateHtml(type = "default") {
   if (type === "return-hidden") {
     return `
       <div class="empty-state">
-        <div class="empty-icon">↩️</div>
+        <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 14 4 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="empty-title">Return flights are off for one-way trips</div>
         <div class="empty-copy">Switch to round-trip when you want SkyDeal to compare departure and return flights together.</div>
       </div>
@@ -3213,7 +3213,7 @@ function emptyStateHtml(type = "default") {
   if (type === "loading") {
     return `
       <div class="empty-state">
-        <div class="empty-icon">🔎</div>
+        <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
         <div class="empty-title">Comparing final prices</div>
         <div class="empty-copy">We check fares, portals, and payment offers before showing your price.</div>
         <div class="sky-loading-steps" aria-live="polite">
@@ -3225,7 +3225,7 @@ function emptyStateHtml(type = "default") {
 
   return `
     <div class="empty-state">
-      <div class="empty-icon">✈️</div>
+      <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L13 19v-5.5l8 2.5Z" fill="currentColor"/></svg></div>
       <div class="empty-title">Search to compare real flight prices</div>
       <div class="empty-copy">Flight prices change depending on the portal and payment method you use. Enter your route to see live fares and your final price on each.</div>
     </div>
