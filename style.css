@@ -1242,6 +1242,35 @@ select:focus{
   margin:0;
 }
 
+.filter-head-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* Only relevant inside the mobile bottom-sheet drawer (see
+   body.mobile-filter-drawer-open below) - on desktop .filter-panel is
+   inline, not an overlay, so there's nothing to close. */
+.filter-drawer-close{
+  display:none;
+  width:28px;
+  height:28px;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  border-radius:50%;
+  background:var(--gray-50);
+  color:var(--gray-700);
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.filter-drawer-footer{
+  display:none;
+}
+
 .clear-filter-btn{
   border:0;
   background:transparent;
@@ -2006,7 +2035,8 @@ h3{
   z-index:20;
 }
 
-.stopsHoverable:hover .stopsTooltip{
+.stopsHoverable:hover .stopsTooltip,
+.stopsHoverable.tooltip-open .stopsTooltip{
   display:block;
 }
 
@@ -4894,6 +4924,27 @@ body {
   body.mobile-filter-drawer-open .filter-card {
     display: block !important;
     border-radius: var(--radius-xl) !important;
+  }
+
+  /* The drawer covers the whole results view (z-index:120 above) with
+     no other way back out - this close button and the sticky "Show
+     results" footer below are the only ways to dismiss it. */
+  body.mobile-filter-drawer-open .filter-drawer-close {
+    display: flex !important;
+  }
+
+  body.mobile-filter-drawer-open .filter-drawer-footer {
+    display: block !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    margin: 12px -16px -16px !important;
+    padding: 12px 16px !important;
+    background: var(--white) !important;
+    border-top: 1px solid var(--gray-200) !important;
+  }
+
+  body.mobile-filter-drawer-open .filter-drawer-apply {
+    width: 100% !important;
   }
 
 }

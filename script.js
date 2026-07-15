@@ -1105,6 +1105,18 @@ function wireFilters() {
     renderOutbound();
     renderReturn();
   });
+
+  // The mobile drawer (body.mobile-filter-drawer-open, see style.css)
+  // covers the whole results view with no other way back out - filters
+  // already apply live via the change listeners above, so both of
+  // these just need to close the drawer.
+  document.querySelector(".filter-drawer-close")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-filter-drawer-open");
+  });
+
+  document.querySelector(".filter-drawer-apply")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-filter-drawer-open");
+  });
 }
 
 function sortFlightsForDisplay(items, sortValue) {
@@ -4750,6 +4762,15 @@ document.addEventListener("DOMContentLoaded", () => {
   installMobileUxPolish();
 });
 
+// Closes a tap-opened stop tooltip (see .stopsHoverable click handler
+// in renderList) when tapping anywhere else on the page.
+document.addEventListener("click", (event) => {
+  if (event.target.closest(".stopsHoverable")) return;
+  document.querySelectorAll(".stopsHoverable.tooltip-open").forEach((el) => {
+    el.classList.remove("tooltip-open");
+  });
+});
+
 document.addEventListener("click", () => {
   setTimeout(installMobileUxPolish, 0);
 }, true);
@@ -5180,6 +5201,21 @@ function renderList(el, items, direction = "out") {
       }
 
       scrollAfterTripSelection(dir);
+    });
+  });
+
+  // :hover-only (see style.css .stopsHoverable:hover .stopsTooltip)
+  // never opens on a real touchscreen - this gives mobile a tap
+  // equivalent. stopPropagation so tapping the stop count doesn't
+  // also select the card in round-trip mode.
+  el.querySelectorAll(".stopsHoverable").forEach((hoverable) => {
+    hoverable.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const wasOpen = hoverable.classList.contains("tooltip-open");
+      document.querySelectorAll(".stopsHoverable.tooltip-open").forEach((other) => {
+        other.classList.remove("tooltip-open");
+      });
+      hoverable.classList.toggle("tooltip-open", !wasOpen);
     });
   });
 
