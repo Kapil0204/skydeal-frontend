@@ -5491,11 +5491,18 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
   renderSelectedTripPanel();
 
   try {
+    // 90s, not 60s - some itinerary-heavy domestic routes (e.g. BOM-IXJ,
+    // 104 raw FlightAPI itineraries) measured a real, successful backend
+    // response taking ~66s (one failed FlightAPI attempt needing a retry,
+    // plus a genuinely slow retry response) - at 60s the frontend was
+    // giving up and showing "no results" a few seconds before the
+    // backend's correct answer (real same-carrier connecting flights)
+    // would have arrived. See CURRENT_BUGS.md (2026-07-15).
     const res = await fetchWithTimeout(`${BACKEND}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }, 60000);
+    }, 90000);
 
     const json = await res.json();
     console.log("[SkyDeal] /search meta", json?.meta);
