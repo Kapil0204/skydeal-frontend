@@ -314,6 +314,10 @@ h3{ margin:0; font-size:var(--fs-lg); }
   color:var(--muted);
   font-size:var(--fs-base);
   line-height:1.35;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
 }
 .bestDealBanner{
   margin-top:10px;
@@ -4546,6 +4550,11 @@ body {
     grid-area: stops !important;
     font-size: var(--fs-sm) !important;
     white-space: nowrap !important;
+    text-align: left !important;
+  }
+
+  .flightStopsLine {
+    margin: 6px 0 !important;
   }
 
   .price {
@@ -9772,12 +9781,9 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 }
 
 /* =====================================================
-   EXPERIMENT (2026-07-15): "Option C" header treatment
-   Near-black surface + neon accent, header only - everything
-   below (search card, results, footer) stays the light theme
-   from the earlier brand refresh. A live side-by-side to
-   compare against the all-light header, not a final decision.
-   To remove: delete this block, header reverts to light.
+   Header treatment (frozen 2026-07-15): near-black surface +
+   neon-purple accent, header only - search card, results, and
+   footer stay the light theme from the earlier brand refresh.
 ===================================================== */
 
 .skydeal-hero-header {
@@ -9808,12 +9814,10 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 }
 
 /* =====================================================
-   Round-trip flight selection (2026-07-15): radio-style,
-   click-anywhere-on-card - replaces the old full-width
-   "Select departure"/"Select return" button. Round-trip leg
-   cards never show a coupon-copy button (showCouponChip is
-   false in that context), so there's no nested clickable
-   element for a whole-card click to conflict with.
+   Round-trip flight selection: radio-style, click-anywhere-
+   on-card. The radio sits inline inside the existing price/
+   offer box (.bestDealTopRow or .best) instead of its own
+   row, so selecting a card adds no extra vertical space.
 ===================================================== */
 
 .card-selectable {
@@ -9830,15 +9834,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   background: var(--brand-50) !important;
 }
 
-.selectTripRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--gray-200);
-}
-
 .selectTripRadio {
   width: 18px;
   height: 18px;
@@ -9847,27 +9842,18 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border: 2px solid var(--gray-200);
   position: relative;
   background: var(--white);
+  margin-left: auto;
+  align-self: center;
 }
 
-.selectTripRow.is-selected .selectTripRadio {
+.selectTripRadio.is-selected {
   border-color: var(--primary);
 }
 
-.selectTripRow.is-selected .selectTripRadio::after {
+.selectTripRadio.is-selected::after {
   content: "";
   position: absolute;
   inset: 3px;
   border-radius: 50%;
   background: var(--primary);
-}
-
-.selectTripLabel {
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--gray-700);
-}
-
-.selectTripRow.is-selected .selectTripLabel {
-  color: var(--primary);
-  font-weight: 800;
 }

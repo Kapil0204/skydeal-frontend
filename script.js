@@ -775,14 +775,18 @@ function getSavingsAmount(basePrice, finalPrice) {
   return Math.max(0, Math.round(b - f));
 }
 
-function renderBestDealSummary(bestDeal, context = "default") {
+function renderBestDealSummary(bestDeal, context = "default", isSelected = false) {
   const isRoundTripLeg = context === "round-trip-leg";
+  const radioHtml = isRoundTripLeg
+    ? `<span class="selectTripRadio${isSelected ? " is-selected" : ""}" aria-hidden="true"></span>`
+    : "";
 
   if (!bestDeal || !bestDeal.applied) {
     return `
       <div class="bestDealBanner">
         <div class="bestDealTopRow">
           <div class="bestDealTop">No extra discount for this flight</div>
+          ${radioHtml}
         </div>
         <div class="bestDealMeta">
           ${
@@ -814,6 +818,7 @@ function renderBestDealSummary(bestDeal, context = "default") {
           <div class="bestDealPortal">${portalLine}</div>
         </div>
         ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
+        ${radioHtml}
       </div>
 
       <div class="bestDealMeta">
@@ -5067,28 +5072,22 @@ function flightCard(f, direction = "out") {
   const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
   const cardSavings = best?.applied ? getSavingsAmount(best.basePrice, best.finalPrice) : 0;
 
-  const bestLine = best
-    ? renderBestDealSummary(best, isRoundTripModeActive() ? "round-trip-leg" : "default")
-    : `<div class="best">${
-        isRoundTripModeActive()
-          ? "Select both flights to compare the full round-trip booking price."
-          : "Compare portals to find the best payable price."
-      }</div>`;
-
   const key = flightKey(f);
   const isRoundTrip = isRoundTripModeActive();
   const selectedForDirection = direction === "ret" ? selectedReturnFlight : selectedOutboundFlight;
   const isSelectedForDirection = isSameSelectedFlight(f, selectedForDirection);
-  const selectLabel = direction === "ret" ? "Select this return flight" : "Select this departure flight";
 
-  const selectTripButton = isRoundTrip
-    ? `
-      <div class="selectTripRow${isSelectedForDirection ? " is-selected" : ""}" data-direction="${direction}" role="radio" aria-checked="${isSelectedForDirection ? "true" : "false"}" aria-label="${selectLabel}">
-        <span class="selectTripRadio" aria-hidden="true"></span>
-        <span class="selectTripLabel">${isSelectedForDirection ? "Selected" : "Select this flight"}</span>
-      </div>
-    `
-    : "";
+  const bestLine = best
+    ? renderBestDealSummary(best, isRoundTrip ? "round-trip-leg" : "default", isSelectedForDirection)
+    : `<div class="best">${
+        isRoundTrip
+          ? "Select both flights to compare the full round-trip booking price."
+          : "Compare portals to find the best payable price."
+      }${
+        isRoundTrip
+          ? `<span class="selectTripRadio${isSelectedForDirection ? " is-selected" : ""}" aria-hidden="true"></span>`
+          : ""
+      }</div>`;
 
   const oneWayBestPortal = !isRoundTrip && best?.portal ? safeText(best.portal) : "";
   const oneWayActions = !isRoundTrip && oneWayBestPortal
@@ -5134,7 +5133,6 @@ function flightCard(f, direction = "out") {
 
       ${bestLine}
       ${oneWayActions}
-      ${selectTripButton}
     </div>
   `;
 }
@@ -5148,12 +5146,11 @@ function renderList(el, items, direction = "out") {
 
   el.innerHTML = items.map((f) => flightCard(f, direction)).join("");
 
-  el.querySelectorAll(".card:has(.selectTripRow)").forEach((card) => {
+  el.querySelectorAll(".card:has(.selectTripRadio)").forEach((card) => {
     card.classList.add("card-selectable");
     card.addEventListener("click", () => {
       const key = card.getAttribute("data-flightkey");
-      const row = card.querySelector(".selectTripRow");
-      const dir = row?.getAttribute("data-direction") || direction;
+      const dir = card.getAttribute("data-direction") || direction;
 
       const source = dir === "ret" ? returnAll : outboundAll;
       const flight = source.find((x) => flightKey(x) === key);
