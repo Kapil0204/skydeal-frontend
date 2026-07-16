@@ -5163,15 +5163,7 @@ function stopsLineHtml(stops) {
 // number per segment) but true for ~98% of all connections in a live
 // sample, so it would say "yes" almost every time while still
 // occasionally being wrong - not worth the false precision.
-// arrivalTileHtml (optional): only passed for multi-airport-disambiguation
-// flights (see METRO_AIRPORT_GROUPS, backend) - appended as an extra child
-// INSIDE the existing .stops wrapper, not as a new sibling in the card's
-// grid row, so every breakpoint's existing .stops grid-area/child-selector
-// rules (round-trip mode, mobile) keep matching exactly what they did
-// before. Ordinary single-airport flights pass nothing and are byte-for-
-// byte unchanged.
-function stopsBadgeHtml(f, arrivalTileHtml = "") {
-  const wrapClass = arrivalTileHtml ? "stops has-arrival-tile" : "stops";
+function stopsBadgeHtml(f) {
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const durationMinutes = totalFlightDurationMinutes(f);
   const durationHtml = durationMinutes != null
@@ -5180,15 +5172,11 @@ function stopsBadgeHtml(f, arrivalTileHtml = "") {
 
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
   if (stops === 0 || layovers.length === 0) {
-    const infoHtml = `
-      ${durationHtml}
-      ${stopsLineHtml(0)}
-      <div>Non-stop</div>
-    `;
     return `
-      <div class="${wrapClass}">
-        ${arrivalTileHtml ? `<div class="stopsInfo">${infoHtml}</div>` : infoHtml}
-        ${arrivalTileHtml}
+      <div class="stops">
+        ${durationHtml}
+        ${stopsLineHtml(0)}
+        <div>Non-stop</div>
       </div>
     `;
   }
@@ -5207,18 +5195,14 @@ function stopsBadgeHtml(f, arrivalTileHtml = "") {
     })
     .join("<br/>");
 
-  const infoHtml = `
-    ${durationHtml}
-    <div class="stopsHoverable">
-      ${stopsLineHtml(stops)}
-      <div class="stopsViaLine">${viaLabel}</div>
-      <div class="stopsTooltip">${tooltipLines}</div>
-    </div>
-  `;
   return `
-    <div class="${wrapClass}">
-      ${arrivalTileHtml ? `<div class="stopsInfo">${infoHtml}</div>` : infoHtml}
-      ${arrivalTileHtml}
+    <div class="stops">
+      ${durationHtml}
+      <div class="stopsHoverable">
+        ${stopsLineHtml(stops)}
+        <div class="stopsViaLine">${viaLabel}</div>
+        <div class="stopsTooltip">${tooltipLines}</div>
+      </div>
     </div>
   `;
 }
@@ -5233,22 +5217,33 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
   // airport for the same city on EITHER side (e.g. Mumbai = BOM + Navi
   // Mumbai) - see METRO_AIRPORT_GROUPS (backend) and renderList's
   // airportLabelFlags below. A normal single-airport route never builds
-  // any of this, so existing cards are byte-for-byte unchanged.
+  // any of this, so existing cards are byte-for-byte unchanged (plain
+  // .timeStopsRow, plain "dep → arr" .times, no .arrival-tile at all).
   //
-  // MMT-style tile layout, once EITHER side needs disambiguation: switch
-  // the whole card (both sides) from the plain "dep → arr" time range to
-  // a departure tile (time + city stacked) and an arrival tile (time +
-  // city stacked, appended inside stopsBadgeHtml's own .stops box - see
-  // that function's arrivalTileHtml param - so it visually lands to the
-  // right of the stop/duration info, matching MMT's
-  // dep -> stops -> arrival left-to-right reading order). Only the side(s)
-  // actually flagged get a city caption; a flight whose arrival isn't
-  // itself ambiguous still needs its arrival TIME rendered somewhere once
-  // the card is in tile mode, so the tile switch is driven by "either
-  // side ambiguous", not "this specific side ambiguous" - otherwise a
-  // Mumbai(BOM/NMI)->Aurangabad search would silently drop the arrival
-  // time entirely (Aurangabad itself has only one airport).
-  const showTileLayout = Boolean(
+  // MMT-style tile layout, once EITHER side needs disambiguation: .times
+  // (departure time+city), .stops (duration/stop badge, unmodified from
+  // the ordinary case), and a new .arrival-tile (arrival time+city) all
+  // become TRUE siblings inside .timeStopsRow, which itself switches from
+  // display:contents (passthrough into the outer .row grid - the ordinary
+  // case) to its own real 3-column grid via the "tile-mode" class (see
+  // CSS) - `auto 1fr auto`, so the middle .stops column gets whatever
+  // space remains and the duration/stop text sits genuinely centered
+  // between the two times, not just packed against .times. Only the
+  // side(s) actually flagged get a city caption; a flight whose arrival
+  // isn't itself ambiguous still needs its arrival TIME rendered
+  // somewhere once the card is in tile mode, so the switch is driven by
+  // "either side ambiguous", not "this specific side ambiguous" -
+  // otherwise a Mumbai(BOM/NMI)->Aurangabad search would silently drop
+  // the arrival time entirely (Aurangabad itself has only one airport).
+  //
+  // Round-trip mode's compact 2-column card layout (.row's own separate
+  // grid-template-areas, see style.css) has no spare named area for a
+  // 3rd tile - deliberately left as a known scope limit rather than
+  // reworking that grid too, since every real report/screenshot of this
+  // feature so far has been a one-way search. Falls back to the plain
+  // "dep → arr" format there (no city disambiguation), never to a
+  // half-built or overlapping tile.
+  const showTileLayout = !isRoundTripModeActive() && Boolean(
     (airportLabelFlags.showDeparture && f.departureAirportCode) ||
     (airportLabelFlags.showArrival && f.arrivalAirportCode)
   );
@@ -5316,9 +5311,10 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
           </div>
         </div>
 
-        <div class="timeStopsRow">
+        <div class="timeStopsRow${showTileLayout ? " tile-mode" : ""}">
           ${timesHtml}
-          ${stopsBadgeHtml(f, arrivalTileHtml)}
+          ${stopsBadgeHtml(f)}
+          ${arrivalTileHtml}
         </div>
 
         <div class="price">

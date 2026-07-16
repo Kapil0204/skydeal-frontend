@@ -2284,18 +2284,24 @@ h3{
 }
 
 /* MMT-style tile, only built for metro areas with more than one airport
-   (e.g. Mumbai = BOM + Navi Mumbai) - see airportLabelFlags in
-   flightCard()/script.js. .stops.has-arrival-tile only exists when an
-   arrival-tile was actually appended (stopsBadgeHtml's arrivalTileHtml
-   param) - ordinary single-airport cards never get this modifier class,
-   so their layout is byte-for-byte unchanged. Lays the existing
-   duration/stops-badge group (wrapped as .stopsInfo only in this case)
-   and the new arrival time/city side by side, so the row reads
-   departure -> stop info -> arrival left to right, matching MMT. */
-.stops.has-arrival-tile{
-  display:flex;
+   (e.g. Mumbai = BOM + Navi Mumbai) - see showTileLayout in
+   flightCard()/script.js. .timeStopsRow.tile-mode only exists on those
+   cards - ordinary single-airport cards keep the base display:contents
+   rule untouched, so their layout is byte-for-byte unchanged. Switches
+   from "contents" (passthrough into .row's own grid) to a real 3-column
+   grid of its own: .times / .stops / .arrival-tile become true siblings,
+   with the middle (auto 1fr auto) column giving .stops whatever space is
+   left over so it sits genuinely centered between the two times, not
+   packed against .times the way a plain flex row would leave it. */
+.timeStopsRow.tile-mode{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
   align-items:center;
-  gap:16px;
+  column-gap:10px;
+  /* Reclaims the combined width of the "times" + "stops" columns this
+     row used to informally borrow via display:contents, now that it's a
+     single real grid item taking just one auto-placed column. */
+  grid-column:span 2;
 }
 
 .arrival-tile{
@@ -4654,16 +4660,37 @@ body {
     min-width: 0 !important;
   }
 
-  /* Only present when .stops also carries .has-arrival-tile (metro
-     disambiguation cards) - groups the duration/stops-badge content so it
-     stays inline together, matching how those same elements were already
-     laid out as direct flex children of .stops before an arrival tile
-     existed. Ordinary cards never render this wrapper. */
-  .stopsInfo {
-    display: flex !important;
-    align-items: baseline !important;
-    gap: 6px !important;
-    min-width: 0 !important;
+  /* Metro-disambiguation cards only (see showTileLayout, script.js):
+     .timeStopsRow becomes a real 3-column grid instead of the plain flex
+     row above, so .times / .stops / .arrival-tile are true side-by-side
+     columns and .stops (middle, auto 1fr auto) sits genuinely centered
+     between the two times rather than packed against .times. */
+  .timeStopsRow.tile-mode {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+  }
+
+  /* Within tile-mode, stack duration above the stop-count text (like
+     desktop) instead of the compact single-line row ordinary mobile
+     cards use above - there's no arrival info competing for horizontal
+     space on an ordinary card, but there is here, so keeping it on one
+     line read as cramped once an arrival tile sits beside it. */
+  .timeStopsRow.tile-mode .stops {
+    display: block !important;
+    text-align: center !important;
+  }
+
+  /* The divider below exists to separate duration from stop-count text
+     when they sit on ONE inline row (ordinary mobile cards, above) -
+     tile-mode already put them on 2 stacked lines instead, so the same
+     border here would land in a spot it wasn't designed for (between
+     the departure city and stop-count text) rather than serving its
+     original purpose. */
+  .timeStopsRow.tile-mode .stops > div:last-child {
+    border-left: none !important;
+    padding-left: 0 !important;
   }
 
   .stops > div:last-child {
@@ -4876,7 +4903,11 @@ body {
     position: fixed;
     left: 10px;
     right: 10px;
-    top: 10px;
+    /* The sticky mobile-results-mode header (.nav, position:sticky top:0)
+       is ~50.5px tall (measured live) - this banner sat at a flat top:10px
+       regardless, landing on top of the header/logo instead of below it.
+       10px clearance below the header. */
+    top: 61px;
     /* Above .mobile-search-summary's sticky bar (z-index:50) - this
        banner is meant to take over that same top-of-screen slot once
        the full price-intelligence card scrolls past, not sit behind
