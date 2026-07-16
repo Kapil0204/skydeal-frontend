@@ -2283,6 +2283,18 @@ h3{
   text-align:center;
 }
 
+/* Only rendered for metro areas with more than one airport (e.g. Mumbai =
+   BOM + Navi Mumbai) - see airportLabelFlags in flightCard(), script.js.
+   Sits as its own full-width line below .row (not inside .timeStopsRow),
+   since .row's fixed grid/flex columns have no spare cell for it and a
+   long airport name would collide with neighboring cells. */
+.flight-airport-label{
+  margin-top:6px;
+  font-size:var(--fs-2xs);
+  color:var(--gray-500);
+  line-height:1.3;
+}
+
 .price{
   text-align:right;
   font-size:var(--fs-xl);

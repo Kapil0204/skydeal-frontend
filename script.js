@@ -454,7 +454,9 @@ let activeFilters = {
   nonStop: false,
   bestOffer: false,
   timeSlots: [],
-  airlines: []
+  airlines: [],
+  departureAirports: [],
+  arrivalAirports: []
 };
 
 const PAGE_SIZE = 20;
@@ -555,6 +557,17 @@ function cityNameForCode(code) {
   if (!upper) return "";
   const match = AIRPORTS.find((x) => x.code === upper);
   return match?.city || upper;
+}
+
+// Distinct from cityNameForCode - needed once a search can span more than
+// one airport per city (see METRO_AIRPORT_GROUPS in the backend, e.g.
+// Mumbai = BOM + NMI): the city name alone can't tell two same-city
+// airports apart, but the airport's own name can.
+function airportNameForCode(code) {
+  const upper = String(code || "").trim().toUpperCase();
+  if (!upper) return "";
+  const match = AIRPORTS.find((x) => x.code === upper);
+  return match?.name || upper;
 }
 
 function popularCitySuggestions() {
@@ -1009,6 +1022,22 @@ function applyFlightFilters(items) {
       return false;
     }
 
+    if (
+      Array.isArray(activeFilters.departureAirports) &&
+      activeFilters.departureAirports.length > 0 &&
+      !activeFilters.departureAirports.includes(String(flight?.departureAirportCode || ""))
+    ) {
+      return false;
+    }
+
+    if (
+      Array.isArray(activeFilters.arrivalAirports) &&
+      activeFilters.arrivalAirports.length > 0 &&
+      !activeFilters.arrivalAirports.includes(String(flight?.arrivalAirportCode || ""))
+    ) {
+      return false;
+    }
+
     if (!flightMatchesTimeSlots(flight, activeFilters.timeSlots)) return false;
 
     return true;
@@ -1019,6 +1048,17 @@ function getAvailableAirlines() {
   const all = [...(outboundAll || []), ...(returnAll || [])];
   return [...new Set(all.map((f) => String(f?.airlineName || "").trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b));
+}
+
+// Only meaningfully different from a single entry when the searched city
+// is part of a multi-airport metro group (see METRO_AIRPORT_GROUPS,
+// backend index.js) - e.g. Mumbai searches can return flights tagged
+// BOM or NMI. A normal single-airport route yields exactly one code here,
+// and the caller hides the filter section entirely in that case.
+function getAvailableAirportCodes(field) {
+  const all = [...(outboundAll || []), ...(returnAll || [])];
+  return [...new Set(all.map((f) => String(f?.[field] || "").trim()).filter(Boolean))]
+    .sort((a, b) => airportNameForCode(a).localeCompare(airportNameForCode(b)));
 }
 
 function renderAirlineFilters() {
@@ -1051,6 +1091,64 @@ function renderAirlineFilters() {
       renderOutbound();
       renderReturn();
     });
+  });
+}
+
+// Shared by both the Departure and Arrival Airports filter groups (see
+// index.html) - only rendered/visible at all when 2+ distinct airports
+// are actually present, since a normal single-airport route has nothing
+// to filter and showing a lone always-checked-by-default option would
+// just be clutter. Mirrors renderAirlineFilters()'s dynamic-from-results
+// pattern exactly.
+function renderAirportFilterGroup({ hostId, sectionId, field, activeKey }) {
+  const host = document.getElementById(hostId);
+  const section = document.getElementById(sectionId);
+  if (!host || !section) return;
+
+  const codes = getAvailableAirportCodes(field);
+
+  if (codes.length < 2) {
+    section.style.display = "none";
+    activeFilters[activeKey] = [];
+    host.innerHTML = "";
+    return;
+  }
+
+  section.style.display = "";
+  host.innerHTML = codes.map((code) => `
+    <label class="filter-option">
+      <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
+        activeFilters[activeKey].includes(code) ? "checked" : ""
+      } />
+      <span>${safeText(airportNameForCode(code))}</span>
+    </label>
+  `).join("");
+
+  host.querySelectorAll(`.${hostId}-option`).forEach((cb) => {
+    cb.addEventListener("change", () => {
+      activeFilters[activeKey] = [...host.querySelectorAll(`.${hostId}-option:checked`)]
+        .map((x) => x.value);
+
+      outPageIdx = 1;
+      retPageIdx = 1;
+      renderOutbound();
+      renderReturn();
+    });
+  });
+}
+
+function renderAirportFilters() {
+  renderAirportFilterGroup({
+    hostId: "departureAirportFilters",
+    sectionId: "departureAirportFilterGroup",
+    field: "departureAirportCode",
+    activeKey: "departureAirports"
+  });
+  renderAirportFilterGroup({
+    hostId: "arrivalAirportFilters",
+    sectionId: "arrivalAirportFilterGroup",
+    field: "arrivalAirportCode",
+    activeKey: "arrivalAirports"
   });
 }
 
@@ -1092,7 +1190,9 @@ function wireFilters() {
       nonStop: false,
       bestOffer: false,
       timeSlots: [],
-      airlines: []
+      airlines: [],
+      departureAirports: [],
+      arrivalAirports: []
     };
 
     document.querySelectorAll(".filter-panel input[type='checkbox']").forEach((cb) => {
@@ -1102,6 +1202,7 @@ function wireFilters() {
     outPageIdx = 1;
     retPageIdx = 1;
     renderAirlineFilters();
+    renderAirportFilters();
     renderOutbound();
     renderReturn();
   });
@@ -5084,11 +5185,27 @@ function stopsBadgeHtml(f) {
   `;
 }
 
-function flightCard(f, direction = "out") {
+function flightCard(f, direction = "out", airportLabelFlags = {}) {
   const name = safeText(f.displayAirlineName || f.airlineName);
   const num = displayFlightNumber(f);
   const dep = fmtTime(f.departureTime);
   const arr = fmtTime(f.arrivalTime);
+
+  // Only shown when the current results actually span more than one
+  // airport for the same city (e.g. Mumbai = BOM + Navi Mumbai) - see
+  // METRO_AIRPORT_GROUPS (backend) and renderList's airportLabelFlags
+  // below. A normal single-airport route never shows this, so existing
+  // cards are visually unchanged.
+  const airportLabelParts = [];
+  if (airportLabelFlags.showDeparture && f.departureAirportCode) {
+    airportLabelParts.push(safeText(airportNameForCode(f.departureAirportCode)));
+  }
+  if (airportLabelFlags.showArrival && f.arrivalAirportCode) {
+    airportLabelParts.push(safeText(airportNameForCode(f.arrivalAirportCode)));
+  }
+  const airportLabelHtml = airportLabelParts.length
+    ? `<div class="flight-airport-label">${airportLabelParts.join(" → ")}</div>`
+    : "";
 
   const best = f.bestDeal;
   const cardFinalPrice = best?.applied ? best.finalPrice : f.price;
@@ -5155,6 +5272,7 @@ function flightCard(f, direction = "out") {
 
       </div>
 
+      ${airportLabelHtml}
       ${bestLine}
       ${oneWayActions}
     </div>
@@ -5168,7 +5286,11 @@ function renderList(el, items, direction = "out") {
     return;
   }
 
-  el.innerHTML = items.map((f) => flightCard(f, direction)).join("");
+  const airportLabelFlags = {
+    showDeparture: getAvailableAirportCodes("departureAirportCode").length > 1,
+    showArrival: getAvailableAirportCodes("arrivalAirportCode").length > 1
+  };
+  el.innerHTML = items.map((f) => flightCard(f, direction, airportLabelFlags)).join("");
 
   el.querySelectorAll(".card:has(.selectTripRadio)").forEach((card) => {
     card.classList.add("card-selectable");
@@ -5544,6 +5666,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
       activeFilters.airlines = [];
       renderAirlineFilters();
+      renderAirportFilters();
       setResultsPreSearch(true);
       updateFlightSectionHeadings();
       renderSearchNoResultsState({
@@ -5558,6 +5681,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     activeFilters.airlines = [];
     renderAirlineFilters();
+    renderAirportFilters();
     setResultsPreSearch(false);
 
     renderOutbound();
@@ -5683,6 +5807,7 @@ retSortSelect?.addEventListener("change", () => {
 });
    wireFilters();
   renderAirlineFilters();
+  renderAirportFilters();
 
   renderPager("out");
   renderPager("ret");
