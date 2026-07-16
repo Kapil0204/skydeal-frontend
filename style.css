@@ -3017,9 +3017,15 @@ select:focus{
    Dark hero + light results
    ========================= */
 
+/* Hero tint (2026-07-15): a light brand-tint fade behind the header +
+   search-card area only, so that zone reads as visually distinct from
+   the plain white/gray-50 results below - without reopening the dark-
+   background-zone approach the earlier light-theme flip deliberately
+   removed. The dark header itself sits on top of this (opaque, so the
+   tint is invisible underneath it) and stays untouched. */
 body{
   background:
-    radial-gradient(900px 420px at 12% -8%, rgba(139,92,246,0.10), transparent 60%),
+    linear-gradient(180deg, var(--brand-50) 0px, var(--brand-50) 480px, var(--gray-50) 760px, var(--gray-50) 100%),
     var(--gray-50);
 }
 
