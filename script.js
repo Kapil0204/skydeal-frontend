@@ -570,6 +570,28 @@ function airportNameForCode(code) {
   return match?.name || upper;
 }
 
+// Short, disambiguating city label for flight-card display when a search
+// spans more than one airport per city (see METRO_AIRPORT_GROUPS,
+// backend) - a full official airport name (airportNameForCode) is too
+// long for an inline card label, and airports.js's own "city" field is
+// already disambiguating for most groups (BOM->"Mumbai" vs NMI->"Navi
+// Mumbai", DEL->"Delhi" vs DXN->"Noida") but not all: GOI and GOX both
+// say "Goa", and HDO's own city field repeats its full verbose name.
+// Overridden here for display only - the underlying airports.js record
+// (used for search/autocomplete) is untouched. Filters keep the full
+// airport name (airportNameForCode) since disambiguation there has more
+// room and benefits from the fuller detail.
+const METRO_CITY_LABEL_OVERRIDES = {
+  GOI: "Goa (Dabolim)",
+  GOX: "Goa (Mopa)",
+  HDO: "Hindon"
+};
+
+function metroCityLabelForCode(code) {
+  const upper = String(code || "").trim().toUpperCase();
+  return METRO_CITY_LABEL_OVERRIDES[upper] || cityNameForCode(upper);
+}
+
 function popularCitySuggestions() {
   return POPULAR_CITY_CODES
     .map((code) => AIRPORTS.find((a) => a.code === code))
@@ -5141,7 +5163,15 @@ function stopsLineHtml(stops) {
 // number per segment) but true for ~98% of all connections in a live
 // sample, so it would say "yes" almost every time while still
 // occasionally being wrong - not worth the false precision.
-function stopsBadgeHtml(f) {
+// arrivalTileHtml (optional): only passed for multi-airport-disambiguation
+// flights (see METRO_AIRPORT_GROUPS, backend) - appended as an extra child
+// INSIDE the existing .stops wrapper, not as a new sibling in the card's
+// grid row, so every breakpoint's existing .stops grid-area/child-selector
+// rules (round-trip mode, mobile) keep matching exactly what they did
+// before. Ordinary single-airport flights pass nothing and are byte-for-
+// byte unchanged.
+function stopsBadgeHtml(f, arrivalTileHtml = "") {
+  const wrapClass = arrivalTileHtml ? "stops has-arrival-tile" : "stops";
   const stops = Number.isFinite(f.stops) ? f.stops : 0;
   const durationMinutes = totalFlightDurationMinutes(f);
   const durationHtml = durationMinutes != null
@@ -5150,11 +5180,15 @@ function stopsBadgeHtml(f) {
 
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
   if (stops === 0 || layovers.length === 0) {
+    const infoHtml = `
+      ${durationHtml}
+      ${stopsLineHtml(0)}
+      <div>Non-stop</div>
+    `;
     return `
-      <div class="stops">
-        ${durationHtml}
-        ${stopsLineHtml(0)}
-        <div>Non-stop</div>
+      <div class="${wrapClass}">
+        ${arrivalTileHtml ? `<div class="stopsInfo">${infoHtml}</div>` : infoHtml}
+        ${arrivalTileHtml}
       </div>
     `;
   }
@@ -5173,14 +5207,18 @@ function stopsBadgeHtml(f) {
     })
     .join("<br/>");
 
+  const infoHtml = `
+    ${durationHtml}
+    <div class="stopsHoverable">
+      ${stopsLineHtml(stops)}
+      <div class="stopsViaLine">${viaLabel}</div>
+      <div class="stopsTooltip">${tooltipLines}</div>
+    </div>
+  `;
   return `
-    <div class="stops">
-      ${durationHtml}
-      <div class="stopsHoverable">
-        ${stopsLineHtml(stops)}
-        <div class="stopsViaLine">${viaLabel}</div>
-        <div class="stopsTooltip">${tooltipLines}</div>
-      </div>
+    <div class="${wrapClass}">
+      ${arrivalTileHtml ? `<div class="stopsInfo">${infoHtml}</div>` : infoHtml}
+      ${arrivalTileHtml}
     </div>
   `;
 }
@@ -5192,19 +5230,42 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
   const arr = fmtTime(f.arrivalTime);
 
   // Only shown when the current results actually span more than one
-  // airport for the same city (e.g. Mumbai = BOM + Navi Mumbai) - see
-  // METRO_AIRPORT_GROUPS (backend) and renderList's airportLabelFlags
-  // below. A normal single-airport route never shows this, so existing
-  // cards are visually unchanged.
-  const airportLabelParts = [];
-  if (airportLabelFlags.showDeparture && f.departureAirportCode) {
-    airportLabelParts.push(safeText(airportNameForCode(f.departureAirportCode)));
-  }
-  if (airportLabelFlags.showArrival && f.arrivalAirportCode) {
-    airportLabelParts.push(safeText(airportNameForCode(f.arrivalAirportCode)));
-  }
-  const airportLabelHtml = airportLabelParts.length
-    ? `<div class="flight-airport-label">${airportLabelParts.join(" → ")}</div>`
+  // airport for the same city on EITHER side (e.g. Mumbai = BOM + Navi
+  // Mumbai) - see METRO_AIRPORT_GROUPS (backend) and renderList's
+  // airportLabelFlags below. A normal single-airport route never builds
+  // any of this, so existing cards are byte-for-byte unchanged.
+  //
+  // MMT-style tile layout, once EITHER side needs disambiguation: switch
+  // the whole card (both sides) from the plain "dep → arr" time range to
+  // a departure tile (time + city stacked) and an arrival tile (time +
+  // city stacked, appended inside stopsBadgeHtml's own .stops box - see
+  // that function's arrivalTileHtml param - so it visually lands to the
+  // right of the stop/duration info, matching MMT's
+  // dep -> stops -> arrival left-to-right reading order). Only the side(s)
+  // actually flagged get a city caption; a flight whose arrival isn't
+  // itself ambiguous still needs its arrival TIME rendered somewhere once
+  // the card is in tile mode, so the tile switch is driven by "either
+  // side ambiguous", not "this specific side ambiguous" - otherwise a
+  // Mumbai(BOM/NMI)->Aurangabad search would silently drop the arrival
+  // time entirely (Aurangabad itself has only one airport).
+  const showTileLayout = Boolean(
+    (airportLabelFlags.showDeparture && f.departureAirportCode) ||
+    (airportLabelFlags.showArrival && f.arrivalAirportCode)
+  );
+
+  const depCityHtml = showTileLayout && f.departureAirportCode
+    ? `<div class="flight-city-label">${safeText(metroCityLabelForCode(f.departureAirportCode))}</div>`
+    : "";
+  const arrCityHtml = showTileLayout && f.arrivalAirportCode
+    ? `<div class="flight-city-label">${safeText(metroCityLabelForCode(f.arrivalAirportCode))}</div>`
+    : "";
+
+  const timesHtml = showTileLayout
+    ? `<div class="times"><div class="dep-time">${dep}</div>${depCityHtml}</div>`
+    : `<div class="times">${dep} → ${arr}</div>`;
+
+  const arrivalTileHtml = showTileLayout
+    ? `<div class="arrival-tile"><div class="arrival-time">${arr}</div>${arrCityHtml}</div>`
     : "";
 
   const best = f.bestDeal;
@@ -5256,8 +5317,8 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
         </div>
 
         <div class="timeStopsRow">
-          <div class="times">${dep} → ${arr}</div>
-          ${stopsBadgeHtml(f)}
+          ${timesHtml}
+          ${stopsBadgeHtml(f, arrivalTileHtml)}
         </div>
 
         <div class="price">
@@ -5272,7 +5333,6 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
 
       </div>
 
-      ${airportLabelHtml}
       ${bestLine}
       ${oneWayActions}
     </div>

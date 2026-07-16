@@ -2283,16 +2283,42 @@ h3{
   text-align:center;
 }
 
-/* Only rendered for metro areas with more than one airport (e.g. Mumbai =
-   BOM + Navi Mumbai) - see airportLabelFlags in flightCard(), script.js.
-   Sits as its own full-width line below .row (not inside .timeStopsRow),
-   since .row's fixed grid/flex columns have no spare cell for it and a
-   long airport name would collide with neighboring cells. */
-.flight-airport-label{
-  margin-top:6px;
+/* MMT-style tile, only built for metro areas with more than one airport
+   (e.g. Mumbai = BOM + Navi Mumbai) - see airportLabelFlags in
+   flightCard()/script.js. .stops.has-arrival-tile only exists when an
+   arrival-tile was actually appended (stopsBadgeHtml's arrivalTileHtml
+   param) - ordinary single-airport cards never get this modifier class,
+   so their layout is byte-for-byte unchanged. Lays the existing
+   duration/stops-badge group (wrapped as .stopsInfo only in this case)
+   and the new arrival time/city side by side, so the row reads
+   departure -> stop info -> arrival left to right, matching MMT. */
+.stops.has-arrival-tile{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.arrival-tile{
+  text-align:right;
+}
+
+.arrival-time{
+  font-size:var(--fs-md);
+  color:var(--gray-700);
+  font-weight:850;
+  white-space:nowrap;
+}
+
+/* Short disambiguating city label (metroCityLabelForCode) under a
+   departure or arrival time - e.g. "Mumbai" / "Navi Mumbai",
+   "Delhi" / "Noida". Filters show the fuller airport name instead
+   (airportNameForCode) since there's more room there. */
+.flight-city-label{
+  margin-top:2px;
   font-size:var(--fs-2xs);
   color:var(--gray-500);
   line-height:1.3;
+  white-space:nowrap;
 }
 
 .price{
@@ -4625,6 +4651,18 @@ body {
   .stopsHoverable {
     display: flex !important;
     align-items: baseline !important;
+    min-width: 0 !important;
+  }
+
+  /* Only present when .stops also carries .has-arrival-tile (metro
+     disambiguation cards) - groups the duration/stops-badge content so it
+     stays inline together, matching how those same elements were already
+     laid out as direct flex children of .stops before an arrival tile
+     existed. Ordinary cards never render this wrapper. */
+  .stopsInfo {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 6px !important;
     min-width: 0 !important;
   }
 
