@@ -1307,33 +1307,55 @@ function cityMap(iata) {
   return map[x] || x;
 }
 
+// ixigo city slugs for its /cheap-flights/{from}-{to}-{FROM}-{TO} URL pattern.
+// Only BOM/GOI ("mumbai"/"goa") and DEL/BLR ("new-delhi"/"bengaluru" — note ixigo
+// uses "bengaluru", not "bangalore") were confirmed live via a real ixigo.com page
+// load (2026-07). The rest are inferred by lowercasing the existing `plain` city
+// name (reasonable default; not individually confirmed) — patch reactively if a
+// specific one turns out wrong, same convention this file already uses for the
+// airport-dataset gap fixes.
+function skydealIxigoCitySlug(plainCityName) {
+  return String(plainCityName || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function skydealPortalAirportMeta(iata) {
   const code = String(iata || "").toUpperCase();
 
   const map = {
-    BOM: { emt: "Mumbai-India", cleartrip: "Mumbai, IN", plain: "Mumbai" },
-    DEL: { emt: "Delhi-India", cleartrip: "New Delhi, IN", plain: "New Delhi" },
-    BLR: { emt: "Bangalore-India", cleartrip: "Bangalore, IN", plain: "Bangalore" },
-    HYD: { emt: "Hyderabad-India", cleartrip: "Hyderabad, IN", plain: "Hyderabad" },
-    MAA: { emt: "Chennai-India", cleartrip: "Chennai, IN", plain: "Chennai" },
-    CCU: { emt: "Kolkata-India", cleartrip: "Kolkata, IN", plain: "Kolkata" },
-    PNQ: { emt: "Pune-India", cleartrip: "Pune, IN", plain: "Pune" },
-    GOI: { emt: "Goa-India", cleartrip: "Goa, IN", plain: "Goa" },
-    AMD: { emt: "Ahmedabad-India", cleartrip: "Ahmedabad, IN", plain: "Ahmedabad" },
-    COK: { emt: "Kochi-India", cleartrip: "Kochi, IN", plain: "Kochi" },
-    JAI: { emt: "Jaipur-India", cleartrip: "Jaipur, IN", plain: "Jaipur" },
-    LKO: { emt: "Lucknow-India", cleartrip: "Lucknow, IN", plain: "Lucknow" },
-    IXC: { emt: "Chandigarh-India", cleartrip: "Chandigarh, IN", plain: "Chandigarh" },
-    BBI: { emt: "Bhubaneswar-India", cleartrip: "Bhubaneswar, IN", plain: "Bhubaneswar" },
-    GAU: { emt: "Guwahati-India", cleartrip: "Guwahati, IN", plain: "Guwahati" },
-    TRV: { emt: "Thiruvananthapuram-India", cleartrip: "Thiruvananthapuram, IN", plain: "Thiruvananthapuram" },
-    IXB: { emt: "Bagdogra-India", cleartrip: "Bagdogra, IN", plain: "Bagdogra" },
-    PAT: { emt: "Patna-India", cleartrip: "Patna, IN", plain: "Patna" },
-    IDR: { emt: "Indore-India", cleartrip: "Indore, IN", plain: "Indore" },
-    NAG: { emt: "Nagpur-India", cleartrip: "Nagpur, IN", plain: "Nagpur" }
+    BOM: { emt: "Mumbai-India", cleartrip: "Mumbai, IN", plain: "Mumbai", ixigo: "mumbai" },
+    DEL: { emt: "Delhi-India", cleartrip: "New Delhi, IN", plain: "New Delhi", ixigo: "new-delhi" },
+    BLR: { emt: "Bangalore-India", cleartrip: "Bangalore, IN", plain: "Bangalore", ixigo: "bengaluru" },
+    HYD: { emt: "Hyderabad-India", cleartrip: "Hyderabad, IN", plain: "Hyderabad", ixigo: "hyderabad" },
+    MAA: { emt: "Chennai-India", cleartrip: "Chennai, IN", plain: "Chennai", ixigo: "chennai" },
+    CCU: { emt: "Kolkata-India", cleartrip: "Kolkata, IN", plain: "Kolkata", ixigo: "kolkata" },
+    PNQ: { emt: "Pune-India", cleartrip: "Pune, IN", plain: "Pune", ixigo: "pune" },
+    GOI: { emt: "Goa-India", cleartrip: "Goa, IN", plain: "Goa", ixigo: "goa" },
+    AMD: { emt: "Ahmedabad-India", cleartrip: "Ahmedabad, IN", plain: "Ahmedabad", ixigo: "ahmedabad" },
+    COK: { emt: "Kochi-India", cleartrip: "Kochi, IN", plain: "Kochi", ixigo: "kochi" },
+    JAI: { emt: "Jaipur-India", cleartrip: "Jaipur, IN", plain: "Jaipur", ixigo: "jaipur" },
+    LKO: { emt: "Lucknow-India", cleartrip: "Lucknow, IN", plain: "Lucknow", ixigo: "lucknow" },
+    IXC: { emt: "Chandigarh-India", cleartrip: "Chandigarh, IN", plain: "Chandigarh", ixigo: "chandigarh" },
+    BBI: { emt: "Bhubaneswar-India", cleartrip: "Bhubaneswar, IN", plain: "Bhubaneswar", ixigo: "bhubaneswar" },
+    GAU: { emt: "Guwahati-India", cleartrip: "Guwahati, IN", plain: "Guwahati", ixigo: "guwahati" },
+    TRV: { emt: "Thiruvananthapuram-India", cleartrip: "Thiruvananthapuram, IN", plain: "Thiruvananthapuram", ixigo: "thiruvananthapuram" },
+    IXB: { emt: "Bagdogra-India", cleartrip: "Bagdogra, IN", plain: "Bagdogra", ixigo: "bagdogra" },
+    PAT: { emt: "Patna-India", cleartrip: "Patna, IN", plain: "Patna", ixigo: "patna" },
+    IDR: { emt: "Indore-India", cleartrip: "Indore, IN", plain: "Indore", ixigo: "indore" },
+    NAG: { emt: "Nagpur-India", cleartrip: "Nagpur, IN", plain: "Nagpur", ixigo: "nagpur" }
   };
 
-  return map[code] || { emt: `${code}-India`, cleartrip: `${code}, IN`, plain: code };
+  if (map[code]) return map[code];
+
+  const fallbackPlain = code;
+  return {
+    emt: `${code}-India`,
+    cleartrip: `${code}, IN`,
+    plain: fallbackPlain,
+    ixigo: skydealIxigoCitySlug(fallbackPlain)
+  };
 }
 
 function skydealCompactYmd(dateValue) {
@@ -1471,6 +1493,20 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = `https://www.cleartrip.com/flights/results?${params.toString()}`;
     } else {
       url = "https://www.cleartrip.com/flights";
+    }
+  } else if (portal.includes("ixigo")) {
+    // ixigo's real route-based results page, confirmed live (2026-07):
+    // /cheap-flights/{from-city}-{to-city}-{FROM}-{TO} — e.g.
+    // /cheap-flights/mumbai-goa-bom-goi. Unlike the other 5 portals' URLs,
+    // this one does not encode date/passengers/trip-type in the query string;
+    // the results page defaults to a near-future date and lets the user pick
+    // from date tabs client-side. Still a real pre-filled route (not a bare
+    // homepage), same graceful-degradation tier as the other portals' one-way
+    // fallback URLs when full pre-fill isn't available.
+    if (from && to) {
+      url = `https://www.ixigo.com/cheap-flights/${fromMeta.ixigo}-${toMeta.ixigo}-${from.toLowerCase()}-${to.toLowerCase()}`;
+    } else {
+      url = "https://www.ixigo.com/flights";
     }
   }
 
