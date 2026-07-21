@@ -4222,6 +4222,7 @@ function ensureMobilePriceIntelPlacement() {
     // just the card and momentarily invert card/sentinel order. Plain
     // insertBefore calls are safe to repeat even when nothing needs to
     // move.
+    card.classList.remove("price-intel-hero");
     const anchor = document.getElementById("mobileQuickFilters") || workspace;
     proResults.insertBefore(card, anchor);
     proResults.insertBefore(sentinel, anchor);
@@ -4234,8 +4235,26 @@ function ensureMobilePriceIntelPlacement() {
   const banner = document.getElementById("priceIntelFrozenBanner");
   if (banner) banner.classList.remove("is-visible");
 
+  // Desktop, post-search only (2026-07-21, v2): the hero band's dark,
+  // bold treatment only earns its weight once there's a real result to
+  // headline (a live suggestion, or "you're already optimised") - shown
+  // pre-search, the same treatment had nothing behind it yet and read as
+  // a random, unearned banner (founder feedback on the v1 always-on
+  // hero). Pre-search and while loading, the card stays exactly where
+  // it always lived: the quiet .filter-panel sidebar slot.
   const filterPanel = document.querySelector(".filter-panel");
   const filterCard = document.querySelector(".filter-card");
+  const wrap = document.querySelector("main.wrap") || document.querySelector(".wrap");
+
+  if (hasActiveSearchResults() && wrap) {
+    card.classList.add("price-intel-hero");
+    if (card.parentElement !== wrap) {
+      wrap.insertBefore(card, proResults);
+    }
+    return;
+  }
+
+  card.classList.remove("price-intel-hero");
   if (filterPanel && card.parentElement !== filterPanel) {
     filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
   }
