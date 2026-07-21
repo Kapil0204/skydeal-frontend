@@ -10199,8 +10199,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   margin-bottom: 6px;
 }
 
-.price-intel-hero .payment-profile-status,
-.price-intel-hero .payment-guide-success-heading {
+.price-intel-hero .payment-profile-status {
   position: relative;
   font-size: 30px;
   font-weight: 800;
@@ -10220,11 +10219,15 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   margin-bottom: 8px;
 }
 
-/* "Already optimised" has no number or action to headline - full hero-
-   scale text here read as a lot of ceremony for "nothing to do," and
-   ate a full screen's worth of space (founder feedback, 2026-07-21).
-   Same quiet, compact treatment as the loading state below. */
-.price-intel-hero .payment-guide-optimised-title {
+/* "Already optimised" and the accepted/resting states all have either
+   no number, or a number that's already carried by their own price
+   line - full hero-scale text on top of that read as a lot of ceremony
+   for "nothing new to report," and one of them (the resting state,
+   what's visible between searches most of the time) was still missing
+   this demotion entirely (founder catch, 2026-07-21). Same quiet,
+   compact treatment as the loading state below. */
+.price-intel-hero .payment-guide-optimised-title,
+.price-intel-hero .payment-guide-success-heading {
   position: relative;
   font-size: var(--fs-lg);
   font-weight: 750;
@@ -10240,6 +10243,32 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   color: rgba(255, 255, 255, 0.65);
   max-width: 560px;
   margin-bottom: 16px;
+}
+
+/* Text left, action right - uses the hero's full width on purpose
+   instead of a narrow stacked column with empty space beside it
+   (founder catch, 2026-07-21). Wraps on narrow viewports. */
+.price-intel-hero .payment-guide-success-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.price-intel-hero .payment-guide-success-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.price-intel-hero .payment-guide-success-text .payment-guide-success-message {
+  margin-bottom: 0;
+}
+
+.price-intel-hero .payment-guide-success-row .payment-guide-check-more-btn {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .price-intel-hero .payment-guide-optimised-sub {

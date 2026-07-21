@@ -2960,23 +2960,34 @@ function renderGuideAcceptedHtml() {
         : "";
 
     notePart = `
-      <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
-      ${priceLine}
-      <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
+      <div class="payment-guide-success-text">
+        <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
+        ${priceLine}
+        <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
+      </div>
     `;
   } else {
     // Once the transient success note fades (see applyPaymentSuggestion's
     // 4s timer), this is the resting state until the user explicitly
     // checks again - give it quiet framing instead of a bare button.
     notePart = `
-      <div class="payment-guide-success-heading">You're on your best price right now</div>
-      <div class="payment-guide-success-message payment-guide-resting-message">Want us to check for other ways to pay?</div>
+      <div class="payment-guide-success-text">
+        <div class="payment-guide-success-heading">You're on your best price right now</div>
+        <div class="payment-guide-success-message payment-guide-resting-message">Want us to check for other ways to pay?</div>
+      </div>
     `;
   }
 
+  // Wrapped in a row (text left, action right) rather than stacked, so
+  // the hero's full width gets used on purpose instead of leaving most
+  // of it empty next to a narrow column of text (founder catch,
+  // 2026-07-21 - the resting state especially, which is what's visible
+  // most of the time between searches).
   return `
-    ${notePart}
-    <button type="button" class="payment-guide-check-more-btn">Check for more options</button>
+    <div class="payment-guide-success-row">
+      ${notePart}
+      <button type="button" class="payment-guide-check-more-btn">Check for more options</button>
+    </div>
   `;
 }
 
