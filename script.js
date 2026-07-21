@@ -2872,13 +2872,36 @@ function renderGuideSuggestionCardHtml(s, idx) {
 }
 
 function renderGuideSuggestionsHtml(visible) {
-  if (visible.length === 1) {
-    return renderGuideSuggestionCardHtml(visible[0], 0);
+  if (visible.length <= 1) {
+    return visible.length === 1 ? renderGuideSuggestionCardHtml(visible[0], 0) : "";
   }
-  return `
-    <div class="payment-guide-multi-heading">More ways to lower your price</div>
-    ${visible.map((s, i) => renderGuideSuggestionCardHtml(s, i)).join("")}
-  `;
+
+  // Backend caps this at 2 suggestions (see CONTRACT.md /payment-suggestions).
+  // Lead with whichever saves more so the hero always headlines the best
+  // option instead of an arbitrary list order - the other stays one tap
+  // away instead of matching it in visual weight, which is what made a
+  // 2-suggestion result look like a stack of promo cards instead of one
+  // headline (founder feedback, 2026-07-21).
+  const ranked = visible
+    .map((s, idx) => ({ s, idx }))
+    .sort((a, b) => (Number(b.s.additionalSaving) || 0) - (Number(a.s.additionalSaving) || 0));
+
+  const [lead, ...rest] = ranked;
+  const leadHtml = renderGuideSuggestionCardHtml(lead.s, lead.idx);
+
+  const restHtml = rest
+    .map(({ s, idx }) => {
+      const amount = Number.isFinite(s.additionalSaving) ? money(s.additionalSaving) : "";
+      return `
+        <details class="payment-guide-more-details">
+          <summary class="payment-guide-more-toggle">+1 more way to save${amount ? ` ${amount}` : ""}</summary>
+          ${renderGuideSuggestionCardHtml(s, idx)}
+        </details>
+      `;
+    })
+    .join("");
+
+  return `${leadHtml}${restHtml}`;
 }
 
 function renderGuideAcceptedHtml() {

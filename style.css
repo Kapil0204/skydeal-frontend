@@ -1643,6 +1643,35 @@ h3{
   margin-top:10px;
 }
 
+/* Second suggestion (backend caps at 2 - see CONTRACT.md), collapsed
+   behind a toggle so it doesn't compete in weight with the lead
+   suggestion above it. Native <details>/<summary> - no JS needed for
+   the open/close state itself. */
+.payment-guide-more-details{
+  margin-top:10px;
+}
+
+.payment-guide-more-details .payment-guide-suggestion{
+  margin-top:8px;
+}
+
+.payment-guide-more-toggle{
+  font-size:var(--fs-sm);
+  font-weight:700;
+  color:var(--gray-500);
+  text-decoration:underline;
+  cursor:pointer;
+  list-style:none;
+}
+
+.payment-guide-more-toggle::-webkit-details-marker{
+  display:none;
+}
+
+.payment-guide-more-toggle:hover{
+  color:var(--gray-700);
+}
+
 /* Phase 2 - one compact category badge per suggestion (never more than
    one - see pickSuggestionLabel in index.js). Deliberately neutral, not
    brand-tinted - purple is reserved for the single Add button below. */
@@ -10187,4 +10216,13 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .price-intel-hero .payment-guide-actions-row,
 .price-intel-hero .payment-guide-add-btn + .payment-guide-dismiss-btn {
   position: relative;
+}
+
+.price-intel-hero .payment-guide-more-toggle {
+  position: relative;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.price-intel-hero .payment-guide-more-toggle:hover {
+  color: rgba(255, 255, 255, 0.8);
 }
