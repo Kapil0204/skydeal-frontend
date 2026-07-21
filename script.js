@@ -4222,6 +4222,7 @@ function ensureMobilePriceIntelPlacement() {
     // just the card and momentarily invert card/sentinel order. Plain
     // insertBefore calls are safe to repeat even when nothing needs to
     // move.
+    card.classList.remove("price-intel-hero");
     const anchor = document.getElementById("mobileQuickFilters") || workspace;
     proResults.insertBefore(card, anchor);
     proResults.insertBefore(sentinel, anchor);
@@ -4234,10 +4235,16 @@ function ensureMobilePriceIntelPlacement() {
   const banner = document.getElementById("priceIntelFrozenBanner");
   if (banner) banner.classList.remove("is-visible");
 
-  const filterPanel = document.querySelector(".filter-panel");
-  const filterCard = document.querySelector(".filter-card");
-  if (filterPanel && card.parentElement !== filterPanel) {
-    filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
+  // Desktop-only experiment (2026-07-21): promote Price intelligence from
+  // a .filter-panel sidebar card to a full-width hero band between the
+  // search card and the results grid - see .price-intel-hero in
+  // style.css. .filter-panel keeps only the real Filters card; it's
+  // already position:sticky, so Filters now stays reachable while
+  // scrolling on its own, unrelated to this card's placement.
+  card.classList.add("price-intel-hero");
+  const wrap = document.querySelector("main.wrap") || document.querySelector(".wrap");
+  if (wrap && card.parentElement !== wrap) {
+    wrap.insertBefore(card, proResults);
   }
 }
 
