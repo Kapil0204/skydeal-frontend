@@ -1389,12 +1389,17 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     departInput?.value ||
     "";
 
-  const ret =
-    payload?.returnDate ||
-    payload?.retDate ||
-    lastSearchPayload?.returnDate ||
-    returnInput?.value ||
-    "";
+  // returnInput keeps a pre-filled date even in one-way mode (so it's
+  // ready if the user later switches to round-trip) - falling back to it
+  // unconditionally meant a one-way search's deep link still picked up
+  // that leftover date and sent the user to the portal's round-trip
+  // results page with a return date they never asked for. Only resolve a
+  // return date at all when the actual search that was run was round-trip.
+  const isRoundTripSearch = (payload?.tripType || lastSearchPayload?.tripType) === "round-trip";
+
+  const ret = isRoundTripSearch
+    ? (payload?.returnDate || payload?.retDate || lastSearchPayload?.returnDate || returnInput?.value || "")
+    : "";
 
   const adults = Number(payload?.passengers || payload?.adults || lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
 
@@ -5639,9 +5644,6 @@ function toggleReturn() {
 }
 
 async function handleSearch(e) {
-  setSearchButtonLoading(true);
-  renderSearchLoadingState();
-
   tagMobileSearchFieldWrappers();
   e?.preventDefault?.();
 
@@ -5664,10 +5666,20 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
   lastSearchPayload = payload;
   console.log("[SkyDeal] payload.paymentMethods", payload.paymentMethods);
 
+  // All validation happens before setSearchButtonLoading/renderSearchLoadingState
+  // below - those two calls used to run first, so any early return here (e.g.
+  // the alerts) left the search button and results area stuck showing
+  // "Checking prices..." forever, since nothing ever reset them.
   if (!payload.from || !payload.to || !payload.departureDate) {
     alert("Please enter From, To and Depart date.");
     return;
   }
+
+  if (payload.from === payload.to) {
+    alert("Departure and destination airports cannot be the same.");
+    return;
+  }
+
   if (payload.tripType === "round-trip" && !payload.returnDate) {
     alert("Please enter Return date for round-trip.");
     return;
@@ -5682,6 +5694,9 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     alert("Return date cannot be before departure date.");
     return;
   }
+
+  setSearchButtonLoading(true);
+  renderSearchLoadingState();
 
    outboundList.innerHTML = emptyStateHtml("loading");
 
