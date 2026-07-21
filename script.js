@@ -2528,13 +2528,23 @@ function computeTotalLiveOfferCount() {
 // once at page load.
 function renderPaymentProfileCard() {
   const statusEl = document.getElementById("paymentProfileStatus");
+  const bodyEl = document.getElementById("paymentProfileBody");
   const footerEl = document.getElementById("paymentProfileFooter");
   const btnEl = document.getElementById("paymentProfileBtn");
-  if (!statusEl && !footerEl && !btnEl) return;
+  if (!statusEl && !bodyEl && !footerEl && !btnEl) return;
 
   const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
   if (statusEl) {
     statusEl.textContent = n === 0 ? "No payment methods added" : `${n} payment method${n === 1 ? "" : "s"} added`;
+  }
+
+  // Body copy pitched "add your cards" regardless of whether you already
+  // had (founder feedback, 2026-07-21) - it should read the same state the
+  // heading above it already reflects.
+  if (bodyEl) {
+    bodyEl.textContent = n === 0
+      ? "Add your cards, UPI apps or wallets to see the final prices available to you."
+      : "Add more to compare across every payment option we track.";
   }
 
   const total = computeTotalLiveOfferCount();
@@ -2858,9 +2868,26 @@ function renderGuideErrorHtml() {
 
 function renderGuideSuggestionCardHtml(s, idx) {
   const labelBadge = s.label ? `<div class="payment-guide-label-badge">${s.label}</div>` : "";
+
+  // Leads with the actual price transition (matches the strikethrough
+  // base->final pattern flight cards already use, and the accepted-state
+  // "₹X -> ₹Y" line below) instead of only a sentence - founder feedback,
+  // 2026-07-21: the number should be the thing you see first.
+  const hasPrices = Number.isFinite(s.newBestPrice) && Number.isFinite(s.additionalSaving);
+  const oldPrice = hasPrices ? s.newBestPrice + s.additionalSaving : null;
+  const priceTransition = hasPrices
+    ? `
+      <div class="payment-guide-price-transition">
+        <span class="payment-guide-new-price">${money(s.newBestPrice)}</span>
+        <span class="payment-guide-old-price">${money(oldPrice)}</span>
+      </div>
+    `
+    : "";
+
   return `
     <div class="payment-guide-suggestion">
       ${labelBadge}
+      ${priceTransition}
       <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
       <div class="payment-guide-suggestion-message">${s.message || ""}</div>
       <div class="payment-guide-suggestion-actions">
@@ -2908,15 +2935,18 @@ function renderGuideAcceptedHtml() {
   let notePart = "";
 
   if (guideAcceptedNote) {
+    // Price line leads right after the heading, ahead of the descriptive
+    // sentence - the transformed price is the actual win, so it gets seen
+    // first (founder feedback, 2026-07-21).
     const priceLine =
       guideAcceptedNote.previousBestPrice != null && guideAcceptedNote.newBestPrice != null
-        ? `<div class="payment-guide-success-prices">₹${guideAcceptedNote.previousBestPrice} → ₹${guideAcceptedNote.newBestPrice}</div>`
+        ? `<div class="payment-guide-success-prices">${money(guideAcceptedNote.previousBestPrice)} → ${money(guideAcceptedNote.newBestPrice)}</div>`
         : "";
 
     notePart = `
       <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
-      <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
       ${priceLine}
+      <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
     `;
   } else {
     // Once the transient success note fades (see applyPaymentSuggestion's
@@ -2977,6 +3007,42 @@ function renderPaymentGuideCard() {
   updatePriceIntelFrozenBannerText();
 }
 
+// Smooths the height change when the guide's dynamic content swaps between
+// states (loading -> suggestion -> accepted, etc.) - each state has a very
+// different natural height, and a bare innerHTML swap made the whole page
+// jump abruptly (founder feedback, 2026-07-21). Measures the height before
+// and after the swap and animates between them, then releases back to
+// height:auto so later organic reflows (e.g. the "+1 more way to save"
+// <details> toggle) aren't blocked by a stale fixed height.
+function setGuideDynamicHtml(host, html) {
+  if (!host) return;
+  const startHeight = host.getBoundingClientRect().height;
+  host.style.transition = "none";
+  host.style.height = `${startHeight}px`;
+  host.style.overflow = "hidden";
+
+  host.innerHTML = html;
+
+  const endHeight = host.scrollHeight;
+  // Forces layout so the browser registers the starting height before the
+  // transition kicks in - without this the start/end heights collapse into
+  // one paint and nothing visibly animates.
+  void host.offsetHeight;
+  host.style.transition = "height 0.2s ease";
+  host.style.height = `${endHeight}px`;
+
+  const clear = () => {
+    host.style.transition = "";
+    host.style.height = "";
+    host.style.overflow = "";
+    host.removeEventListener("transitionend", clear);
+  };
+  host.addEventListener("transitionend", clear);
+  // Fallback in case transitionend never fires (e.g. start === end height,
+  // so no property actually changes and no event dispatches).
+  setTimeout(clear, 250);
+}
+
 function renderPaymentGuideCardInner() {
   const container = document.querySelector(".offers-panel-content");
   const dynamicHost = document.getElementById("paymentGuideDynamic");
@@ -2984,7 +3050,7 @@ function renderPaymentGuideCardInner() {
 
   if (!hasActiveSearchResults()) {
     container.classList.remove("guide-replacing");
-    dynamicHost.innerHTML = "";
+    setGuideDynamicHtml(dynamicHost, "");
     renderTimingInsights();
     return;
   }
@@ -2996,20 +3062,20 @@ function renderPaymentGuideCardInner() {
 
   if (guideAwaitingManualRecheck) {
     container.classList.add("guide-replacing");
-    dynamicHost.innerHTML = renderGuideAcceptedHtml();
+    setGuideDynamicHtml(dynamicHost, renderGuideAcceptedHtml());
     wireGuideCheckMoreButton(dynamicHost);
     return;
   }
 
   if (paymentGuideState === "loading") {
     container.classList.add("guide-replacing");
-    dynamicHost.innerHTML = renderGuideLoadingHtml();
+    setGuideDynamicHtml(dynamicHost, renderGuideLoadingHtml());
     return;
   }
 
   if (paymentGuideState === "error") {
     container.classList.remove("guide-replacing");
-    dynamicHost.innerHTML = renderGuideErrorHtml();
+    setGuideDynamicHtml(dynamicHost, renderGuideErrorHtml());
     return;
   }
 
@@ -3018,19 +3084,19 @@ function renderPaymentGuideCardInner() {
 
     if (visible.length === 0) {
       container.classList.add("guide-replacing");
-      dynamicHost.innerHTML = renderGuideOptimisedHtml();
+      setGuideDynamicHtml(dynamicHost, renderGuideOptimisedHtml());
       wireGuideCheckMoreButton(dynamicHost);
       return;
     }
 
     container.classList.add("guide-replacing");
-    dynamicHost.innerHTML = renderGuideSuggestionsHtml(visible);
+    setGuideDynamicHtml(dynamicHost, renderGuideSuggestionsHtml(visible));
     wireGuideSuggestionButtons(dynamicHost, visible);
     return;
   }
 
   container.classList.remove("guide-replacing");
-  dynamicHost.innerHTML = "";
+  setGuideDynamicHtml(dynamicHost, "");
 }
 
 // Phase 3 - a small, separate, informational section (no add/dismiss

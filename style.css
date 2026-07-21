@@ -1655,11 +1655,21 @@ h3{
   margin-top:8px;
 }
 
+/* A pill + chevron, not another underlined link - sitting right next to
+   "Not applicable to me" (also an underlined link) made the two easy to
+   confuse even though they do unrelated things (dismiss vs. reveal a
+   second suggestion). Chevron flips via the <details> [open] state. */
 .payment-guide-more-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
   font-size:var(--fs-sm);
   font-weight:700;
-  color:var(--gray-500);
-  text-decoration:underline;
+  color:var(--gray-700);
+  background:var(--gray-50);
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius-pill);
+  padding:6px 12px;
   cursor:pointer;
   list-style:none;
 }
@@ -1668,8 +1678,23 @@ h3{
   display:none;
 }
 
+.payment-guide-more-toggle::after{
+  content:"";
+  width:6px;
+  height:6px;
+  flex:0 0 auto;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:rotate(45deg);
+  transition:transform .15s ease;
+}
+
+.payment-guide-more-details[open] > .payment-guide-more-toggle::after{
+  transform:rotate(-135deg);
+}
+
 .payment-guide-more-toggle:hover{
-  color:var(--gray-700);
+  background:var(--gray-200);
 }
 
 /* Phase 2 - one compact category badge per suggestion (never more than
@@ -1685,6 +1710,30 @@ h3{
   padding:2px 8px;
   margin-bottom:6px;
   letter-spacing:.01em;
+}
+
+/* Leads with the actual price transition, matching the strikethrough
+   base -> final pattern flight cards already use elsewhere on the page -
+   the transformed price is the thing worth seeing first, the heading text
+   below it names which method got you there. */
+.payment-guide-price-transition{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-bottom:4px;
+}
+
+.payment-guide-new-price{
+  font-size:var(--fs-2xl);
+  font-weight:800;
+  color:var(--gray-900);
+}
+
+.payment-guide-old-price{
+  font-size:var(--fs-sm);
+  font-weight:600;
+  color:var(--gray-500);
+  text-decoration:line-through;
 }
 
 .payment-guide-suggestion-heading{
@@ -10146,8 +10195,8 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 }
 
 .price-intel-hero .payment-profile-status,
-.price-intel-hero .payment-guide-suggestion-heading,
-.price-intel-hero .payment-guide-optimised-title {
+.price-intel-hero .payment-guide-optimised-title,
+.price-intel-hero .payment-guide-success-heading {
   position: relative;
   font-size: 30px;
   font-weight: 800;
@@ -10156,14 +10205,60 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   margin-bottom: 10px;
 }
 
+/* The price transition (added below) now carries the "big number" job -
+   the heading text demotes to a supporting line naming which method,
+   not the headline itself (founder feedback, 2026-07-21). */
+.price-intel-hero .payment-guide-suggestion-heading {
+  position: relative;
+  font-size: var(--fs-lg);
+  font-weight: 750;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 8px;
+}
+
 .price-intel-hero .payment-profile-body,
 .price-intel-hero .payment-guide-suggestion-message,
-.price-intel-hero .payment-guide-optimised-sub {
+.price-intel-hero .payment-guide-optimised-sub,
+.price-intel-hero .payment-guide-success-message {
   position: relative;
   font-size: var(--fs-md);
   color: rgba(255, 255, 255, 0.65);
   max-width: 560px;
   margin-bottom: 16px;
+}
+
+.price-intel-hero .payment-guide-price-transition {
+  position: relative;
+}
+
+.price-intel-hero .payment-guide-new-price {
+  color: #ffffff;
+}
+
+.price-intel-hero .payment-guide-old-price {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.price-intel-hero .payment-guide-success-prices {
+  position: relative;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--success-light);
+  margin-bottom: 12px;
+}
+
+.price-intel-hero .payment-guide-check-more-btn {
+  position: relative;
+  width: auto;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.price-intel-hero .payment-guide-check-more-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .price-intel-hero .payment-profile-btn,
@@ -10220,9 +10315,12 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 .price-intel-hero .payment-guide-more-toggle {
   position: relative;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .price-intel-hero .payment-guide-more-toggle:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
 }
