@@ -2543,8 +2543,8 @@ function renderPaymentProfileCard() {
   // heading above it already reflects.
   if (bodyEl) {
     bodyEl.textContent = n === 0
-      ? "Add your cards, UPI apps or wallets to see the final prices available to you."
-      : "Add more to compare across every payment option we track.";
+      ? "Add your cards, UPI apps or wallets to see your real price."
+      : "Add more to find an even better price.";
   }
 
   const total = computeTotalLiveOfferCount();
@@ -2780,9 +2780,12 @@ async function applyPaymentSuggestion(suggestion) {
 
   guideAwaitingManualRecheck = true;
   guideAcceptedNote = {
-    heading: "Your prices are updated",
+    heading: "Price updated",
+    // "improved N flight options" read backwards (sounds like fewer
+    // results, not a lower price on the same ones) - same fix as the
+    // suggestion-card message above (founder catch, 2026-07-21).
     message: `Adding ${shortLabel} lowered your best final price by ₹${suggestion.additionalSaving}${
-      flightsImproved > 0 ? ` and improved ${flightsImproved} flight option${flightsImproved === 1 ? "" : "s"}` : ""
+      flightsImproved > 0 ? ` and lowered the price on ${flightsImproved} more flight${flightsImproved === 1 ? "" : "s"}` : ""
     }.`,
     previousBestPrice,
     newBestPrice: suggestion.newBestPrice,
@@ -2819,7 +2822,7 @@ function renderGuideLoadingHtml() {
     <div class="payment-guide-loading">
       <div class="payment-guide-skeleton"></div>
       <div class="payment-guide-loading-title">Checking for a better way to pay…</div>
-      <div class="payment-guide-loading-sub">We're testing your selected payment methods against available offers.</div>
+      <div class="payment-guide-loading-sub">We check your payment methods against today's live offers.</div>
     </div>
   `;
 }
@@ -2855,8 +2858,8 @@ function renderGuideOptimisedHtml() {
 
   return `
     <div class="payment-guide-optimised">
-      <div class="payment-guide-optimised-title">You're already well optimised</div>
-      <div class="payment-guide-optimised-sub">We didn't find another realistic payment method that lowers your current best final price.</div>
+      <div class="payment-guide-optimised-title">You've already got the best price</div>
+      <div class="payment-guide-optimised-sub">We checked every other way to pay - this is already your best price.</div>
       ${summaryLine}
     </div>
   `;
@@ -2884,15 +2887,28 @@ function renderGuideSuggestionCardHtml(s, idx) {
     `
     : "";
 
+  // Composed here rather than shown as the backend's raw s.message -
+  // "lowers 40 flight options" reads backwards (sounds like fewer
+  // results, not a lower price on the same results) and the same
+  // pattern showed up in the accepted-state copy this function's
+  // sibling builds. The affected-flight count and method name are
+  // already structured data on the suggestion, so this doesn't need
+  // the raw sentence to say it correctly (founder catch, 2026-07-21).
+  const affectedFlights = Number.isFinite(s.affectedFlights) ? s.affectedFlights : null;
+  const methodLabel = String(s.primaryActionLabel || "").replace(/^Add\s+/i, "") || paymentMethodDisplayLabel(s.paymentMethod);
+  const suggestionMessage = affectedFlights > 0
+    ? `${methodLabel} lowers the price on ${affectedFlights} flight${affectedFlights === 1 ? "" : "s"} in this search.`
+    : "";
+
   return `
     <div class="payment-guide-suggestion">
       ${labelBadge}
       ${priceTransition}
       <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
-      <div class="payment-guide-suggestion-message">${s.message || ""}</div>
+      ${suggestionMessage ? `<div class="payment-guide-suggestion-message">${suggestionMessage}</div>` : ""}
       <div class="payment-guide-suggestion-actions">
         <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${s.primaryActionLabel || "Add"}</button>
-        <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not applicable to me</button>
+        <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not for me</button>
       </div>
     </div>
   `;
@@ -2953,7 +2969,7 @@ function renderGuideAcceptedHtml() {
     // 4s timer), this is the resting state until the user explicitly
     // checks again - give it quiet framing instead of a bare button.
     notePart = `
-      <div class="payment-guide-success-heading">You're on a good price right now</div>
+      <div class="payment-guide-success-heading">You're on your best price right now</div>
       <div class="payment-guide-success-message payment-guide-resting-message">Want us to check for other ways to pay?</div>
     `;
   }
@@ -4178,11 +4194,11 @@ function getPriceIntelHeroLine() {
     const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
     return n === 0
       ? "Add how you pay to see your best final price"
-      : "We'll check your payment methods against today's live offers";
+      : "We check your payment methods against today's live offers";
   }
 
   if (guideAwaitingManualRecheck) {
-    return guideAcceptedNote?.heading || "You're on a good price right now";
+    return guideAcceptedNote?.heading || "You're on your best price right now";
   }
 
   if (paymentGuideState === "loading") {
@@ -4196,7 +4212,7 @@ function getPriceIntelHeroLine() {
   if (paymentGuideState === "ready") {
     const visible = visiblePaymentSuggestions();
     return visible.length === 0
-      ? "You're already well optimised"
+      ? "You've already got the best price"
       : (visible[0]?.heading || "You could save more on this trip");
   }
 
