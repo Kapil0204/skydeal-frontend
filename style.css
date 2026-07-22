@@ -10603,3 +10603,17 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
     justify-content: flex-start !important;
   }
 }
+
+/* Info-offers that can never apply to the current trip (e.g. an
+   international-only offer surfaced on a domestic search) - shown
+   for transparency but visually de-emphasized since no card swap
+   fixes it. */
+.otherOfferItem-muted {
+  opacity: 0.6 !important;
+}
+
+.otherOfferBadge-muted {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}

@@ -969,6 +969,53 @@ function getInfoBadgeLabel(io) {
   return found ? `Needs ${found} credit card` : "Specific card required";
 }
 
+function isDomesticSearchTrip() {
+  const from = String(lastSearchPayload?.from || "").toUpperCase();
+  const to = String(lastSearchPayload?.to || "").toUpperCase();
+  if (!from || !to) return null;
+  return INDIAN_IATA_CODES.has(from) && INDIAN_IATA_CODES.has(to);
+}
+
+// Some "info" offers on a portal are flagged with a generic backend
+// label (e.g. "Requires different card/payment") even when the real
+// reason is a trip-type mismatch (an international-only offer showing
+// up on a domestic search, or vice versa) - no card swap fixes that.
+// Detected from the offer's own text since the backend doesn't send a
+// structured flag for it.
+function isInfoOfferTripMismatch(io) {
+  const domestic = isDomesticSearchTrip();
+  if (domestic === null) return false;
+
+  const text = `${io?.title || ""} ${io?.rawDiscount || ""}`.toLowerCase();
+  const mentionsInternational = /\binternational\b/.test(text);
+  const mentionsDomestic = /\bdomestic\b/.test(text);
+
+  if (domestic && mentionsInternational && !mentionsDomestic) return true;
+  if (!domestic && mentionsDomestic && !mentionsInternational) return true;
+  return false;
+}
+
+function getEffectiveInfoBadge(io) {
+  if (isInfoOfferTripMismatch(io)) {
+    return { label: "Not valid for this trip", mismatch: true };
+  }
+  return { label: getInfoBadgeLabel(io), mismatch: false };
+}
+
+// Backend's paymentHint is often a near-duplicate of the offer title
+// (e.g. title "Kotak Mahindra Bank Credit Card No-Cost EMI on Domestic
+// Flights" + hint "Kotak Mahindra Bank • Kotak Mahindra Bank Credit
+// Card No-Cost EMI"). Only render the hint when it adds information
+// the title doesn't already say.
+function isHintRedundantWithTitle(hint, title) {
+  const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const hWords = norm(hint).split(" ").filter(Boolean);
+  if (!hWords.length) return false;
+  const t = norm(title);
+  const matched = hWords.filter((w) => t.includes(w)).length;
+  return matched / hWords.length >= 0.7;
+}
+
 function getCompareButtonLabel() {
   return "Compare";
 }
@@ -3231,17 +3278,21 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-");
 
-        const renderOfferCard = (io) => `
-          <div class="otherOfferItem">
+        const renderOfferCard = (io) => {
+          const badge = getEffectiveInfoBadge(io);
+          const showHint = io.paymentHint && !isHintRedundantWithTitle(io.paymentHint, io.title);
+
+          return `
+          <div class="otherOfferItem${badge.mismatch ? " otherOfferItem-muted" : ""}">
             <div class="otherOfferHead">
               <b>${safeText(io.title || io.couponCode || "Offer")}</b>
-              ${io.infoLabel ? `<span class="otherOfferBadge">${safeText(getInfoBadgeLabel(io))}</span>` : ""}
+              ${io.infoLabel ? `<span class="otherOfferBadge${badge.mismatch ? " otherOfferBadge-muted" : ""}">${safeText(badge.label)}</span>` : ""}
             </div>
-            ${io.paymentHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
+            ${showHint ? `<div class="otherOfferHint">${safeText(io.paymentHint)}</div>` : ""}
             ${io.rawDiscount ? `<div class="otherOfferDiscount">${safeText(io.rawDiscount)}</div>` : ""}
             <div class="otherOfferActions">
               ${
-                io.couponCode
+                io.couponCode && !badge.mismatch
                   ? `
                     <button
                       type="button"
@@ -3271,6 +3322,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
             </div>
           </div>
         `;
+        };
 
         return `
           <div class="otherOffersInline">
