@@ -5463,10 +5463,14 @@ function stopsBadgeHtml(f) {
 
   const layovers = Array.isArray(f?.layovers) ? f.layovers : [];
   if (stops === 0 || layovers.length === 0) {
+    // No stopsLineHtml() here - that divider exists to carry one dot per
+    // stop, so on a non-stop flight it would render with zero dots: pure
+    // empty vertical space (a 1px line plus its own margin) with nothing
+    // for it to show. Timing/cost are what users actually scan for, so
+    // this secondary info shouldn't claim space it isn't using.
     return `
       <div class="stops">
         ${durationHtml}
-        ${stopsLineHtml(0)}
         <div>Non-stop</div>
       </div>
     `;

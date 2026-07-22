@@ -10705,9 +10705,21 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   font-weight: 500 !important;
 }
 
+/* Users scroll flight lists to compare timing and cost - duration/
+   stop-count is good-to-have, not decision-critical, so it needs to
+   read as clearly secondary next to the (bold, 14px) times, not
+   comparable to them. Sized down another notch from the first pass. */
 .stops {
   color: var(--gray-500) !important;
   font-weight: 600 !important;
+  font-size: var(--fs-2xs) !important;
+}
+
+.flightDuration,
+.stopsViaLine {
+  color: var(--gray-500) !important;
+  font-weight: 600 !important;
+  font-size: var(--fs-2xs) !important;
 }
 
 .price {
@@ -10739,7 +10751,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom: none;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
 .bestDealBanner + .oneWayCardActions {
@@ -10751,5 +10763,5 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border-top-right-radius: 0;
   border-bottom-left-radius: var(--radius-md);
   border-bottom-right-radius: var(--radius-md);
-  padding: 8px 14px 12px;
+  padding: 4px 14px 10px;
 }
