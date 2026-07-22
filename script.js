@@ -696,6 +696,17 @@ function fmtTime(t) {
   return s;
 }
 
+// Pulls the date straight off the flight's own departureTime rather than
+// lastSearchPayload - works regardless of whether this is the outbound or
+// return leg, no direction guessing needed.
+function fmtDateFromISO(t) {
+  if (!t) return "";
+  const datePart = String(t).split("T")[0];
+  const d = new Date(`${datePart}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+}
+
 const AIRLINE_CODE_MAP = [
   // Indian domestic carriers
   { k: "indigo", c: "6E" },
@@ -3352,7 +3363,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
     body.innerHTML = `
       <div class="portalCompareFlightHead portalCompareFlightHeadV2">
         <span>${safeText(flight.displayAirlineName || flight.airlineName)} ${displayFlightNumber(flight)}</span>
-        <strong>${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}</strong>
+        <strong>${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}${fmtDateFromISO(flight.departureTime) ? ` · ${fmtDateFromISO(flight.departureTime)}` : ""}</strong>
       </div>
 
       <div class="portalCompareList">

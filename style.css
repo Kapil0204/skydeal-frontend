@@ -10490,12 +10490,24 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   flex: 1 1 auto !important;
 }
 
+/* Fixed width (not flex:0 0 auto) so every row's price starts at the
+   same x position regardless of how long the portal name is -
+   "Yatra" vs "MakeMyTrip" were pushing prices to different columns
+   before, making the whole list look ragged/unaligned. */
 .portalHeaderLeft {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  min-width: 0 !important;
-  flex: 0 0 auto !important;
+  flex: 0 0 168px !important;
+  width: 168px !important;
+  min-width: 168px !important;
+  overflow: hidden !important;
+}
+
+.portalHeaderLeft .portalName {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .portalName {
