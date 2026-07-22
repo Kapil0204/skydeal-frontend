@@ -932,6 +932,22 @@ function getOfferAwarePaymentLabel(item = {}) {
   return `${baseLabel} • EMI`;
 }
 
+// "No payment restriction" on its own reads like a technical caveat.
+// When the offer is the portal's own generic checkout offer (not tied
+// to a specific bank/card), say so plainly instead - that's the actual
+// reason any payment method works.
+function getOfferAwarePaymentLabelForRow(item = {}) {
+  const baseLabel = getOfferAwarePaymentLabel(item);
+  const isNoRestriction = /^no (payment )?restriction/i.test(baseLabel.trim());
+  const offerType = String(item.offerTypeLabel || "").trim().toLowerCase();
+  const isCheckoutOffer = offerType === "checkout offer" || offerType === "checkout";
+
+  if (isNoRestriction && isCheckoutOffer) {
+    return `${safeText(item.portal)}'s own offer, works with any payment method`;
+  }
+  return baseLabel;
+}
+
 function getPortalCtaLabel(portal) {
   return `Book with ${safeText(portal)}`;
 }
@@ -2087,7 +2103,7 @@ function formatOfferLine(p) {
       >T&C</button>`
     : "";
 
-  const pay = getOfferAwarePaymentLabel(p);
+  const pay = getOfferAwarePaymentLabelForRow(p);
   const parts = [];
   if (codeText) parts.push(`Code ${codeText}`);
   if (pay) parts.push(safeText(pay));
@@ -3353,12 +3369,12 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
             return `
               <div class="portalRow ${isBest ? "best" : ""}">
                 <div class="portalHeader">
-  <div class="portalHeaderLeft">
-    <div class="portalName">${safeText(p.portal)}</div>
-   ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
-  </div>
+  <div class="portalHeaderMain">
+    <div class="portalHeaderLeft">
+      <div class="portalName">${safeText(p.portal)}</div>
+     ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
+    </div>
 
-  <div class="portalHeaderRight">
     <div class="portalPrice">
   <div>${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
   ${
@@ -3368,12 +3384,13 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
       : ""
   }
 </div>
-    ${
-      href
-        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice">${getPortalCtaLabel(p.portal)}</a>`
-        : ""
-    }
   </div>
+
+  ${
+    href
+      ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice">${getPortalCtaLabel(p.portal)}</a>`
+      : ""
+  }
 </div>
 
                 ${
