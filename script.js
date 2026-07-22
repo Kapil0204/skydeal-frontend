@@ -937,15 +937,11 @@ function getPortalCtaLabel(portal) {
 }
 
 function getOtherOffersButtonLabel(portal, count = 0) {
-  return count > 0
-    ? `More offers on ${safeText(portal)} (${count})`
-    : `More offers on ${safeText(portal)}`;
+  return count > 0 ? `${count} more offer${count === 1 ? "" : "s"}` : "More offers";
 }
 
 function getOtherOffersHideLabel(portal, count = 0) {
-  return count > 0
-    ? `Hide offers on ${safeText(portal)} (${count})`
-    : `Hide offers on ${safeText(portal)}`;
+  return count > 0 ? `Hide ${count} more offer${count === 1 ? "" : "s"}` : "Hide offers";
 }
 
 function getInfoBadgeLabel(io) {
@@ -2022,65 +2018,39 @@ function cleanTermsText(text) {
    Offer line formatter + T&C modal
    ========================= */
 function formatOfferLine(p) {
-if (!p.applied) {
-  return `
-    <div style="opacity:.72;font-size:13px;">
-      No discount available with your selected payment method.
-    </div>
-  `;
-}
+  if (!p.applied) {
+    return `<div class="portalOfferLine portalOfferLine-muted">No discount with your selected payment methods.</div>`;
+  }
 
-const offerText = safeText(p.rawDiscount, "Offer available");
-const savings = getSavingsAmount(p.basePrice, p.finalPrice);
-const codeText = p.code
-  ? `<button
+  const codeText = p.code
+    ? `<button
         type="button"
         class="copyCouponBtn inlineCopyCouponBtn"
         data-code="${safeText(p.code)}"
         title="Copy coupon code"
       >${safeText(p.code)}</button>`
-  : "";
-const termsText = formatTermsForDisplay(p.terms);
-const hasTerms = !!termsText;
-
-const tncBtn = hasTerms
-  ? ` • <button 
+    : "";
+  const termsText = formatTermsForDisplay(p.terms);
+  const tncBtn = termsText
+    ? `<button
         type="button"
         class="tncBtn"
         data-portal="${safeText(p.portal)}"
         data-terms="${encodeURIComponent(termsText)}"
-        style="
-          background:transparent;
-          border:1px solid rgba(255,255,255,.25);
-          color:#f8fafc;
-          border-radius:10px;
-          padding:2px 8px;
-          font-size:12px;
-          cursor:pointer;
-        "
       >T&C</button>`
-  : "";
-
-  const pay = getOfferAwarePaymentLabel(p);
-  const showTypeLabel =
-  p.offerTypeLabel &&
-  String(p.offerTypeLabel).trim().toLowerCase() !== "payment offer";
-
-  const typeSpan = showTypeLabel
-    ? `<span>${safeText(p.offerTypeLabel)}</span>`
     : "";
 
+  const pay = getOfferAwarePaymentLabel(p);
+  const parts = [];
+  if (codeText) parts.push(`Code ${codeText}`);
+  if (pay) parts.push(safeText(pay));
+
+  if (!parts.length && !tncBtn) return "";
+
   return `
-    <div style="opacity:.9;font-size:13px;">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:4px;">Applied offer</div>
-      <div>${offerText}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;">
-        ${savings > 0 ? `<span style="color:#86efac;font-weight:800;">You save ${money(savings)}</span>` : ""}
-        ${codeText ? `<span>Coupon: ${codeText}</span>` : ""}
-        ${pay ? `<span>Payment: <b>${safeText(pay)}</b></span>` : ""}
-        ${typeSpan}
-      </div>
-      ${tncBtn ? `<div style="margin-top:8px;">${tncBtn.replace(/^\s*•\s*/, "")}</div>` : ""}
+    <div class="portalOfferLine">
+      ${parts.join(" &middot; ")}
+      ${tncBtn}
     </div>
   `;
 }
@@ -3229,7 +3199,6 @@ function showPortalCompare(flight) {
   const body = modal.querySelector("#portalCompareBody");
 
   const portalPricesRaw = Array.isArray(flight?.portalPrices) ? flight.portalPrices : [];
-const bestPortal = flight?.bestDeal?.portal || null;
 
 const portalPrices = [...portalPricesRaw].sort((a, b) => {
   const aPrice = Number(a?.finalPrice ?? a?.basePrice ?? Infinity);
@@ -3250,9 +3219,9 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
 
       <div class="portalCompareList">
         ${portalPrices
-          .map((p) => {
+          .map((p, idx) => {
             const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
-            const isBest = bestPortal && p.portal === bestPortal;
+            const isBest = idx === 0;
              const portalSavings = getSavingsAmount(p.basePrice, p.finalPrice);
 
             const infoOffersHtml =
@@ -3317,7 +3286,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
             </button>
 
             <div id="portal-other-offers-${portalSlug}" class="otherOffersDrawer">
-              <div class="otherOffersTitle">More offers on ${safeText(p.portal)}</div>
+              <div class="otherOffersTitle">More offers</div>
               <div class="otherOffersMore open">
                 ${p.infoOffers.map(renderOfferCard).join("")}
               </div>
@@ -3327,12 +3296,14 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
       })()
     : "";
 
+            const offerLineHtml = formatOfferLine(p);
+
             return `
               <div class="portalRow ${isBest ? "best" : ""}">
                 <div class="portalHeader">
   <div class="portalHeaderLeft">
     <div class="portalName">${safeText(p.portal)}</div>
-   ${isBest ? `<span class="badge bestPriceBadge">Best option</span>` : ""}
+   ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
   </div>
 
   <div class="portalHeaderRight">
@@ -3340,24 +3311,24 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
   <div>${money(p.finalPrice ?? p.basePrice ?? flight?.price)}</div>
   ${
     portalSavings > 0
-      ? `<div style="font-size:12px;opacity:.75;text-decoration:line-through;">${money(p.basePrice)}</div>
-         <div style="font-size:12px;color:#86efac;">Save ${money(portalSavings)}</div>`
+      ? `<div class="portalPriceOld">${money(p.basePrice)}</div>
+         <div class="portalPriceSave">Save ${money(portalSavings)}</div>`
       : ""
   }
 </div>
     ${
       href
-        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice" style="text-decoration:none;">${getPortalCtaLabel(p.portal)}</a>`
+        ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice">${getPortalCtaLabel(p.portal)}</a>`
         : ""
     }
   </div>
 </div>
 
-                <div class="mainOffer">
-                  ${formatOfferLine(p)}
-                </div>
-
-                ${infoOffersHtml}
+                ${
+                  offerLineHtml || infoOffersHtml
+                    ? `<div class="portalRowFooter">${offerLineHtml}${infoOffersHtml}</div>`
+                    : ""
+                }
               </div>
             `;
           })

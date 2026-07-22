@@ -8189,7 +8189,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 ===================================================== */
 
 .skydeal-hero-header {
-  padding: 26px 28px 24px !important;
+  padding: 26px 0 24px !important;
   border-bottom: 1px solid rgba(168, 85, 247, 0.28) !important;
 }
 
@@ -8198,6 +8198,10 @@ body #selectedTripPanel .sky-trip-clear-btn {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 10px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .skydeal-hero-header .brand {
@@ -8225,8 +8229,8 @@ body #selectedTripPanel .sky-trip-clear-btn {
   display: inline-block;
   font-size: clamp(30px, 3.1vw, 44px) !important;
   line-height: 0.95 !important;
-  letter-spacing: -0.055em !important;
-  font-weight: 950 !important;
+  letter-spacing: -0.045em !important;
+  font-weight: 750 !important;
   color: var(--primary2) !important;
   text-shadow: 0 0 26px rgba(168, 85, 247, 0.28) !important;
 }
@@ -8251,7 +8255,7 @@ body #selectedTripPanel .sky-trip-clear-btn {
 
 @media (max-width: 760px) {
   .skydeal-hero-header {
-    padding: 22px 20px 18px !important;
+    padding: 22px 0 18px !important;
   }
 
   .skydeal-brand-lockup {
@@ -10406,4 +10410,196 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .price-intel-hero .payment-guide-more-toggle:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.14);
+}
+
+/* =========================================================
+   SkyDeal portal-compare redesign: one consistent row shape
+   per portal, tighter spacing, cheapest flagged as best price.
+   ========================================================= */
+
+.portalCompareList {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.portalRow {
+  border-radius: var(--radius-lg) !important;
+  padding: 12px 14px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: none !important;
+}
+
+.portalRow.best {
+  display: block !important;
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.13), rgba(168, 85, 247, 0.10)) !important;
+  border: 1px solid rgba(52, 211, 153, 0.32) !important;
+}
+
+.portalHeader {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+}
+
+.portalHeaderLeft {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.portalName {
+  color: var(--white) !important;
+  font-size: var(--fs-md) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.bestPriceBadge {
+  display: inline-flex !important;
+  width: fit-content !important;
+  margin-top: 0 !important;
+  border: 1px solid rgba(52, 211, 153, 0.30) !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: var(--success-light) !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 3px 8px !important;
+  font-size: var(--fs-2xs) !important;
+  font-weight: 850 !important;
+  text-transform: none !important;
+}
+
+.portalHeaderRight {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 0 0 auto !important;
+}
+
+.portalPrice {
+  text-align: right !important;
+  line-height: 1.15 !important;
+}
+
+.portalPrice > div:first-child {
+  color: var(--white) !important;
+  font-size: var(--fs-xl) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 900 !important;
+}
+
+.portalPriceOld {
+  font-size: var(--fs-2xs) !important;
+  opacity: 0.65 !important;
+  text-decoration: line-through !important;
+}
+
+.portalPriceSave {
+  font-size: var(--fs-2xs) !important;
+  color: #86efac !important;
+  font-weight: 800 !important;
+}
+
+.portalLinkBelowPrice {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 7px 12px !important;
+  background: rgba(168, 85, 247, 0.92) !important;
+  color: var(--white) !important;
+  font-size: var(--fs-sm) !important;
+  font-weight: 900 !important;
+  border: 0 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+.portalRowFooter {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.portalOfferLine {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: var(--fs-sm) !important;
+  font-weight: 650 !important;
+}
+
+.portalOfferLine-muted {
+  opacity: 0.62 !important;
+}
+
+.inlineCopyCouponBtn {
+  padding: 3px 8px !important;
+  font-size: var(--fs-2xs) !important;
+}
+
+.otherOffersInline {
+  margin-top: 0 !important;
+}
+
+.otherOffersInlineBtn {
+  border-radius: var(--radius-pill) !important;
+  padding: 5px 10px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: var(--fs-2xs) !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+.otherOffersDrawer {
+  margin-top: 10px !important;
+  flex-basis: 100% !important;
+  border-radius: var(--radius-lg) !important;
+  background: rgba(15, 23, 42, 0.42) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.otherOffersTitle {
+  color: var(--white) !important;
+  font-size: var(--fs-sm) !important;
+  font-weight: 950 !important;
+}
+
+.tncBtn {
+  padding: 3px 8px !important;
+  font-size: var(--fs-2xs) !important;
+  border-radius: var(--radius-pill) !important;
+  cursor: pointer !important;
+}
+
+@media (max-width: 760px) {
+  .portalHeader {
+    flex-wrap: wrap !important;
+  }
+
+  .portalHeaderRight {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .portalPrice {
+    text-align: left !important;
+  }
+
+  .portalRowFooter {
+    justify-content: flex-start !important;
+  }
 }
