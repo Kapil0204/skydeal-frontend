@@ -10664,3 +10664,92 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   color: rgba(255, 255, 255, 0.62) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
+
+/* =========================================================
+   Flight-card text hierarchy pass: bold/dark for the facts that
+   actually decide something (times, price), muted/regular for
+   supporting facts (flight number, city labels, duration/stops).
+   Written as one authoritative block because the individual
+   selectors below have several older, conflicting declarations
+   earlier in this file - this is the version that's meant to win.
+   ========================================================= */
+
+.airline-name {
+  color: var(--gray-900) !important;
+  font-weight: 800 !important;
+}
+
+/* Was inheriting .air's bold weight while also being colored muted -
+   bold + muted read as contradictory. Regular weight matches its
+   role as a supporting fact under the airline name. */
+.flight-number {
+  color: var(--gray-500) !important;
+  font-weight: 500 !important;
+}
+
+.times,
+.arrival-time {
+  color: var(--gray-900) !important;
+  font-weight: 800 !important;
+}
+
+/* Fixes the reported bug: this had no font-weight of its own, so it
+   inherited 850 from .times on the departure side but the unstyled
+   default on the arrival side (.arrival-tile never sets a weight) -
+   "Mumbai" bold, "Noida" not. Declaring it explicitly here makes both
+   sides identical regardless of which parent they sit in, and doubles
+   as the "de-emphasize city/airport names" pass - regular weight,
+   muted gray, matches duration/stops below. */
+.flight-city-label {
+  color: var(--gray-500) !important;
+  font-weight: 500 !important;
+}
+
+.stops {
+  color: var(--gray-500) !important;
+  font-weight: 600 !important;
+}
+
+.price {
+  color: var(--gray-900) !important;
+  font-weight: 900 !important;
+}
+
+.bestDealTop {
+  color: var(--gray-900) !important;
+  font-weight: 800 !important;
+}
+
+.bestDealPortal,
+.bestDealMeta {
+  color: var(--gray-500) !important;
+  font-weight: 500 !important;
+}
+
+.bestDealSave {
+  color: var(--success) !important;
+  font-weight: 800 !important;
+}
+
+/* Book with X / Compare portals used to sit just below the gray deal
+   box on plain white, separated by only a margin - close enough to
+   look ambiguous but not actually part of it. Merges them into one
+   continuous bordered unit instead, removing the doubled border/gap. */
+.bestDealBanner:has(+ .oneWayCardActions) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+.bestDealBanner + .oneWayCardActions {
+  margin-top: 0;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  padding: 8px 14px 12px;
+}
