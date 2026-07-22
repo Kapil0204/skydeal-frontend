@@ -10851,6 +10851,16 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   position: relative;
 }
 
+/* The popover's own z-index only wins inside its row's local stacking
+   context - every .pm-item is position:relative with no z-index of its
+   own, so later rows in DOM order (e.g. Indian Overseas Bank, Kotak
+   Bank below ICICI) were painting on top of an earlier row's open
+   popover regardless of the popover's z-index:40. Bumping the row
+   itself above its siblings while its popover is open fixes that. */
+.pm-item:has(.pm-offer-popover.open) {
+  z-index: 50;
+}
+
 .pm-item .pm-offer-badge {
   appearance: none !important;
   font-family: inherit !important;

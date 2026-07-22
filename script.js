@@ -2355,22 +2355,18 @@ function renderPaymentList() {
         ? (paymentOfferCounts?.EMI?.[key] || 0)
         : 0;
       const offerCount = baseCount + emiCount;
-      // Which offers actually back that count, so hovering/tapping the
-      // badge can show what it's counting instead of just the number -
-      // same "Up to" framing applies (this is the offer's own stated
-      // condition, not a check against any specific search).
+      // Which offers actually back that count, so tapping the badge can
+      // show what it's counting instead of just the number.
       const baseSummaries = paymentOfferSummaries?.[type]?.[key] || [];
       const emiSummaries = (type === "Credit Card" && includeEmiOffers)
         ? (paymentOfferSummaries?.EMI?.[key] || [])
         : [];
       const summaries = [...baseSummaries, ...emiSummaries].slice(0, 6);
 
-      // "N offers" read as a promise ("I'll get N discounts") when really
-      // it's just how many offers exist for this bank overall - most
-      // depend on route/fare conditions that aren't checked until an
-      // actual search runs, so some may not apply. "Up to" signals that,
-      // and tapping the badge (when we have the data) shows each offer's
-      // own condition text so there's no surprise later.
+      // "N offers" alone still reads like a promise, but now that tapping
+      // it (when summaries exist) shows each offer's own condition text,
+      // the star does the "conditions apply, see details" signalling
+      // instead of hedging the number itself with "Up to".
       const popoverId = `${id}_offers`;
       const badge = offerCount > 0
         ? `
@@ -2380,7 +2376,7 @@ function renderPaymentList() {
             data-popover-target="${popoverId}"
             aria-expanded="false"
             ${summaries.length === 0 ? "disabled" : ""}
-          >Up to ${offerCount} offer${offerCount === 1 ? "" : "s"}</button>
+          >${offerCount} offer${offerCount === 1 ? "" : "s"}${summaries.length > 0 ? " ★" : ""}</button>
           ${summaries.length > 0 ? `
             <div class="pm-offer-popover" id="${popoverId}">
               <div class="pm-offer-popover-title">What ${safeText(name)}'s offers say</div>
