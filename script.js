@@ -393,6 +393,19 @@ let lastSearchPayload = null;
 
 // Phase 1 intelligent payment guide state.
 let paymentGuideState = "idle"; // idle | loading | ready | error
+// Which step the "loading" banner is currently describing - "repricing"
+// while an already-loaded search is being repriced against the current
+// payment methods (fast, in-memory - the flight cards' own spinners),
+// "suggestions" while separately checking whether some other method not
+// yet added would help further (the slower candidate-loop call). Both
+// steps used to share one static "Checking for a better way to pay..."
+// message, so once the reprice finished and the cards settled on their
+// final price, the banner gave no visible signal that a *second*,
+// separate check was now running - it looked like the same message
+// just hadn't caught up yet (founder catch, 2026-07-22). Splitting the
+// copy by phase means the banner text itself visibly changes the
+// moment the reprice hands off to the suggestions check.
+let guideLoadingPhase = "suggestions"; // "repricing" | "suggestions"
 let paymentSuggestions = [];
 const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
 
@@ -2624,6 +2637,7 @@ async function fetchPaymentSuggestions() {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
   paymentGuideState = "loading";
+  guideLoadingPhase = "suggestions";
   renderPaymentGuideCard();
 
   try {
@@ -2769,8 +2783,12 @@ async function syncPaymentMethodsPostSearch() {
   // cards' own spinners - fetchPaymentSuggestions() only sets this itself
   // once repriceAndRenderFlights() below has already finished, which made
   // the banner flip to "loading" only after prices had already visibly
-  // changed (founder catch, 2026-07-22).
+  // changed (founder catch, 2026-07-22). Starts in the "repricing" phase
+  // so the copy matches what's actually happening to the cards right
+  // now; fetchPaymentSuggestions() below flips it to "suggestions" (and
+  // re-renders) once the reprice is done and it takes over.
   paymentGuideState = "loading";
+  guideLoadingPhase = "repricing";
   renderPaymentGuideCard();
   await repriceAndRenderFlights();
   await fetchPaymentSuggestions();
@@ -2863,6 +2881,16 @@ function dismissPaymentSuggestion(suggestion) {
 }
 
 function renderGuideLoadingHtml() {
+  if (guideLoadingPhase === "repricing") {
+    return `
+      <div class="payment-guide-loading">
+        <div class="payment-guide-skeleton"></div>
+        <div class="payment-guide-loading-title">Updating your price…</div>
+        <div class="payment-guide-loading-sub">Applying your new payment method to this search.</div>
+      </div>
+    `;
+  }
+
   return `
     <div class="payment-guide-loading">
       <div class="payment-guide-skeleton"></div>
@@ -4300,7 +4328,7 @@ function getPriceIntelHeroLine() {
   }
 
   if (paymentGuideState === "loading") {
-    return "Checking for a better way to pay…";
+    return guideLoadingPhase === "repricing" ? "Updating your price…" : "Checking for a better way to pay…";
   }
 
   if (paymentGuideState === "error") {
