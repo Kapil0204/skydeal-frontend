@@ -10853,7 +10853,14 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 /* Booking handoff modal: a quick "here's what you picked, here's your
    code" pause before handing off to the portal in a new tab. Kept small
    (unlike .modal-content.wide) since it's one flight and a few lines of
-   text, not a comparison table. */
+   text, not a comparison table. Explicit z-index above the base .modal
+   (9999) and the portal-compare modal (created at runtime and appended
+   later in the DOM, which otherwise wins the paint order at an equal
+   z-index) so this always ends up on top regardless of DOM order. */
+#bookingHandoffModal {
+  z-index: 10001;
+}
+
 .modal-content.narrow {
   width: min(440px, 92vw);
 }

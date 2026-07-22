@@ -1495,18 +1495,29 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
   const toMeta = skydealPortalAirportMeta(to);
 
   const hasRoundTrip = from && to && departDmy && retDmy;
+  // One-way searches used to fall all the way back to each portal's bare
+  // homepage (no route/date at all) because every branch below only had a
+  // round-trip deep link and a bare fallback, nothing in between. Each
+  // portal's one-way URL is the same shape as its round-trip one - just
+  // the standard tripType-O / single-segment / no-return-date variant -
+  // so a one-way search now gets a real pre-filled results page too.
+  const hasOneWay = from && to && departDmy;
 
   let url = "";
 
   if (portal.includes("makemytrip")) {
     if (hasRoundTrip) {
       url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${to}-${from}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+    } else if (hasOneWay) {
+      url = `https://www.makemytrip.com/flight/search?tripType=O&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
     } else {
       url = "https://www.makemytrip.com/flights/";
     }
   } else if (portal.includes("goibibo")) {
     if (from && to && departYmd && retYmd) {
       url = `https://www.goibibo.com/flights/air-${from}-${to}-${departYmd}-${retYmd}-${adults}-0-0-E-D/`;
+    } else if (from && to && departYmd) {
+      url = `https://www.goibibo.com/flights/air-${from}-${to}-${departYmd}-${adults}-0-0-E-D/`;
     } else {
       url = "https://www.goibibo.com/flights/";
     }
@@ -1531,6 +1542,25 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       });
 
       url = `https://flight.yatra.com/air-search-ui/dom2/trigger?${params.toString()}`;
+    } else if (hasOneWay) {
+      const params = new URLSearchParams({
+        flex: "0",
+        viewName: "normal",
+        source: "fresco-flights",
+        type: "O",
+        class: "Economy",
+        ADT: String(adults),
+        CHD: "0",
+        INF: "0",
+        noOfSegments: "1",
+        origin: from,
+        originCountry: "IN",
+        destination: to,
+        destinationCountry: "IN",
+        flight_depart_date: departDmy
+      });
+
+      url = `https://flight.yatra.com/air-search-ui/dom2/trigger?${params.toString()}`;
     } else {
       url = "https://www.yatra.com/flights";
     }
@@ -1542,6 +1572,22 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         cbn: "0",
         ar: "undefined",
         isow: "false",
+        isdm: "true",
+        lang: "en-us",
+        IsDoubleSeat: "false",
+        CCODE: "IN",
+        curr: "INR",
+        apptype: "B2C"
+      });
+
+      url = `https://www.easemytrip.com/flight-search/listing?${params.toString()}`;
+    } else if (hasOneWay) {
+      const params = new URLSearchParams({
+        srch: `${from}-${fromMeta.emt}|${to}-${toMeta.emt}|${departDmy}`,
+        px: `${adults}-0-0`,
+        cbn: "0",
+        ar: "undefined",
+        isow: "true",
         isdm: "true",
         lang: "en-us",
         IsDoubleSeat: "false",
@@ -1575,6 +1621,29 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         sourceCountry: fromMeta.plain,
         destinationCountry: toMeta.plain,
         return_date: retDmy,
+        nonStop: ""
+      });
+
+      url = `https://www.cleartrip.com/flights/results?${params.toString()}`;
+    } else if (hasOneWay) {
+      const params = new URLSearchParams({
+        adults: String(adults),
+        childs: "0",
+        infants: "0",
+        class: "Economy",
+        depart_date: departDmy,
+        from,
+        to,
+        intl: "n",
+        origin: `${from} - ${fromMeta.cleartrip}`,
+        destination: `${to} - ${toMeta.cleartrip}`,
+        sft: "",
+        sd: String(Date.now()),
+        rnd_one: "O",
+        isCfw: "false",
+        isFF: "false",
+        sourceCountry: fromMeta.plain,
+        destinationCountry: toMeta.plain,
         nonStop: ""
       });
 
@@ -3579,6 +3648,11 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
       const legSummary = flight
         ? `${safeText(flight.displayAirlineName || flight.airlineName)} ${displayFlightNumber(flight)} · ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}${fmtDateFromISO(flight.departureTime) ? ` · ${fmtDateFromISO(flight.departureTime)}` : ""}`
         : "";
+
+      // Close the compare list underneath instead of stacking a second
+      // backdrop on top of it - the handoff modal is a step forward in
+      // the same flow, not a second, simultaneous dialog.
+      modal.style.display = "none";
 
       openBookingHandoffModal({
         portal,
