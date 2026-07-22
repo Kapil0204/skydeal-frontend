@@ -380,7 +380,6 @@ let editingPaymentIndex = null;
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
 let paymentOfferCounts = {}; // { "Credit Card": { "HDFC Bank": 3, ... }, ... } — how many live offers back each entry
-let paymentOfferSummaries = {}; // { "Credit Card": { "hdfc bank": [{title, rawDiscount}, ...] }, ... } — what those offers actually say
 let activePaymentType = "Credit Card";
 let includeEmiOffers = false;
 
@@ -2332,51 +2331,6 @@ function toggleSelected(type, name, checked) {
   updatePaymentButtonLabel();
 }
 
-// The raw title/rawDiscount text from offer_rules is marketing copy -
-// verbose, inconsistently phrased ("Grab Up to 12% Instant Discount on
-// domestic flights & hotels." vs "Flat INR 2,000 off for bookings of
-// less than INR 30,000..."). Rather than truncating that arbitrarily
-// (which reads awkwardly and can cut off mid-word), pull out just the
-// headline figure (percentage, preferred, else a flat amount) and the
-// trip scope (domestic/international) that are almost always present
-// somewhere in the text, and state them plainly - "Up to 12% off ·
-// Domestic flights". Falls back to a hard-capped raw string only when
-// neither figure nor scope can be found, so nothing renders empty.
-function summarizeOfferCondition(title, rawDiscount) {
-  const combined = `${title || ""} ${rawDiscount || ""}`;
-
-  const pctMatch = combined.match(/\b(\d{1,3})\s?%/);
-  const amtMatch = combined.match(/(?:₹|Rs\.?|INR)\s?([\d,]+)/i);
-
-  let headline = "";
-  if (pctMatch) {
-    headline = `Up to ${pctMatch[1]}% off`;
-  } else if (amtMatch) {
-    headline = `Up to ₹${amtMatch[1]} off`;
-  }
-
-  const isDomestic = /\bdomestic\b/i.test(combined);
-  const isIntl = /\binternational\b/i.test(combined);
-  let scope = "";
-  if (isDomestic && isIntl) scope = "Domestic & international flights";
-  else if (isDomestic) scope = "Domestic flights";
-  else if (isIntl) scope = "International flights";
-
-  // The only piece of the title that's ever NOT already restated by the
-  // figure+scope above (e.g. "HSBC Credit Card EMI Offer on Domestic
-  // Flights" vs the plain discount offer that lands on the exact same
-  // "Domestic flights" scope line) - without this, two genuinely
-  // different offers from the same bank can render identically.
-  const isEmi = /\bemi\b/i.test(combined);
-
-  const parts = [headline, scope].filter(Boolean);
-  if (parts.length > 0) return `${isEmi ? "EMI · " : ""}${parts.join(" · ")}`;
-
-  const fallbackSource = rawDiscount && (!title || rawDiscount.length <= title.length) ? rawDiscount : title;
-  const fallback = String(fallbackSource || "").trim();
-  return fallback.length > 60 ? `${fallback.slice(0, 60).trim()}…` : fallback;
-}
-
 function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
@@ -2400,43 +2354,8 @@ function renderPaymentList() {
         ? (paymentOfferCounts?.EMI?.[key] || 0)
         : 0;
       const offerCount = baseCount + emiCount;
-      // Which offers actually back that count, so tapping the badge can
-      // show what it's counting instead of just the number.
-      const baseSummaries = paymentOfferSummaries?.[type]?.[key] || [];
-      const emiSummaries = (type === "Credit Card" && includeEmiOffers)
-        ? (paymentOfferSummaries?.EMI?.[key] || [])
-        : [];
-      const summaries = [...baseSummaries, ...emiSummaries].slice(0, 6);
-
-      // "N offers" alone still reads like a promise, but now that tapping
-      // it (when summaries exist) shows each offer's own condition text,
-      // the star does the "conditions apply, see details" signalling
-      // instead of hedging the number itself with "Up to".
-      const popoverId = `${id}_offers`;
       const badge = offerCount > 0
-        ? `
-          <button
-            type="button"
-            class="pm-offer-badge"
-            data-popover-target="${popoverId}"
-            aria-expanded="false"
-            ${summaries.length === 0 ? "disabled" : ""}
-          >${offerCount} offer${offerCount === 1 ? "" : "s"}${summaries.length > 0 ? '<span class="pm-offer-badge-note">*</span>' : ""}</button>
-          ${summaries.length > 0 ? `
-            <div class="pm-offer-popover" id="${popoverId}">
-              <div class="pm-offer-popover-title">What ${safeText(name)}'s offers say</div>
-              ${summaries
-                .map((s) => {
-                  const condition = summarizeOfferCondition(s.title, s.rawDiscount);
-                  if (!condition) return "";
-                  return `
-                    <div class="pm-offer-popover-item">${safeText(condition)}</div>
-                  `;
-                })
-                .join("")}
-            </div>
-          ` : ""}
-        `
+        ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
         : "";
       return `
         <label class="pm-item" for="${id}">
@@ -2447,25 +2366,6 @@ function renderPaymentList() {
       `;
     })
     .join("");
-
-  pmList.querySelectorAll(".pm-offer-badge").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const targetId = btn.getAttribute("data-popover-target");
-      const popover = targetId ? document.getElementById(targetId) : null;
-      const willOpen = popover ? !popover.classList.contains("open") : false;
-
-      // Accordion: only one offer popover open at a time.
-      pmList.querySelectorAll(".pm-offer-popover.open").forEach((p) => p.classList.remove("open"));
-      pmList.querySelectorAll(".pm-offer-badge[aria-expanded='true']").forEach((b) => b.setAttribute("aria-expanded", "false"));
-
-      if (popover && willOpen) {
-        popover.classList.add("open");
-        btn.setAttribute("aria-expanded", "true");
-      }
-    });
-  });
 
   pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
     cb.addEventListener("change", (e) => {
@@ -2616,7 +2516,6 @@ async function loadPaymentOptions() {
     const backendOptions = dedupePaymentOptions(data?.options || {});
     paymentOptions = mergeMasterCatalogWithBackend(backendOptions);
     paymentOfferCounts = normalizeOfferCounts(data?.offerCounts || {});
-    paymentOfferSummaries = normalizeOfferSummaries(data?.offerSummaries || {});
 
     for (const k of Object.keys(paymentOptions)) {
       const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
@@ -2643,7 +2542,6 @@ async function loadPaymentOptions() {
     // Safe fallback: still show master catalog even if backend call fails
     paymentOptions = mergeMasterCatalogWithBackend({});
     paymentOfferCounts = {};
-    paymentOfferSummaries = {};
     renderPaymentTabs();
     updatePaymentButtonLabel();
   }
@@ -2661,25 +2559,6 @@ function normalizeOfferCounts(rawOfferCounts) {
       if (!displayName) continue;
       const key = displayName.toLowerCase();
       normalized[key] = (normalized[key] || 0) + (Number(count) || 0);
-    }
-    out[type] = normalized;
-  }
-  return out;
-}
-
-// Same re-keying as normalizeOfferCounts, but concatenating summary
-// arrays (instead of summing numbers) when multiple raw spellings
-// collapse into one displayed bank name.
-function normalizeOfferSummaries(rawOfferSummaries) {
-  const out = {};
-  for (const [type, bankSummaries] of Object.entries(rawOfferSummaries || {})) {
-    const normalized = {};
-    for (const [rawBank, summaries] of Object.entries(bankSummaries || {})) {
-      const displayName = normalizePmNameForUI(rawBank);
-      if (!displayName) continue;
-      const key = displayName.toLowerCase();
-      const list = Array.isArray(summaries) ? summaries : [];
-      normalized[key] = [...(normalized[key] || []), ...list];
     }
     out[type] = normalized;
   }
@@ -6276,13 +6155,6 @@ toggleReturn();
   pmClose?.addEventListener("click", closePaymentModal);
   paymentModal?.addEventListener("click", (e) => {
     if (e.target === paymentModal) closePaymentModal();
-
-    // Click-outside-to-close for the offer-summary popover: anything
-    // that isn't the badge itself or inside the open popover closes it.
-    if (!e.target.closest(".pm-offer-badge") && !e.target.closest(".pm-offer-popover")) {
-      paymentModal.querySelectorAll(".pm-offer-popover.open").forEach((p) => p.classList.remove("open"));
-      paymentModal.querySelectorAll(".pm-offer-badge[aria-expanded='true']").forEach((b) => b.setAttribute("aria-expanded", "false"));
-    }
   });
 
   pmClear?.addEventListener("click", () => {
