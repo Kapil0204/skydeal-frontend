@@ -9620,10 +9620,10 @@ body.sky-return-date-dimmed .return-date-field #returnInput::-webkit-calendar-pi
     grid-template-columns: minmax(250px, 320px) minmax(0, 1fr) !important;
     align-items: stretch !important;
     gap: 24px !important;
-    width: min(1180px, calc(100vw - 48px)) !important;
-    max-width: 1180px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
