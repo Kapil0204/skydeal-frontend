@@ -2814,12 +2814,17 @@ async function applyPaymentSuggestion(suggestion) {
   guideAwaitingManualRecheck = true;
   guideAcceptedNote = {
     heading: "Price updated",
-    // "improved N flight options" read backwards (sounds like fewer
-    // results, not a lower price on the same ones) - same fix as the
-    // suggestion-card message above (founder catch, 2026-07-21).
-    message: `Adding ${shortLabel} lowered your best final price by ₹${suggestion.additionalSaving}${
-      flightsImproved > 0 ? ` and lowered the price on ${flightsImproved} more flight${flightsImproved === 1 ? "" : "s"}` : ""
-    }.`,
+    // The price line (previousBestPrice -> newBestPrice, rendered
+    // separately above this message) already shows the ₹ saving on
+    // the single cheapest flight - restating it in the sentence too,
+    // then tacking on the unrelated "N other flights" headcount,
+    // conflated two different numbers into one sentence and read as
+    // if all N flights dropped by that same amount (founder catch,
+    // 2026-07-22). This now states only the one fact the price line
+    // doesn't already cover.
+    message: flightsImproved > 0
+      ? `${shortLabel} also lowers the price on ${flightsImproved} other flight${flightsImproved === 1 ? "" : "s"} in this search.`
+      : "",
     previousBestPrice,
     newBestPrice: suggestion.newBestPrice,
     additionalSaving: suggestion.additionalSaving,
@@ -3000,7 +3005,7 @@ function renderGuideAcceptedHtml() {
       <div class="payment-guide-success-text">
         <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
         ${priceLine}
-        <div class="payment-guide-success-message">${guideAcceptedNote.message}</div>
+        ${guideAcceptedNote.message ? `<div class="payment-guide-success-message">${guideAcceptedNote.message}</div>` : ""}
       </div>
     `;
   } else {
