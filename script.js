@@ -2187,6 +2187,73 @@ function closeTncModal() {
   modal.style.display = "none";
 }
 
+// A brief, clean pause before handing off to the portal: confirms which
+// flight(s) this is for and that the coupon code is already on the
+// clipboard. Kept as a real click-through (not an auto-redirect after a
+// timer) because browsers only allow window.open as a direct result of a
+// click - a delayed one risks getting silently popup-blocked.
+function openBookingHandoffModal({ portal, url, code, legs }) {
+  if (!url) return;
+
+  const modal = document.getElementById("bookingHandoffModal");
+  const body = document.getElementById("bookingHandoffBody");
+  if (!modal || !body) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  if (code) {
+    navigator.clipboard?.writeText(code).catch(() => {});
+  }
+
+  const legsHtml = (Array.isArray(legs) ? legs : [])
+    .filter((leg) => leg && leg.summary && leg.summary !== "Not selected yet")
+    .map(
+      (leg) => `
+        <div class="booking-handoff-leg">
+          <div class="booking-handoff-leg-label">${safeText(leg.label)}</div>
+          <div class="booking-handoff-leg-summary">${safeText(leg.summary)}</div>
+        </div>
+      `
+    )
+    .join("");
+
+  const codeHtml = code
+    ? `
+      <div class="booking-handoff-code-note">
+        <strong>Copied to clipboard:</strong> <code>${safeText(code)}</code> — paste it at checkout on ${safeText(portal)}.
+      </div>
+    `
+    : `
+      <div class="booking-handoff-code-note booking-handoff-code-note-plain">
+        This price applies automatically - no coupon needed at checkout.
+      </div>
+    `;
+
+  body.innerHTML = `
+    ${legsHtml}
+    ${codeHtml}
+    <button type="button" class="btn-primary booking-handoff-continue">Continue to ${safeText(portal)} ↗</button>
+  `;
+
+  body.querySelector(".booking-handoff-continue").addEventListener("click", () => {
+    window.open(url, "_blank", "noopener,noreferrer");
+    closeBookingHandoffModal();
+  });
+
+  modal.classList.add("open");
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeBookingHandoffModal() {
+  const modal = document.getElementById("bookingHandoffModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.display = "none";
+}
+
 // One global delegated click handler for all T&C buttons
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".tncBtn");
@@ -3481,7 +3548,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
 
   ${
     href
-      ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="badge portalLinkBadge portalLinkBelowPrice">${getPortalCtaLabel(p.portal)}</a>`
+      ? `<button type="button" class="badge portalLinkBadge portalLinkBelowPrice" data-url="${safeText(href)}" data-portal="${safeText(p.portal)}" data-code="${safeText(p.code || "", "")}">${getPortalCtaLabel(p.portal)}</button>`
       : ""
   }
 </div>
@@ -3500,6 +3567,27 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
   }
 
   modal.style.display = "block";
+
+  body.querySelectorAll(".portalLinkBelowPrice").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const url = btn.getAttribute("data-url") || "";
+      const portal = btn.getAttribute("data-portal") || "";
+      const code = btn.getAttribute("data-code") || "";
+      if (!url) return;
+
+      const legSummary = flight
+        ? `${safeText(flight.displayAirlineName || flight.airlineName)} ${displayFlightNumber(flight)} · ${fmtTime(flight.departureTime)} → ${fmtTime(flight.arrivalTime)}${fmtDateFromISO(flight.departureTime) ? ` · ${fmtDateFromISO(flight.departureTime)}` : ""}`
+        : "";
+
+      openBookingHandoffModal({
+        portal,
+        url,
+        code: code || null,
+        legs: [{ label: "Your flight", summary: legSummary }]
+      });
+    });
+  });
 
     body.querySelectorAll(".otherOffersInlineBtn").forEach((btn) => {
   btn.onclick = () => {
@@ -3930,7 +4018,15 @@ function bookSelectedRoundTripBestPortal() {
   const url = bestInfo.bookingUrl || buildPortalBookingUrl(bestInfo.portal);
 
   if (url) {
-    window.open(url, "_blank", "noopener,noreferrer");
+    openBookingHandoffModal({
+      portal: bestInfo.portal,
+      url,
+      code: bestInfo.code || null,
+      legs: [
+        { label: selectedTripRouteLabel("out"), summary: selectedFlightSummary(selectedOutboundFlight, "out") },
+        { label: selectedTripRouteLabel("ret"), summary: selectedFlightSummary(selectedReturnFlight, "ret") }
+      ]
+    });
     return;
   }
 
@@ -5753,7 +5849,12 @@ function renderList(el, items, direction = "out") {
 
       const href = buildPortalSearchUrl(portal, lastSearchPayload);
       if (href) {
-        window.open(href, "_blank", "noopener,noreferrer");
+        openBookingHandoffModal({
+          portal,
+          url: href,
+          code: flight.bestDeal?.applied ? (flight.bestDeal?.code || null) : null,
+          legs: [{ label: "Your flight", summary: selectedFlightSummary(flight) }]
+        });
       } else {
         showPortalCompare(flight);
       }
@@ -6155,6 +6256,12 @@ toggleReturn();
   pmClose?.addEventListener("click", closePaymentModal);
   paymentModal?.addEventListener("click", (e) => {
     if (e.target === paymentModal) closePaymentModal();
+  });
+
+  const bookingHandoffModal = document.getElementById("bookingHandoffModal");
+  document.getElementById("bookingHandoffClose")?.addEventListener("click", closeBookingHandoffModal);
+  bookingHandoffModal?.addEventListener("click", (e) => {
+    if (e.target === bookingHandoffModal) closeBookingHandoffModal();
   });
 
   pmClear?.addEventListener("click", () => {

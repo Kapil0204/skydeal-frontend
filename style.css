@@ -10850,3 +10850,71 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   color: var(--white);
 }
 
+/* Booking handoff modal: a quick "here's what you picked, here's your
+   code" pause before handing off to the portal in a new tab. Kept small
+   (unlike .modal-content.wide) since it's one flight and a few lines of
+   text, not a comparison table. */
+.modal-content.narrow {
+  width: min(440px, 92vw);
+}
+
+.booking-handoff-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.booking-handoff-leg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.booking-handoff-leg-label {
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.booking-handoff-leg-summary {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Same purple-callout language as .sky-payment-nudge/.pm-offer-disclaimer
+   so this reads as one consistent "heads up" voice across the app. */
+.booking-handoff-code-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(168, 85, 247, 0.09);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.booking-handoff-code-note strong {
+  color: var(--white);
+}
+
+.booking-handoff-code-note code {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm, 6px);
+  padding: 2px 6px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.booking-handoff-code-note-plain {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.booking-handoff-continue {
+  width: 100%;
+}
+
