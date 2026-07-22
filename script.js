@@ -2935,13 +2935,17 @@ function renderGuideSuggestionCardHtml(s, idx) {
 
   return `
     <div class="payment-guide-suggestion">
-      ${labelBadge}
-      ${priceTransition}
-      <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
-      ${suggestionMessage ? `<div class="payment-guide-suggestion-message">${suggestionMessage}</div>` : ""}
-      <div class="payment-guide-suggestion-actions">
-        <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${s.primaryActionLabel || "Add"}</button>
-        <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not for me</button>
+      <div class="payment-guide-suggestion-row">
+        <div class="payment-guide-suggestion-text">
+          ${labelBadge}
+          ${priceTransition}
+          <div class="payment-guide-suggestion-heading">${s.heading || ""}</div>
+          ${suggestionMessage ? `<div class="payment-guide-suggestion-message">${suggestionMessage}</div>` : ""}
+        </div>
+        <div class="payment-guide-suggestion-actions">
+          <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${s.primaryActionLabel || "Add"}</button>
+          <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not for me</button>
+        </div>
       </div>
     </div>
   `;

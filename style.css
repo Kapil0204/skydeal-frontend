@@ -10375,6 +10375,44 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+/* Same "text left, actions right" row the accepted/resting states
+   already use - the live suggestion card (badge + price + heading +
+   message, stacked on top of a full-height Add button and a second
+   full-height dismiss link) never got this treatment, so it stayed
+   the tallest state despite being the most commonly seen one. */
+.price-intel-hero .payment-guide-suggestion-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.price-intel-hero .payment-guide-suggestion-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.price-intel-hero .payment-guide-suggestion-text .payment-guide-suggestion-message {
+  margin-bottom: 0;
+}
+
+.price-intel-hero .payment-guide-suggestion-actions {
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.price-intel-hero .payment-guide-dismiss-btn {
+  width: auto;
+}
+
+.price-intel-hero .payment-guide-suggestion-actions .payment-guide-add-btn {
+  align-self: center;
+}
+
 .price-intel-hero .payment-guide-multi-heading {
   position: relative;
   color: #ffffff;
