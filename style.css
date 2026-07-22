@@ -10830,3 +10830,15 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(147, 51, 234, 0.35);
 }
+
+/* Payment modal: sets expectations once for the whole list instead of
+   re-litigating "will this actually apply?" on every single row's
+   offer-count badge. */
+.pm-offer-disclaimer {
+  margin: 10px 0 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: var(--fs-2xs);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+}

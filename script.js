@@ -73,7 +73,7 @@ const MASTER_PAYMENT_CATALOG = {
     "Federal Bank",
     "Bank of Baroda",
     "OneCard",
-    "Other Credit Card"
+    "Other"
   ],
   "Debit Card": [
     "HDFC Bank",
@@ -88,7 +88,7 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
-    "Other Debit Card"
+    "Other"
   ],
   "Net Banking": [
     "HDFC Bank",
@@ -103,7 +103,7 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
-    "Other Net Banking"
+    "Other"
   ],
   "UPI": [
     "Google Pay",
@@ -111,14 +111,14 @@ const MASTER_PAYMENT_CATALOG = {
     "Paytm UPI",
     "CRED",
     "BHIM",
-    "Other UPI"
+    "Other"
   ],
   "Wallet": [
     "Amazon Pay",
     "Paytm Wallet",
     "MobiKwik",
     "Freecharge",
-    "Other Wallet"
+    "Other"
   ],
   "EMI": [
     "HDFC Bank",
@@ -133,7 +133,7 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
-    "Other EMI"
+    "Other"
   ]
 };
 const EMI_TENURE_OPTIONS = [3, 6, 9, 12, 18, 24];
@@ -236,8 +236,8 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
   "OneCard": [
     "OneCard"
   ],
-  "Other Credit Card": [
-    "Other Credit Card"
+  "Other": [
+    "Other"
   ]
 };
 
@@ -254,7 +254,7 @@ const DEBIT_CARD_TYPE_OPTIONS_BY_BANK = {
   "Yes Bank": ["Classic", "Platinum", "Other Yes Bank Debit Card"],
   "Federal Bank": ["Classic", "Visa Platinum", "Other Federal Debit Card"],
   "Bank of Baroda": ["Classic", "Platinum", "Other Bank of Baroda Debit Card"],
-  "Other Debit Card": ["Other Debit Card"]
+  "Other": ["Other"]
 };
 
 const CORPORATE_OPTIONS = [
@@ -1676,17 +1676,17 @@ function paymentMethodDisplayLabel(pm) {
 }
 
 function getCardTypeOptionsForPaymentMethod(pm) {
-  if (!pm) return ["Other Card"];
+  if (!pm) return ["Other"];
 
   if (pm.type === "Credit Card") {
-    return CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other Credit Card"];
+    return CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other"];
   }
 
   if (pm.type === "Debit Card") {
-    return DEBIT_CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other Debit Card"];
+    return DEBIT_CARD_TYPE_OPTIONS_BY_BANK[pm.name] || ["Other"];
   }
 
-  return ["Other Card"];
+  return ["Other"];
 }
 
 function paymentMethodDetailSummary(pm) {
@@ -2354,8 +2354,14 @@ function renderPaymentList() {
         ? (paymentOfferCounts?.EMI?.[key] || 0)
         : 0;
       const offerCount = baseCount + emiCount;
+      // "N offers" read as a promise ("I'll get N discounts") when really
+      // it's just how many offers exist for this bank overall - most
+      // depend on route/fare conditions that aren't checked until an
+      // actual search runs, so some may not apply. "Up to" signals that
+      // without needing per-offer eligibility data we don't have here
+      // (see the disclaimer line above the list for the fuller context).
       const badge = offerCount > 0
-        ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
+        ? `<span class="pm-offer-badge">Up to ${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
         : "";
       return `
         <label class="pm-item" for="${id}">
@@ -2415,8 +2421,8 @@ function normalizePmNameForUI(name) {
   if (u === "MOBIKWIK") return "MobiKwik";
   if (u === "FREECHARGE") return "Freecharge";
   if (u === "AMAZON PAY") return "Amazon Pay";
-  if (u === "UPI" || u === "OTHER UPI") return u === "UPI" ? "UPI" : "Other UPI";
-  if (u === "EMI" || u === "OTHER EMI") return u === "EMI" ? "EMI" : "Other EMI";
+  if (u === "UPI" || u === "OTHER UPI") return u === "UPI" ? "UPI" : "Other";
+  if (u === "EMI" || u === "OTHER EMI") return u === "EMI" ? "EMI" : "Other";
 
   const ACRONYMS = new Set(["UPI", "EMI", "CRED", "SBI", "DBS", "HSBC", "AU", "IDFC", "BOB", "RBL", "IDBI", "J&K"]);
   return s
