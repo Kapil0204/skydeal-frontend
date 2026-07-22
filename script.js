@@ -2362,8 +2362,15 @@ function summarizeOfferCondition(title, rawDiscount) {
   else if (isDomestic) scope = "Domestic flights";
   else if (isIntl) scope = "International flights";
 
+  // The only piece of the title that's ever NOT already restated by the
+  // figure+scope above (e.g. "HSBC Credit Card EMI Offer on Domestic
+  // Flights" vs the plain discount offer that lands on the exact same
+  // "Domestic flights" scope line) - without this, two genuinely
+  // different offers from the same bank can render identically.
+  const isEmi = /\bemi\b/i.test(combined);
+
   const parts = [headline, scope].filter(Boolean);
-  if (parts.length > 0) return parts.join(" · ");
+  if (parts.length > 0) return `${isEmi ? "EMI · " : ""}${parts.join(" · ")}`;
 
   const fallbackSource = rawDiscount && (!title || rawDiscount.length <= title.length) ? rawDiscount : title;
   const fallback = String(fallbackSource || "").trim();
@@ -2421,11 +2428,9 @@ function renderPaymentList() {
               ${summaries
                 .map((s) => {
                   const condition = summarizeOfferCondition(s.title, s.rawDiscount);
+                  if (!condition) return "";
                   return `
-                    <div class="pm-offer-popover-item">
-                      ${s.title ? `<div class="pm-offer-popover-item-title">${safeText(s.title)}</div>` : ""}
-                      ${condition ? `<div class="pm-offer-popover-item-condition">${safeText(condition)}</div>` : ""}
-                    </div>
+                    <div class="pm-offer-popover-item">${safeText(condition)}</div>
                   `;
                 })
                 .join("")}
