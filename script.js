@@ -380,6 +380,7 @@ let editingPaymentIndex = null;
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
 let paymentOfferCounts = {}; // { "Credit Card": { "HDFC Bank": 3, ... }, ... } — how many live offers back each entry
+let paymentOfferSummaries = {}; // { "Credit Card": { "hdfc bank": [{title, rawDiscount}, ...] }, ... } — what those offers actually say
 let activePaymentType = "Credit Card";
 let includeEmiOffers = false;
 
@@ -2354,14 +2355,46 @@ function renderPaymentList() {
         ? (paymentOfferCounts?.EMI?.[key] || 0)
         : 0;
       const offerCount = baseCount + emiCount;
+      // Which offers actually back that count, so hovering/tapping the
+      // badge can show what it's counting instead of just the number -
+      // same "Up to" framing applies (this is the offer's own stated
+      // condition, not a check against any specific search).
+      const baseSummaries = paymentOfferSummaries?.[type]?.[key] || [];
+      const emiSummaries = (type === "Credit Card" && includeEmiOffers)
+        ? (paymentOfferSummaries?.EMI?.[key] || [])
+        : [];
+      const summaries = [...baseSummaries, ...emiSummaries].slice(0, 6);
+
       // "N offers" read as a promise ("I'll get N discounts") when really
       // it's just how many offers exist for this bank overall - most
       // depend on route/fare conditions that aren't checked until an
-      // actual search runs, so some may not apply. "Up to" signals that
-      // without needing per-offer eligibility data we don't have here
-      // (see the disclaimer line above the list for the fuller context).
+      // actual search runs, so some may not apply. "Up to" signals that,
+      // and tapping the badge (when we have the data) shows each offer's
+      // own condition text so there's no surprise later.
+      const popoverId = `${id}_offers`;
       const badge = offerCount > 0
-        ? `<span class="pm-offer-badge">Up to ${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
+        ? `
+          <button
+            type="button"
+            class="pm-offer-badge"
+            data-popover-target="${popoverId}"
+            aria-expanded="false"
+            ${summaries.length === 0 ? "disabled" : ""}
+          >Up to ${offerCount} offer${offerCount === 1 ? "" : "s"}</button>
+          ${summaries.length > 0 ? `
+            <div class="pm-offer-popover" id="${popoverId}">
+              <div class="pm-offer-popover-title">What ${safeText(name)}'s offers say</div>
+              ${summaries
+                .map((s) => `
+                  <div class="pm-offer-popover-item">
+                    ${s.title ? `<div class="pm-offer-popover-item-title">${safeText(s.title)}</div>` : ""}
+                    ${s.rawDiscount ? `<div class="pm-offer-popover-item-condition">${safeText(s.rawDiscount)}</div>` : ""}
+                  </div>
+                `)
+                .join("")}
+            </div>
+          ` : ""}
+        `
         : "";
       return `
         <label class="pm-item" for="${id}">
@@ -2372,7 +2405,25 @@ function renderPaymentList() {
       `;
     })
     .join("");
-   
+
+  pmList.querySelectorAll(".pm-offer-badge").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetId = btn.getAttribute("data-popover-target");
+      const popover = targetId ? document.getElementById(targetId) : null;
+      const willOpen = popover ? !popover.classList.contains("open") : false;
+
+      // Accordion: only one offer popover open at a time.
+      pmList.querySelectorAll(".pm-offer-popover.open").forEach((p) => p.classList.remove("open"));
+      pmList.querySelectorAll(".pm-offer-badge[aria-expanded='true']").forEach((b) => b.setAttribute("aria-expanded", "false"));
+
+      if (popover && willOpen) {
+        popover.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+    });
+  });
 
   pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
     cb.addEventListener("change", (e) => {
@@ -2523,6 +2574,7 @@ async function loadPaymentOptions() {
     const backendOptions = dedupePaymentOptions(data?.options || {});
     paymentOptions = mergeMasterCatalogWithBackend(backendOptions);
     paymentOfferCounts = normalizeOfferCounts(data?.offerCounts || {});
+    paymentOfferSummaries = normalizeOfferSummaries(data?.offerSummaries || {});
 
     for (const k of Object.keys(paymentOptions)) {
       const arr = Array.isArray(paymentOptions[k]) ? paymentOptions[k] : [];
@@ -2549,6 +2601,7 @@ async function loadPaymentOptions() {
     // Safe fallback: still show master catalog even if backend call fails
     paymentOptions = mergeMasterCatalogWithBackend({});
     paymentOfferCounts = {};
+    paymentOfferSummaries = {};
     renderPaymentTabs();
     updatePaymentButtonLabel();
   }
@@ -2566,6 +2619,25 @@ function normalizeOfferCounts(rawOfferCounts) {
       if (!displayName) continue;
       const key = displayName.toLowerCase();
       normalized[key] = (normalized[key] || 0) + (Number(count) || 0);
+    }
+    out[type] = normalized;
+  }
+  return out;
+}
+
+// Same re-keying as normalizeOfferCounts, but concatenating summary
+// arrays (instead of summing numbers) when multiple raw spellings
+// collapse into one displayed bank name.
+function normalizeOfferSummaries(rawOfferSummaries) {
+  const out = {};
+  for (const [type, bankSummaries] of Object.entries(rawOfferSummaries || {})) {
+    const normalized = {};
+    for (const [rawBank, summaries] of Object.entries(bankSummaries || {})) {
+      const displayName = normalizePmNameForUI(rawBank);
+      if (!displayName) continue;
+      const key = displayName.toLowerCase();
+      const list = Array.isArray(summaries) ? summaries : [];
+      normalized[key] = [...(normalized[key] || []), ...list];
     }
     out[type] = normalized;
   }
@@ -6162,6 +6234,13 @@ toggleReturn();
   pmClose?.addEventListener("click", closePaymentModal);
   paymentModal?.addEventListener("click", (e) => {
     if (e.target === paymentModal) closePaymentModal();
+
+    // Click-outside-to-close for the offer-summary popover: anything
+    // that isn't the badge itself or inside the open popover closes it.
+    if (!e.target.closest(".pm-offer-badge") && !e.target.closest(".pm-offer-popover")) {
+      paymentModal.querySelectorAll(".pm-offer-popover.open").forEach((p) => p.classList.remove("open"));
+      paymentModal.querySelectorAll(".pm-offer-badge[aria-expanded='true']").forEach((b) => b.setAttribute("aria-expanded", "false"));
+    }
   });
 
   pmClear?.addEventListener("click", () => {

@@ -10842,3 +10842,90 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.4;
 }
+
+/* Offer-count badge became a real <button> (was a <span>) so it can
+   toggle the condition popover below without also activating the
+   row's checkbox - resets default button chrome, keeps the same look
+   the badge already had. */
+.pm-item {
+  position: relative;
+}
+
+.pm-item .pm-offer-badge {
+  appearance: none !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+}
+
+.pm-item .pm-offer-badge:disabled {
+  cursor: default !important;
+}
+
+.pm-item .pm-offer-badge:not(:disabled):hover {
+  background: rgba(5, 150, 105, 0.18) !important;
+}
+
+/* Anchored to the row, not pushed into the grid flow - a taller
+   popover would otherwise stretch every other card in the same grid
+   row (see .pm-list's 3-column grid). */
+.pm-offer-popover {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: 260px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--gray-900);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  white-space: normal;
+  text-align: left;
+  cursor: default;
+}
+
+.pm-offer-popover.open {
+  display: block;
+}
+
+.pm-offer-popover-title {
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.pm-offer-popover-item {
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pm-offer-popover-item:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.pm-offer-popover-item-title {
+  font-size: var(--fs-sm);
+  font-weight: 750;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.pm-offer-popover-item-condition {
+  margin-top: 2px;
+  font-size: var(--fs-2xs);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .pm-offer-popover {
+    width: 220px;
+  }
+}
