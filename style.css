@@ -10925,13 +10925,34 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   font-weight: 750;
   color: #ffffff;
   line-height: 1.35;
+  /* Backstop for titles that are a single long run-on marketing
+     sentence with nowhere to naturally cut - the condition line below
+     is already short (summarizeOfferCondition), this just guarantees
+     the title can't blow up the popover's height too. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .pm-offer-popover-item-condition {
   margin-top: 2px;
   font-size: var(--fs-2xs);
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.4;
+}
+
+/* Small, raised - reads as a footnote marker (like a T&C asterisk),
+   not another word-sized character sitting inline with "offers".
+   Needs 3 classes' worth of specificity, not just !important: .pm-item
+   span is ALSO !important, and its class+type selector otherwise beats
+   a plain single-class selector on specificity regardless of which
+   declared later. */
+.pm-item .pm-offer-badge .pm-offer-badge-note {
+  font-size: 9px !important;
+  vertical-align: super !important;
+  margin-left: 1px !important;
 }
 
 @media (max-width: 760px) {

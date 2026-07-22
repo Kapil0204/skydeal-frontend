@@ -2332,6 +2332,44 @@ function toggleSelected(type, name, checked) {
   updatePaymentButtonLabel();
 }
 
+// The raw title/rawDiscount text from offer_rules is marketing copy -
+// verbose, inconsistently phrased ("Grab Up to 12% Instant Discount on
+// domestic flights & hotels." vs "Flat INR 2,000 off for bookings of
+// less than INR 30,000..."). Rather than truncating that arbitrarily
+// (which reads awkwardly and can cut off mid-word), pull out just the
+// headline figure (percentage, preferred, else a flat amount) and the
+// trip scope (domestic/international) that are almost always present
+// somewhere in the text, and state them plainly - "Up to 12% off ·
+// Domestic flights". Falls back to a hard-capped raw string only when
+// neither figure nor scope can be found, so nothing renders empty.
+function summarizeOfferCondition(title, rawDiscount) {
+  const combined = `${title || ""} ${rawDiscount || ""}`;
+
+  const pctMatch = combined.match(/\b(\d{1,3})\s?%/);
+  const amtMatch = combined.match(/(?:₹|Rs\.?|INR)\s?([\d,]+)/i);
+
+  let headline = "";
+  if (pctMatch) {
+    headline = `Up to ${pctMatch[1]}% off`;
+  } else if (amtMatch) {
+    headline = `Up to ₹${amtMatch[1]} off`;
+  }
+
+  const isDomestic = /\bdomestic\b/i.test(combined);
+  const isIntl = /\binternational\b/i.test(combined);
+  let scope = "";
+  if (isDomestic && isIntl) scope = "Domestic & international flights";
+  else if (isDomestic) scope = "Domestic flights";
+  else if (isIntl) scope = "International flights";
+
+  const parts = [headline, scope].filter(Boolean);
+  if (parts.length > 0) return parts.join(" · ");
+
+  const fallbackSource = rawDiscount && (!title || rawDiscount.length <= title.length) ? rawDiscount : title;
+  const fallback = String(fallbackSource || "").trim();
+  return fallback.length > 60 ? `${fallback.slice(0, 60).trim()}…` : fallback;
+}
+
 function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
@@ -2376,17 +2414,20 @@ function renderPaymentList() {
             data-popover-target="${popoverId}"
             aria-expanded="false"
             ${summaries.length === 0 ? "disabled" : ""}
-          >${offerCount} offer${offerCount === 1 ? "" : "s"}${summaries.length > 0 ? " ★" : ""}</button>
+          >${offerCount} offer${offerCount === 1 ? "" : "s"}${summaries.length > 0 ? '<span class="pm-offer-badge-note">*</span>' : ""}</button>
           ${summaries.length > 0 ? `
             <div class="pm-offer-popover" id="${popoverId}">
               <div class="pm-offer-popover-title">What ${safeText(name)}'s offers say</div>
               ${summaries
-                .map((s) => `
-                  <div class="pm-offer-popover-item">
-                    ${s.title ? `<div class="pm-offer-popover-item-title">${safeText(s.title)}</div>` : ""}
-                    ${s.rawDiscount ? `<div class="pm-offer-popover-item-condition">${safeText(s.rawDiscount)}</div>` : ""}
-                  </div>
-                `)
+                .map((s) => {
+                  const condition = summarizeOfferCondition(s.title, s.rawDiscount);
+                  return `
+                    <div class="pm-offer-popover-item">
+                      ${s.title ? `<div class="pm-offer-popover-item-title">${safeText(s.title)}</div>` : ""}
+                      ${condition ? `<div class="pm-offer-popover-item-condition">${safeText(condition)}</div>` : ""}
+                    </div>
+                  `;
+                })
                 .join("")}
             </div>
           ` : ""}
