@@ -2765,6 +2765,13 @@ async function repriceAndRenderFlights() {
 // applyPaymentSuggestion).
 async function syncPaymentMethodsPostSearch() {
   guideAwaitingManualRecheck = false;
+  // Show the banner's loading state immediately, in step with the flight
+  // cards' own spinners - fetchPaymentSuggestions() only sets this itself
+  // once repriceAndRenderFlights() below has already finished, which made
+  // the banner flip to "loading" only after prices had already visibly
+  // changed (founder catch, 2026-07-22).
+  paymentGuideState = "loading";
+  renderPaymentGuideCard();
   await repriceAndRenderFlights();
   await fetchPaymentSuggestions();
 }
@@ -2889,16 +2896,28 @@ function renderGuideOptimisedHtml() {
         <div class="payment-guide-optimised-title">We couldn't finish checking in time</div>
         <div class="payment-guide-optimised-sub">We checked what we could before timing out, but didn't get through every option - there may still be a better way to pay.</div>
         ${summaryLine}
-        <button type="button" class="payment-guide-check-more-btn">Check again</button>
+        <button type="button" class="payment-guide-check-more-btn" data-guide-action="retry">Check again</button>
       </div>
     `;
   }
 
+  // Same "no further savings available" conclusion as the resting state
+  // renderGuideAcceptedHtml falls back to once its transient note fades -
+  // shared rendering so both paths (fresh check vs. post-accept) always
+  // look and behave identically, including always offering a way to add
+  // another payment method instead of sometimes dead-ending here.
+  return renderGuideOptimisedRestingHtml(summaryLine);
+}
+
+function renderGuideOptimisedRestingHtml(summaryLine) {
   return `
-    <div class="payment-guide-optimised">
-      <div class="payment-guide-optimised-title">You've already got the best price</div>
-      <div class="payment-guide-optimised-sub">We checked every other way to pay - this is already your best price.</div>
-      ${summaryLine}
+    <div class="payment-guide-success-row">
+      <div class="payment-guide-success-text">
+        <div class="payment-guide-success-heading">You've already got the best price</div>
+        <div class="payment-guide-success-message payment-guide-resting-message">We checked every other way to pay - add another card, UPI app, or wallet to see if it saves you more.</div>
+        ${summaryLine || ""}
+      </div>
+      <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
     </div>
   `;
 }
@@ -2990,41 +3009,32 @@ function renderGuideSuggestionsHtml(visible) {
 }
 
 function renderGuideAcceptedHtml() {
-  let notePart = "";
-
-  if (guideAcceptedNote) {
-    // Price line leads right after the heading, ahead of the descriptive
-    // sentence - the transformed price is the actual win, so it gets seen
-    // first (founder feedback, 2026-07-21).
-    const priceLine =
-      guideAcceptedNote.previousBestPrice != null && guideAcceptedNote.newBestPrice != null
-        ? `<div class="payment-guide-success-prices">${money(guideAcceptedNote.previousBestPrice)} → ${money(guideAcceptedNote.newBestPrice)}</div>`
-        : "";
-
-    notePart = `
-      <div class="payment-guide-success-text">
-        <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
-        ${priceLine}
-        ${guideAcceptedNote.message ? `<div class="payment-guide-success-message">${guideAcceptedNote.message}</div>` : ""}
-      </div>
-    `;
-  } else {
+  if (!guideAcceptedNote) {
     // Once the transient success note fades (see applyPaymentSuggestion's
-    // 4s timer), this is the resting state until the user explicitly
-    // checks again - give it quiet framing instead of a bare button.
-    notePart = `
-      <div class="payment-guide-success-text">
-        <div class="payment-guide-success-heading">You're on your best price right now</div>
-        <div class="payment-guide-success-message payment-guide-resting-message">Add another card, UPI app, or wallet to see if it saves you more.</div>
-      </div>
-    `;
+    // 4s timer), this means exactly the same thing as a fresh check
+    // finding nothing further - shared rendering with
+    // renderGuideOptimisedHtml so both paths always look and behave
+    // identically, including always offering a way to add another
+    // payment method instead of sometimes dead-ending here (founder
+    // catch, 2026-07-22). No facts line here - lastGuideSummary/
+    // lastGuideCurrentBestPrice reflect the check from *before* whatever
+    // suggestion was just accepted, not the current state, so showing
+    // them here would be stale.
+    return renderGuideOptimisedRestingHtml();
   }
+
+  // Price line leads right after the heading, ahead of the descriptive
+  // sentence - the transformed price is the actual win, so it gets seen
+  // first (founder feedback, 2026-07-21).
+  const priceLine =
+    guideAcceptedNote.previousBestPrice != null && guideAcceptedNote.newBestPrice != null
+      ? `<div class="payment-guide-success-prices">${money(guideAcceptedNote.previousBestPrice)} → ${money(guideAcceptedNote.newBestPrice)}</div>`
+      : "";
 
   // Wrapped in a row (text left, action right) rather than stacked, so
   // the hero's full width gets used on purpose instead of leaving most
   // of it empty next to a narrow column of text (founder catch,
-  // 2026-07-21 - the resting state especially, which is what's visible
-  // most of the time between searches).
+  // 2026-07-21).
   //
   // This button opens the payment modal rather than silently re-running
   // the same check with the same payment methods - once we've told the
@@ -3033,8 +3043,12 @@ function renderGuideAcceptedHtml() {
   // lever, so that's what this offers (founder catch, 2026-07-22).
   return `
     <div class="payment-guide-success-row">
-      ${notePart}
-      <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn">Add more ways to pay</button>
+      <div class="payment-guide-success-text">
+        <div class="payment-guide-success-heading">${guideAcceptedNote.heading}</div>
+        ${priceLine}
+        ${guideAcceptedNote.message ? `<div class="payment-guide-success-message">${guideAcceptedNote.message}</div>` : ""}
+      </div>
+      <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
     </div>
   `;
 }
@@ -3051,7 +3065,11 @@ function wireGuideAddMethodButton(host) {
 }
 
 function wireGuideCheckMoreButton(host) {
-  const btn = host.querySelector(".payment-guide-check-more-btn");
+  // Scoped to the retry button specifically - .payment-guide-check-more-btn
+  // alone is shared with the "Add more ways to pay" button (same visual
+  // style, different action), and both can be wired from the same render
+  // path (see renderGuideOptimisedHtml's call site).
+  const btn = host.querySelector('.payment-guide-check-more-btn[data-guide-action="retry"]');
   if (!btn || btn.dataset.wired) return;
   btn.dataset.wired = "1";
 
@@ -3171,7 +3189,10 @@ function renderPaymentGuideCardInner() {
     if (visible.length === 0) {
       container.classList.add("guide-replacing");
       setGuideDynamicHtml(dynamicHost, renderGuideOptimisedHtml());
+      // Exactly one of these finds its button and wires it - which one
+      // depends on lastGuideTruncated (see renderGuideOptimisedHtml).
       wireGuideCheckMoreButton(dynamicHost);
+      wireGuideAddMethodButton(dynamicHost);
       return;
     }
 
