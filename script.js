@@ -3015,7 +3015,7 @@ function renderGuideAcceptedHtml() {
     notePart = `
       <div class="payment-guide-success-text">
         <div class="payment-guide-success-heading">You're on your best price right now</div>
-        <div class="payment-guide-success-message payment-guide-resting-message">Want us to check for other ways to pay?</div>
+        <div class="payment-guide-success-message payment-guide-resting-message">Add another card, UPI app, or wallet to see if it saves you more.</div>
       </div>
     `;
   }
@@ -3025,12 +3025,29 @@ function renderGuideAcceptedHtml() {
   // of it empty next to a narrow column of text (founder catch,
   // 2026-07-21 - the resting state especially, which is what's visible
   // most of the time between searches).
+  //
+  // This button opens the payment modal rather than silently re-running
+  // the same check with the same payment methods - once we've told the
+  // user they're already on their best price, "check for more options"
+  // had nothing new to check. Adding a payment method is the actual
+  // lever, so that's what this offers (founder catch, 2026-07-22).
   return `
     <div class="payment-guide-success-row">
       ${notePart}
-      <button type="button" class="payment-guide-check-more-btn">Check for more options</button>
+      <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn">Add more ways to pay</button>
     </div>
   `;
+}
+
+function wireGuideAddMethodButton(host) {
+  const btn = host.querySelector(".payment-guide-add-method-btn");
+  if (!btn || btn.dataset.wired) return;
+  btn.dataset.wired = "1";
+
+  btn.addEventListener("click", () => {
+    if (guideSearchSummary) guideSearchSummary.manuallyCheckedForMore = true;
+    openPaymentModal();
+  });
 }
 
 function wireGuideCheckMoreButton(host) {
@@ -3132,7 +3149,7 @@ function renderPaymentGuideCardInner() {
   if (guideAwaitingManualRecheck) {
     container.classList.add("guide-replacing");
     setGuideDynamicHtml(dynamicHost, renderGuideAcceptedHtml());
-    wireGuideCheckMoreButton(dynamicHost);
+    wireGuideAddMethodButton(dynamicHost);
     return;
   }
 
