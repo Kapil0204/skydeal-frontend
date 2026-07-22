@@ -10765,3 +10765,56 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border-bottom-right-radius: var(--radius-md);
   padding: 4px 14px 10px;
 }
+
+/* =========================================================
+   Flight-card polish round 2: group the timing trio, align
+   round-trip's text weight with one-way's, fix the compare-portals
+   CTA hover.
+   ========================================================= */
+
+/* The middle column used to be 1fr (stretches to fill all leftover
+   row width), which is why duration/stops floated in a big empty gap
+   between the two times instead of reading as one group. Auto-sized
+   columns + a fixed gap pack the trio close together, and centering
+   the whole cluster within its grid area puts the leftover space
+   outside the group (airline<->group, group<->price) instead of
+   inside it. */
+.timeStopsRow.tile-mode {
+  grid-template-columns: auto auto auto !important;
+  column-gap: 22px !important;
+  justify-content: center !important;
+}
+
+/* Round-trip cards kept an older, separate set of rules that was
+   never updated when the one-way hierarchy above was rebalanced -
+   .stops was still font-weight:850 (near as bold as the times
+   themselves) instead of the quieter, secondary treatment. Brought
+   in line so both formats read the same way. */
+.pro-results.round-trip-results-mode .times {
+  font-weight: 800 !important;
+  color: var(--gray-900) !important;
+}
+
+.pro-results.round-trip-results-mode .stops {
+  font-weight: 600 !important;
+  font-size: var(--fs-2xs) !important;
+  color: var(--gray-500) !important;
+}
+
+/* Compare-portals modal: hovering anywhere on the row was fading the
+   "Book with X" button to a near-transparent white, so scanning the
+   list made the primary CTA look disabled rather than clickable.
+   Row-hover no longer touches it; the button gets its own real hover
+   state instead (deeper purple + a slight lift), same language the
+   rest of the site's buttons already use. */
+.portalRow:hover .portalLinkBelowPrice {
+  background: rgba(168, 85, 247, 0.92) !important;
+  color: #ffffff !important;
+  border-color: rgba(168, 85, 247, 0.92) !important;
+}
+
+.portalLinkBelowPrice:hover {
+  background: rgba(147, 51, 234, 1) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(147, 51, 234, 0.35);
+}
