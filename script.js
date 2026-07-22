@@ -2479,8 +2479,16 @@ function mergeMasterCatalogWithBackend(backendOptions) {
       }
     }
 
-    // ✅ NEW: alphabetical sorting (case-insensitive, clean UX)
-    finalList.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    // Alphabetical sorting (case-insensitive), with the catch-all "Other
+    // X" entry always pinned to the end instead of wherever "O" happens
+    // to fall - it's a fallback for "none of these apply to me", not a
+    // bank name to scan alongside the rest.
+    finalList.sort((a, b) => {
+      const aOther = /^other\b/i.test(a);
+      const bOther = /^other\b/i.test(b);
+      if (aOther !== bOther) return aOther ? 1 : -1;
+      return a.localeCompare(b, undefined, { sensitivity: "base" });
+    });
 
     merged[type] = finalList;
   }
