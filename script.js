@@ -1661,15 +1661,44 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = "https://www.cleartrip.com/flights";
     }
   } else if (portal.includes("ixigo")) {
-    // ixigo's real route-based results page, confirmed live (2026-07):
-    // /cheap-flights/{from-city}-{to-city}-{FROM}-{TO} — e.g.
-    // /cheap-flights/mumbai-goa-bom-goi. Unlike the other 5 portals' URLs,
-    // this one does not encode date/passengers/trip-type in the query string;
-    // the results page defaults to a near-future date and lets the user pick
-    // from date tabs client-side. Still a real pre-filled route (not a bare
-    // homepage), same graceful-degradation tier as the other portals' one-way
-    // fallback URLs when full pre-fill isn't available.
-    if (from && to) {
+    // Real results endpoint, confirmed from an actual ixigo search
+    // (2026-07): /search/result/flight?from=..&to=..&date=DDMMYYYY
+    // [&returnDate=DDMMYYYY]&adults=..&children=..&infants=..&class=e -
+    // date has no separators (e.g. 28072026), unlike every other portal's
+    // DD/MM/YYYY. Supersedes the old /cheap-flights/{slug} route page,
+    // which never carried date/passengers and left the user to reselect
+    // the date themselves once there.
+    const departDdmmyyyy = departDmy.replace(/\//g, "");
+    const retDdmmyyyy = retDmy.replace(/\//g, "");
+
+    if (hasRoundTrip) {
+      const params = new URLSearchParams({
+        from,
+        to,
+        date: departDdmmyyyy,
+        returnDate: retDdmmyyyy,
+        adults: String(adults),
+        children: "0",
+        infants: "0",
+        class: "e",
+        source: "Search Form",
+        utm_source: "seo"
+      });
+      url = `https://www.ixigo.com/search/result/flight?${params.toString()}`;
+    } else if (hasOneWay) {
+      const params = new URLSearchParams({
+        from,
+        to,
+        date: departDdmmyyyy,
+        adults: String(adults),
+        children: "0",
+        infants: "0",
+        class: "e",
+        source: "Search Form",
+        utm_source: "seo"
+      });
+      url = `https://www.ixigo.com/search/result/flight?${params.toString()}`;
+    } else if (from && to) {
       url = `https://www.ixigo.com/cheap-flights/${fromMeta.ixigo}-${toMeta.ixigo}-${from.toLowerCase()}-${to.toLowerCase()}`;
     } else {
       url = "https://www.ixigo.com/flights";
