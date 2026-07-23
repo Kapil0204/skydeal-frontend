@@ -1441,23 +1441,6 @@ function skydealPortalAirportMeta(iata) {
   };
 }
 
-function skydealCompactYmd(dateValue) {
-  if (!dateValue) return "";
-
-  const d = new Date(dateValue);
-
-  if (Number.isNaN(d.getTime())) {
-    const parts = String(dateValue).split("-");
-    if (parts.length === 3) return `${parts[0]}${parts[1]}${parts[2]}`;
-    return "";
-  }
-
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-
-  return `${yyyy}${mm}${dd}`;
-}
 
 function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
   const portal = String(portalName || "").toLowerCase();
@@ -1488,8 +1471,6 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
 
   const departDmy = formatDateForMmtUrl(depart);
   const retDmy = formatDateForMmtUrl(ret);
-  const departYmd = skydealCompactYmd(depart);
-  const retYmd = skydealCompactYmd(ret);
 
   const fromMeta = skydealPortalAirportMeta(from);
   const toMeta = skydealPortalAirportMeta(to);
@@ -1514,10 +1495,38 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = "https://www.makemytrip.com/flights/";
     }
   } else if (portal.includes("goibibo")) {
-    if (from && to && departYmd && retYmd) {
-      url = `https://www.goibibo.com/flights/air-${from}-${to}-${departYmd}-${retYmd}-${adults}-0-0-E-D/`;
-    } else if (from && to && departYmd) {
-      url = `https://www.goibibo.com/flights/air-${from}-${to}-${departYmd}-${adults}-0-0-E-D/`;
+    // The old "pretty slug" (/flights/air-FROM-TO-date1-date2-.../) only
+    // works when both dates are present - a one-way search (no return
+    // date) doesn't match any route Goibibo's server recognizes and
+    // silently falls back to their homepage with an unrelated default
+    // route. Confirmed live (2026-07) that the pretty slug is itself just
+    // a redirector into this real results endpoint - Goibibo and
+    // MakeMyTrip share the same booking platform (post-merger), so it
+    // uses the exact same tripType/itinerary/paxType shape as the MMT
+    // branch above. Going straight here (skipping the fragile slug)
+    // works for both one-way and round-trip.
+    if (hasRoundTrip) {
+      const params = new URLSearchParams({
+        tripType: "R",
+        itinerary: `${from}-${to}-${departDmy}_${to}-${from}-${retDmy}`,
+        paxType: `A-${adults}_C-0_I-0`,
+        cabinClass: "E",
+        intl: "false",
+        ccde: "IN",
+        lang: "eng"
+      });
+      url = `https://www.goibibo.com/flight/search/?${params.toString()}`;
+    } else if (hasOneWay) {
+      const params = new URLSearchParams({
+        tripType: "O",
+        itinerary: `${from}-${to}-${departDmy}`,
+        paxType: `A-${adults}_C-0_I-0`,
+        cabinClass: "E",
+        intl: "false",
+        ccde: "IN",
+        lang: "eng"
+      });
+      url = `https://www.goibibo.com/flight/search/?${params.toString()}`;
     } else {
       url = "https://www.goibibo.com/flights/";
     }
