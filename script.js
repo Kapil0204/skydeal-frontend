@@ -4253,9 +4253,7 @@ function formatCompactTripBestSummary() {
     return `
       <div class="sky-trip-compact-summary is-loading">
         <div class="sky-trip-compact-main">
-          <div class="sky-trip-compact-eyebrow">Checking offers</div>
-          <div class="sky-trip-compact-title">Comparing portal-wise prices...</div>
-          <div class="sky-trip-compact-sub">Checking fares and payment offers for your selected flights.</div>
+          <div class="sky-trip-compact-title">Comparing prices across portals…</div>
         </div>
       </div>
     `;
@@ -4277,9 +4275,7 @@ function formatCompactTripBestSummary() {
     return `
       <div class="sky-trip-compact-summary is-loading">
         <div class="sky-trip-compact-main">
-          <div class="sky-trip-compact-eyebrow">Checking offers</div>
-          <div class="sky-trip-compact-title">Calculating selected trip price...</div>
-          <div class="sky-trip-compact-sub">We’ll show the best portal once both flights are checked.</div>
+          <div class="sky-trip-compact-title">Calculating your best price…</div>
         </div>
       </div>
     `;
@@ -4290,6 +4286,20 @@ function formatCompactTripBestSummary() {
   const coupon = bestInfo.code || "";
   const saveText = bestInfo.savings > 0 ? `Save ${money(bestInfo.savings)}` : "No discount applied";
 
+  // No separate "Best price on X" eyebrow here - the book button right
+  // next to this card already names the portal ("Book with X"), and the
+  // coupon code/offer title used to repeat the same fact as its own bold
+  // line above the coupon chip. One of the two (never both) is enough.
+  const primaryLineHtml = coupon
+    ? `
+      <div class="sky-trip-compact-coupon">
+        <span>Coupon</span>
+        <strong>${safeText(coupon)}</strong>
+        <button type="button" class="copyTripCouponBtn" data-code="${safeText(coupon)}">Copy</button>
+      </div>
+    `
+    : `<div class="sky-trip-compact-title">${offerTitle}</div>`;
+
   return `
     <div class="sky-trip-compact-summary">
       <div class="sky-trip-compact-price">
@@ -4299,24 +4309,11 @@ function formatCompactTripBestSummary() {
       </div>
 
       <div class="sky-trip-compact-main">
-        <div class="sky-trip-compact-eyebrow">Best price on ${safeText(bestInfo.portal)}</div>
-        <div class="sky-trip-compact-title">${offerTitle}</div>
+        ${primaryLineHtml}
         <div class="sky-trip-compact-sub">
           <span class="sky-trip-save-pill">${saveText}</span>
           <span>${paymentText}</span>
         </div>
-
-        ${
-          coupon
-            ? `
-              <div class="sky-trip-compact-coupon">
-                <span>Coupon</span>
-                <strong>${safeText(coupon)}</strong>
-                <button type="button" class="copyTripCouponBtn" data-code="${safeText(coupon)}">Copy</button>
-              </div>
-            `
-            : ""
-        }
       </div>
     </div>
   `;
@@ -5451,7 +5448,13 @@ function renderSelectedTripPanel() {
         <div class="sky-trip-bar-title-row">
           <div class="sky-trip-bar-kicker">Selected trip</div>
           <div class="sky-trip-bar-status">
-            ${ready ? "Best price calculated for the flights you selected." : "Select one departure and one return flight."}
+            ${
+              !ready
+                ? "Select one departure and one return flight."
+                : selectedTripCompareLoading
+                  ? "Checking your best price…"
+                  : "Best price calculated for the flights you selected."
+            }
           </div>
         </div>
 
