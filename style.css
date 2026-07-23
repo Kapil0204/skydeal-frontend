@@ -7942,6 +7942,15 @@ body #selectedTripPanel .sky-trip-compact-base {
   font-weight: 800 !important;
 }
 
+/* Deliberately small/quiet, same treatment as the flight-card version -
+   a tie is a minor footnote, not something competing with the price. */
+body #selectedTripPanel .sky-trip-compact-tied-note {
+  margin-top: 3px !important;
+  font-size: var(--fs-3xs) !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  font-weight: 600 !important;
+}
+
 body #selectedTripPanel .sky-trip-compact-main {
   min-width: 0 !important;
 }
@@ -10772,6 +10781,15 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .bestDealMeta {
   color: var(--gray-500) !important;
   font-weight: 500 !important;
+}
+
+/* Deliberately small/quiet - a tie is a minor footnote to the price
+   above it, not something that should compete for attention. */
+.bestDealTiedNote {
+  font-size: var(--fs-3xs) !important;
+  color: var(--gray-400, #98a2b3) !important;
+  font-weight: 500 !important;
+  margin-top: 2px !important;
 }
 
 .bestDealSave {

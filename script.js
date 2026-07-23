@@ -868,6 +868,10 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
   const showType = type && type.toLowerCase() !== "payment offer";
   const showCouponChip = !isRoundTripLeg;
   const portalLine = `Best price on ${portal}`;
+  const tiedWith = Array.isArray(bestDeal.tiedWithPortals) ? bestDeal.tiedWithPortals : [];
+  const tiedNote = tiedWith.length > 0
+    ? `<div class="bestDealTiedNote">Same price on ${tiedWith.map((p) => safeText(p)).join(", ")}</div>`
+    : "";
 
   return `
     <div class="bestDealBanner">
@@ -875,6 +879,7 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
         <div>
           <div class="bestDealTop">${finalPrice}</div>
           <div class="bestDealPortal">${portalLine}</div>
+          ${tiedNote}
         </div>
         ${savings > 0 ? `<div class="bestDealSave">Save ${money(savings)}</div>` : ""}
         ${radioHtml}
@@ -4009,6 +4014,7 @@ function getBestTripPortalInfo() {
     rawDiscount: best.rawDiscount || matchingPortal?.rawDiscount || "",
     appliedDiscountText: best.appliedDiscountText || matchingPortal?.appliedDiscountText || "",
     explain: best.explain || matchingPortal?.explain || "",
+    tiedWithPortals: best.tiedWithPortals || matchingPortal?.tiedWithPortals || null,
     bookingUrl:
       best.bookingUrl ||
       best.url ||
@@ -4285,6 +4291,10 @@ function formatCompactTripBestSummary() {
   const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment option";
   const coupon = bestInfo.code || "";
   const saveText = bestInfo.savings > 0 ? `Save ${money(bestInfo.savings)}` : "No discount applied";
+  const tiedWith = Array.isArray(bestInfo.tiedWithPortals) ? bestInfo.tiedWithPortals : [];
+  const tiedNote = tiedWith.length > 0
+    ? `<div class="sky-trip-compact-tied-note">Same price on ${tiedWith.map((p) => safeText(p)).join(", ")}</div>`
+    : "";
 
   // No separate "Best price on X" eyebrow here - the book button right
   // next to this card already names the portal ("Book with X"), and the
@@ -4306,6 +4316,7 @@ function formatCompactTripBestSummary() {
         <div class="sky-trip-compact-price-label">Best price</div>
         <div class="sky-trip-compact-price-value">${money(bestInfo.finalPrice)}</div>
         <div class="sky-trip-compact-base">Base fare <s>${money(bestInfo.baseTotal)}</s></div>
+        ${tiedNote}
       </div>
 
       <div class="sky-trip-compact-main">
