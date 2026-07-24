@@ -391,6 +391,12 @@ let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
 
+// Bumped on every new search; a page-2 prefetch (see prefetchNextPage)
+// captures the value at kickoff and checks it still matches before
+// merging results in, so a stale prefetch from an abandoned search can
+// never clobber a newer search's results.
+let searchGeneration = 0;
+
 // Phase 1 intelligent payment guide state.
 let paymentGuideState = "idle"; // idle | loading | ready | error
 // Which step the "loading" banner is currently describing - "repricing"
@@ -6142,6 +6148,60 @@ function toggleReturn() {
   }
 }
 
+// Fetches page 2 (flights ranked 41-80) in the background and appends it
+// to the already-rendered page-1 results, so clicking "Next" past the
+// existing pages feels instant instead of triggering a fresh wait. Never
+// awaited by its caller - a slow or failed prefetch must not affect the
+// page-1 results already on screen.
+//
+// applyFlightFilters() already filters over the FULL outboundAll/returnAll
+// array (not just the current page), so once page 2 is merged in here, any
+// filter the user applies automatically searches across both pages for
+// free - the only extra step needed is refreshing the filter CHECKBOX
+// LIST itself (renderAirlineFilters/renderAirportFilters), since a carrier
+// that only appears in page 2 (e.g. Air India Express on a busy route)
+// wouldn't otherwise show up as a filter option at all.
+async function prefetchNextPage(basePayload, generation) {
+  try {
+    const res = await fetchWithTimeout(`${BACKEND}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...basePayload, page: 2 }),
+    }, 90000);
+
+    // A newer search may have started (and bumped searchGeneration) while
+    // this was in flight - discard this page's results if so, since
+    // outboundAll/returnAll now belong to a different search entirely.
+    if (generation !== searchGeneration || !res.ok) return;
+
+    const json = await res.json();
+    if (generation !== searchGeneration) return;
+
+    const nextOutbound = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
+    const nextReturn = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
+
+    if (!nextOutbound.length && !nextReturn.length) return;
+
+    if (nextOutbound.length) {
+      outboundAll = outboundAll.concat(nextOutbound);
+      renderPager("out");
+    }
+    if (nextReturn.length) {
+      returnAll = returnAll.concat(nextReturn);
+      renderPager("ret");
+    }
+
+    // Refresh the filter option lists so a carrier/airport that only
+    // appeared in page 2 becomes selectable - the currently-active
+    // filters themselves (activeFilters.*) are untouched, so anything the
+    // user already selected stays selected.
+    renderAirlineFilters();
+    renderAirportFilters();
+  } catch (err) {
+    console.warn("[SkyDeal] page-2 prefetch failed (non-fatal)", err);
+  }
+}
+
 async function handleSearch(e) {
   tagMobileSearchFieldWrappers();
   e?.preventDefault?.();
@@ -6193,6 +6253,8 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     alert("Return date cannot be before departure date.");
     return;
   }
+
+  const thisSearchGeneration = ++searchGeneration;
 
   setSearchButtonLoading(true);
   renderSearchLoadingState();
@@ -6298,6 +6360,16 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     // successful search - the only path a mobile user actually takes
     // most of the time.
     renderMobileQuickFilters();
+
+    // Fire-and-forget: if the backend says there's a page 2 (ranks 41-80)
+    // for either leg, fetch it in the background now rather than waiting
+    // for the user to click "Next" - see FLIGHTAPI_CARRIER_PRICING_AUDIT_2026-07.md
+    // for why a lower-frequency carrier can rank just past 40 and never
+    // show up without this. Deliberately not awaited: must never delay
+    // the page-1 results the user is already looking at.
+    if (json?.meta?.outHasMore || json?.meta?.retHasMore) {
+      prefetchNextPage(payload, thisSearchGeneration);
+    }
 
     dismissedSuggestionKeys.clear();
     paymentSuggestions = [];
