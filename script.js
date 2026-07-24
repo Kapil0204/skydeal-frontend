@@ -478,7 +478,7 @@ let activeFilters = {
   arrivalAirports: []
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 40;
 
 let outPageIdx = 1;
 let retPageIdx = 1;
@@ -3480,14 +3480,22 @@ function totalPages(items) {
 }
 
 function renderPager(which) {
+  const outPagesEl = document.getElementById("outPages");
+  const retPagesEl = document.getElementById("retPages");
+
   if (which === "out") {
-    const tp = totalPages(outboundAll);
+    // totalPages must reflect what's actually being shown (post-filter),
+    // not the raw fetched count - otherwise "Next" can stay enabled past
+    // the point where the filtered results actually run out.
+    const tp = totalPages(applyFlightFilters(outboundAll));
     if (outPage) outPage.textContent = String(outPageIdx);
+    if (outPagesEl) outPagesEl.textContent = String(tp);
     if (outPrev) outPrev.disabled = outPageIdx <= 1;
     if (outNext) outNext.disabled = outPageIdx >= tp;
   } else {
-    const tp = totalPages(returnAll);
+    const tp = totalPages(applyFlightFilters(returnAll));
     if (retPage) retPage.textContent = String(retPageIdx);
+    if (retPagesEl) retPagesEl.textContent = String(tp);
     if (retPrev) retPrev.disabled = retPageIdx <= 1;
     if (retNext) retNext.disabled = retPageIdx >= tp;
   }
@@ -6421,7 +6429,7 @@ toggleReturn();
     renderOutbound();
   });
   outNext?.addEventListener("click", () => {
-    outPageIdx = Math.min(totalPages(outboundAll), outPageIdx + 1);
+    outPageIdx = Math.min(totalPages(applyFlightFilters(outboundAll)), outPageIdx + 1);
     renderOutbound();
   });
 
@@ -6430,7 +6438,7 @@ toggleReturn();
     renderReturn();
   });
   retNext?.addEventListener("click", () => {
-    retPageIdx = Math.min(totalPages(returnAll), retPageIdx + 1);
+    retPageIdx = Math.min(totalPages(applyFlightFilters(returnAll)), retPageIdx + 1);
     renderReturn();
   });
 
