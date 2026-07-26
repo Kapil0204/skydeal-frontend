@@ -3511,36 +3511,71 @@ function renderPaymentGuideCardInner() {
   setGuideDynamicHtml(dynamicHost, "");
 }
 
-// Phase 3 - a small, separate, informational section (no add/dismiss
-// actions - these are read-only "when" signals, not new suggestions to
-// accept). Never shown pre-search; empty when the backend has nothing to
-// say (no timing opportunity is not an error and gets no messaging at all).
-function renderTimingInsightCardHtml(insight) {
+// Small inline clock icon (not an emoji - keeps the hero's polished,
+// slightly-fintech visual language rather than looking like a chat
+// message) used to give timing insights their own distinct identity
+// separate from the payment-method suggestion above/below them.
+const TIMING_CLOCK_ICON_SVG = `
+  <svg class="payment-timing-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M10 5.5V10L13 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+`;
+
+// Phase 3 - these are read-only "when" signals, not new suggestions to
+// accept (no add/dismiss actions). Never shown pre-search; empty when the
+// backend has nothing to say (no timing opportunity is not an error and
+// gets no messaging at all).
+//
+// Split into two visually distinct tiers rather than one undifferentiated
+// list (2026-07-25 - previously a single small, muted section trailing
+// below the main suggestion, easy to miss entirely):
+//   - "urgent" (isOfferOnlyEstimate === false, i.e. a real discount that's
+//     ACTUALLY ending) renders in its own slot ABOVE the main payment
+//     suggestion, with a stronger amber/red treatment scaled by
+//     insight.urgency - this is the single most actionable signal in the
+//     whole panel ("book today or lose this saving") and deserved to be
+//     found, not stumbled into.
+//   - "future" (isOfferOnlyEstimate === true, a forward-looking estimate -
+//     "a better rate opens up in N days") stays below the main suggestion
+//     as a secondary, exploratory signal, but now with real card styling
+//     instead of a thin divider.
+function renderTimingInsightCardHtml(insight, { urgent }) {
   const labelBadge = insight.label ? `<div class="payment-timing-label-badge">${insight.label}</div>` : "";
   const disclaimerPart = insight.disclaimer
     ? `<div class="payment-timing-disclaimer">${insight.disclaimer}</div>`
     : "";
+  const urgencyClass = urgent ? ` is-urgent urgency-${safeText(insight.urgency || "medium")}` : "";
 
   return `
-    <div class="payment-timing-insight">
-      ${labelBadge}
-      <div class="payment-timing-heading">${insight.heading || ""}</div>
-      <div class="payment-timing-message">${insight.message || ""}</div>
-      ${disclaimerPart}
+    <div class="payment-timing-insight${urgencyClass}">
+      ${TIMING_CLOCK_ICON_SVG}
+      <div class="payment-timing-body">
+        ${labelBadge}
+        <div class="payment-timing-heading">${insight.heading || ""}</div>
+        <div class="payment-timing-message">${insight.message || ""}</div>
+        ${disclaimerPart}
+      </div>
     </div>
   `;
 }
 
 function renderTimingInsights() {
-  const host = document.getElementById("paymentTimingDynamic");
-  if (!host) return;
+  const urgentHost = document.getElementById("paymentTimingUrgentDynamic");
+  const futureHost = document.getElementById("paymentTimingDynamic");
+  if (!urgentHost || !futureHost) return;
 
   if (!hasActiveSearchResults() || !Array.isArray(paymentTimingInsights) || paymentTimingInsights.length === 0) {
-    host.innerHTML = "";
+    urgentHost.innerHTML = "";
+    futureHost.innerHTML = "";
     return;
   }
 
-  host.innerHTML = paymentTimingInsights.map(renderTimingInsightCardHtml).join("");
+  const urgentInsights = paymentTimingInsights.filter((i) => i.isOfferOnlyEstimate === false);
+  const futureInsights = paymentTimingInsights.filter((i) => i.isOfferOnlyEstimate !== false);
+
+  urgentHost.innerHTML = urgentInsights.map((i) => renderTimingInsightCardHtml(i, { urgent: true })).join("");
+  futureHost.innerHTML = futureInsights.map((i) => renderTimingInsightCardHtml(i, { urgent: false })).join("");
 }
 
 // ---------- Flight Results Rendering + Pagination ----------

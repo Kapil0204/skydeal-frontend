@@ -1437,6 +1437,14 @@ h3{
   flex-direction:column;
 }
 
+/* Spaces the urgent-timing slot away from whatever renders below it
+   (the main payment suggestion) only when it actually has content -
+   :not(:empty) so an ordinary search with no ending-soon offer doesn't
+   leave a dead gap above the suggestion card. */
+#paymentTimingUrgentDynamic:not(:empty){
+  margin-bottom:14px;
+}
+
 /* flex:1 (grow to fill .filter-card's stretched height) is scoped to
    pre-search only - see the note on .payment-profile-static below for why
    applying it post-search (when .filter-card is stretched to match a long
@@ -1851,19 +1859,60 @@ h3{
   outline-offset:2px;
 }
 
-/* Phase 3 - timing insights render in their own container
-   (#paymentTimingDynamic), always below the Phase 1/2 guide states,
-   never replacing them. Quieter/neutral tone (amber accent) to read as
-   secondary, informational "when" guidance rather than a new suggestion. */
+/* Phase 3 - timing insights ("your discount ends today", "a better rate
+   opens up in 3 days"). Two tiers, two DOM slots (script.js
+   renderTimingInsights): urgent/ending ones render in
+   #paymentTimingUrgentDynamic, ABOVE the main payment suggestion - this is
+   the single most actionable signal in the panel and used to be a small
+   muted footnote below everything else, easy to miss entirely (2026-07-25
+   promotion). Future/forward-looking ones stay in #paymentTimingDynamic,
+   below the suggestion, as a secondary but still first-class card - not a
+   thin divider line anymore. */
 .payment-timing-insight{
-  margin-top:12px;
-  padding-top:12px;
-  border-top:1px solid rgba(15,23,42,0.08);
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:10px;
+  padding:12px 14px;
+  border-radius:var(--radius-md);
+  background:var(--warning-light);
+  border:1px solid rgba(217,119,6,0.18);
 }
 
-.payment-timing-insight + .payment-timing-insight{
-  margin-top:10px;
-  padding-top:10px;
+.payment-timing-insight:first-child{
+  margin-top:0;
+}
+
+.payment-timing-icon{
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  margin-top:1px;
+  color:var(--warning);
+}
+
+.payment-timing-body{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+/* Ending-family insights get a bolder treatment scaled by urgency -
+   "ends today" earns more visual weight than "ends in a few days". Both
+   still sit in the SAME slot above the suggestion; only the intensity
+   changes, so a genuinely first-class signal doesn't look identical to a
+   merely-noteworthy one. */
+.payment-timing-insight.is-urgent{
+  border-width:1.5px;
+}
+
+.payment-timing-insight.is-urgent.urgency-high{
+  background:rgba(239,68,68,0.1);
+  border-color:rgba(239,68,68,0.35);
+}
+
+.payment-timing-insight.is-urgent.urgency-high .payment-timing-icon,
+.payment-timing-insight.is-urgent.urgency-high .payment-timing-heading{
+  color:var(--danger);
 }
 
 .payment-timing-label-badge{
@@ -1876,6 +1925,11 @@ h3{
   padding:2px 8px;
   margin-bottom:6px;
   letter-spacing:.01em;
+}
+
+.payment-timing-insight.is-urgent.urgency-high .payment-timing-label-badge{
+  color:var(--danger);
+  background:rgba(239,68,68,0.14);
 }
 
 .payment-timing-heading{
@@ -10385,6 +10439,56 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 .price-intel-hero .payment-guide-old-price {
   color: rgba(255, 255, 255, 0.45);
+}
+
+/* Timing insights inside the dark hero band (desktop, post-search - see
+   ensurePricelIntelHeroPlacement-equivalent logic in script.js). The
+   light-mode card (amber/red tinted, near-black text) reads correctly on
+   white but disappears into the hero's dark navy background unstyled, so
+   these get their own translucent-on-dark treatment instead of the
+   default. Kept visually related to the base styles (same border-radius,
+   same icon, same urgency-scaling logic) - just recolored for the dark
+   ground. */
+.price-intel-hero .payment-timing-insight {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.price-intel-hero .payment-timing-insight.is-urgent.urgency-high {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.price-intel-hero .payment-timing-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.price-intel-hero .payment-timing-insight.is-urgent.urgency-high .payment-timing-icon,
+.price-intel-hero .payment-timing-insight.is-urgent.urgency-high .payment-timing-heading {
+  color: #fca5a5;
+}
+
+.price-intel-hero .payment-timing-heading {
+  color: #ffd699;
+}
+
+.price-intel-hero .payment-timing-message {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.price-intel-hero .payment-timing-label-badge {
+  color: #ffd699;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.price-intel-hero .payment-timing-insight.is-urgent.urgency-high .payment-timing-label-badge {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.price-intel-hero .payment-timing-disclaimer {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .price-intel-hero .payment-guide-success-prices {
