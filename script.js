@@ -387,6 +387,75 @@ let includeEmiOffers = false;
 // { type, name, provider, network, cardFamily, cardVariant, isCorporate, tenureMonths }
 let selectedPaymentMethods = [];
 
+// Persists the user's payment profile (methods + EMI toggle) across visits
+// via localStorage, so a returning user's FIRST search already shows their
+// real personalized price instead of requiring "Add how you pay" every
+// single time. Only ever stores method labels already visible in the UI
+// (e.g. "HDFC Bank", "UPI") - never card numbers, CVVs, or any actual
+// payment credential, so this carries no more sensitivity than a
+// "remember my preferred airline" setting.
+const PAYMENT_PROFILE_STORAGE_KEY = "skydeal_payment_profile_v1";
+// Stale profiles (e.g. a card the user no longer holds) shouldn't silently
+// resurrect forever - 180 days balances "actually useful across a normal
+// booking-research window" against "not a permanent, forgotten setting".
+const PAYMENT_PROFILE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000;
+
+function savePaymentProfileToStorage() {
+  try {
+    const payload = {
+      v: 1,
+      savedAt: Date.now(),
+      selectedPaymentMethods,
+      includeEmiOffers
+    };
+    localStorage.setItem(PAYMENT_PROFILE_STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    // localStorage can throw (Safari private mode, storage disabled/full,
+    // etc.) - persistence is a nice-to-have, never something that should
+    // break the app if it fails.
+    console.warn("[SkyDeal] could not save payment profile", err);
+  }
+}
+
+// Validates each stored method has the minimum shape the rest of the app
+// already assumes (isSelected/buildSearchPaymentMethods key off type+name) -
+// deliberately conservative: a malformed/tampered/future-shape entry is
+// dropped rather than passed through and causing a confusing downstream
+// bug much later.
+function isValidStoredPaymentMethod(m) {
+  return (
+    m &&
+    typeof m === "object" &&
+    typeof m.type === "string" && m.type.trim() &&
+    typeof m.name === "string" && m.name.trim()
+  );
+}
+
+function loadPaymentProfileFromStorage() {
+  try {
+    const raw = localStorage.getItem(PAYMENT_PROFILE_STORAGE_KEY);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+
+    const age = Date.now() - Number(parsed.savedAt || 0);
+    if (!Number.isFinite(age) || age < 0 || age > PAYMENT_PROFILE_MAX_AGE_MS) {
+      localStorage.removeItem(PAYMENT_PROFILE_STORAGE_KEY);
+      return;
+    }
+
+    const methods = Array.isArray(parsed.selectedPaymentMethods)
+      ? parsed.selectedPaymentMethods.filter(isValidStoredPaymentMethod)
+      : [];
+
+    selectedPaymentMethods = methods;
+    includeEmiOffers = parsed.includeEmiOffers === true;
+  } catch (err) {
+    console.warn("[SkyDeal] could not load payment profile", err);
+  }
+}
+
 let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
@@ -2084,6 +2153,11 @@ function updatePaymentButtonLabel() {
   renderSelectedPaymentMethodsSummary();
   ensurePaymentEducationNudge();
   renderPaymentProfileCard();
+  // Every mutation of selectedPaymentMethods/includeEmiOffers already
+  // calls this function immediately after (toggle, clear, done, accepting
+  // a suggestion) - the single reliable choke point, so persistence is
+  // hooked here rather than duplicated at each call site.
+  savePaymentProfileToStorage();
 }
 function formatTermsForDisplay(terms) {
   if (!terms) return "";
@@ -6530,6 +6604,12 @@ retSortSelect?.addEventListener("change", () => {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Restore the payment profile FIRST, before anything below renders off
+  // selectedPaymentMethods/includeEmiOffers - a returning user's very
+  // first paint should already reflect their saved methods, not flash
+  // "Add how you pay" and then update a moment later.
+  loadPaymentProfileFromStorage();
+
   const today = todayISO();
 const defaultReturn = addDaysISO(today, 7);
 
