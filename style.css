@@ -2123,6 +2123,34 @@ h3{
   display:block;
 }
 
+.estimatedPriceBadge{
+  display:inline-block;
+  margin-top:3px;
+}
+
+.estimatedPriceBadgeLabel{
+  display:inline-block;
+  font-size:var(--fs-3xs);
+  font-weight:700;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--warning);
+  background:var(--warning-light);
+  border-radius:var(--radius-pill);
+  padding:2px 7px;
+  white-space:nowrap;
+}
+
+/* estimatedPriceBadge's own tooltip needs left-edge anchoring, not the
+   stops badge's centered one - it sits near the card's left edge, so a
+   centered tooltip would overflow off-screen on narrow viewports. */
+.estimatedPriceBadge .stopsTooltip{
+  left:0;
+  transform:none;
+  text-align:left;
+  font-weight:500;
+}
+
 .price{
   color:var(--gray-900);
   font-size:var(--fs-lg);

@@ -5697,6 +5697,29 @@ function stopsLineHtml(stops) {
   return `<div class="flightStopsLine">${dots}</div>`;
 }
 
+// Surfaces the backend's priceSource distinction (see
+// skydeal-backend/index.js mapFlightsFromFlightAPI and
+// NO_CARRIER_PRICE_ESTIMATE_DISCOUNT) to the user for the first time -
+// the data has always been sent in the /search response, just never
+// rendered. Deliberately silent for the normal "carrier_airline" case
+// (the overwhelming majority of flights) - only the minority
+// "estimated_min_reseller" case (currently Star Air, Alliance Air; see
+// FLIGHTAPI_CARRIER_PRICING_AUDIT_2026-07.md) gets a badge, so as not to
+// clutter every card with a "verified" tag nobody needs. Reuses the exact
+// .stopsHoverable/.stopsTooltip tap-and-hover mechanism already wired
+// generically in renderList() - no new interaction code needed, just the
+// same class names with different content.
+function estimatedPriceBadgeHtml(f) {
+  if (f?.priceSource !== "estimated_min_reseller") return "";
+
+  return `
+    <div class="stopsHoverable estimatedPriceBadge">
+      <span class="estimatedPriceBadgeLabel">Estimated price</span>
+      <div class="stopsTooltip">${safeText(f.displayAirlineName || f.airlineName)} doesn't publish a direct price for this flight, so we estimate it from other travel-booking sites. The real price may differ slightly - always confirm on the booking page before paying.</div>
+    </div>
+  `;
+}
+
 // Lives in the card's grid row next to price, stacked MMT-style: total
 // flight duration on top, a line with one dot per stop below that, then
 // "N stop(s) via City[, City]" (or "Non-stop") at the bottom. Short city
@@ -5857,6 +5880,7 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
           <div>
             <div class="airline-name">${name}</div>
             <div class="flight-number">${num}</div>
+            ${estimatedPriceBadgeHtml(f)}
           </div>
         </div>
 
