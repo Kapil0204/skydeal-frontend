@@ -3628,7 +3628,7 @@ function ensurePortalModal() {
       <div class="portalModalCard portalModalCardV2">
         <div class="portalModalTop">
           <div>
-            <div class="portalModalEyebrow">Portal comparison</div>
+            <div class="portalModalEyebrow"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#skydealMark"/></svg>Portal comparison</div>
             <div class="portalModalTitle">Same flight, different final prices</div>
             <div class="portalModalSubtitle">We check each portal against your selected payment options.</div>
           </div>

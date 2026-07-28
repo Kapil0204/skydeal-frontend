@@ -11099,3 +11099,54 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   width: 100%;
 }
 
+/* =====================================================
+   Brand refresh (2026-07-28): header texture + new mark + tagline
+   See brand.md "Proposed refresh" and skydeal-project-docs/... brief.
+===================================================== */
+
+.skydeal-hero-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.skydeal-header-dots {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.skydeal-brand-lockup {
+  position: relative;
+  z-index: 1;
+}
+
+.skydeal-hero-subline {
+  width: 100%;
+  margin-top: 2px;
+  font-size: var(--fs-2xs);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+}
+
+@media (max-width: 760px) {
+  body.mobile-results-mode .skydeal-hero-subline {
+    display: none !important;
+  }
+}
+
+/* Small mark inline with a modal's own title text - both payment and
+   portal-compare modal headers keep their existing dark surface/purple
+   accent unchanged, this only adds the brand mark next to the heading. */
+.modal-head-mark {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  vertical-align: -3px;
+  color: #ae3dff;
+}
+
