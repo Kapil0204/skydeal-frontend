@@ -11119,13 +11119,36 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   pointer-events: none;
 }
 
+/* Stacked lockup: logo+wordmark row on top, tagline+subline below it,
+   both left-aligned to the same edge - was a single wrapped flex row
+   before, which put "Price, decoded." beside the wordmark at almost the
+   same size/weight (competing with it) and left the subline starting
+   under the icon instead of under the wordmark, since it wrapped as its
+   own full-width flex item rather than living inside a shared column. */
 .skydeal-brand-lockup {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.skydeal-tagline-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.skydeal-hero-line {
+  font-size: var(--fs-md) !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+  font-weight: 650 !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  max-width: none !important;
 }
 
 .skydeal-hero-subline {
-  width: 100%;
   margin-top: 2px;
   font-size: var(--fs-2xs);
   color: rgba(255, 255, 255, 0.55);
