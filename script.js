@@ -1911,7 +1911,16 @@ function ensurePaymentEducationNudge() {
   const pmToggle = document.getElementById("paymentBtn");
   if (!searchCard || !pmToggle) return;
 
-  if (localStorage.getItem("skydealPaymentNudgeDismissed") === "true") {
+  // Was a one-time-forever dismiss (a plain "true" flag, no expiry) - once
+  // clicked, the tip never came back on any future visit, even for a user
+  // who still hadn't added a single payment method. The tip is only truly
+  // moot once payment methods are actually added; otherwise a dismiss just
+  // means "not now," so it re-surfaces after a day rather than permanently.
+  const hasPaymentMethods = Array.isArray(selectedPaymentMethods) && selectedPaymentMethods.length > 0;
+  const dismissedAt = Number(localStorage.getItem("skydealPaymentNudgeDismissedAt") || 0);
+  const dismissedRecently = dismissedAt > 0 && Date.now() - dismissedAt < 24 * 60 * 60 * 1000;
+
+  if (hasPaymentMethods || dismissedRecently) {
     const old = document.getElementById("skyPaymentNudge");
     if (old) old.remove();
     return;
@@ -1934,7 +1943,7 @@ function ensurePaymentEducationNudge() {
   `;
 
   nudge.querySelector("button")?.addEventListener("click", () => {
-    localStorage.setItem("skydealPaymentNudgeDismissed", "true");
+    localStorage.setItem("skydealPaymentNudgeDismissedAt", String(Date.now()));
     nudge.remove();
   });
 }
