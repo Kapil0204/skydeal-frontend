@@ -3628,7 +3628,7 @@ function ensurePortalModal() {
       <div class="portalModalCard portalModalCardV2">
         <div class="portalModalTop">
           <div>
-            <div class="portalModalEyebrow"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#skydealMark"/></svg>Portal comparison</div>
+            <div class="portalModalEyebrow"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#sairroMark"/></svg>Portal comparison</div>
             <div class="portalModalTitle">Same flight, different final prices</div>
             <div class="portalModalSubtitle">We check each portal against your selected payment options.</div>
           </div>
@@ -3963,7 +3963,7 @@ function emptyStateHtml(type = "default") {
       <div class="empty-state">
         <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 14 4 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="empty-title">Return flights are off for one-way trips</div>
-        <div class="empty-copy">Switch to round-trip when you want SkyDeal to compare departure and return flights together.</div>
+        <div class="empty-copy">Switch to round-trip when you want sairro to compare departure and return flights together.</div>
       </div>
     `;
   }

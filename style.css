@@ -11109,16 +11109,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   overflow: hidden;
 }
 
-.skydeal-header-dots {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.45;
-  pointer-events: none;
-}
-
 /* Stacked lockup: logo+wordmark row on top, tagline+subline below it,
    both left-aligned to the same edge - was a single wrapped flex row
    before, which put "Price, decoded." beside the wordmark at almost the
@@ -11171,5 +11161,142 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   margin-right: 8px;
   vertical-align: -3px;
   color: #ae3dff;
+}
+
+/* =====================================================
+   sairro rebrand (2026-07-29): name, color, type, symbol.
+   Appended at the end per this file's own established pattern (see
+   "Header treatment (frozen 2026-07-15)" above) so these declarations
+   win the cascade without touching/consolidating the older blocks.
+   Full decision trail: skydeal-project-docs/brand.md.
+===================================================== */
+
+/* ---- Type system: 3 self-hosted fonts, 3 separate jobs ----
+   Cabinet Grotesk: logo + tagline only (no lighter weight exists, so it
+   is never used for body copy). General Sans: everything else - swaps
+   in for the old system-ui stack. JetBrains Mono: prices/numbers only,
+   for tabular-nums column alignment. */
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("assets/fonts/CabinetGrotesk-Extrabold.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "General Sans";
+  src: url("assets/fonts/GeneralSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "General Sans";
+  src: url("assets/fonts/GeneralSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("assets/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+body {
+  font-family: "General Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.price,
+.portalPrice,
+.portalPriceOld,
+.payment-guide-new-price,
+.payment-guide-old-price,
+.sky-trip-compact-price-value {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Grain: two tuned intensities, dark-surface and light-surface ----
+   Baked into a small repeating SVG tile (feTurbulence rendered once,
+   then tiled by the browser) rather than a live full-viewport filter -
+   much cheaper, and avoids adding new DOM nodes / touching body's
+   positioning (this project has a documented history of fragile mobile
+   sticky/z-index behavior - see CLAUDE.md - so intentionally not
+   introducing a new position:relative/fixed layer to achieve this). */
+:root {
+  --grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='sgD'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23sgD)'/%3E%3C/svg%3E");
+  --grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='sgL'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23sgL)'/%3E%3C/svg%3E");
+}
+
+/* ---- Header: eye-comfort background (lifted from #0c0812, glow halved)
+   plus grain, replacing the old dotted-flight-path texture. ---- */
+.skydeal-hero-header {
+  background:
+    radial-gradient(circle 340px at 12% 150%, rgba(168, 82, 255, 0.26), transparent 70%),
+    radial-gradient(circle 260px at 96% -60%, rgba(143, 31, 255, 0.18), transparent 70%),
+    var(--grain-dark) repeat,
+    #181228 !important;
+  border-bottom: 1px solid rgba(180, 121, 255, 0.28) !important;
+}
+
+.skydeal-hero-header .brand-name {
+  color: #ffffff !important;
+  text-shadow: none !important;
+  font-family: "Cabinet Grotesk", sans-serif !important;
+}
+
+.skydeal-hero-header .brand-name .brand-air {
+  color: #b479ff !important;
+  text-shadow: 0 0 12px rgba(168, 82, 255, 0.4) !important;
+}
+
+.skydeal-logo-mark {
+  filter: drop-shadow(0 0 6px rgba(168, 82, 255, 0.3)) !important;
+}
+
+/* ---- Footer: brought to the same dark family as the header. Its own
+   documented intent ("dark bookend matching the header palette", see
+   PROJECT_STATE.md 2026-07-15) already called for this - the live CSS
+   had drifted to a plain light-gray background with no override ever
+   added back, a real pre-existing inconsistency this closes. ---- */
+.skydeal-footer {
+  background:
+    radial-gradient(circle 280px at 10% 130%, rgba(168, 82, 255, 0.2), transparent 70%),
+    var(--grain-dark) repeat,
+    #181228 !important;
+  border-top: 1px solid rgba(180, 121, 255, 0.22) !important;
+}
+
+.skydeal-footer-brand .brand-name {
+  color: #ffffff !important;
+  text-shadow: none !important;
+  font-family: "Cabinet Grotesk", sans-serif !important;
+}
+
+.skydeal-footer-logo {
+  filter: drop-shadow(0 0 5px rgba(168, 82, 255, 0.25));
+}
+
+.skydeal-footer-contact a {
+  color: #c9a8ff !important;
+}
+
+.skydeal-footer-legal p {
+  color: rgba(244, 241, 250, 0.6) !important;
+}
+
+.skydeal-footer-legal {
+  border-top-color: rgba(180, 121, 255, 0.18) !important;
+}
+
+/* ---- Page tint: same brand-50 -> gray-50 fade as before (untouched
+   gradient stops), + 5% grain added as an extra background layer. A
+   CSS `background` shorthand fully replaces earlier declarations on the
+   same element rather than merging, so the original stops are repeated
+   here rather than only adding the new layer. ---- */
+body {
+  background:
+    linear-gradient(180deg, var(--brand-50) 0px, var(--brand-50) 480px, var(--gray-50) 760px, var(--gray-50) 100%),
+    var(--grain-light) repeat,
+    var(--gray-50);
 }
 

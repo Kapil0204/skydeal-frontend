@@ -3,41 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SkyDeal</title>
-  <meta name="description" content="SkyDeal — Price, decoded. The true final price on every flight, based on how you pay." />
+  <title>sairro</title>
+  <meta name="description" content="sairro — Flight prices, decoded. The true final price on every flight, based on how you pay." />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<!-- Brand refresh (2026-07-28): plane departing a stack of offers - one
-     definition, reused via <use> in the header, footer, and both modal
-     headers so it recolors per surface via currentColor instead of a
-     separate export each place. See brand.md "Proposed refresh". -->
+<!-- sairro rebrand (2026-07-29): faceted paper plane, gradient-shaded
+     facets + a center crease + a gold nose-spark. Reused via <use> in the
+     header, footer, and both modal headers. Unlike the old mark this one
+     is NOT a pure currentColor recolor - the gradients are fixed to the
+     dark-surface palette, which is fine since every current usage
+     (header, footer, payment modal, portal-compare modal) is a dark
+     surface. A separate light-surface palette exists for the favicon/
+     social-preview assets only. See brand.md for the full decision trail. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="skydealMark" viewBox="0 0 64 64">
-    <rect x="16" y="46" width="32" height="6" rx="3" fill="currentColor" opacity="0.35"/>
-    <rect x="19" y="38" width="26" height="6" rx="3" fill="currentColor" opacity="0.6"/>
-    <rect x="22" y="30" width="20" height="6" rx="3" fill="currentColor" opacity="0.85"/>
-    <path d="M14 28 L44 8 L36 24 L48 21 L26 40 L20 33 Z" fill="currentColor"/>
-    <path d="M14 28 L26 40 L20 33 Z" fill="currentColor" opacity="0.55"/>
+  <defs>
+    <linearGradient id="sairroWingR" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8f1fff"/><stop offset="100%" stop-color="#660ac2"/></linearGradient>
+    <linearGradient id="sairroWingL" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c48aff"/><stop offset="100%" stop-color="#8f1fff"/></linearGradient>
+    <linearGradient id="sairroTailR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c48aff"/><stop offset="100%" stop-color="#a852ff"/></linearGradient>
+  </defs>
+  <symbol id="sairroMark" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="56" rx="16" ry="3" fill="#000" opacity="0.25"/>
+    <path d="M32 6 L54 44 L32 34 Z" fill="url(#sairroWingR)"/>
+    <path d="M32 6 L10 44 L32 34 Z" fill="url(#sairroWingL)"/>
+    <path d="M32 34 L54 44 L34 53 Z" fill="url(#sairroTailR)"/>
+    <path d="M32 34 L10 44 L30 53 Z" fill="#c48aff" opacity="0.65"/>
+    <path d="M32 6 L32 52" stroke="#f4ecff" stroke-width="1.1" opacity="0.35"/>
+    <circle cx="32" cy="6" r="2.6" fill="#eab308"/>
   </symbol>
 </svg>
 
  <header class="nav skydeal-hero-header">
-  <svg class="skydeal-header-dots" viewBox="0 0 760 70" preserveAspectRatio="none" aria-hidden="true">
-    <circle cx="60" cy="18" r="2" fill="#ae3dff"/>
-    <circle cx="160" cy="45" r="1.5" fill="#ae3dff"/>
-    <circle cx="600" cy="16" r="2" fill="#ae3dff"/>
-    <circle cx="700" cy="48" r="1.5" fill="#ae3dff"/>
-  </svg>
   <div class="skydeal-brand-lockup">
     <div class="brand">
       <span class="skydeal-logo-mark" aria-hidden="true">
-        <svg viewBox="0 0 64 64"><use href="#skydealMark"/></svg>
+        <svg viewBox="0 0 64 64"><use href="#sairroMark"/></svg>
       </span>
-      <span class="brand-name">SkyDeal</span>
+      <span class="brand-name">s<span class="brand-air">air</span>ro</span>
     </div>
     <div class="skydeal-tagline-stack">
-      <div class="skydeal-hero-line">Price, decoded.</div>
+      <div class="skydeal-hero-line">Flight prices, decoded.</div>
       <div class="skydeal-hero-subline">The true final price on every flight — based on how you pay.</div>
     </div>
   </div>
@@ -263,9 +268,9 @@
       <div class="skydeal-footer-left">
         <div class="skydeal-footer-brand">
           <span class="skydeal-footer-logo" aria-hidden="true">
-            <svg viewBox="0 0 64 64"><use href="#skydealMark"/></svg>
+            <svg viewBox="0 0 64 64"><use href="#sairroMark"/></svg>
           </span>
-          <span class="brand-name">SkyDeal</span>
+          <span class="brand-name">s<span class="brand-air">air</span>ro</span>
         </div>
         <div class="skydeal-footer-contact">
           <a href="mailto:info@skydeal.co.in">info@skydeal.co.in</a>
@@ -273,7 +278,7 @@
       </div>
       <div class="skydeal-footer-legal">
         <p>Prices and offers are shown for reference and can change before checkout. Always confirm the final price on the booking portal before paying.</p>
-        <p>&copy; 2026 SkyDeal. All rights reserved.</p>
+        <p>&copy; 2026 sairro. All rights reserved.</p>
       </div>
     </div>
   </footer>
@@ -282,7 +287,7 @@
   <div id="paymentModal" class="modal" aria-hidden="true">
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
       <div class="modal-head">
-        <h2 id="pmTitle"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#skydealMark"/></svg>Add your payment options</h2>
+        <h2 id="pmTitle"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#sairroMark"/></svg>Add your payment options</h2>
         <button id="pmClose" class="x" aria-label="Close">&times;</button>
       </div>
 
