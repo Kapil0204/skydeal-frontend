@@ -50,6 +50,19 @@
 
   <main class="wrap">
     <section class="search-card">
+      <!-- Moved out of .grid and to the top per founder review (2026-07-29):
+           trip type is a precondition for the rest of the form (it decides
+           whether Return means anything), so it's decided first now,
+           matching how Google Flights/MMT do it. Still the exact same
+           #oneWay/#roundTrip radios everywhere else in script.js reads/
+           writes by id - only the visual container moved, so the existing
+           auto-switch-to-round-trip-on-Return-interaction logic
+           (syncReturnDateAutoRoundTrip) needed zero changes. -->
+      <div class="trip-toggle">
+        <label class="trip-toggle-opt"><input type="radio" name="tripType" id="oneWay" checked /><span>One-way</span></label>
+        <label class="trip-toggle-opt"><input type="radio" name="tripType" id="roundTrip" /><span>Round-trip</span></label>
+      </div>
+
       <div class="grid">
         <label class="location-field">From
   <input id="fromInput" placeholder="BOM / Mumbai / Bombay" autocomplete="off" />
@@ -83,11 +96,6 @@
             <option value="business">Business</option>
           </select>
         </label>
-
-        <div class="trip-toggle">
-          <label><input type="radio" name="tripType" id="oneWay" checked /> One-way</label>
-          <label><input type="radio" name="tripType" id="roundTrip" /> Round-trip</label>
-        </div>
 
         <div class="pm-holder">
           <button id="paymentBtn" class="btn-ghost">

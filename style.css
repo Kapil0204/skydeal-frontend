@@ -11310,3 +11310,68 @@ body {
     var(--gray-50);
 }
 
+/* =====================================================
+   Search-box UX pass (2026-07-29, separate scope from the rebrand
+   above - see brand.md, this isn't a brand decision). Trip-type toggle
+   moved out of .grid to sit above it as a segmented pill - same
+   #oneWay/#roundTrip radios, only their container/visual treatment
+   changed, so syncReturnDateAutoRoundTrip() and every other reference
+   to those two ids elsewhere in script.js needed zero changes. This
+   section wins over the many older scattered .trip-toggle rules above
+   (including mobile !important ones) purely by appearing later in the
+   cascade, this file's own established pattern.
+===================================================== */
+
+.trip-toggle {
+  display: inline-flex !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  margin: 0 0 16px !important;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  width: auto !important;
+  justify-content: flex-start !important;
+}
+
+.trip-toggle-opt {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row !important;
+  gap: 0 !important;
+  padding: 8px 20px !important;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-base) !important;
+  font-weight: 600 !important;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.trip-toggle-opt input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.trip-toggle-opt:has(input:checked) {
+  background: var(--btn);
+  color: var(--white);
+}
+
+.trip-toggle-opt:has(input:focus-visible) {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--primary);
+}
+
+@media (max-width: 760px) {
+  .trip-toggle {
+    grid-column: unset !important;
+    display: inline-flex !important;
+    justify-content: flex-start !important;
+    width: auto !important;
+  }
+}
+
