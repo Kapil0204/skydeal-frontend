@@ -7095,52 +7095,6 @@ body.search-error-mode .pro-results {
 }
 
 /* =====================================================
-   Payment education nudge
-   Small, dismissible, non-blocking helper copy
-===================================================== */
-
-.sky-payment-nudge {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: 620px;
-  margin: 10px 0 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  border-radius: var(--radius-md);
-  background: rgba(168, 85, 247, 0.09);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: var(--fs-sm);
-  line-height: 1.45;
-}
-
-.sky-payment-nudge strong {
-  color: var(--white);
-}
-
-.sky-payment-nudge button {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  cursor: pointer;
-  padding: 0 2px;
-}
-
-.sky-payment-nudge button:hover {
-  color: var(--white);
-}
-
-@media (max-width: 760px) {
-  .sky-payment-nudge {
-    margin-top: 8px;
-    font-size: var(--fs-2xs);
-  }
-}
-
-/* =====================================================
    Search loading step animation
    Makes the wait feel intentional while fares/offers load
 ===================================================== */
@@ -10138,24 +10092,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border-color: var(--gray-500) !important;
 }
 
-.sky-payment-nudge {
-  background: var(--brand-50) !important;
-  border: 1px solid var(--brand-200) !important;
-  color: var(--gray-700) !important;
-}
-
-.sky-payment-nudge strong {
-  color: var(--gray-900) !important;
-}
-
-.sky-payment-nudge button {
-  color: var(--gray-500) !important;
-}
-
-.sky-payment-nudge button:hover {
-  color: var(--gray-900) !important;
-}
-
 .skydeal-footer {
   background: var(--gray-50) !important;
   border-top: 1px solid var(--gray-200) !important;
@@ -11375,6 +11311,93 @@ body {
     display: inline-flex !important;
     justify-content: flex-start !important;
     width: auto !important;
+  }
+}
+
+/* ---- Payment prompt card: merged button + former "Heads up" banner.
+   Whole card is clickable (see paymentPromptCard listener in script.js);
+   the button itself stays a real <button> for keyboard/screen-reader
+   users, just visually leads instead of the old bare-ghost-pill. ---- */
+.payment-prompt-card {
+  /* .pm-holder (this card's actual parent) is a column-flex with
+     align-items:flex-start, built for the old shrink-to-fit button -
+     grid-column has no effect here since this isn't a direct grid item,
+     so width:100% is what actually makes the card fill the row. */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+  padding: 14px 18px;
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--brand-50), #fbf7ff);
+  cursor: pointer;
+}
+
+.payment-prompt-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  border: 1.5px solid var(--brand-400);
+  color: var(--brand-700);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.payment-prompt-icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  stroke: var(--brand-700);
+}
+
+.payment-prompt-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-prompt-title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 2px;
+}
+
+.payment-prompt-sub {
+  font-size: var(--fs-sm);
+  color: var(--gray-500);
+}
+
+.payment-prompt-count {
+  flex: none;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--brand-700);
+  background: var(--brand-100);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .payment-prompt-card {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+  }
+  .payment-prompt-body {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .payment-prompt-count {
+    margin-left: auto;
   }
 }
 

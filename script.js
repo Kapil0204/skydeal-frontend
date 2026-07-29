@@ -364,7 +364,11 @@ const retSortSelect = sortSelectEls[1] || null;
 
 // Payment UI
 const paymentBtn = document.getElementById("paymentBtn");
-const pmCount = document.getElementById("pmCount");
+const paymentPromptCard = document.getElementById("paymentPromptCard");
+const paymentPromptBtnLabel = document.getElementById("paymentPromptBtnLabel");
+const paymentPromptTitle = document.getElementById("paymentPromptTitle");
+const paymentPromptSub = document.getElementById("paymentPromptSub");
+const paymentPromptCountEl = document.getElementById("paymentPromptCount");
 
 const paymentModal = document.getElementById("paymentModal");
 const pmClose = document.getElementById("pmClose");
@@ -1906,46 +1910,36 @@ function paymentMethodDetailSummary(pm) {
   return parts.join(" • ");
 }
 
-function ensurePaymentEducationNudge() {
-  const searchCard = document.querySelector(".search-card");
-  const pmToggle = document.getElementById("paymentBtn");
-  if (!searchCard || !pmToggle) return;
+// Replaces the old separate "Heads up" dismissable nudge - this card is
+// always visible (it's the entry point for a core action, not a tip to
+// dismiss), so its job now is just staying in sync with real state: the
+// user's own selected-method count, and the real bank-wide live offer
+// count already computed for the "Price intelligence" panel.
+function renderPaymentPromptCard() {
+  if (!paymentPromptCard) return;
 
-  // Was a one-time-forever dismiss (a plain "true" flag, no expiry) - once
-  // clicked, the tip never came back on any future visit, even for a user
-  // who still hadn't added a single payment method. The tip is only truly
-  // moot once payment methods are actually added; otherwise a dismiss just
-  // means "not now," so it re-surfaces after a day rather than permanently.
-  const hasPaymentMethods = Array.isArray(selectedPaymentMethods) && selectedPaymentMethods.length > 0;
-  const dismissedAt = Number(localStorage.getItem("skydealPaymentNudgeDismissedAt") || 0);
-  const dismissedRecently = dismissedAt > 0 && Date.now() - dismissedAt < 24 * 60 * 60 * 1000;
+  const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
+  const total = typeof computeTotalLiveOfferCount === "function" ? computeTotalLiveOfferCount() : 0;
 
-  if (hasPaymentMethods || dismissedRecently) {
-    const old = document.getElementById("skyPaymentNudge");
-    if (old) old.remove();
-    return;
+  if (paymentPromptTitle) {
+    paymentPromptTitle.textContent = n === 0
+      ? "Your final price depends on how you pay"
+      : `${n} payment method${n === 1 ? "" : "s"} added`;
+  }
+  if (paymentPromptSub) {
+    const emiNote = includeEmiOffers ? " EMI offers included." : "";
+    paymentPromptSub.textContent = n === 0
+      ? "Add your cards, UPI apps or wallets to see your real price"
+      : `Add more to find an even better price.${emiNote}`;
+  }
+  if (paymentPromptCountEl) {
+    paymentPromptCountEl.textContent = total > 0 ? `${total} offer${total === 1 ? "" : "s"}` : "";
   }
 
-  let nudge = document.getElementById("skyPaymentNudge");
-  if (!nudge) {
-    nudge = document.createElement("div");
-    nudge.id = "skyPaymentNudge";
-    nudge.className = "sky-payment-nudge";
-    pmToggle.insertAdjacentElement("afterend", nudge);
+  if (!paymentPromptCard.dataset.wired) {
+    paymentPromptCard.dataset.wired = "1";
+    paymentPromptCard.addEventListener("click", () => openPaymentModal());
   }
-
-  nudge.innerHTML = `
-    <div>
-      <strong>Heads up:</strong> your final price can change depending on how you pay.
-      Add your cards or UPI apps to see your real price.
-    </div>
-    <button type="button" aria-label="Dismiss payment tip">×</button>
-  `;
-
-  nudge.querySelector("button")?.addEventListener("click", () => {
-    localStorage.setItem("skydealPaymentNudgeDismissedAt", String(Date.now()));
-    nudge.remove();
-  });
 }
 
 function renderSelectedPaymentMethodsSummary() {
@@ -1960,7 +1954,14 @@ function renderSelectedPaymentMethodsSummary() {
     host.style.display = "flex";
     host.style.flexWrap = "wrap";
     host.style.gap = "8px";
-    paymentBtn.insertAdjacentElement("afterend", host);
+    // Anchored after the whole merged payment-prompt card (2026-07-29),
+    // not after paymentBtn directly - paymentBtn now lives inside that
+    // card's own flex row, and "afterend" of just the button used to
+    // land this chip list as an unwanted 4th flex child there, eating
+    // most of the row's width via its own width:100%. Falls back to the
+    // old anchor if the card ever isn't present for some reason.
+    const anchor = document.getElementById("paymentPromptCard") || paymentBtn;
+    anchor.insertAdjacentElement("afterend", host);
   }
 
   if (!Array.isArray(selectedPaymentMethods) || selectedPaymentMethods.length === 0) {
@@ -2154,13 +2155,14 @@ function openPaymentDetailEditor(index) {
 
 function updatePaymentButtonLabel() {
   const n = selectedPaymentMethods.length;
-  if (pmCount) pmCount.textContent = String(n);
-  if (paymentBtn) {
-    const base = n === 0 ? "Add how you pay" : `${n} payment method${n === 1 ? "" : "s"} added`;
-    paymentBtn.textContent = includeEmiOffers ? `${base} + EMI offers` : base;
+  // Sets the inner label span, not paymentBtn.textContent directly - the
+  // button also contains the card-icon <svg> now, which a plain
+  // textContent overwrite would silently wipe.
+  if (paymentPromptBtnLabel) {
+    paymentPromptBtnLabel.textContent = n === 0 ? "Add how you pay" : "Manage payment methods";
   }
   renderSelectedPaymentMethodsSummary();
-  ensurePaymentEducationNudge();
+  renderPaymentPromptCard();
   renderPaymentProfileCard();
   // Every mutation of selectedPaymentMethods/includeEmiOffers already
   // calls this function immediately after (toggle, clear, done, accepting
@@ -6680,4 +6682,4 @@ updatePaymentButtonLabel();
 });
 
 
-setTimeout(ensurePaymentEducationNudge, 0);
+setTimeout(renderPaymentPromptCard, 0);
