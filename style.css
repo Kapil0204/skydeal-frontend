@@ -11358,8 +11358,11 @@ body {
 }
 
 .trip-toggle-opt:has(input:checked) {
-  background: var(--btn);
-  color: var(--white);
+  /* Light tint + dark text, not a solid brand-500 fill - per founder
+     feedback ("too loud") and brand.md's own "purple is an accent, not
+     a zone" rule, which a solid-fill pill control was quietly breaking. */
+  background: var(--brand-100);
+  color: var(--brand-700);
 }
 
 .trip-toggle-opt:has(input:focus-visible) {
