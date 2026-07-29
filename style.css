@@ -11253,6 +11253,16 @@ body {
   filter: drop-shadow(0 0 6px rgba(168, 82, 255, 0.3)) !important;
 }
 
+/* Fix: the tagline/subline block was left-aligned to the lockup's own
+   edge, i.e. under the ICON - not under the wordmark that sits beside
+   it (icon width + the row's 8px gap = 42px offset), producing a
+   staircase where the wordmark looked indented past the line below it.
+   Pre-existing since the 2026-07-28 refresh, not something this pass
+   introduced, but a real live bug regardless - not a style choice. */
+.skydeal-tagline-stack {
+  margin-left: calc(clamp(24px, 2.4vw, 34px) + 8px);
+}
+
 /* ---- Footer: brought to the same dark family as the header. Its own
    documented intent ("dark bookend matching the header palette", see
    PROJECT_STATE.md 2026-07-15) already called for this - the live CSS
