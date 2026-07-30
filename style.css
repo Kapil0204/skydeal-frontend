@@ -11484,9 +11484,35 @@ body {
   margin-bottom: 24px;
 }
 
+/* Sequential reveal, triggered by the .pre-search display:block toggle
+   itself (not a scroll observer) - this section sits right after the
+   search card, almost always in/near the initial viewport, so the
+   simpler "animate whenever it appears" behavior gets ~the same result
+   as a real scroll-trigger with far less risk (no new JS lifecycle to
+   manage). Founder-requested "wow" pass, 2026-07-29. */
 .hiw-step {
   position: relative;
   padding: 0 16px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: hiwStepIn 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.hiw-step:nth-child(1) { animation-delay: 0.05s; }
+.hiw-step:nth-child(2) { animation-delay: 0.2s; }
+.hiw-step:nth-child(3) { animation-delay: 0.35s; }
+.hiw-step:nth-child(4) { animation-delay: 0.5s; }
+
+@keyframes hiwStepIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-step {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .hiw-step:first-child {
@@ -11506,6 +11532,20 @@ body {
   border-top: 2px solid var(--brand-200);
   border-right: 2px solid var(--brand-200);
   transform: rotate(45deg);
+  animation: hiwArrowPulse 2.2s ease-in-out infinite;
+}
+
+.hiw-step:nth-child(1) .hiw-arrow { animation-delay: 0s; }
+.hiw-step:nth-child(2) .hiw-arrow { animation-delay: 0.35s; }
+.hiw-step:nth-child(3) .hiw-arrow { animation-delay: 0.7s; }
+
+@keyframes hiwArrowPulse {
+  0%, 100% { opacity: 0.4; }
+  45% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-arrow { animation: none; opacity: 0.7; }
 }
 
 .hiw-step:last-child .hiw-arrow {
@@ -11517,27 +11557,64 @@ body {
 }
 
 .hiw-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, var(--brand-50), var(--brand-100));
+  margin-bottom: 12px;
 }
 
 .hiw-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.hiw-icon.money {
-  background: linear-gradient(135deg, var(--brand-50), var(--brand-200));
+  width: 22px;
+  height: 22px;
 }
 
 .hiw-icon.done {
-  background: linear-gradient(135deg, #fff7e0, #fdecc8);
+  background: linear-gradient(135deg, #ffd77a, #f5a623);
+}
+
+/* ---- step 4: the climax - breaks the pattern on purpose so it reads
+   as the payoff, not "one of four" (founder feedback: nothing felt
+   like the point). Same gold as the logo's own nose-spark. ---- */
+.hiw-step-final {
+  background: linear-gradient(165deg, #fffaf0, #fff);
+  border: 1px solid #f5deae;
+  border-radius: 16px;
+  padding: 16px 18px 14px;
+  margin: -8px -10px -6px;
+}
+
+.hiw-step-final .hiw-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  box-shadow: 0 0 0 5px #fff7e0, 0 6px 18px rgba(245, 166, 35, 0.35);
+  animation: hiwFinalGlow 2.6s ease-in-out infinite;
+}
+
+@keyframes hiwFinalGlow {
+  0%, 100% { box-shadow: 0 0 0 5px #fff7e0, 0 6px 18px rgba(245, 166, 35, 0.35); }
+  50% { box-shadow: 0 0 0 7px #fff3d6, 0 8px 24px rgba(245, 166, 35, 0.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-step-final .hiw-icon { animation: none; }
+}
+
+.hiw-step-final .hiw-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.hiw-step-final .hiw-num {
+  color: #c98a06;
+}
+
+.hiw-step-final .hiw-step-title {
+  font-size: 13.5px;
+  font-weight: 700;
 }
 
 .hiw-num {
@@ -11703,6 +11780,16 @@ body {
 
   .hiw-step-desc {
     font-size: 12px;
+  }
+
+  .hiw-step-final {
+    margin: 6px 0 0;
+    padding: 12px 14px;
+  }
+
+  .hiw-step-final .hiw-icon {
+    width: 44px;
+    height: 44px;
   }
 
   .hiw-panel {
