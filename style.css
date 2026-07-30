@@ -11333,6 +11333,8 @@ body {
     width: auto !important;
     display: inline-flex !important;
     justify-content: flex-start !important;
+    padding: 2px !important;
+    margin: 0 0 14px !important;
   }
 
   /* Beats an older "Mobile Phase 1D" rule (.search-card .trip-toggle
@@ -11343,10 +11345,22 @@ body {
   .search-card .trip-toggle-opt,
   .search-card .trip-toggle label {
     color: var(--gray-700) !important;
+    padding: 5px 10px !important;
+    font-size: 12px !important;
   }
 
   .search-card .trip-toggle-opt:has(input:checked) {
     color: var(--brand-700) !important;
+  }
+
+  /* .search-card.mobile-compact-search-card label { margin-bottom:6px }
+     (~line 6261, meant for From/To/Depart field labels) also matches
+     this element since trip-toggle-opt IS a <label> - the stray bottom
+     margin broke vertical centering of the selected pill inside its
+     outer container (0 top vs 6px bottom). Reset with higher
+     specificity (3 classes vs its 2+tag). */
+  .search-card.mobile-compact-search-card .trip-toggle-opt {
+    margin-bottom: 0 !important;
   }
 }
 
