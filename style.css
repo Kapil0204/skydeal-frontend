@@ -11321,6 +11321,20 @@ body {
     justify-content: flex-start !important;
     width: auto !important;
   }
+
+  /* Beats an older "Mobile Phase 1D" rule (.search-card .trip-toggle
+     label { color: var(--gray-200) !important }) written for a since-
+     replaced dark mobile search card - on today's white card that
+     near-white text is nearly invisible. Same selector + !important,
+     just later in the file, so this wins. */
+  .search-card .trip-toggle-opt,
+  .search-card .trip-toggle label {
+    color: var(--gray-700) !important;
+  }
+
+  .search-card .trip-toggle-opt:has(input:checked) {
+    color: var(--brand-700) !important;
+  }
 }
 
 /* ---- Payment prompt card: merged button + former "Heads up" banner.
@@ -11464,6 +11478,17 @@ body {
 .pro-results.pre-search > .smart-guide-card,
 .pro-results.pre-search .smart-guide-card {
   display: none !important;
+}
+
+@media (max-width: 760px) {
+  /* Mobile's ".pro-results{ padding: 0 10px 160px }" (see ~line 4718)
+     reserves 160px at the bottom for the results view's sticky "Show
+     results" bar - but it applies unconditionally, so pre-search also
+     got that dead 160px gap before the footer with no sticky bar to
+     justify it. */
+  .pro-results.pre-search {
+    padding-bottom: 24px !important;
+  }
 }
 
 .hiw-title {
