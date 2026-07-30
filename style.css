@@ -11322,6 +11322,19 @@ body {
     width: auto !important;
   }
 
+  /* JS adds "mobile-compact-search-card" to .search-card on mobile, and
+     that scoped rule (~line 5261: width:100% !important; justify-content:
+     center !important) has 3 classes of specificity vs. plain
+     ".trip-toggle" above's 1 - it was winning regardless of source
+     order, keeping the toggle stretched full-width and centered instead
+     of a compact left-aligned pill (founder feedback: shouldn't span the
+     whole search card). Matching its specificity here beats it. */
+  .search-card.mobile-compact-search-card .trip-toggle {
+    width: auto !important;
+    display: inline-flex !important;
+    justify-content: flex-start !important;
+  }
+
   /* Beats an older "Mobile Phase 1D" rule (.search-card .trip-toggle
      label { color: var(--gray-200) !important }) written for a since-
      replaced dark mobile search card - on today's white card that
