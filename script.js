@@ -2159,7 +2159,7 @@ function updatePaymentButtonLabel() {
   // button also contains the card-icon <svg> now, which a plain
   // textContent overwrite would silently wipe.
   if (paymentPromptBtnLabel) {
-    paymentPromptBtnLabel.textContent = n === 0 ? "Add how you pay" : "Manage payment methods";
+    paymentPromptBtnLabel.textContent = n === 0 ? "Add how you pay" : "Payment methods";
   }
   renderSelectedPaymentMethodsSummary();
   renderPaymentPromptCard();
