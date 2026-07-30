@@ -129,6 +129,85 @@
     </section>
 
     <section class="results pro-results pre-search">
+      <!-- Replaces the old pre-search pair (Price Intelligence panel +
+           empty plane-icon results box, 2026-07-29) - both had gone
+           stale/redundant once payment info moved into the search card's
+           own prompt, and founder felt neither one earned its space. This
+           is a single section spanning both grid columns, shown/hidden by
+           the exact same .pro-results.pre-search toggle already driving
+           everything else here - no new JS, see setResultsPreSearch(). -->
+      <div class="how-it-works-presearch">
+        <div class="hiw-title">How sairro works</div>
+        <div class="hiw-sub">No account needed — just search once.</div>
+
+        <div class="hiw-steps">
+          <div class="hiw-step">
+            <div class="hiw-line" aria-hidden="true"></div>
+            <div class="hiw-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="#7a06ef" stroke-width="2"/><path d="M20 20L15.5 15.5" stroke="#7a06ef" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div class="hiw-arrow" aria-hidden="true"></div>
+            <div class="hiw-body">
+              <div class="hiw-num">STEP 1</div>
+              <div class="hiw-step-title">Search your route</div>
+              <div class="hiw-step-desc">Where you're flying, and when.</div>
+            </div>
+          </div>
+          <div class="hiw-step">
+            <div class="hiw-line" aria-hidden="true"></div>
+            <div class="hiw-icon money"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="13" rx="2.5" stroke="#8f1fff" stroke-width="2"/><line x1="2" y1="10.5" x2="22" y2="10.5" stroke="#8f1fff" stroke-width="2"/></svg></div>
+            <div class="hiw-arrow" aria-hidden="true"></div>
+            <div class="hiw-body">
+              <div class="hiw-num">STEP 2</div>
+              <div class="hiw-step-title">Add your cards &amp; UPI apps</div>
+              <div class="hiw-step-desc">This is where sairro is different — your final price depends on how you pay.</div>
+              <div class="hiw-flag">The key step</div>
+            </div>
+          </div>
+          <div class="hiw-step">
+            <div class="hiw-line" aria-hidden="true"></div>
+            <div class="hiw-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="7" height="7" rx="1.5" stroke="#7a06ef" stroke-width="1.8"/><rect x="14" y="4" width="7" height="7" rx="1.5" stroke="#7a06ef" stroke-width="1.8" opacity="0.6"/><rect x="3" y="15" width="7" height="7" rx="1.5" stroke="#7a06ef" stroke-width="1.8" opacity="0.6"/><rect x="14" y="15" width="7" height="7" rx="1.5" stroke="#7a06ef" stroke-width="1.8" opacity="0.35"/></svg></div>
+            <div class="hiw-arrow" aria-hidden="true"></div>
+            <div class="hiw-body">
+              <div class="hiw-num">STEP 3</div>
+              <div class="hiw-step-title">We check offers across 6 portals</div>
+              <div class="hiw-step-desc">Each portal runs its own bank/card offers — we match yours against all of them.</div>
+            </div>
+          </div>
+          <div class="hiw-step">
+            <div class="hiw-icon done"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#c98a06" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="hiw-body">
+              <div class="hiw-num">STEP 4</div>
+              <div class="hiw-step-title">See your true final price</div>
+              <div class="hiw-step-desc">Not a "starting from" number — the price you'd actually pay.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-divider"></div>
+
+        <div class="hiw-subhead">Portals we check</div>
+        <div class="hiw-panel">
+          <div class="hiw-portal-row">
+            <span class="hiw-portal-badge">MakeMyTrip</span>
+            <span class="hiw-portal-badge">Goibibo</span>
+            <span class="hiw-portal-badge">EaseMyTrip</span>
+            <span class="hiw-portal-badge">Yatra</span>
+            <span class="hiw-portal-badge">Ixigo</span>
+            <span class="hiw-portal-badge">Cleartrip</span>
+          </div>
+        </div>
+
+        <div class="hiw-subhead">Coming up next</div>
+        <div class="hiw-panel">
+          <div class="hiw-soon-row">
+            <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>International routes</span>
+            <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>More portals</span>
+            <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>More airline coverage</span>
+            <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>Credit card reward points</span>
+            <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>Lounge access perks</span>
+          </div>
+        </div>
+      </div>
+
       <aside class="filter-panel">
         <div class="smart-guide-card">
           <div class="price-intel-eyebrow"><span class="price-intel-dot" aria-hidden="true"></span>Price intelligence</div>
