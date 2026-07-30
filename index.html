@@ -8,14 +8,23 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<!-- sairro rebrand (2026-07-29): faceted paper plane, gradient-shaded
-     facets + a center crease + a gold nose-spark. Reused via <use> in the
-     header, footer, and both modal headers. Unlike the old mark this one
-     is NOT a pure currentColor recolor - the gradients are fixed to the
-     dark-surface palette, which is fine since every current usage
-     (header, footer, payment modal, portal-compare modal) is a dark
-     surface. A separate light-surface palette exists for the favicon/
-     social-preview assets only. See brand.md for the full decision trail. -->
+<!-- sairro rebrand (2026-07-29, mark revised 2026-07-30): literal
+     dart/cross plane silhouette (fuselage + swept main wings, banked
+     28deg), gradient-shaded facets + a gold nose-spark. Reused via
+     <use> in the header, footer, and both modal headers. Unlike the
+     old mark this one is NOT a pure currentColor recolor - the
+     gradients are fixed to the dark-surface palette, which is fine
+     since every current usage (header, footer, payment modal,
+     portal-compare modal) is a dark surface. A separate light-surface
+     palette exists for the favicon/social-preview assets only.
+     Replaced the original faceted-triangle mark after early user
+     feedback consistently read it as a pyramid/gem, not a plane - a
+     solid symmetric triangular mass sitting on a ground-shadow ellipse
+     is pyramid/monument visual grammar regardless of styling. This
+     shape (thin fuselage + wings that visibly spread past the body)
+     is the same silhouette behind the common flight/plane glyph, so it
+     reads unambiguously even at 32px header size. See brand.md for
+     the full decision trail. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="sairroWingR" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8f1fff"/><stop offset="100%" stop-color="#660ac2"/></linearGradient>
@@ -23,13 +32,12 @@
     <linearGradient id="sairroTailR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c48aff"/><stop offset="100%" stop-color="#a852ff"/></linearGradient>
   </defs>
   <symbol id="sairroMark" viewBox="0 0 64 64">
-    <ellipse cx="32" cy="56" rx="16" ry="3" fill="#000" opacity="0.25"/>
-    <path d="M32 6 L54 44 L32 34 Z" fill="url(#sairroWingR)"/>
-    <path d="M32 6 L10 44 L32 34 Z" fill="url(#sairroWingL)"/>
-    <path d="M32 34 L54 44 L34 53 Z" fill="url(#sairroTailR)"/>
-    <path d="M32 34 L10 44 L30 53 Z" fill="#c48aff" opacity="0.65"/>
-    <path d="M32 6 L32 52" stroke="#f4ecff" stroke-width="1.1" opacity="0.35"/>
-    <circle cx="32" cy="6" r="2.6" fill="#eab308"/>
+    <g transform="rotate(28 32 32)">
+      <path d="M32 4 L35 56 L32 60 L29 56 Z" fill="url(#sairroTailR)"/>
+      <path d="M34 24 L60 42 L33 34 Z" fill="url(#sairroWingR)"/>
+      <path d="M30 24 L4 42 L31 34 Z" fill="url(#sairroWingL)"/>
+      <circle cx="32" cy="4" r="2.4" fill="#eab308"/>
+    </g>
   </symbol>
 </svg>
 
