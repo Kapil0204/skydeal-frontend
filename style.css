@@ -11421,10 +11421,19 @@ body {
 .how-it-works-presearch {
   display: none;
   grid-column: 1 / -1;
+  /* Was using var(--shadow) - 0 24px 70px rgba(0,0,0,0.45), a much
+     heavier shadow than .search-card's actual final rule (0 10px 28px
+     rgba(15,23,42,0.06)) - meant this secondary/informational section
+     visually outweighed the primary search card above it instead of
+     receding behind it. Fixed to be equal-or-lighter, plus a bigger
+     margin-top so the two don't read as one undifferentiated white
+     mass (founder feedback: "no differentiation between search block
+     and the other not so significant part"). */
+  margin-top: 28px;
   background: var(--white);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
   padding: 26px 28px 24px;
 }
 
@@ -11432,9 +11441,25 @@ body {
   display: block;
 }
 
+/* !important needed to beat two pre-existing mobile rules that force
+   these visible unconditionally (not scoped to pre-search at all):
+   ".flights-workspace{ display:block !important }" (mobile layout
+   reset) and ".pro-results > .smart-guide-card{ display:flex
+   !important }" (ensureMobilePriceIntelPlacement() in script.js
+   relocates the old Price Intelligence card to be a direct sibling
+   here on every mobile render, regardless of search state, then that
+   rule force-shows it - it was never scoped to "post-search only"
+   because pre-search never needed hiding before this section existed).
+   Both bugs only showed up on mobile - desktop had no such
+   unconditional override to fight. */
 .pro-results.pre-search .filter-panel,
 .pro-results.pre-search .flights-workspace {
-  display: none;
+  display: none !important;
+}
+
+.pro-results.pre-search > .smart-guide-card,
+.pro-results.pre-search .smart-guide-card {
+  display: none !important;
 }
 
 .hiw-title {
