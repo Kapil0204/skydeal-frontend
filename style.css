@@ -11430,11 +11430,15 @@ body {
      mass (founder feedback: "no differentiation between search block
      and the other not so significant part"). */
   margin-top: 28px;
-  background: var(--white);
-  border: 1px solid var(--gray-200);
+  background: linear-gradient(165deg, #f6efff 0%, #f3edfd 100%);
+  border: 1px solid #e4d5fb;
   border-radius: var(--radius-xl);
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 20px rgba(122, 6, 239, 0.06);
   padding: 26px 28px 24px;
+}
+
+.how-it-works-presearch .hiw-panel {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .pro-results.pre-search .how-it-works-presearch {
