@@ -11865,3 +11865,52 @@ body {
   }
 }
 
+/* ---- "sairro decode" assistant bubble (2026-07-30) ----
+   Avatar sits as a static sibling of #paymentGuideDynamic; the bubble
+   styling lives on #paymentGuideDynamic itself so it wraps whatever the
+   current render function puts there (loading/optimised/error/
+   suggestion states) without touching each one individually. Base rule
+   below is for the card's plain/light state (mobile always, desktop
+   pre-hero); .price-intel-hero override further down matches the dark
+   "hero" treatment shown once there's a real result to headline. */
+.decode-assistant-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.decode-avatar {
+  width: 42px;
+  height: 42px;
+  flex: none;
+}
+
+.decode-bubble {
+  flex: 1;
+  min-width: 0;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 4px 16px 16px 16px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+/* renderPaymentGuideCardInner() sets this to "" before a search has real
+   results (see script.js) - without this, the card would show an empty
+   bordered box next to the avatar in that window. */
+.decode-bubble:empty {
+  display: none;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.decode-assistant-row:has(.decode-bubble:empty) {
+  display: none;
+}
+
+.price-intel-hero .decode-bubble {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(196, 138, 255, 0.25);
+}
+

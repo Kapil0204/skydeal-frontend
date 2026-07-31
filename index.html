@@ -39,6 +39,31 @@
       <circle cx="32" cy="4" r="2.4" fill="#eab308"/>
     </g>
   </symbol>
+  <!-- "sairro decode" assistant avatar (2026-07-30) - a small personified
+       version of the logo's own gold nose-spark, giving the price-
+       intelligence card's explanatory copy a face/source instead of
+       reading as anonymous system text. Mocked up as 4 directions
+       (a decorative accent, a magnifying-glass character, a plane-based
+       character, an abstract pulse) before landing here - this one won
+       because it reused an existing brand element rather than inventing
+       a second, unrelated character concept. Fixed gradient fills like
+       #sairroMark, not currentColor. -->
+  <radialGradient id="sairroSparkGlow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#ffd77a"/><stop offset="100%" stop-color="#ffd77a" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="sairroSparkBody" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffd77a"/><stop offset="100%" stop-color="#f5a623"/>
+  </linearGradient>
+  <symbol id="sairroSpark" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="46" fill="url(#sairroSparkGlow)" opacity="0.5"/>
+    <circle cx="60" cy="64" r="26" fill="url(#sairroSparkBody)"/>
+    <circle cx="51" cy="60" r="3.2" fill="#4a2c00"/>
+    <circle cx="69" cy="60" r="3.2" fill="#4a2c00"/>
+    <path d="M50 71 Q60 79 70 71" stroke="#4a2c00" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M60 22 L64 34 L60 46 L56 34 Z" fill="#eab308"/>
+    <path d="M32 44 L40 48 L32 52 L27 48 Z" fill="#eab308" opacity="0.8"/>
+    <path d="M88 44 L96 48 L88 52 L83 48 Z" fill="#eab308" opacity="0.8"/>
+  </symbol>
 </svg>
 
  <header class="nav skydeal-hero-header">
@@ -218,7 +243,7 @@
 
       <aside class="filter-panel">
         <div class="smart-guide-card">
-          <div class="price-intel-eyebrow"><span class="price-intel-dot" aria-hidden="true"></span>Price intelligence</div>
+          <div class="price-intel-eyebrow"><span class="price-intel-dot" aria-hidden="true"></span>sairro decode</div>
           <div class="offers-panel-content">
             <div class="payment-profile-static">
               <h3 class="payment-profile-heading">Your payment profile</h3>
@@ -228,7 +253,15 @@
               <div class="payment-profile-footer" id="paymentProfileFooter"></div>
             </div>
             <div id="paymentTimingUrgentDynamic"></div>
-            <div id="paymentGuideDynamic"></div>
+            <!-- Chat-bubble framing (2026-07-30, approved option "C" of 3
+                 mockups) - the avatar is a static sibling, the bubble
+                 styling lives on #paymentGuideDynamic itself so it wraps
+                 whatever render function populates it (loading/optimised/
+                 error/suggestion states) without needing each one edited. -->
+            <div class="decode-assistant-row">
+              <span class="decode-avatar" aria-hidden="true"><svg viewBox="0 0 120 120"><use href="#sairroSpark"/></svg></span>
+              <div id="paymentGuideDynamic" class="decode-bubble"></div>
+            </div>
             <div id="paymentTimingDynamic"></div>
           </div>
         </div>
