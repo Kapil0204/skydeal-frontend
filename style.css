@@ -11914,3 +11914,31 @@ body {
   border: 1px solid rgba(196, 138, 255, 0.25);
 }
 
+/* ---- Flight card: coupon + book/compare buttons share one row (2026-07-31) ----
+   .oneWayCardActions used to render as its own full-width row below the
+   coupon, right-aligned via justify-content:flex-end - leaving the whole
+   left side of that row empty at the buttons' height (founder catch).
+   Now nested inside .bestDealCouponActionsRow alongside the coupon pill
+   (see renderBestDealSummary in script.js), so they share one line.
+   margin-right:auto on the coupon pushes actions to the right whether or
+   not a coupon is actually present (a missing sibling makes it a no-op,
+   so the no-coupon case still right-aligns exactly like before). */
+.bestDealCouponActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.bestDealCouponActionsRow .bestDealCouponRow {
+  margin-right: auto;
+}
+
+.bestDealCouponActionsRow .oneWayCardActions {
+  margin-top: 0;
+  background: none;
+  border: none;
+  padding: 0;
+}
+

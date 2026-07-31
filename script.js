@@ -913,7 +913,7 @@ function getSavingsAmount(basePrice, finalPrice) {
   return Math.max(0, Math.round(b - f));
 }
 
-function renderBestDealSummary(bestDeal, context = "default", isSelected = false) {
+function renderBestDealSummary(bestDeal, context = "default", isSelected = false, actionsHtml = "") {
   const isRoundTripLeg = context === "round-trip-leg";
   const radioHtml = isRoundTripLeg
     ? `<span class="selectTripRadio${isSelected ? " is-selected" : ""}" aria-hidden="true"></span>`
@@ -973,19 +973,28 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
       </div>
 
       ${
-        code && showCouponChip
+        (code && showCouponChip) || actionsHtml
           ? `
-            <div class="bestDealCouponRow">
-              <span>Coupon</span>
-              <button
-                type="button"
-                class="bestDealCouponChip"
-                data-code="${code}"
-                title="Copy coupon code"
-              >
-                <strong>${code}</strong>
-                <small>Copy</small>
-              </button>
+            <div class="bestDealCouponActionsRow">
+              ${
+                code && showCouponChip
+                  ? `
+                    <div class="bestDealCouponRow">
+                      <span>Coupon</span>
+                      <button
+                        type="button"
+                        class="bestDealCouponChip"
+                        data-code="${code}"
+                        title="Copy coupon code"
+                      >
+                        <strong>${code}</strong>
+                        <small>Copy</small>
+                      </button>
+                    </div>
+                  `
+                  : ""
+              }
+              ${actionsHtml}
             </div>
           `
           : ""
@@ -5964,18 +5973,6 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
   const selectedForDirection = direction === "ret" ? selectedReturnFlight : selectedOutboundFlight;
   const isSelectedForDirection = isSameSelectedFlight(f, selectedForDirection);
 
-  const bestLine = best
-    ? renderBestDealSummary(best, isRoundTrip ? "round-trip-leg" : "default", isSelectedForDirection)
-    : `<div class="best">${
-        isRoundTrip
-          ? "Select both flights to compare the full round-trip booking price."
-          : "Compare portals to find the best payable price."
-      }${
-        isRoundTrip
-          ? `<span class="selectTripRadio${isSelectedForDirection ? " is-selected" : ""}" aria-hidden="true"></span>`
-          : ""
-      }</div>`;
-
   const oneWayBestPortal = !isRoundTrip && best?.portal ? safeText(best.portal) : "";
   const oneWayActions = !isRoundTrip && oneWayBestPortal
     ? `
@@ -5987,6 +5984,32 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
       </div>
     `
     : "";
+
+  // best?.applied renders via renderBestDealSummary's main (coupon-capable)
+  // branch, which now folds oneWayActions into the same row as the coupon
+  // instead of it sitting in its own full-width row below (founder catch:
+  // that row was flex-end-aligned, leaving the whole left side empty at
+  // the buttons' height). The "no extra discount" / no-bestDeal branches
+  // never had a coupon to share a row with, so they keep the old
+  // separate-row behavior below unchanged.
+  const bestLine = best
+    ? renderBestDealSummary(
+        best,
+        isRoundTrip ? "round-trip-leg" : "default",
+        isSelectedForDirection,
+        best.applied ? oneWayActions : ""
+      )
+    : `<div class="best">${
+        isRoundTrip
+          ? "Select both flights to compare the full round-trip booking price."
+          : "Compare portals to find the best payable price."
+      }${
+        isRoundTrip
+          ? `<span class="selectTripRadio${isSelectedForDirection ? " is-selected" : ""}" aria-hidden="true"></span>`
+          : ""
+      }</div>`;
+
+  const oneWayActionsStandalone = best?.applied ? "" : oneWayActions;
 
   return `
     <div class="card ${isSelectedForDirection ? "selected-trip-card" : ""}" data-flightkey="${key}" data-direction="${direction}">
@@ -6023,7 +6046,7 @@ function flightCard(f, direction = "out", airportLabelFlags = {}) {
       </div>
 
       ${bestLine}
-      ${oneWayActions}
+      ${oneWayActionsStandalone}
     </div>
   `;
 }
