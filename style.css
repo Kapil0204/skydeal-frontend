@@ -1877,6 +1877,13 @@ h3{
   border-radius:var(--radius-md);
   background:var(--warning-light);
   border:1px solid rgba(217,119,6,0.18);
+  /* Left edge lines up with the decode-bubble's own left edge above it
+     (avatar width 42px + .decode-assistant-row's 14px gap = 56px) - without
+     this, this box's own tight icon+padding recipe (18px icon + 10px gap +
+     14px padding = 42px to its text) reads as a completely different, oddly
+     shifted-left box under the assistant's bubble (whose text sits 76px in),
+     instead of one cohesive stacked card. */
+  margin-left:56px;
 }
 
 .payment-timing-insight:first-child{
