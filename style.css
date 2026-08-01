@@ -1152,10 +1152,31 @@ select:focus{
 }
 
 .filter-panel{
-  position:sticky;
-  top:92px;
   display:flex;
   flex-direction:column;
+}
+
+/* Sticky lives on this inner wrapper, not on .filter-panel itself
+   (2026-08-01, second attempt - see git history for the first, reverted
+   one). .filter-panel is the actual grid item, and .pro-results' grid
+   align-items:stretch deliberately keeps it stretched to the full height
+   of the results column (thousands of px on a real search) - that height
+   is what gives a sticky descendant "room" to travel and stick within
+   for the whole scroll. The first attempt put position:sticky directly
+   on .filter-panel and shrank it to its own ~800px content height via
+   align-self:start - that DID satisfy a naive "does top clamp to 92px"
+   test, but only for the first ~800px past the stick point: once
+   scrolled further than the panel's own (now short) height, it ran out
+   of its own containing block and unstuck entirely, leaving the rest of
+   a long results scroll with an empty left column (founder-reported
+   regression, confirmed by reasoning through the height mismatch, not
+   by a tool that could reproduce the visual glitch directly). This
+   wrapper is only as tall as its own real content (the two cards), sticks
+   at top:92px, and travels within .filter-panel's full stretched height -
+   the standard pattern for a sticky sidebar next to a much taller column. */
+.filter-panel-sticky{
+  position:sticky;
+  top:92px;
 }
 
 /* .filter-card (Filters only, post-search) and .smart-guide-card (Price
@@ -2326,6 +2347,10 @@ h3{
   }
 
   .filter-panel{
+    position:static;
+  }
+
+  .filter-panel-sticky{
     position:static;
   }
 
