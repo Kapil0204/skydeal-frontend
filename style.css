@@ -10398,6 +10398,26 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+/* Non-urgent ("future") timing insight, hero mode only: demoted from a
+   full bordered/tinted card to a quiet footnote under the suggestion
+   above it. In light mode this box's solid warning-yellow fill already
+   reads as a distinct, secondary thing next to the suggestion's plain
+   gray card - but in the hero band both used near-identical translucent
+   white (0.05 vs 0.08 opacity, 0.12 vs 0.16 border), so they read as two
+   competing cards stacked on top of each other instead of one message
+   with a secondary detail attached (founder catch, 2026-08-01). Urgent
+   timing insights are deliberately excluded - those are meant to be the
+   single most actionable thing on the panel and should keep their full
+   bold treatment. */
+.price-intel-hero .payment-timing-insight:not(.is-urgent) {
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  padding: 14px 0 2px;
+  margin-top: 14px;
+}
+
 .price-intel-hero .payment-timing-insight.is-urgent.urgency-high {
   background: rgba(239, 68, 68, 0.18);
   border-color: rgba(239, 68, 68, 0.4);
