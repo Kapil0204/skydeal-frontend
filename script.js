@@ -4798,6 +4798,110 @@ function schedulePriceIntelScrollCheck() {
 
 window.addEventListener("scroll", schedulePriceIntelScrollCheck, { passive: true });
 
+// Desktop/tablet equivalent of the frozen banner above. .price-intel-hero
+// (the full-width band between the search card and the results grid,
+// see ensureMobilePriceIntelPlacement's desktop branch below) had no
+// scroll-persistent version at all - scroll a few flight cards down and
+// it was just gone. This mirrors the mobile pattern exactly (sentinel +
+// scroll-listener + fixed banner that takes over), sized to the page's
+// own centered column instead of an edge-to-edge mobile bar, and wider/
+// richer (headline + supporting line + the live Add button when there's
+// an actionable suggestion) per founder feedback that a single truncated
+// line wasn't enough on the extra width desktop has to spend.
+function ensureDesktopDecodeFrozenBanner() {
+  let banner = document.getElementById("decodeFrozenBanner");
+  if (banner) return banner;
+
+  banner = document.createElement("div");
+  banner.id = "decodeFrozenBanner";
+  banner.className = "decode-frozen-banner";
+  banner.innerHTML = `
+    <div class="decode-frozen-banner-inner">
+      <span class="decode-frozen-dot"></span>
+      <div class="decode-frozen-text">
+        <div class="decode-frozen-eyebrow">sairro decode</div>
+        <div class="decode-frozen-heading" id="decodeFrozenHeading"></div>
+        <div class="decode-frozen-sub" id="decodeFrozenSub"></div>
+      </div>
+    </div>
+  `;
+  banner.addEventListener("click", (e) => {
+    if (e.target.closest(".decode-frozen-cta")) return;
+    const card = document.querySelector(".price-intel-hero");
+    card?.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+
+  document.body.appendChild(banner);
+  return banner;
+}
+
+// Mirrors whatever the full .price-intel-hero card is already showing
+// rather than recomputing suggestion copy separately - reading its
+// rendered suggestion message/Add button means this can never disagree
+// with the full card, and the Add button proxies its click to the real
+// one instead of duplicating the accept-suggestion logic.
+function updateDesktopDecodeFrozenBannerText() {
+  const heading = document.getElementById("decodeFrozenHeading");
+  const sub = document.getElementById("decodeFrozenSub");
+  if (heading) heading.textContent = getPriceIntelHeroLine();
+
+  const liveMessage = document.querySelector(".price-intel-hero .payment-guide-suggestion-message");
+  if (sub) sub.textContent = liveMessage ? liveMessage.textContent : "";
+
+  const banner = document.getElementById("decodeFrozenBanner");
+  const liveAddBtn = document.querySelector(".price-intel-hero .payment-guide-add-btn");
+  if (!banner) return;
+
+  let cta = banner.querySelector(".decode-frozen-cta");
+  if (liveAddBtn) {
+    if (!cta) {
+      cta = document.createElement("button");
+      cta.type = "button";
+      cta.className = "decode-frozen-cta";
+      banner.querySelector(".decode-frozen-banner-inner").appendChild(cta);
+      cta.addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.querySelector(".price-intel-hero .payment-guide-add-btn")?.click();
+      });
+    }
+    cta.textContent = liveAddBtn.textContent;
+  } else if (cta) {
+    cta.remove();
+  }
+}
+
+// Desktop's .nav keeps the full hero-tagline header at all times (only
+// mobile compacts it in results mode - see body.mobile-results-mode in
+// style.css) - measured live at 188.5px, plus a small clearance, same
+// reasoning as PRICE_INTEL_BANNER_TOP_OFFSET above. Kept in sync with
+// .decode-frozen-banner's own CSS top value.
+const DECODE_FROZEN_BANNER_TOP_OFFSET = 198;
+
+function checkDecodeFrozenBannerFreeze() {
+  if (isSkyDealMobileView()) return;
+
+  const sentinel = document.getElementById("decodeHeroSentinel");
+  const banner = document.getElementById("decodeFrozenBanner");
+  if (!sentinel || !banner) return;
+
+  const pastTop = sentinel.getBoundingClientRect().top < DECODE_FROZEN_BANNER_TOP_OFFSET;
+  banner.classList.toggle("is-visible", pastTop);
+  if (pastTop) updateDesktopDecodeFrozenBannerText();
+}
+
+let decodeFrozenBannerTicking = false;
+function scheduleDecodeFrozenBannerCheck() {
+  if (decodeFrozenBannerTicking) return;
+  decodeFrozenBannerTicking = true;
+  requestAnimationFrame(() => {
+    decodeFrozenBannerTicking = false;
+    checkDecodeFrozenBannerFreeze();
+  });
+}
+
+window.addEventListener("scroll", scheduleDecodeFrozenBannerCheck, { passive: true });
+window.addEventListener("resize", scheduleDecodeFrozenBannerCheck, { passive: true });
+
 // Price intelligence lives inside .filter-panel in the markup (so desktop
 // keeps its existing two-box left column), but on mobile .filter-panel is
 // hidden entirely and only reappears inside the Filters drawer - which
@@ -4836,6 +4940,8 @@ function ensureMobilePriceIntelPlacement() {
     proResults.insertBefore(sentinel, anchor);
     ensureMobilePriceIntelFrozenBanner();
     checkPriceIntelScrollFreeze();
+    document.getElementById("decodeHeroSentinel")?.remove();
+    document.getElementById("decodeFrozenBanner")?.classList.remove("is-visible");
     return;
   }
 
@@ -4859,10 +4965,23 @@ function ensureMobilePriceIntelPlacement() {
     if (card.parentElement !== wrap) {
       wrap.insertBefore(card, proResults);
     }
+
+    let heroSentinel = document.getElementById("decodeHeroSentinel");
+    if (!heroSentinel) {
+      heroSentinel = document.createElement("div");
+      heroSentinel.id = "decodeHeroSentinel";
+      heroSentinel.className = "decode-hero-sentinel";
+    }
+    wrap.insertBefore(heroSentinel, proResults);
+
+    ensureDesktopDecodeFrozenBanner();
+    checkDecodeFrozenBannerFreeze();
     return;
   }
 
   card.classList.remove("price-intel-hero");
+  document.getElementById("decodeHeroSentinel")?.remove();
+  document.getElementById("decodeFrozenBanner")?.classList.remove("is-visible");
   if (filterPanel && card.parentElement !== filterPanel) {
     filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
   }

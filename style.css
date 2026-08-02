@@ -1229,6 +1229,112 @@ select:focus{
   height:1px;
 }
 
+.decode-hero-sentinel{
+  height:1px;
+}
+
+/* Desktop/tablet equivalent of the mobile frozen banner above - see
+   ensureDesktopDecodeFrozenBanner in script.js. It's only ever created
+   on non-mobile (checkDecodeFrozenBannerFreeze bails on
+   isSkyDealMobileView()), so display:flex here is safe by construction;
+   the max-width:760px query further down still forces display:none as a
+   hard backstop in case a desktop->mobile resize leaves it in the DOM
+   for a frame. Visibility itself is opacity/transform-driven via
+   .is-visible below, not display, so the entrance can animate. */
+.decode-frozen-banner{
+  display:flex;
+  position:fixed;
+  left:0;
+  right:0;
+  top:198px;
+  z-index:45;
+  background:linear-gradient(120deg, #110b1e 0%, #1c1030 100%);
+  border-bottom:1px solid rgba(174,61,255,0.4);
+  box-shadow:0 12px 30px rgba(17,11,30,0.35);
+  opacity:0;
+  transform:translateY(-8px);
+  pointer-events:none;
+  cursor:pointer;
+  transition:opacity 0.16s ease, transform 0.16s ease;
+}
+
+.decode-frozen-banner.is-visible{
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+
+.decode-frozen-banner-inner{
+  max-width:1100px;
+  margin:0 auto;
+  padding:12px 20px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.decode-frozen-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#ae3dff;
+  flex:0 0 auto;
+}
+
+.decode-frozen-text{
+  flex:1;
+  min-width:0;
+}
+
+.decode-frozen-eyebrow{
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  color:#c48aff;
+  margin-bottom:2px;
+}
+
+.decode-frozen-heading{
+  font-size:14.5px;
+  color:#f8fafc;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.decode-frozen-sub{
+  font-size:12.5px;
+  color:rgba(255,255,255,0.6);
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.decode-frozen-sub:empty{
+  display:none;
+}
+
+.decode-frozen-cta{
+  flex:0 0 auto;
+  background:rgba(174,61,255,0.18);
+  border:1px solid rgba(174,61,255,0.5);
+  color:#e9d5ff;
+  font-size:12.5px;
+  font-weight:700;
+  padding:8px 16px;
+  border-radius:10px;
+  white-space:nowrap;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+.decode-frozen-cta:hover{
+  background:rgba(174,61,255,0.3);
+}
+
 .filter-head{
   display:flex;
   justify-content:space-between;
@@ -5062,6 +5168,15 @@ body {
     display: flex !important;
     width: 100%;
     margin: 0 0 14px;
+  }
+
+  /* Desktop's frozen banner never gets created for a mobile view (see
+     checkDecodeFrozenBannerFreeze's isSkyDealMobileView() guard), but
+     this is here as a hard belt-and-suspenders CSS backstop in case a
+     desktop->mobile resize leaves it in the DOM with .is-visible still
+     set for a frame. */
+  .decode-frozen-banner {
+    display: none !important;
   }
 
   /* Frozen "hero banner" that takes over once the full card (above)
