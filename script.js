@@ -4870,12 +4870,18 @@ function updateDesktopDecodeFrozenBannerText() {
   }
 }
 
-// Desktop's .nav keeps the full hero-tagline header at all times (only
-// mobile compacts it in results mode - see body.mobile-results-mode in
-// style.css) - measured live at 188.5px, plus a small clearance, same
-// reasoning as PRICE_INTEL_BANNER_TOP_OFFSET above. Kept in sync with
-// .decode-frozen-banner's own CSS top value.
-const DECODE_FROZEN_BANNER_TOP_OFFSET = 198;
+// Small clearance from the real viewport top, same as
+// PRICE_INTEL_BANNER_TOP_OFFSET above - not offset by .nav's height.
+// .nav declares position:sticky but .skydeal-hero-header (the other
+// class on the same live <header>) sets position:relative later in the
+// cascade at equal specificity and wins, so the nav doesn't actually
+// stay pinned - confirmed live (getComputedStyle(nav).position reports
+// "relative", nav scrolls fully away). A small, viewport-anchored
+// offset means this banner's timing isn't tied to that pre-existing bug
+// either way, and it only appears once the hero has essentially fully
+// scrolled past, not while a chunk of it (e.g. its timing-insight
+// footer) is still on screen.
+const DECODE_FROZEN_BANNER_TOP_OFFSET = 10;
 
 function checkDecodeFrozenBannerFreeze() {
   if (isSkyDealMobileView()) return;

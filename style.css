@@ -1240,13 +1240,20 @@ select:focus{
    the max-width:760px query further down still forces display:none as a
    hard backstop in case a desktop->mobile resize leaves it in the DOM
    for a frame. Visibility itself is opacity/transform-driven via
-   .is-visible below, not display, so the entrance can animate. */
+   .is-visible below, not display, so the entrance can animate.
+   top:0 (not offset below the nav) is deliberate: .nav declares
+   position:sticky (~line 1040) but .skydeal-hero-header - the other
+   class actually on the live <header> - sets position:relative later in
+   the cascade (~line 11185, same specificity, later wins), so the nav
+   silently doesn't stick and just scrolls away with the page. Anchoring
+   this banner to the real viewport top instead of a guessed nav height
+   means it isn't affected by that pre-existing bug either way. */
 .decode-frozen-banner{
   display:flex;
   position:fixed;
   left:0;
   right:0;
-  top:198px;
+  top:0;
   z-index:45;
   background:linear-gradient(120deg, #110b1e 0%, #1c1030 100%);
   border-bottom:1px solid rgba(174,61,255,0.4);
