@@ -1171,6 +1171,15 @@ select:focus{
 .filter-card.is-pinned{
   position:fixed;
   top:92px;
+  /* Fixed positioning takes it out of the page's own scrollable flow,
+     so a long filter list (more airlines, more departure-airport
+     options, etc. than fit in a short window) would otherwise run off
+     the bottom of the viewport with no way to reach it. Capping the
+     height and scrolling internally keeps every filter reachable
+     regardless of window height, without affecting the static/bottomed
+     states where normal page scroll already handles this. */
+  max-height:calc(100vh - 92px - 24px);
+  overflow-y:auto;
 }
 
 .filter-card.is-bottomed{
