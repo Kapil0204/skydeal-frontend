@@ -4864,7 +4864,6 @@ function ensureMobilePriceIntelPlacement() {
     if (card.parentElement !== wrap) {
       wrap.insertBefore(card, proResults);
     }
-    scheduleDesktopStickyPanelCheck();
     return;
   }
 
@@ -4872,76 +4871,7 @@ function ensureMobilePriceIntelPlacement() {
   if (filterPanelSticky && card.parentElement !== filterPanelSticky) {
     filterPanelSticky.insertBefore(card, filterCard || filterPanelSticky.firstChild);
   }
-  scheduleDesktopStickyPanelCheck();
 }
-
-const DESKTOP_STICKY_PANEL_TOP_OFFSET = 92;
-
-// Desktop sidebar sticky (2026-08-01, third attempt - see the CSS comment
-// on .filter-panel-sticky.is-pinned for why native position:sticky was
-// abandoned after two rounds that were structurally verified correct yet
-// still didn't visually stick for the founder). Same 3-state pattern the
-// mobile frozen banner already proves out in this codebase: static (above
-// the stick point) -> fixed at top:92px (scrolling through the tall
-// results column) -> absolute, resting at the column's own bottom edge
-// (once the column itself runs out) - rather than trusting the browser's
-// own sticky containing-block resolution, which is exactly the part that
-// wasn't behaving as expected.
-function updateDesktopStickyFilterPanel() {
-  const sticky = document.querySelector(".filter-panel-sticky");
-  const panel = document.querySelector(".filter-panel");
-  if (!sticky || !panel) return;
-
-  if (window.matchMedia("(max-width: 1080px)").matches) {
-    sticky.classList.remove("is-pinned", "is-bottomed");
-    sticky.style.left = "";
-    sticky.style.width = "";
-    return;
-  }
-
-  const panelRect = panel.getBoundingClientRect();
-  // Measured only while not already fixed - a fixed element's own rect
-  // no longer reflects its natural content height once pinned, but its
-  // height doesn't change across pin states (only its positioning
-  // scheme does), so the last known value stays valid while pinned.
-  if (!sticky.classList.contains("is-pinned")) {
-    updateDesktopStickyFilterPanel._lastHeight = sticky.getBoundingClientRect().height;
-  }
-  const stickyHeight = updateDesktopStickyFilterPanel._lastHeight || sticky.getBoundingClientRect().height;
-
-  const pastTop = panelRect.top < DESKTOP_STICKY_PANEL_TOP_OFFSET;
-  const roomLeft = (panelRect.top + panelRect.height) - (DESKTOP_STICKY_PANEL_TOP_OFFSET + stickyHeight);
-
-  if (pastTop && roomLeft > 0) {
-    sticky.classList.add("is-pinned");
-    sticky.classList.remove("is-bottomed");
-    sticky.style.left = `${panelRect.left}px`;
-    sticky.style.width = `${panelRect.width}px`;
-  } else if (pastTop) {
-    sticky.classList.remove("is-pinned");
-    sticky.classList.add("is-bottomed");
-    sticky.style.left = "";
-    sticky.style.width = "";
-  } else {
-    sticky.classList.remove("is-pinned", "is-bottomed");
-    sticky.style.left = "";
-    sticky.style.width = "";
-  }
-}
-
-let desktopStickyPanelTicking = false;
-function scheduleDesktopStickyPanelCheck() {
-  if (desktopStickyPanelTicking) return;
-  desktopStickyPanelTicking = true;
-  requestAnimationFrame(() => {
-    desktopStickyPanelTicking = false;
-    updateDesktopStickyFilterPanel();
-  });
-}
-
-window.addEventListener("scroll", scheduleDesktopStickyPanelCheck, { passive: true });
-window.addEventListener("resize", scheduleDesktopStickyPanelCheck, { passive: true });
-document.addEventListener("DOMContentLoaded", scheduleDesktopStickyPanelCheck);
 
 // Mobile Chrome/Safari fire resize events when the URL bar hides/shows
 // mid-scroll, not just on a genuine breakpoint change - only re-run
