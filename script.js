@@ -4908,6 +4908,75 @@ function scheduleDecodeFrozenBannerCheck() {
 window.addEventListener("scroll", scheduleDecodeFrozenBannerCheck, { passive: true });
 window.addEventListener("resize", scheduleDecodeFrozenBannerCheck, { passive: true });
 
+// Keeps .filter-card in view while the (much taller) results column
+// scrolls past it, so Filters doesn't disappear once you're a dozen
+// flight cards down. .filter-panel already declared position:sticky
+// here, but confirmed live it never actually clamps - same class of bug
+// as .nav (see the decode-frozen-banner comment above), different
+// mechanism, not worth chasing further given this JS-driven
+// position:fixed pattern is already proven twice in this file. Same
+// 3-state shape as the others: static above the stick point, fixed
+// while .filter-panel (stretched tall by the grid's align-items:stretch
+// to match .flights-workspace) still has room, then absolute at the
+// panel's own bottom edge once it runs out - so it settles above the
+// footer instead of overlapping it.
+const FILTER_CARD_TOP_OFFSET = 92;
+
+function updateStickyFilterCard() {
+  const card = document.querySelector(".filter-card");
+  const panel = document.querySelector(".filter-panel");
+  if (!card || !panel) return;
+
+  if (isSkyDealMobileView() || window.matchMedia("(max-width: 1080px)").matches) {
+    card.classList.remove("is-pinned", "is-bottomed");
+    card.style.left = "";
+    card.style.width = "";
+    return;
+  }
+
+  const panelRect = panel.getBoundingClientRect();
+  // Same reasoning as updateDesktopStickyFilterPanel used to have: only
+  // remeasure while not already fixed, since a fixed element's own rect
+  // no longer reflects its natural content height once pinned.
+  if (!card.classList.contains("is-pinned")) {
+    updateStickyFilterCard._lastHeight = card.getBoundingClientRect().height;
+  }
+  const cardHeight = updateStickyFilterCard._lastHeight || card.getBoundingClientRect().height;
+
+  const pastTop = panelRect.top < FILTER_CARD_TOP_OFFSET;
+  const roomLeft = (panelRect.top + panelRect.height) - (FILTER_CARD_TOP_OFFSET + cardHeight);
+
+  if (pastTop && roomLeft > 0) {
+    card.classList.add("is-pinned");
+    card.classList.remove("is-bottomed");
+    card.style.left = `${panelRect.left}px`;
+    card.style.width = `${panelRect.width}px`;
+  } else if (pastTop) {
+    card.classList.remove("is-pinned");
+    card.classList.add("is-bottomed");
+    card.style.left = "";
+    card.style.width = "";
+  } else {
+    card.classList.remove("is-pinned", "is-bottomed");
+    card.style.left = "";
+    card.style.width = "";
+  }
+}
+
+let filterCardStickyTicking = false;
+function scheduleFilterCardStickyCheck() {
+  if (filterCardStickyTicking) return;
+  filterCardStickyTicking = true;
+  requestAnimationFrame(() => {
+    filterCardStickyTicking = false;
+    updateStickyFilterCard();
+  });
+}
+
+window.addEventListener("scroll", scheduleFilterCardStickyCheck, { passive: true });
+window.addEventListener("resize", scheduleFilterCardStickyCheck, { passive: true });
+document.addEventListener("DOMContentLoaded", scheduleFilterCardStickyCheck);
+
 // Price intelligence lives inside .filter-panel in the markup (so desktop
 // keeps its existing two-box left column), but on mobile .filter-panel is
 // hidden entirely and only reappears inside the Filters drawer - which
@@ -4948,6 +5017,7 @@ function ensureMobilePriceIntelPlacement() {
     checkPriceIntelScrollFreeze();
     document.getElementById("decodeHeroSentinel")?.remove();
     document.getElementById("decodeFrozenBanner")?.classList.remove("is-visible");
+    updateStickyFilterCard();
     return;
   }
 
@@ -4982,6 +5052,7 @@ function ensureMobilePriceIntelPlacement() {
 
     ensureDesktopDecodeFrozenBanner();
     checkDecodeFrozenBannerFreeze();
+    updateStickyFilterCard();
     return;
   }
 
@@ -4991,6 +5062,7 @@ function ensureMobilePriceIntelPlacement() {
   if (filterPanel && card.parentElement !== filterPanel) {
     filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
   }
+  updateStickyFilterCard();
 }
 
 // Mobile Chrome/Safari fire resize events when the URL bar hides/shows

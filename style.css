@@ -1151,11 +1151,33 @@ select:focus{
   margin-top:18px;
 }
 
+/* position:sticky here looked correct (no conflicting override found,
+   unlike .nav's - see the decode-frozen-banner comment further down)
+   but confirmed live: it never actually clamps at top:92px, it just
+   scrolls straight past like a static element. Same class of bug as
+   .nav, different mechanism - not worth chasing further given the
+   JS-driven position:fixed pattern is already proven twice in this
+   codebase (mobile frozen banner, decode-frozen-banner). .filter-card
+   (the only child once results are active - smart-guide-card moves out
+   to .price-intel-hero) gets that treatment below instead; position:
+   relative here is what gives its "resting at the bottom" absolute
+   state the right containing block. */
 .filter-panel{
-  position:sticky;
-  top:92px;
+  position:relative;
   display:flex;
   flex-direction:column;
+}
+
+.filter-card.is-pinned{
+  position:fixed;
+  top:92px;
+}
+
+.filter-card.is-bottomed{
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
 }
 
 /* .filter-card (Filters only, post-search) and .smart-guide-card (Price
@@ -2440,6 +2462,14 @@ h3{
 
   .filter-panel{
     position:static;
+  }
+
+  .filter-card.is-pinned,
+  .filter-card.is-bottomed{
+    position:static;
+    width:auto;
+    left:auto;
+    bottom:auto;
   }
 
   .flights-workspace{
