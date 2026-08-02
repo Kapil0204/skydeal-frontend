@@ -4850,7 +4850,12 @@ function ensureMobilePriceIntelPlacement() {
   // a random, unearned banner (founder feedback on the v1 always-on
   // hero). Pre-search and while loading, the card stays exactly where
   // it always lived: the quiet .filter-panel sidebar slot.
-  const filterPanel = document.querySelector(".filter-panel");
+  // Card and Filters both live inside .filter-panel-sticky (2026-08-01,
+  // the desktop sticky-sidebar fix) - insertBefore's reference node must
+  // be a direct child of the node it's called on, so this now targets
+  // the wrapper, not .filter-panel itself (which is only their
+  // grandparent since that fix landed).
+  const filterPanelSticky = document.querySelector(".filter-panel-sticky") || document.querySelector(".filter-panel");
   const filterCard = document.querySelector(".filter-card");
   const wrap = document.querySelector("main.wrap") || document.querySelector(".wrap");
 
@@ -4863,8 +4868,8 @@ function ensureMobilePriceIntelPlacement() {
   }
 
   card.classList.remove("price-intel-hero");
-  if (filterPanel && card.parentElement !== filterPanel) {
-    filterPanel.insertBefore(card, filterCard || filterPanel.firstChild);
+  if (filterPanelSticky && card.parentElement !== filterPanelSticky) {
+    filterPanelSticky.insertBefore(card, filterCard || filterPanelSticky.firstChild);
   }
 }
 
