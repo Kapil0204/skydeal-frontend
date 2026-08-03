@@ -1278,7 +1278,19 @@ select:focus{
    the cascade (~line 11185, same specificity, later wins), so the nav
    silently doesn't stick and just scrolls away with the page. Anchoring
    this banner to the real viewport top instead of a guessed nav height
-   means it isn't affected by that pre-existing bug either way. */
+   means it isn't affected by that pre-existing bug either way.
+   This element itself is just a transparent positioning shell now
+   (padding:0 16px matches .wrap's own side padding) - it used to also
+   carry the background/border, spanning the true screen edge like the
+   nav bar does, but nothing else on the page uses that full-bleed
+   convention: the hero card it's replacing, the search card, and the
+   results are all contained, rounded boxes inside .wrap's 1100px
+   column. The visible box (background/border/radius) moved onto
+   .decode-frozen-banner-inner below so it shares that same footprint
+   (2026-08-03 audit). pointer-events stays off here permanently so the
+   now-empty gutters on either side of the inner box never register as
+   a click target - only the inner box (which re-enables its own
+   pointer-events when visible) does. */
 .decode-frozen-banner{
   display:flex;
   position:fixed;
@@ -1286,29 +1298,36 @@ select:focus{
   right:0;
   top:0;
   z-index:45;
-  background:linear-gradient(120deg, #110b1e 0%, #1c1030 100%);
-  border-bottom:1px solid rgba(174,61,255,0.4);
-  box-shadow:0 12px 30px rgba(17,11,30,0.35);
+  padding:0 16px;
   opacity:0;
   transform:translateY(-8px);
   pointer-events:none;
-  cursor:pointer;
   transition:opacity 0.16s ease, transform 0.16s ease;
 }
 
 .decode-frozen-banner.is-visible{
   opacity:1;
   transform:translateY(0);
-  pointer-events:auto;
 }
 
 .decode-frozen-banner-inner{
   max-width:1100px;
+  width:100%;
   margin:0 auto;
   padding:12px 20px;
   display:flex;
   align-items:center;
   gap:16px;
+  background:linear-gradient(120deg, #110b1e 0%, #1c1030 100%);
+  border:1px solid rgba(174,61,255,0.4);
+  border-radius:22px;
+  box-shadow:0 12px 30px rgba(17,11,30,0.35);
+  cursor:pointer;
+  pointer-events:none;
+}
+
+.decode-frozen-banner.is-visible .decode-frozen-banner-inner{
+  pointer-events:auto;
 }
 
 .decode-frozen-dot{
@@ -1773,10 +1792,10 @@ h3{
   margin-top:10px;
 }
 
+/* No top divider - this used to sit below the stale payment-profile-
+   static block (see the guide-replacing fix in script.js), so it's now
+   the only thing in the bubble and doesn't need a divider above it. */
 .payment-guide-error-note{
-  margin-top:10px;
-  padding-top:10px;
-  border-top:1px solid rgba(15,23,42,0.08);
   font-size:var(--fs-sm);
   color:var(--gray-500);
   line-height:1.5;
@@ -1789,11 +1808,12 @@ h3{
   margin-bottom:10px;
 }
 
+/* No border/background/padding of its own (2026-08-03 audit) - this
+   used to be a bordered card, nested inside .decode-bubble (its own
+   bordered card), nested inside .price-intel-hero (a third bordered
+   card) - a card inside a card inside a card for one message. The
+   bubble already does the "this is a card" job. */
 .payment-guide-suggestion{
-  border:1px solid var(--gray-200);
-  border-radius:var(--radius-md);
-  padding:12px;
-  background:var(--gray-50);
 }
 
 .payment-guide-suggestion + .payment-guide-suggestion{
@@ -1808,8 +1828,14 @@ h3{
   margin-top:10px;
 }
 
+/* A top divider, not a second nested box - same "quiet secondary
+   detail" pattern already used for non-urgent timing insights, so the
+   collapsed second suggestion reads as more of the same message rather
+   than another competing card. */
 .payment-guide-more-details .payment-guide-suggestion{
   margin-top:8px;
+  padding-top:14px;
+  border-top:1px solid var(--gray-200);
 }
 
 /* A pill + chevron, not another underlined link - sitting right next to
@@ -2028,6 +2054,10 @@ h3{
      shifted-left box under the assistant's bubble (whose text sits 76px in),
      instead of one cohesive stacked card. */
   margin-left:56px;
+  /* Right edge matches the bubble's too: 56px margin + 720px max-width
+     here lands at the same 776px (42px avatar + 14px gap + 720px bubble)
+     as .decode-bubble's own right edge (2026-08-03 audit). */
+  max-width:720px;
 }
 
 .payment-timing-insight:first-child{
@@ -10530,7 +10560,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .price-intel-hero .payment-guide-error-note {
   position: relative;
   color: rgba(255, 255, 255, 0.65);
-  border-top-color: rgba(255, 255, 255, 0.12);
 }
 
 .price-intel-hero .payment-guide-price-transition {
@@ -10658,10 +10687,14 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* No background/border override needed anymore - the base rule above
+   already has none (2026-08-03 audit removed the nested box). */
 .price-intel-hero .payment-guide-suggestion {
   position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.price-intel-hero .payment-guide-more-details .payment-guide-suggestion {
+  border-top-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Same "text left, actions right" row the accepted/resting states
@@ -12073,9 +12106,17 @@ body {
   flex: none;
 }
 
+/* max-width caps the bubble (and, matching it below, the timing
+   insight cards) to a comfortable reading column - without it the
+   bubble stretches to fill however wide .price-intel-hero happens to
+   be, and at a wide monitor the badge/price/heading/actions each end
+   up loosely scattered across ~1000px+ instead of reading as one
+   message (2026-08-03 audit). The outer hero card still runs full
+   width as the featured band; only the content inside is bounded. */
 .decode-bubble {
   flex: 1;
   min-width: 0;
+  max-width: 720px;
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
   border-radius: 4px 16px 16px 16px;

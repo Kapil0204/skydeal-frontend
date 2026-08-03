@@ -3503,7 +3503,11 @@ function renderPaymentGuideCardInner() {
   }
 
   if (paymentGuideState === "error") {
-    container.classList.remove("guide-replacing");
+    // Every other branch here adds "guide-replacing" to hide the stale
+    // pre-search .payment-profile-static block - this one removed it
+    // instead, so an error rendered the old "N payment methods added"
+    // card and the error note at the same time (2026-08-03 audit).
+    container.classList.add("guide-replacing");
     setGuideDynamicHtml(dynamicHost, renderGuideErrorHtml());
     return;
   }
