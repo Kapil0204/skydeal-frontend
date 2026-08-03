@@ -73,6 +73,15 @@ const MASTER_PAYMENT_CATALOG = {
     "Federal Bank",
     "Bank of Baroda",
     "OneCard",
+    // Added 2026-08-04: these banks already have real, live offers in our
+    // data (PNB Luxura, Standard Chartered's EaseMyTrip co-branded card,
+    // Canara Bank, DBS) but weren't selectable here - a cardholder could
+    // only pick "Other", which never matches a bank-specific offer, so
+    // these offers were effectively unreachable by their own cardholders.
+    "Punjab National Bank",
+    "Standard Chartered",
+    "Canara Bank",
+    "DBS Bank",
     "Other"
   ],
   "Debit Card": [
@@ -133,6 +142,9 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
+    "Punjab National Bank",
+    "Canara Bank",
+    "DBS Bank",
     "Other"
   ]
 };
@@ -149,35 +161,49 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
   "HDFC Bank": [
     "Infinia",
     "Diners Club",
+    "Regalia Gold",
     "Regalia",
     "Millennia",
+    "MoneyBack+",
+    "Freedom",
     "Tata Neu",
     "Swiggy HDFC",
+    "Marriott Bonvoy HDFC",
+    "IndianOil HDFC",
+    "6E Rewards (IndiGo)",
     "Other HDFC Card"
   ],
   "Axis Bank": [
     "Flipkart Axis",
+    "Axis Magnus",
+    "Axis Reserve",
     "Axis Vistara",
     "Axis Atlas",
     "Axis Ace",
     "Axis Neo",
+    "Axis Select",
+    "Axis MyZone",
     "Axis Rewards",
     "Other Axis Card"
   ],
   "ICICI Bank": [
     "Amazon Pay ICICI",
-    "Coral",
-    "Rubyx",
-    "Sapphiro",
+    "MMT-ICICI",
     "Emeralde",
+    "Sapphiro",
+    "Rubyx",
+    "Coral",
     "Other ICICI Card"
   ],
   "SBI": [
     "SBI Cashback",
     "SimplyCLICK",
     "SimplySAVE",
+    "Aurum",
     "Prime",
     "Elite",
+    "IRCTC SBI",
+    "BPCL SBI",
     "Other SBI Card"
   ],
   "HSBC": [
@@ -189,6 +215,8 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
   "Kotak Bank": [
     "Kotak White",
     "Myntra Kotak",
+    "Kotak Royale",
+    "Kotak 811",
     "League",
     "Zen",
     "Other Kotak Card"
@@ -198,17 +226,22 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
     "SmartEarn",
     "Gold Card",
     "Platinum Travel",
+    "Platinum Reserve",
     "Other Amex Card"
   ],
   "IndusInd Bank": [
     "Legend",
-    "Tiger",
     "Pinnacle",
+    "Tiger",
+    "Avios",
+    "EazyDiner",
     "Other IndusInd Card"
   ],
   "IDFC First Bank": [
     "Select",
     "Wealth",
+    "Millennia",
+    "Mayura",
     "Classic",
     "Other IDFC First Card"
   ],
@@ -221,20 +254,41 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
   "Yes Bank": [
     "Prosperity",
     "Marquee",
+    "First Preferred",
+    "Private",
     "Other Yes Bank Card"
   ],
   "Federal Bank": [
-    "Imperio",
     "Scapia Federal",
+    "Imperio",
+    "Celesta",
     "Other Federal Card"
   ],
   "Bank of Baroda": [
     "BoB Premier",
     "BoB Eterna",
+    "BoB Select",
     "Other Bank of Baroda Card"
   ],
   "OneCard": [
     "OneCard"
+  ],
+  // Added 2026-08-04 alongside the corresponding bank-picker additions above -
+  // these banks already have real, live offers restricted to a named card
+  // (PNB Luxura, Standard Chartered's EaseMyTrip co-branded card).
+  "Punjab National Bank": [
+    "PNB Luxura",
+    "Other PNB Card"
+  ],
+  "Standard Chartered": [
+    "EaseMyTrip Credit Card",
+    "Other Standard Chartered Card"
+  ],
+  "Canara Bank": [
+    "Other Canara Bank Card"
+  ],
+  "DBS Bank": [
+    "Other DBS Card"
   ],
   "Other": [
     "Other"
@@ -1079,23 +1133,40 @@ function getOtherOffersHideLabel(portal, count = 0) {
 
 function getInfoBadgeLabel(io) {
   const raw = String(io?.infoLabel || "").trim().toLowerCase();
-  if (raw !== "specific card type required") return safeText(io?.infoLabel, "");
+  // Must match the backend's actual string (index.js: infoLabel: isSpecificFamilyInfoOnly
+  // ? "Specific card required" : ...) - this previously checked for "specific card type
+  // required", a string the backend has never sent, so this whole friendly-naming branch
+  // was silently dead code (found 2026-08-04 while investigating a card-variant decode bug).
+  if (raw !== "specific card required") return safeText(io?.infoLabel, "");
 
   const title = String(io?.title || "");
   const knownCards = [
     "Flipkart Axis",
     "Amazon Pay ICICI",
+    "MMT-ICICI",
     "SBI Cashback",
     "Tata Neu",
     "Infinia",
+    "Regalia Gold",
     "Regalia",
     "Millennia",
     "Axis Atlas",
     "Axis Vistara",
     "Axis Ace",
+    "Axis Magnus",
     "Scapia Federal",
     "SimplyCLICK",
-    "SimplySAVE"
+    "SimplySAVE",
+    "HSBC TravelOne",
+    "Myntra Kotak",
+    "Membership Rewards",
+    "SmartEarn",
+    "IndusInd Legend",
+    "IndusInd Pinnacle",
+    "BoB Eterna",
+    "BoB Premier",
+    "PNB Luxura",
+    "OneCard"
   ];
 
   const found = knownCards.find((k) => title.toLowerCase().includes(k.toLowerCase()));
