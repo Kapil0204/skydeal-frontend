@@ -79,7 +79,7 @@ const MASTER_PAYMENT_CATALOG = {
     // only pick "Other", which never matches a bank-specific offer, so
     // these offers were effectively unreachable by their own cardholders.
     "Punjab National Bank",
-    "Standard Chartered",
+    "Standard Chartered Bank",
     "Canara Bank",
     "DBS Bank",
     "Other"
@@ -280,7 +280,7 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
     "PNB Luxura",
     "Other PNB Card"
   ],
-  "Standard Chartered": [
+  "Standard Chartered Bank": [
     "EaseMyTrip Credit Card",
     "Other Standard Chartered Card"
   ],
@@ -1140,37 +1140,43 @@ function getInfoBadgeLabel(io) {
   if (raw !== "specific card required") return safeText(io?.infoLabel, "");
 
   const title = String(io?.title || "");
+  // `match` is what's searched for in the offer's own title text; `label` is
+  // what's shown. These differ because real scraped titles don't always
+  // keep the bank name and product name adjacent (e.g. "Punjab National
+  // Bank Luxura Credit Cards Sale" doesn't contain "PNB Luxura" as a
+  // substring) - confirmed live 2026-08-04 when this first shipped with
+  // "PNB Luxura" as the match term and silently never fired. Matching on
+  // just the distinctive product word avoids the same gap recurring for
+  // every other bank+product pair below.
   const knownCards = [
-    "Flipkart Axis",
-    "Amazon Pay ICICI",
-    "MMT-ICICI",
-    "SBI Cashback",
-    "Tata Neu",
-    "Infinia",
-    "Regalia Gold",
-    "Regalia",
-    "Millennia",
-    "Axis Atlas",
-    "Axis Vistara",
-    "Axis Ace",
-    "Axis Magnus",
-    "Scapia Federal",
-    "SimplyCLICK",
-    "SimplySAVE",
-    "HSBC TravelOne",
-    "Myntra Kotak",
-    "Membership Rewards",
-    "SmartEarn",
-    "IndusInd Legend",
-    "IndusInd Pinnacle",
-    "BoB Eterna",
-    "BoB Premier",
-    "PNB Luxura",
-    "OneCard"
+    { match: "Flipkart Axis", label: "Flipkart Axis" },
+    { match: "Amazon Pay", label: "Amazon Pay ICICI" },
+    { match: "Sbi Cashback", label: "SBI Cashback" },
+    { match: "Tata Neu", label: "Tata Neu" },
+    { match: "Infinia", label: "Infinia" },
+    { match: "Regalia Gold", label: "Regalia Gold" },
+    { match: "Regalia", label: "Regalia" },
+    { match: "Millennia", label: "Millennia" },
+    { match: "Axis Atlas", label: "Axis Atlas" },
+    { match: "Axis Vistara", label: "Axis Vistara" },
+    { match: "Axis Ace", label: "Axis Ace" },
+    { match: "Axis Magnus", label: "Axis Magnus" },
+    { match: "Scapia", label: "Scapia Federal" },
+    { match: "SimplyCLICK", label: "SimplyCLICK" },
+    { match: "SimplySAVE", label: "SimplySAVE" },
+    { match: "TravelOne", label: "HSBC TravelOne" },
+    { match: "Myntra", label: "Myntra Kotak" },
+    { match: "Membership Rewards", label: "Membership Rewards" },
+    { match: "SmartEarn", label: "SmartEarn" },
+    { match: "Legend", label: "IndusInd Legend" },
+    { match: "Pinnacle", label: "IndusInd Pinnacle" },
+    { match: "Eterna", label: "BoB Eterna" },
+    { match: "Luxura", label: "PNB Luxura" },
+    { match: "OneCard", label: "OneCard" }
   ];
 
-  const found = knownCards.find((k) => title.toLowerCase().includes(k.toLowerCase()));
-  return found ? `Needs ${found} credit card` : "Specific card required";
+  const found = knownCards.find((k) => title.toLowerCase().includes(k.match.toLowerCase()));
+  return found ? `Needs ${found.label} credit card` : "Specific card required";
 }
 
 function isDomesticSearchTrip() {
@@ -2753,6 +2759,14 @@ function normalizePmNameForUI(name) {
   if (u === "J&K BANK" || u === "J AND K BANK") return "J&K Bank";
   if (u === "BANK OF INDIA") return "Bank of India";
   if (u === "DBS" || u === "DBS BANK") return "DBS Bank";
+  // Added 2026-08-04: the backend's live /payment-options list returns both
+  // "PNB" and "Punjab National Bank" as separate raw strings for the same
+  // bank (confirmed live) - without a rule here, "PNB" fell through to the
+  // generic per-word title-case fallback below and became "Pnb", a THIRD
+  // distinct string, splitting one real bank into three dropdown entries
+  // instead of merging into one.
+  if (u === "PNB" || u === "PNB BANK" || u === "PUNJAB NATIONAL BANK") return "Punjab National Bank";
+  if (u === "STANDARD CHARTERED" || u === "STANDARD CHARTERED BANK" || u === "STANCHART" || u === "SCB") return "Standard Chartered Bank";
   if (u === "RUPAY") return "RuPay";
   if (u === "INDUSIND" || u === "INDUSIND BANK") return "IndusInd Bank";
   if (u === "BHIM" || u === "BHIM UPI") return "BHIM";
