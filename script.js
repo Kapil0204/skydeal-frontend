@@ -157,6 +157,18 @@ const CARD_NETWORK_OPTIONS = [
   "American Express"
 ];
 
+// Per-bank network restriction, only where genuinely fixed (not just "usually
+// issues X") - American Express is a closed-loop network in India: it issues
+// its own cards directly and doesn't license Visa/Mastercard/RuPay the way
+// other issuers do, so those three were never real choices for an Amex
+// selection. Deliberately not extending this to other banks (HDFC, SBI,
+// etc.) - which specific network a given card comes in varies product by
+// product, not bank-wide, so a bank-level restriction there would risk
+// being confidently wrong rather than just permissive.
+const NETWORK_OPTIONS_BY_BANK = {
+  "American Express": ["American Express"]
+};
+
 const CARD_TYPE_OPTIONS_BY_BANK = {
   "HDFC Bank": [
     "Infinia",
@@ -1966,6 +1978,11 @@ function getCardTypeOptionsForPaymentMethod(pm) {
   return ["Other"];
 }
 
+function getNetworkOptionsForPaymentMethod(pm) {
+  if (!pm) return CARD_NETWORK_OPTIONS;
+  return NETWORK_OPTIONS_BY_BANK[pm.name] || CARD_NETWORK_OPTIONS;
+}
+
 function paymentMethodDetailSummary(pm) {
   if (!pm) return "";
 
@@ -2209,6 +2226,7 @@ function openPaymentDetailEditor(index) {
     `;
     } else if (pm.type === "Credit Card" || pm.type === "Debit Card") {
     const cardTypeOptions = getCardTypeOptionsForPaymentMethod(pm);
+    const networkOptions = getNetworkOptionsForPaymentMethod(pm);
 
     bodyEl.innerHTML = `
       <div style="opacity:.8;font-size:12px;margin-bottom:12px;">All details below are optional.</div>
@@ -2216,7 +2234,7 @@ function openPaymentDetailEditor(index) {
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card network</label>
       <select id="pmDetailNetwork" style="width:100%;padding:10px;border-radius:8px;background:#17172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);margin-bottom:14px;">
         <option value="">Not specified</option>
-        ${CARD_NETWORK_OPTIONS.map((name) => `<option value="${name}" ${pm.network === name ? "selected" : ""}>${name}</option>`).join("")}
+        ${networkOptions.map((name) => `<option value="${name}" ${pm.network === name ? "selected" : ""}>${name}</option>`).join("")}
       </select>
 
       <label style="display:block;font-size:13px;margin-bottom:8px;">Card type / card family</label>
