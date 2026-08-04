@@ -1008,7 +1008,7 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
   const finalPrice = money(bestDeal.finalPrice);
   const basePrice = money(bestDeal.basePrice);
   const code = bestDeal.code ? safeText(bestDeal.code) : "";
-  const payment = getOfferAwarePaymentLabel(bestDeal);
+  const payment = getOfferAwarePaymentLabelForRow(bestDeal);
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
   const showType = type && type.toLowerCase() !== "payment offer";
   const showCouponChip = !isRoundTripLeg;
@@ -1115,18 +1115,28 @@ function getOfferAwarePaymentLabel(item = {}) {
   return `${baseLabel} • EMI`;
 }
 
-// "No payment restriction" on its own reads like a technical caveat.
-// When the offer is the portal's own generic checkout offer (not tied
-// to a specific bank/card), say so plainly instead - that's the actual
-// reason any payment method works.
+// "No payment restriction" on its own reads like a technical caveat, and
+// worse, if a user's own bank/card offer didn't apply, seeing nothing else
+// here reads as "we found nothing for you" even when a real discount (just
+// not a payment-specific one) is the one actually applied to the price
+// shown. Say so plainly and reassuringly instead.
+//
+// Matches by offer-type PREFIX, not an exact string - the backend emits
+// several different labels for "not tied to a specific bank/card"
+// (confirmed in source: "Checkout offer", "Checkout coupon", "Portal offer
+// (no payment required)", "Airline offer"). The previous check only
+// matched "checkout offer"/"checkout" verbatim, so a real "Checkout
+// coupon" or "Portal offer" deal - both genuinely emitted - fell through
+// to the raw "No payment restriction" label instead of this one. Same bug
+// class as getInfoBadgeLabel's dead string check found earlier.
 function getOfferAwarePaymentLabelForRow(item = {}) {
   const baseLabel = getOfferAwarePaymentLabel(item);
   const isNoRestriction = /^no (payment )?restriction/i.test(baseLabel.trim());
   const offerType = String(item.offerTypeLabel || "").trim().toLowerCase();
-  const isCheckoutOffer = offerType === "checkout offer" || offerType === "checkout";
+  const isNonPaymentOffer = /^(checkout|portal|airline)\b/.test(offerType);
 
-  if (isNoRestriction && isCheckoutOffer) {
-    return `${safeText(item.portal)}'s own offer, works with any payment method`;
+  if (isNoRestriction && isNonPaymentOffer) {
+    return `${safeText(item.portal)}'s own discount - already applied, works with any payment method`;
   }
   return baseLabel;
 }
@@ -4448,7 +4458,7 @@ function formatTripBestSummary() {
   }
 
   const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Best available payment offer";
-  const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment method";
+  const paymentText = getOfferAwarePaymentLabelForRow(bestInfo) || "Selected payment method";
   const saveText = bestInfo.savings > 0 ? `You save ${money(bestInfo.savings)}` : "No discount applied";
   const bestPortalText = bestInfo.portal ? `Best price on ${bestInfo.portal}` : "Best price for selected flights";
 
@@ -4538,7 +4548,7 @@ function formatCompactTripBestSummary() {
   }
 
   const offerTitle = bestInfo.offerTitle || bestInfo.rawDiscount || "Matching payment offer applied";
-  const paymentText = getOfferAwarePaymentLabel(bestInfo) || "Selected payment option";
+  const paymentText = getOfferAwarePaymentLabelForRow(bestInfo) || "Selected payment option";
   const coupon = bestInfo.code || "";
   const saveText = bestInfo.savings > 0 ? `Save ${money(bestInfo.savings)}` : "No discount applied";
   const tiedWith = Array.isArray(bestInfo.tiedWithPortals) ? bestInfo.tiedWithPortals : [];
