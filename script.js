@@ -3057,7 +3057,15 @@ async function fetchPaymentSuggestions() {
       travelClass: lastSearchPayload.travelClass,
       tripType: lastSearchPayload.tripType,
       passengers: lastSearchPayload.passengers,
-      selectedPaymentMethods,
+      // buildSearchPaymentMethods(), not the raw selectedPaymentMethods -
+      // this must match what /search itself sends, or every EMI-typed
+      // offer is invisible to the backend's suggestions/timing-insight
+      // engine whenever "Show EMI offers" is toggled on but the user never
+      // separately added an EMI entry (found 2026-08-07: a real round-trip
+      // min-transaction insight for an EMI-only offer silently never
+      // appeared, because this request never told the backend EMI was in
+      // play at all).
+      selectedPaymentMethods: buildSearchPaymentMethods(),
       outboundFlights: outboundAll.map(tripFlightForGuideRequest),
       returnFlights: returnAll.map(tripFlightForGuideRequest),
       // Phase 3: used only to bound the timing-insight lookahead horizon
@@ -3125,7 +3133,11 @@ async function repriceAndRenderFlights() {
       travelClass: lastSearchPayload.travelClass,
       tripType: lastSearchPayload.tripType,
       passengers: lastSearchPayload.passengers,
-      selectedPaymentMethods,
+      // buildSearchPaymentMethods(), not the raw selectedPaymentMethods -
+      // must match what /search itself sends, or a toggle-only reprice
+      // (no fresh /search) silently drops back to non-EMI pricing whenever
+      // "Show EMI offers" is on but no separate EMI entry was ever added.
+      selectedPaymentMethods: buildSearchPaymentMethods(),
       outboundFlights: outboundAll.map(tripFlightForRepriceRequest),
       returnFlights: returnAll.map(tripFlightForRepriceRequest),
     };
