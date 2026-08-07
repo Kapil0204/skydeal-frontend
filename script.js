@@ -3356,7 +3356,7 @@ function renderGuideOptimisedHtml() {
   // shared rendering so both paths (fresh check vs. post-accept) always
   // look and behave identically, including always offering a way to add
   // another payment method instead of sometimes dead-ending here.
-  return renderGuideOptimisedRestingHtml(summaryLine);
+  return renderGuideOptimisedRestingHtml();
 }
 
 // "You've already got the best price" is a comparison claim - it only
@@ -3368,11 +3368,36 @@ function renderGuideOptimisedHtml() {
 // Same reasoning for "We checked every other way to pay" - true either
 // way, but only useful as a reassurance once the user might plausibly be
 // wondering "is there something better", not before they've had the
-// chance to wonder that at all. selectedPaymentMethodCount (already on
-// the backend's own summary) is what actually earns this framing - not a
-// separate signal, just using the one that was already there.
-function renderGuideOptimisedRestingHtml(summaryLine) {
-  const selectedCount = lastGuideSummary?.selectedPaymentMethodCount ?? selectedPaymentMethods.length;
+// chance to wonder that at all.
+//
+// Deliberately reads the frontend's OWN selectedPaymentMethods array, not
+// lastGuideSummary.selectedPaymentMethodCount - founder-caught bug,
+// 2026-08-07: that backend count reflects buildSearchPaymentMethods()'s
+// EMI expansion (one Credit Card entry + one auto-added EMI entry when
+// "Show EMI offers" is on), so picking ONE bank with EMI included already
+// counted as 2 and showed the earned "best price" framing on someone's
+// very first pick. This array is exactly what the user themselves added
+// in the payment modal, before any such expansion.
+function renderGuideOptimisedRestingHtml() {
+  const selectedCount = selectedPaymentMethods.length;
+
+  // The passed-in summaryLine is built from lastGuideSummary.selectedPaymentMethodCount
+  // - the backend's EMI-expanded count (buildSearchPaymentMethods() adds a
+  // second entry per bank when "Show EMI offers" is on), not what the user
+  // themselves picked in the payment modal. "N payment methods selected" is
+  // describing the user's own action, so it should always use their raw
+  // count - rebuilt here rather than trusting the passed-in line, in both
+  // branches (founder-caught, 2026-08-07: first spotted on someone's very
+  // first pick, but the same mismatch was still there once selected 2+).
+  const ownSummaryLine = lastGuideSummary
+    ? `
+      <div class="payment-guide-optimised-facts">
+        ${lastGuideCurrentBestPrice != null ? `<span>Best final price: ₹${lastGuideCurrentBestPrice}</span>` : ""}
+        <span>${selectedCount} payment method${selectedCount === 1 ? "" : "s"} selected</span>
+        ${Number.isFinite(lastGuideSummary.matchedOfferCount) ? `<span>${lastGuideSummary.matchedOfferCount} offer${lastGuideSummary.matchedOfferCount === 1 ? "" : "s"} matched</span>` : ""}
+      </div>
+    `
+    : "";
 
   if (selectedCount <= 1) {
     return `
@@ -3380,7 +3405,7 @@ function renderGuideOptimisedRestingHtml(summaryLine) {
         <div class="payment-guide-success-text">
           <div class="payment-guide-success-heading">Here's your price</div>
           <div class="payment-guide-success-message payment-guide-resting-message">Add another card, UPI app, or wallet if you'd like to compare and see if it saves you more.</div>
-          ${summaryLine || ""}
+          ${ownSummaryLine}
         </div>
         <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
       </div>
@@ -3392,7 +3417,7 @@ function renderGuideOptimisedRestingHtml(summaryLine) {
       <div class="payment-guide-success-text">
         <div class="payment-guide-success-heading">You've already got the best price</div>
         <div class="payment-guide-success-message payment-guide-resting-message">We checked every other way to pay - add another card, UPI app, or wallet to see if it saves you more.</div>
-        ${summaryLine || ""}
+        ${ownSummaryLine}
       </div>
       <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
     </div>
