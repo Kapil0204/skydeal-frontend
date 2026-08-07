@@ -3359,7 +3359,34 @@ function renderGuideOptimisedHtml() {
   return renderGuideOptimisedRestingHtml(summaryLine);
 }
 
+// "You've already got the best price" is a comparison claim - it only
+// means something once the user has actually seen a comparison happen
+// (i.e. they've tried more than one way to pay). Said the moment someone
+// adds their FIRST card, it asserts a conclusion against a baseline they
+// never saw, which reads as unearned or just confusing (founder catch,
+// 2026-08-07: "they wouldn't even know the use case of this message").
+// Same reasoning for "We checked every other way to pay" - true either
+// way, but only useful as a reassurance once the user might plausibly be
+// wondering "is there something better", not before they've had the
+// chance to wonder that at all. selectedPaymentMethodCount (already on
+// the backend's own summary) is what actually earns this framing - not a
+// separate signal, just using the one that was already there.
 function renderGuideOptimisedRestingHtml(summaryLine) {
+  const selectedCount = lastGuideSummary?.selectedPaymentMethodCount ?? selectedPaymentMethods.length;
+
+  if (selectedCount <= 1) {
+    return `
+      <div class="payment-guide-success-row">
+        <div class="payment-guide-success-text">
+          <div class="payment-guide-success-heading">Here's your price</div>
+          <div class="payment-guide-success-message payment-guide-resting-message">Add another card, UPI app, or wallet if you'd like to compare and see if it saves you more.</div>
+          ${summaryLine || ""}
+        </div>
+        <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
+      </div>
+    `;
+  }
+
   return `
     <div class="payment-guide-success-row">
       <div class="payment-guide-success-text">
