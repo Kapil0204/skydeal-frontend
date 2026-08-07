@@ -412,12 +412,6 @@ returnInput?.addEventListener("change", () => {
 });
 roundTripRadio?.addEventListener("change", syncReturnDateVisualState);
 document.getElementById("oneWay")?.addEventListener("change", syncReturnDateVisualState);
-roundTripRadio?.addEventListener("change", () => {
-  if (typeof renderRoundTripMinTxnHint === "function") renderRoundTripMinTxnHint();
-});
-document.getElementById("oneWay")?.addEventListener("change", () => {
-  if (typeof renderRoundTripMinTxnHint === "function") renderRoundTripMinTxnHint();
-});
 setTimeout(syncReturnDateVisualState, 0);
 
 
@@ -535,11 +529,6 @@ function loadPaymentProfileFromStorage() {
 let outboundAll = [];
 let returnAll = [];
 let lastSearchPayload = null;
-// Subtle "a round-trip search might unlock this" nudge from meta.roundTripMinTxnHint
-// - null whenever the backend found no offer blocked purely by minimum transaction
-// value with enough margin. Cleared on every new search so a stale hint from a
-// previous route never lingers into an unrelated one.
-let lastRoundTripMinTxnHint = null;
 
 // Bumped on every new search; a page-2 prefetch (see prefetchNextPage)
 // captures the value at kickoff and checks it still matches before
@@ -6571,36 +6560,9 @@ function updateFlightSectionHeadings() {
   }
 }
 
-// Subtle, hedged nudge (never a promise) built from meta.roundTripMinTxnHint -
-// only ever shown for the one-way results it was actually computed for, and
-// hidden again the moment the user flips to round-trip mode (the backend
-// already gates roundTripMinTxnHint to one-way requests, but the trip-type
-// toggle can change without a new search firing yet, so this is a second,
-// UI-side guard against suggesting an action the user has already taken).
-function renderRoundTripMinTxnHint() {
-  const el = document.getElementById("roundTripHintNote");
-  if (!el) return;
-
-  const hint = lastRoundTripMinTxnHint;
-  const isOneWayNow = typeof isRoundTripModeActive === "function" ? !isRoundTripModeActive() : true;
-
-  if (!hint || !isOneWayNow) {
-    el.classList.add("is-hidden");
-    el.innerHTML = "";
-    return;
-  }
-
-  const bankText = hint.bank ? `${safeText(hint.bank)}'s` : "A";
-  const discountText = hint.rawDiscount ? safeText(hint.rawDiscount) : "an offer";
-
-  el.innerHTML = `💡 ${bankText} offer (${discountText}) needs a higher minimum spend than this one-way fare — <strong>a round-trip search may unlock it</strong>.`;
-  el.classList.remove("is-hidden");
-}
-
 function renderOutbound() {
   document.body.classList.remove("search-error-mode");
   updateFlightSectionHeadings();
-  renderRoundTripMinTxnHint();
   const filtered = applyFlightFilters(outboundAll);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
   const pageItems = slicePage(sorted, outPageIdx);
@@ -6828,8 +6790,6 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       const msg = json?.meta?.error || json?.error || `Backend error (${res.status})`;
       outboundAll = [];
       returnAll = [];
-      lastRoundTripMinTxnHint = null;
-      renderRoundTripMinTxnHint();
       selectedOutboundFlight = null;
       selectedReturnFlight = null;
       selectedTripComparison = null;
@@ -6842,7 +6802,6 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
        outboundAll = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
     returnAll = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
-    lastRoundTripMinTxnHint = json?.meta?.roundTripMinTxnHint || null;
 
     const missingOutbound = outboundAll.length === 0;
     const missingReturn = payload.tripType === "round-trip" && returnAll.length === 0;
@@ -6867,8 +6826,6 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       renderAirportFilters();
       setResultsPreSearch(true);
       updateFlightSectionHeadings();
-      lastRoundTripMinTxnHint = null;
-      renderRoundTripMinTxnHint();
       renderSearchNoResultsState({
         tripType: payload.tripType,
         missingOutbound,

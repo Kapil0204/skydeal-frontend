@@ -1582,30 +1582,6 @@ h3{
   margin:0 auto;
 }
 
-/* A deliberately quiet nudge, not a banner - this is a maybe, not a promise
-   (see the roundTripMinTxnHint copy in script.js), so it should read like a
-   footnote a curious user notices, not something competing with the actual
-   results for attention. */
-.round-trip-hint-note{
-  display:flex;
-  align-items:baseline;
-  gap:6px;
-  font-size:var(--fs-sm);
-  color:var(--gray-500);
-  background:var(--brand-50);
-  border:1px solid var(--brand-100);
-  border-radius:8px;
-  padding:8px 12px;
-  margin:0 0 12px;
-}
-.round-trip-hint-note.is-hidden{
-  display:none;
-}
-.round-trip-hint-note strong{
-  color:var(--brand-700);
-  font-weight:700;
-}
-
 /* Filters have nothing to filter until a real search has real results, so
    the whole Filters box (.filter-card, now a separate sibling card from
    .smart-guide-card - see index.html) stays hidden pre-search rather than
