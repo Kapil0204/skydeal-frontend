@@ -8948,21 +8948,15 @@ body #selectedTripPanel .sky-trip-clear-btn {
 .empty-state:has(.sky-loading-steps)::before {
   content: "";
   position: absolute;
-  inset: -40%;
-  z-index: -1;
-  background:
-    linear-gradient(
-      115deg,
-      transparent 0%,
-      transparent 35%,
-      rgba(168, 85, 247, 0.16) 45%,
-      rgba(34, 197, 94, 0.10) 50%,
-      rgba(168, 85, 247, 0.16) 55%,
-      transparent 65%,
-      transparent 100%
-    );
-  transform: translateX(-40%);
-  animation: skyLoadingShimmer 2.8s linear infinite;
+  top: 0;
+  left: -60%;
+  width: 60%;
+  height: 100%;
+  z-index: 1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: skyLoadingShimmer 1.8s ease-in-out infinite;
 }
 
 .sky-search-loading-card::after,
@@ -8988,10 +8982,10 @@ body #selectedTripPanel .sky-trip-clear-btn {
 
 @keyframes skyLoadingShimmer {
   0% {
-    transform: translateX(-45%) rotate(0deg);
+    left: -60%;
   }
   100% {
-    transform: translateX(45%) rotate(0deg);
+    left: 160%;
   }
 }
 
@@ -11851,6 +11845,29 @@ body {
   overflow: hidden;
 }
 
+/* Full-card sweep (2026-08-08 follow-up): the fill-bar shimmer + glow
+   pulse alone were too small/localized to read as "actively working" at
+   a glance - a soft diagonal band across the whole card is large enough
+   to register peripherally. Blend-moded + low opacity so it never hurts
+   legibility of the text it crosses. See DECISIONS.md. */
+.decode-wait-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.22) 48%, rgba(255, 255, 255, 0.22) 52%, transparent 65%);
+  background-size: 250% 250%;
+  background-position: -40% 0%;
+  mix-blend-mode: overlay;
+  animation: dwsCardSweep 3.2s ease-in-out infinite;
+}
+
+@keyframes dwsCardSweep {
+  0% { background-position: -60% 0%; }
+  100% { background-position: 160% 0%; }
+}
+
 .dws-glow {
   position: absolute;
   width: 320px;
@@ -11861,6 +11878,12 @@ body {
   opacity: 0.16;
   border-radius: 50%;
   pointer-events: none;
+  animation: dwsGlowPulse 4.5s ease-in-out infinite;
+}
+
+@keyframes dwsGlowPulse {
+  0%, 100% { opacity: 0.16; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.14); }
 }
 
 .dws-eyebrow {
@@ -11983,6 +12006,7 @@ body {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 3px;
   margin: 0 22px 18px;
+  overflow: hidden;
 }
 
 .dws-fill {
@@ -11994,6 +12018,23 @@ body {
   background: linear-gradient(90deg, var(--brand-400), #ffd77a);
   border-radius: 3px;
   transition: width 0.5s ease;
+  overflow: hidden;
+}
+
+.dws-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: dwsShimmer 1.5s linear infinite;
+}
+
+@keyframes dwsShimmer {
+  0% { left: -40%; }
+  100% { left: 140%; }
 }
 
 .dws-steps {
