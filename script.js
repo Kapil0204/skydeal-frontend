@@ -2278,6 +2278,7 @@ function updatePaymentButtonLabel() {
   renderSelectedPaymentMethodsSummary();
   renderPaymentPromptCard();
   renderPaymentProfileCard();
+  refreshDesktopSearchSummaryPaymentChip();
   // Every mutation of selectedPaymentMethods/includeEmiOffers already
   // calls this function immediately after (toggle, clear, done, accepting
   // a suggestion) - the single reliable choke point, so persistence is
@@ -5443,6 +5444,7 @@ function renderMobileSearchSummary() {
 
   summary.querySelector("#mobileEditSearchBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
+    document.body.classList.remove("desktop-results-mode");
     const searchCard = document.querySelector(".search-card");
     if (searchCard) {
       searchCard.scrollIntoView({ behavior: "instant", block: "start" });
@@ -5490,6 +5492,116 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 setTimeout(bindMobileSearchModeEvents, 0);
+
+// ---------- Desktop: payment-first search summary ----------
+// Mirrors the mobile search-to-results collapse above (full form -> thin
+// banner -> Edit search brings it back) for viewports wider than 760px,
+// with one difference: the payment chip is its own tap target that opens
+// the real payment modal directly, since payment methods are the thing
+// people change most after a search - "Edit search" only covers route,
+// dates, passengers and cabin. See DECISIONS.md ("Post-search layout").
+function ensureDesktopSearchSummary() {
+  const results = document.querySelector(".pro-results") || document.querySelector(".results");
+  if (!results) return null;
+
+  let summary = document.getElementById("desktopSearchSummary");
+  if (summary) return summary;
+
+  summary = document.createElement("div");
+  summary.id = "desktopSearchSummary";
+  summary.className = "desktop-search-summary";
+
+  results.parentNode.insertBefore(summary, results);
+
+  return summary;
+}
+
+function desktopPaymentChipLabel() {
+  const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
+  if (n === 0) return "Add payment method";
+  if (n === 1) return paymentMethodDisplayLabel(selectedPaymentMethods[0]);
+  return `${n} payment methods`;
+}
+
+function renderDesktopSearchSummary() {
+  const summary = ensureDesktopSearchSummary();
+  if (!summary) return;
+
+  const from = String(lastSearchPayload?.from || fromInput?.value || "From").toUpperCase();
+  const to = String(lastSearchPayload?.to || toInput?.value || "To").toUpperCase();
+
+  const depart = formatMobileSummaryDate(lastSearchPayload?.departureDate || departInput?.value || "");
+  const ret = formatMobileSummaryDate(lastSearchPayload?.returnDate || returnInput?.value || "");
+
+  const passengers = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+  const cabin = lastSearchPayload?.travelClass || cabinInput?.value || "Economy";
+
+  const isRound = isRoundTripModeActive();
+  const dateText = isRound && ret ? `${depart} - ${ret}` : depart;
+
+  summary.innerHTML = `
+    <div class="desktop-search-route">
+      ${safeText(from)} ${getRouteArrowForSearchState()} ${safeText(to)}
+      <span class="sep">&middot;</span>${safeText(dateText)}
+      <span class="sep">&middot;</span>${passengers} Adult${passengers > 1 ? "s" : ""}
+      <span class="sep">&middot;</span>${safeText(cabin)}
+    </div>
+    <div class="desktop-search-summary-right">
+      <button type="button" id="desktopPaymentChipBtn" class="desktop-payment-chip"><span>${safeText(desktopPaymentChipLabel())}</span></button>
+      <button type="button" id="desktopEditSearchBtn" class="desktop-edit-search-btn">Edit search</button>
+    </div>
+  `;
+
+  summary.querySelector("#desktopPaymentChipBtn")?.addEventListener("click", () => {
+    openPaymentModal();
+  });
+
+  summary.querySelector("#desktopEditSearchBtn")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-results-mode");
+    document.body.classList.remove("desktop-results-mode");
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+}
+
+// Cheap text-only refresh for the payment chip - called from
+// updatePaymentButtonLabel()'s single choke point (see its own comment)
+// so the chip stays in sync whenever payment methods change, without a
+// full summary re-render/re-bind on every add/remove.
+function refreshDesktopSearchSummaryPaymentChip() {
+  if (!document.body.classList.contains("desktop-results-mode")) return;
+  const chipLabel = document.querySelector("#desktopPaymentChipBtn span");
+  if (chipLabel) chipLabel.textContent = desktopPaymentChipLabel();
+}
+
+function enterDesktopResultsMode() {
+  if (isSkyDealMobileView()) return;
+
+  renderDesktopSearchSummary();
+  document.body.classList.add("desktop-results-mode");
+}
+
+function bindDesktopSearchModeEvents() {
+  const searchBtn = document.getElementById("searchBtn");
+  if (!searchBtn || searchBtn.dataset.desktopModeBound === "true") return;
+
+  searchBtn.dataset.desktopModeBound = "true";
+
+  searchBtn.addEventListener("click", () => {
+    if (isSkyDealMobileView()) return;
+
+    setTimeout(() => {
+      renderDesktopSearchSummary();
+      document.body.classList.add("desktop-results-mode");
+    }, 80);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindDesktopSearchModeEvents();
+});
+
+setTimeout(bindDesktopSearchModeEvents, 0);
 
 function removeStandaloneSearchError() {
   const existing = document.getElementById("skySearchStandaloneError");
@@ -5596,6 +5708,7 @@ function renderSearchErrorState(errorMessage = "We couldn’t load live flights.
 
   standalone.querySelector("#editSearchFromErrorBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
+    document.body.classList.remove("desktop-results-mode");
     const searchCard = document.querySelector(".search-card");
     if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
   });
@@ -5747,6 +5860,7 @@ function renderSearchNoResultsState(details = {}) {
 
   document.getElementById("editSearchFromNoResultsBtn")?.addEventListener("click", () => {
     document.body.classList.remove("mobile-results-mode");
+    document.body.classList.remove("desktop-results-mode");
     const searchCard = document.querySelector(".search-card");
     if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
   });
@@ -6054,6 +6168,7 @@ function renderSelectedTripPanel() {
     renderSelectedTripPanel();
     renderMobileQuickFilters();
     enterMobileResultsMode();
+    enterDesktopResultsMode();
     renderMobileResultsApp();
   });
 
@@ -6861,6 +6976,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       renderSearchErrorState(msg);
       renderMobileQuickFilters();
       enterMobileResultsMode();
+      enterDesktopResultsMode();
       return;
     }
 
@@ -6952,6 +7068,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
     enterMobileResultsMode();
+    enterDesktopResultsMode();
     return;
   }
 
