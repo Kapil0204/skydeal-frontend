@@ -292,6 +292,15 @@
       <aside class="filter-panel">
         <div class="smart-guide-card">
           <div class="price-intel-eyebrow"><span class="price-intel-dot" aria-hidden="true"></span>sairro decode</div>
+          <!-- Re-search refreshing tag (2026-08-08): a static sibling, not
+               inside #paymentGuideDynamic - that element's innerHTML gets
+               fully replaced on every render, so anything placed inside it
+               would vanish the next time the guide re-renders. Toggled via
+               setDecodeCardRefreshing() in script.js; only shown when a
+               re-search starts (there are already results on screen) so
+               the stale price/copy underneath doesn't read as current
+               until fresh data actually lands. See DECISIONS.md. -->
+          <div class="decode-refreshing-tag" id="decodeRefreshingTag"><span class="decode-refreshing-spin"></span>Refreshing</div>
           <div class="offers-panel-content">
             <div class="payment-profile-static">
               <h3 class="payment-profile-heading">Your payment profile</h3>

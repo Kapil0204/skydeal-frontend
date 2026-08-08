@@ -1213,6 +1213,7 @@ select:focus{
    Filters receding to a plain box below it (see the mockup this was
    approved from). */
 .smart-guide-card{
+  position:relative;
   background:var(--white);
   border:1.5px solid rgba(168,85,247,0.55);
   border-radius:var(--radius-xl);
@@ -12503,6 +12504,7 @@ body {
    message (2026-08-03 audit). The outer hero card still runs full
    width as the featured band; only the content inside is bounded. */
 .decode-bubble {
+  position: relative;
   flex: 1;
   min-width: 0;
   max-width: 720px;
@@ -12511,6 +12513,61 @@ body {
   border-radius: 4px 16px 16px 16px;
   padding: 16px 20px;
   box-sizing: border-box;
+  transition: opacity 0.3s ease;
+}
+
+/* Re-search "refreshing" state (2026-08-08): dims + sweeps the stale
+   decode content the instant a re-search starts, so it never reads as
+   current while new data is still in flight. Cleared by
+   setDecodeCardRefreshing(false) once fetchPaymentSuggestions() actually
+   resolves - see script.js and DECISIONS.md ("Decode card refreshing
+   state on re-search"). */
+.smart-guide-card.decode-refreshing .decode-bubble {
+  opacity: 0.55;
+  overflow: hidden;
+}
+
+.smart-guide-card.decode-refreshing .decode-bubble::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.28) 48%, rgba(255, 255, 255, 0.28) 52%, transparent 65%);
+  background-size: 250% 250%;
+  background-position: -40% 0%;
+  mix-blend-mode: overlay;
+  animation: dwsCardSweep 2.4s ease-in-out infinite;
+}
+
+.decode-refreshing-tag {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--white);
+  background: var(--brand-500);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 5px 10px;
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 3;
+}
+
+.smart-guide-card.decode-refreshing .decode-refreshing-tag {
+  display: inline-flex;
+}
+
+.decode-refreshing-spin {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--white);
+  animation: skySpin 0.7s linear infinite;
 }
 
 /* renderPaymentGuideCardInner() sets this to "" before a search has real

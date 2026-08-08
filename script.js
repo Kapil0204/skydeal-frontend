@@ -3024,6 +3024,18 @@ function hasActiveSearchResults() {
   return !!resultsSection && !resultsSection.classList.contains("pre-search");
 }
 
+// Marks the decode card as showing stale content while a re-search is in
+// flight (route/date/passengers/cabin changed - not a payment-method-only
+// addition, which reprices in place via /reprice-flights and never touches
+// this). Only ever called when hasActiveSearchResults() was already true
+// at the moment handleSearch started, so the first search of a session
+// (handled by the separate decode-wait-stage) never sets this. See
+// DECISIONS.md ("Decode card refreshing state on re-search").
+function setDecodeCardRefreshing(isRefreshing) {
+  const card = document.querySelector(".smart-guide-card");
+  if (card) card.classList.toggle("decode-refreshing", isRefreshing);
+}
+
 function suggestionKey(s) {
   const pm = s?.paymentMethod || {};
   return `${pm.type || ""}|${pm.name || ""}|${pm.tenureMonths ?? ""}`.toLowerCase();
@@ -3105,6 +3117,7 @@ async function fetchPaymentSuggestions() {
     lastGuideTruncated = false;
   }
 
+  setDecodeCardRefreshing(false);
   renderPaymentGuideCard();
 }
 
@@ -7044,9 +7057,12 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   const thisSearchGeneration = ++searchGeneration;
 
+  const isReSearch = hasActiveSearchResults();
+
   setSearchButtonLoading(true);
   renderSearchLoadingState();
   startDecodeWaitStage(payload.from, payload.to);
+  if (isReSearch) setDecodeCardRefreshing(true);
 
    outboundList.innerHTML = emptyStateHtml("loading");
 
@@ -7094,6 +7110,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       selectedReturnFlight = null;
       selectedTripComparison = null;
       resetDecodeWaitVisualToStatic();
+      setDecodeCardRefreshing(false);
       renderSelectedTripPanel();
       renderSearchErrorState(msg);
       renderMobileQuickFilters();
@@ -7128,6 +7145,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       renderAirportFilters();
       setResultsPreSearch(true);
       resetDecodeWaitVisualToStatic();
+      setDecodeCardRefreshing(false);
       updateFlightSectionHeadings();
       renderSearchNoResultsState({
         tripType: payload.tripType,
@@ -7189,6 +7207,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
     setResultsPreSearch(true);
     resetDecodeWaitVisualToStatic();
+    setDecodeCardRefreshing(false);
     updateFlightSectionHeadings();
     renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();
