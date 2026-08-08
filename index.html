@@ -169,7 +169,54 @@
            is a single section spanning both grid columns, shown/hidden by
            the exact same .pro-results.pre-search toggle already driving
            everything else here - no new JS, see setResultsPreSearch(). -->
-      <div class="how-it-works-presearch">
+      <div class="how-it-works-presearch" id="hiwPresearch">
+        <!-- Wait stage (added 2026-08-08): while a search is actually in
+             flight, this explainer's static content is swapped for a live
+             progress view (startDecodeWaitStage() in script.js) - same
+             .pro-results.pre-search toggle keeps controlling the outer
+             show/hide, only the inner content changes. See DECISIONS.md
+             ("Sairro decode wait stage"). -->
+        <div id="decodeWaitStage" class="decode-wait-stage" style="display:none;">
+          <div class="dws-glow" aria-hidden="true"></div>
+          <div class="dws-eyebrow"><span class="dws-dot" aria-hidden="true"></span>sairro decode</div>
+
+          <div class="dws-route">
+            <span class="dws-airport" id="dwsFrom">&mdash;</span>
+            <span class="dws-track"><svg class="dws-plane" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12l19-9-7 9 7 9z"/></svg></span>
+            <span class="dws-airport" id="dwsTo">&mdash;</span>
+          </div>
+
+          <div class="dws-ticket">
+            <div class="dws-ticket-label">Decoding your price</div>
+            <div class="dws-ticket-price" id="dwsTicketPrice">&#8377;<span class="dws-digit">0</span><span class="dws-digit">0</span>,<span class="dws-digit">0</span><span class="dws-digit">0</span><span class="dws-digit">0</span></div>
+          </div>
+
+          <div class="dws-tracker">
+            <div class="dws-rail"><div class="dws-fill" id="dwsFill"></div></div>
+            <div class="dws-steps">
+              <div class="dws-step" data-step="1">
+                <div class="dws-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="6.2"/><path d="M19.5 19.5l-5-5"/></svg></div>
+                <div class="dws-label">Finding your<br />flights</div>
+              </div>
+              <div class="dws-step" data-step="2">
+                <div class="dws-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="13" height="9.5" rx="2"/><rect x="7.5" y="10.5" width="13" height="9.5" rx="2"/></svg></div>
+                <div class="dws-label">Comparing prices<br />on 6 portals</div>
+              </div>
+              <div class="dws-step" data-step="3">
+                <div class="dws-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M2 10.5h20"/><path d="M7 15.2l2 2 4.2-4.2"/></svg></div>
+                <div class="dws-label">Matching your<br />payment offers</div>
+              </div>
+              <div class="dws-step" data-step="4">
+                <div class="dws-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/></svg></div>
+                <div class="dws-label">Decoding your<br />best price</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dws-subtext" id="dwsSubtext">&nbsp;</div>
+        </div>
+
+        <div id="hiwStaticContent">
         <div class="hiw-title">How sairro works</div>
         <div class="hiw-sub">No account needed — just search once.</div>
 
@@ -238,6 +285,7 @@
             <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>Credit card reward points</span>
             <span class="hiw-soon-chip"><span class="hiw-soon-dot"></span>Lounge access perks</span>
           </div>
+        </div>
         </div>
       </div>
 

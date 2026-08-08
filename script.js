@@ -5611,6 +5611,126 @@ function removeStandaloneSearchError() {
   if (proResults) proResults.style.removeProperty("display");
 }
 
+// ---------- Decode wait stage ----------
+// While a search is actually in flight (only relevant when
+// .how-it-works-presearch is the thing on screen - i.e. the first search
+// of a session, or after an error/no-results revert), swap its static
+// explainer for a live progress view instead of leaving it inert for
+// however long the real /search + /payment-suggestions round trip takes
+// (measured ~6-20s+). Deliberately does NOT touch setResultsPreSearch()
+// or its timing - only the inner content of the pre-search explainer
+// changes; a re-search (pre-search already false from a prior search)
+// is untouched and keeps today's behavior. See DECISIONS.md.
+var decodeWaitRafId = null;
+var decodeWaitCipherInterval = null;
+var decodeWaitCurrentPhase = 0;
+
+function decodeWaitPhaseForProgress(pct) {
+  if (pct < 20) return 1;
+  if (pct < 50) return 2;
+  if (pct < 78) return 3;
+  return 4;
+}
+
+function decodeWaitSetStep(n, state) {
+  var step = document.querySelector('.dws-step[data-step="' + n + '"]');
+  if (!step) return;
+  step.classList.remove("done", "active");
+  if (state) step.classList.add(state);
+}
+
+var DECODE_WAIT_SUBTEXTS = {
+  1: "Scanning live fares for your route",
+  2: "Checking MakeMyTrip, Goibibo, Yatra and more",
+  3: "Matching your cards and UPI apps against today's offers",
+  4: "Locking in your true final price",
+};
+
+function decodeWaitApplyProgress(pct) {
+  var fill = document.getElementById("dwsFill");
+  if (fill) fill.style.width = pct + "%";
+  var phase = decodeWaitPhaseForProgress(pct);
+  if (phase !== decodeWaitCurrentPhase) {
+    if (decodeWaitCurrentPhase) decodeWaitSetStep(decodeWaitCurrentPhase, "done");
+    decodeWaitSetStep(phase, "active");
+    var subtext = document.getElementById("dwsSubtext");
+    if (subtext) subtext.textContent = DECODE_WAIT_SUBTEXTS[phase];
+    decodeWaitCurrentPhase = phase;
+  }
+}
+
+function stopDecodeWaitTimers() {
+  if (decodeWaitRafId) cancelAnimationFrame(decodeWaitRafId);
+  decodeWaitRafId = null;
+  if (decodeWaitCipherInterval) clearInterval(decodeWaitCipherInterval);
+  decodeWaitCipherInterval = null;
+}
+
+// Reverts .how-it-works-presearch back to its normal static explainer -
+// needed whenever pre-search flips back to true after a failed/empty
+// search, so the next thing the user sees isn't a frozen mid-progress
+// wait stage. Not needed on the success path (the whole explainer is
+// hidden once pre-search flips false, regardless of what's inside it).
+function resetDecodeWaitVisualToStatic() {
+  stopDecodeWaitTimers();
+  decodeWaitCurrentPhase = 0;
+  var hiwPresearch = document.getElementById("hiwPresearch");
+  var waitStage = document.getElementById("decodeWaitStage");
+  var staticContent = document.getElementById("hiwStaticContent");
+  if (hiwPresearch) hiwPresearch.classList.remove("decode-wait-active");
+  if (waitStage) waitStage.style.display = "none";
+  if (staticContent) staticContent.style.display = "";
+}
+
+function startDecodeWaitStage(fromCode, toCode) {
+  stopDecodeWaitTimers();
+  decodeWaitCurrentPhase = 0;
+
+  var hiwPresearch = document.getElementById("hiwPresearch");
+  var waitStage = document.getElementById("decodeWaitStage");
+  var staticContent = document.getElementById("hiwStaticContent");
+  if (!hiwPresearch || !waitStage || !staticContent) return;
+
+  hiwPresearch.classList.add("decode-wait-active");
+  staticContent.style.display = "none";
+  waitStage.style.display = "block";
+
+  var fromEl = document.getElementById("dwsFrom");
+  var toEl = document.getElementById("dwsTo");
+  if (fromEl) fromEl.textContent = safeText(String(fromCode || "").toUpperCase() || "—");
+  if (toEl) toEl.textContent = safeText(String(toCode || "").toUpperCase() || "—");
+
+  [1, 2, 3, 4].forEach(function (n) { decodeWaitSetStep(n, null); });
+  var fill = document.getElementById("dwsFill");
+  if (fill) fill.style.width = "0%";
+  var subtext = document.getElementById("dwsSubtext");
+  if (subtext) subtext.textContent = " ";
+
+  var digits = document.querySelectorAll("#dwsTicketPrice .dws-digit");
+  decodeWaitCipherInterval = setInterval(function () {
+    digits.forEach(function (d) { d.textContent = Math.floor(Math.random() * 10); });
+  }, 90);
+
+  // Unknown real duration (no fixed schedule) - a fixed time constant
+  // eases progress toward ~90% and lets it slow down the longer it runs,
+  // but never claims 100% until stopDecodeWaitTimers() is actually
+  // called from the real /search + /payment-suggestions completion. A
+  // fast ~6s response just catches this curve early; a slow ~20s+ one
+  // keeps creeping upward instead of looking stalled. See DECISIONS.md
+  // ("Sairro decode wait stage") for why this replaced an earlier,
+  // wall-clock-scheduled version.
+  var maxProgress = 90;
+  var tau = 5500;
+  var startTime = performance.now();
+
+  function tick(now) {
+    var elapsed = now - startTime;
+    decodeWaitApplyProgress(maxProgress * (1 - Math.exp(-elapsed / tau)));
+    decodeWaitRafId = requestAnimationFrame(tick);
+  }
+  decodeWaitRafId = requestAnimationFrame(tick);
+}
+
 function renderSearchLoadingState(message = "Comparing final prices") {
   document.body.classList.remove("search-error-mode");
   removeStandaloneSearchError();
@@ -6926,6 +7046,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   setSearchButtonLoading(true);
   renderSearchLoadingState();
+  startDecodeWaitStage(payload.from, payload.to);
 
    outboundList.innerHTML = emptyStateHtml("loading");
 
@@ -6972,6 +7093,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       selectedOutboundFlight = null;
       selectedReturnFlight = null;
       selectedTripComparison = null;
+      resetDecodeWaitVisualToStatic();
       renderSelectedTripPanel();
       renderSearchErrorState(msg);
       renderMobileQuickFilters();
@@ -7005,6 +7127,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       renderAirlineFilters();
       renderAirportFilters();
       setResultsPreSearch(true);
+      resetDecodeWaitVisualToStatic();
       updateFlightSectionHeadings();
       renderSearchNoResultsState({
         tripType: payload.tripType,
@@ -7020,6 +7143,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderAirlineFilters();
     renderAirportFilters();
     setResultsPreSearch(false);
+    stopDecodeWaitTimers();
 
     renderOutbound();
     renderReturn();
@@ -7064,6 +7188,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedTripComparison = null;
 
     setResultsPreSearch(true);
+    resetDecodeWaitVisualToStatic();
     updateFlightSectionHeadings();
     renderSearchErrorState(err?.message || "We couldn’t load live flights.");
     renderMobileQuickFilters();

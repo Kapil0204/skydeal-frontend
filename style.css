@@ -11829,6 +11829,254 @@ body {
   display: none !important;
 }
 
+/* =====================================================
+   Decode wait stage (2026-08-08): while a search is in
+   flight, .how-it-works-presearch's static explainer swaps
+   for this live progress view - startDecodeWaitStage() in
+   script.js. Reuses .price-intel-hero's own dark palette
+   (#110b1e + #ae3dff glow) for visual continuity with the
+   real decode card this leads into. See DECISIONS.md.
+===================================================== */
+
+.how-it-works-presearch.decode-wait-active {
+  background: #110b1e;
+  border-color: rgba(174, 61, 255, 0.28);
+  box-shadow: 0 20px 50px rgba(17, 11, 30, 0.25);
+  padding: 24px 26px 26px;
+}
+
+.decode-wait-stage {
+  position: relative;
+  color: #f4f1fb;
+  overflow: hidden;
+}
+
+.dws-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  top: -150px;
+  right: -90px;
+  background: #ae3dff;
+  opacity: 0.16;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dws-eyebrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-300);
+  margin-bottom: 22px;
+}
+
+.dws-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-400);
+}
+
+.dws-route {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 auto 26px;
+  max-width: 320px;
+}
+
+.dws-airport {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+}
+
+.dws-track {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 6px, transparent 6px 12px);
+}
+
+.dws-plane {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  color: #ffd77a;
+  transform: translate(-50%, -50%);
+  animation: dwsFly 2.6s ease-in-out infinite;
+}
+
+@keyframes dwsFly {
+  0% { left: 2%; transform: translate(-50%, -65%); }
+  50% { left: 50%; transform: translate(-50%, -135%); }
+  100% { left: 98%; transform: translate(-50%, -65%); }
+}
+
+.dws-ticket {
+  position: relative;
+  margin: 0 auto 28px;
+  max-width: 260px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.dws-ticket::before,
+.dws-ticket::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  background: #110b1e;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.dws-ticket::before { left: -8px; }
+.dws-ticket::after { right: -8px; }
+
+.dws-ticket-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a394c4;
+  margin-bottom: 6px;
+}
+
+.dws-ticket-price {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.dws-tracker {
+  position: relative;
+}
+
+.dws-rail {
+  position: relative;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  margin: 0 22px 18px;
+}
+
+.dws-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--brand-400), #ffd77a);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.dws-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.dws-step {
+  flex: 1;
+  text-align: center;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.dws-step.active,
+.dws-step.done {
+  opacity: 1;
+}
+
+.dws-icon {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  color: #a394c4;
+  transition: all 0.3s ease;
+}
+
+.dws-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dws-step.active .dws-icon {
+  background: rgba(168, 82, 255, 0.18);
+  border-color: var(--brand-400);
+  color: var(--white);
+  animation: dwsPulse 1s ease-in-out infinite;
+}
+
+.dws-step.done .dws-icon {
+  background: var(--brand-500);
+  border-color: var(--brand-500);
+  color: var(--white);
+}
+
+@keyframes dwsPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 82, 255, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(168, 82, 255, 0); }
+}
+
+.dws-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #c8c1db;
+}
+
+.dws-step.active .dws-label {
+  color: var(--white);
+}
+
+.dws-subtext {
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--brand-300);
+  font-weight: 700;
+  margin-top: 18px;
+  min-height: 16px;
+}
+
+@media (max-width: 760px) {
+  .dws-route { max-width: 260px; }
+  .dws-ticket-price { font-size: 24px; }
+  .dws-label { font-size: 10px; }
+}
+
 @media (max-width: 760px) {
   /* Mobile's ".pro-results{ padding: 0 10px 160px }" (see ~line 4718)
      reserves 160px at the bottom for the results view's sticky "Show
