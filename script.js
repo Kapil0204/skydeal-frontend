@@ -5479,33 +5479,6 @@ function enterMobileResultsMode() {
   }
 }
 
-function bindMobileSearchModeEvents() {
-  const searchBtn = document.getElementById("searchBtn");
-  if (!searchBtn || searchBtn.dataset.mobileModeBound === "true") return;
-
-  searchBtn.dataset.mobileModeBound = "true";
-
-  searchBtn.addEventListener("click", () => {
-    if (!isSkyDealMobileView()) return;
-
-    setTimeout(() => {
-      renderMobileSearchSummary();
-      document.body.classList.add("mobile-results-mode");
-
-      const summary = document.getElementById("mobileSearchSummary");
-      if (summary) {
-        summary.scrollIntoView({ behavior: "instant", block: "start" });
-      }
-    }, 80);
-  });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  bindMobileSearchModeEvents();
-});
-
-setTimeout(bindMobileSearchModeEvents, 0);
-
 // ---------- Desktop: payment-first search summary ----------
 // Mirrors the mobile search-to-results collapse above (full form -> thin
 // banner -> Edit search brings it back) for viewports wider than 760px,
@@ -5593,28 +5566,6 @@ function enterDesktopResultsMode() {
   renderDesktopSearchSummary();
   document.body.classList.add("desktop-results-mode");
 }
-
-function bindDesktopSearchModeEvents() {
-  const searchBtn = document.getElementById("searchBtn");
-  if (!searchBtn || searchBtn.dataset.desktopModeBound === "true") return;
-
-  searchBtn.dataset.desktopModeBound = "true";
-
-  searchBtn.addEventListener("click", () => {
-    if (isSkyDealMobileView()) return;
-
-    setTimeout(() => {
-      renderDesktopSearchSummary();
-      document.body.classList.add("desktop-results-mode");
-    }, 80);
-  });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  bindDesktopSearchModeEvents();
-});
-
-setTimeout(bindDesktopSearchModeEvents, 0);
 
 function removeStandaloneSearchError() {
   const existing = document.getElementById("skySearchStandaloneError");
@@ -7063,6 +7014,16 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
   renderSearchLoadingState();
   startDecodeWaitStage(payload.from, payload.to);
   if (isReSearch) setDecodeCardRefreshing(true);
+  // Collapsing into the results-mode banner used to be a blind 80ms timer
+  // fired on every click, completely decoupled from whether validation
+  // above actually passed - a search left blank still collapsed into a
+  // banner reading "FROM -> TO" with "How sairro works" showing
+  // underneath, even though the alert() had already stopped the search
+  // itself. Calling these here instead means the collapse only ever
+  // happens as a direct consequence of a validated search actually
+  // starting. Founder-reported 2026-08-08 - see CURRENT_BUGS.md.
+  enterMobileResultsMode();
+  enterDesktopResultsMode();
 
    outboundList.innerHTML = emptyStateHtml("loading");
 
