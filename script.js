@@ -573,6 +573,14 @@ let guideAcceptedNoteTimer = null;
 // state. Backend-authoritative; not recomputed client-side.
 let lastGuideSummary = null;
 let lastGuideCurrentBestPrice = null;
+// Sairro decode priority hierarchy (2026-08-08) - the backend's single
+// ordered message (Tier 1 exact match > Tier 2 same-bank nearby > Tier 3
+// unlocks soon > Tier 4 fallback reassurance), replacing the old
+// suggestions/timingInsights split as the primary "ready" state's
+// content. Null when nothing is selected yet, or if the backend's own
+// computation failed defensively - both cases fall back to the prior
+// suggestions-based rendering. See DECISIONS.md.
+let lastPrimaryDecodeMessage = null;
 // meta.truncated from /payment-suggestions - true when the backend's
 // candidate-evaluation loop hit its time budget before testing every
 // candidate. When this is true and nothing cleared the savings bar,
@@ -3101,6 +3109,7 @@ async function fetchPaymentSuggestions() {
     lastGuideSummary = json?.summary || null;
     lastGuideCurrentBestPrice = Number.isFinite(json?.currentBestPrice) ? json.currentBestPrice : null;
     lastGuideTruncated = json?.meta?.truncated === true;
+    lastPrimaryDecodeMessage = json?.primaryDecodeMessage || null;
 
     if (!guideSearchSummary && lastGuideCurrentBestPrice != null) {
       resetGuideSearchSummary(lastGuideCurrentBestPrice);
@@ -3115,6 +3124,7 @@ async function fetchPaymentSuggestions() {
     paymentTimingInsights = [];
     paymentGuideState = "error";
     lastGuideTruncated = false;
+    lastPrimaryDecodeMessage = null;
   }
 
   setDecodeCardRefreshing(false);
@@ -3663,6 +3673,95 @@ function setGuideDynamicHtml(host, html) {
   setTimeout(clear, 250);
 }
 
+// Sairro decode priority hierarchy (2026-08-08) - renders the backend's
+// single ordered message (lastPrimaryDecodeMessage). Every value comes
+// from the backend response for THIS search/selection - nothing here is
+// hardcoded copy for a specific bank/portal/amount, only the small
+// tier->tag label mapping, which is a UI label keyed off the dynamic
+// `tier` number, not a fixed message.
+function decodePrimaryTagText(msg) {
+  if (msg.tier === 1) return msg.urgent ? "Ending soon" : "Live today";
+  if (msg.tier === 2) return "Add to save";
+  if (msg.tier === 3) return "Opens soon";
+  return "Nothing live";
+}
+
+function renderPrimaryDecodeMessageHtml(msg) {
+  const tagClass = msg.urgent ? " decode-primary-tag-urgent" : (msg.tier === 3 ? " decode-primary-tag-soon" : "");
+  const parts = [];
+
+  parts.push(`<span class="decode-primary-tag${tagClass}">${safeText(decodePrimaryTagText(msg))}</span>`);
+  parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}</div>`);
+  parts.push(`<div class="decode-primary-body">${safeText(msg.message)}</div>`);
+
+  if (msg.upsell) {
+    parts.push(`<div class="decode-primary-upsell">${safeText(msg.upsell)}</div>`);
+  }
+  if (msg.mirror) {
+    parts.push(`<div class="decode-primary-mirror">${safeText(msg.mirror)}</div>`);
+  }
+
+  if (msg.cta) {
+    parts.push(`
+      <div class="decode-primary-actions">
+        <button type="button" class="payment-guide-add-btn" data-cta-kind="method">${safeText(msg.cta.label)}</button>
+      </div>
+    `);
+  } else if (msg.ctaGeneric) {
+    parts.push(`
+      <div class="decode-primary-actions">
+        <button type="button" class="payment-guide-check-more-btn" data-cta-kind="generic">${safeText(msg.ctaGeneric)}</button>
+      </div>
+    `);
+  }
+
+  if (msg.warning) {
+    parts.push(`<div class="decode-primary-warning">${safeText(msg.warning)}</div>`);
+  }
+  if (msg.tip) {
+    parts.push(`<div class="decode-primary-tip">${safeText(msg.tip)}</div>`);
+  }
+
+  return parts.join("\n");
+}
+
+// Tier 2's cta only carries {label, paymentMethod} - re-finds the FULL
+// suggestion object (additionalSaving/newBestPrice/affectedFlights etc.)
+// from the same-request paymentSuggestions array so it can reuse
+// applyPaymentSuggestion() exactly as the old suggestion cards did,
+// rather than duplicating that accept-suggestion logic here.
+function wirePrimaryDecodeMessageButtons(host) {
+  if (!host || host.dataset.wired) return;
+  host.dataset.wired = "1";
+
+  // Reads lastPrimaryDecodeMessage fresh on every click rather than
+  // capturing it in this closure - the host div persists and is only
+  // wired once (guarded above), but its content re-renders on every
+  // search/re-search, so a captured reference would silently go stale
+  // and the button would act on a previous search's data.
+  host.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-cta-kind]");
+    if (!btn) return;
+
+    if (btn.dataset.ctaKind === "generic") {
+      openPaymentModal();
+      return;
+    }
+
+    const pm = lastPrimaryDecodeMessage?.cta?.paymentMethod;
+    if (!pm) return;
+
+    const matched = paymentSuggestions.find(
+      (s) =>
+        String(s.paymentMethod?.type || "").toLowerCase() === String(pm.type || "").toLowerCase() &&
+        String(s.paymentMethod?.name || "").toLowerCase() === String(pm.name || "").toLowerCase() &&
+        (s.paymentMethod?.tenureMonths ?? null) === (pm.tenureMonths ?? null)
+    );
+
+    if (matched) applyPaymentSuggestion(matched);
+  });
+}
+
 function renderPaymentGuideCardInner() {
   const container = document.querySelector(".offers-panel-content");
   const dynamicHost = document.getElementById("paymentGuideDynamic");
@@ -3704,6 +3803,13 @@ function renderPaymentGuideCardInner() {
   }
 
   if (paymentGuideState === "ready") {
+    if (lastPrimaryDecodeMessage) {
+      container.classList.add("guide-replacing");
+      setGuideDynamicHtml(dynamicHost, renderPrimaryDecodeMessageHtml(lastPrimaryDecodeMessage));
+      wirePrimaryDecodeMessageButtons(dynamicHost);
+      return;
+    }
+
     const visible = visiblePaymentSuggestions();
 
     if (visible.length === 0) {
@@ -3779,6 +3885,18 @@ function renderTimingInsights() {
   const urgentHost = document.getElementById("paymentTimingUrgentDynamic");
   const futureHost = document.getElementById("paymentTimingDynamic");
   if (!urgentHost || !futureHost) return;
+
+  // Sairro decode priority hierarchy (2026-08-08): urgency and "unlocks
+  // soon" now live INSIDE the single primary message (Tier 1's warning
+  // line, Tier 3) instead of these separate cards - showing both would
+  // duplicate the same signal twice. These containers stay the fallback
+  // for whenever lastPrimaryDecodeMessage is null (nothing selected yet,
+  // or the backend's computation failed defensively).
+  if (lastPrimaryDecodeMessage) {
+    urgentHost.innerHTML = "";
+    futureHost.innerHTML = "";
+    return;
+  }
 
   if (!hasActiveSearchResults() || !Array.isArray(paymentTimingInsights) || paymentTimingInsights.length === 0) {
     urgentHost.innerHTML = "";

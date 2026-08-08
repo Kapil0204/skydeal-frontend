@@ -12516,6 +12516,124 @@ body {
   transition: opacity 0.3s ease;
 }
 
+/* Sairro decode priority hierarchy (2026-08-08) - the single ordered
+   message (renderPrimaryDecodeMessageHtml in script.js). Light/base
+   styling here; .price-intel-hero overrides below match the dark hero
+   card's own palette, mirroring the existing .payment-guide-success-*
+   pattern rather than inventing a second convention. See DECISIONS.md
+   ("Sairro decode priority hierarchy"). */
+.decode-primary-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--brand-50);
+  color: var(--brand-700);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  margin-bottom: 8px;
+}
+
+.decode-primary-tag-urgent {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.decode-primary-tag-soon {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.decode-primary-heading {
+  font-size: var(--fs-base);
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.decode-primary-body {
+  font-size: var(--fs-sm);
+  color: var(--gray-700);
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.decode-primary-upsell {
+  font-size: var(--fs-sm);
+  color: var(--gray-900);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.decode-primary-mirror {
+  font-size: var(--fs-sm);
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+
+.decode-primary-actions {
+  margin: 8px 0;
+}
+
+.decode-primary-warning {
+  font-size: var(--fs-sm);
+  color: var(--danger);
+  background: var(--danger-light);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.decode-primary-tip {
+  font-size: var(--fs-sm);
+  color: var(--gray-500);
+  margin-top: 8px;
+  border-top: 1px solid var(--gray-200);
+  padding-top: 8px;
+}
+
+.price-intel-hero .decode-primary-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c9a6ff;
+}
+
+.price-intel-hero .decode-primary-tag-urgent {
+  background: rgba(220, 38, 38, 0.18);
+  color: #f19a9a;
+}
+
+.price-intel-hero .decode-primary-tag-soon {
+  background: rgba(242, 201, 76, 0.16);
+  color: #f2c94c;
+}
+
+.price-intel-hero .decode-primary-heading {
+  color: #ffffff;
+}
+
+.price-intel-hero .decode-primary-body {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.price-intel-hero .decode-primary-upsell {
+  color: #ffffff;
+}
+
+.price-intel-hero .decode-primary-mirror {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.price-intel-hero .decode-primary-warning {
+  color: #f19a9a;
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.price-intel-hero .decode-primary-tip {
+  color: rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
 /* Re-search "refreshing" state (2026-08-08): dims + sweeps the stale
    decode content the instant a re-search starts, so it never reads as
    current while new data is still in flight. Cleared by
