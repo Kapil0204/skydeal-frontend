@@ -3766,24 +3766,24 @@ function setGuideDynamicHtml(host, html) {
   setTimeout(clear, 250);
 }
 
-// Sairro decode priority hierarchy (2026-08-08) - renders the backend's
-// single ordered message (lastPrimaryDecodeMessage). Every value comes
-// from the backend response for THIS search/selection - nothing here is
-// hardcoded copy for a specific bank/portal/amount, only the small
-// tier->tag label mapping, which is a UI label keyed off the dynamic
-// `tier` number, not a fixed message.
-function decodePrimaryTagText(msg) {
-  if (msg.tier === 1) return msg.urgent ? "Ending soon" : "Live today";
-  if (msg.tier === 2) return "Add to save";
-  if (msg.tier === 3) return "Opens soon";
-  return "Nothing live";
+// Sairro decode priority hierarchy (2026-08-08, revised 2026-08-09 to
+// match decode_priority_hierarchy_mock.html precisely) - renders the
+// backend's single ordered message (lastPrimaryDecodeMessage). tag/
+// tagVariant come straight from the backend (it has the bank/day/percent
+// data to build a specific label like "Same bank • live today" or "Opens
+// Monday" - a tier-number->generic-word mapping here would just throw
+// that specificity away), so this function is pure rendering, no copy.
+function decodePrimaryTagClass(msg) {
+  if (msg.tagVariant === "urgent") return " decode-primary-tag-urgent";
+  if (msg.tagVariant === "warn") return " decode-primary-tag-soon";
+  return "";
 }
 
 function renderPrimaryDecodeMessageHtml(msg) {
-  const tagClass = msg.urgent ? " decode-primary-tag-urgent" : (msg.tier === 3 ? " decode-primary-tag-soon" : "");
+  const tagClass = decodePrimaryTagClass(msg);
   const parts = [];
 
-  parts.push(`<span class="decode-primary-tag${tagClass}">${safeText(decodePrimaryTagText(msg))}</span>`);
+  parts.push(`<span class="decode-primary-tag${tagClass}">${safeText(msg.tag || "")}</span>`);
   parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}</div>`);
   parts.push(`<div class="decode-primary-body">${safeText(msg.message)}</div>`);
 
@@ -3798,6 +3798,7 @@ function renderPrimaryDecodeMessageHtml(msg) {
     parts.push(`
       <div class="decode-primary-actions">
         <button type="button" class="payment-guide-add-btn" data-cta-kind="method">${safeText(msg.cta.label)}</button>
+        ${msg.skip ? `<button type="button" class="decode-primary-skip" data-cta-kind="skip">${safeText(msg.skip)}</button>` : ""}
       </div>
     `);
   } else if (msg.ctaGeneric) {
@@ -3835,6 +3836,14 @@ function wirePrimaryDecodeMessageButtons(host) {
   host.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-cta-kind]");
     if (!btn) return;
+
+    if (btn.dataset.ctaKind === "skip") {
+      // "I'll wait" / "Not for me" - a plain dismissal, not an action on
+      // any backend state. Just removes the actions row so the CTA
+      // doesn't keep nagging for the rest of this render.
+      btn.closest(".decode-primary-actions")?.remove();
+      return;
+    }
 
     if (btn.dataset.ctaKind === "generic") {
       openPaymentModal();

@@ -12573,7 +12573,22 @@ body {
 }
 
 .decode-primary-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin: 8px 0;
+}
+
+.decode-primary-skip {
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--gray-500);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .decode-primary-warning {
@@ -12622,6 +12637,10 @@ body {
 
 .price-intel-hero .decode-primary-mirror {
   color: rgba(255, 255, 255, 0.55);
+}
+
+.price-intel-hero .decode-primary-skip {
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .price-intel-hero .decode-primary-warning {
