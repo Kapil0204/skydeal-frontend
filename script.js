@@ -3107,11 +3107,19 @@ async function fetchPaymentSuggestionsOnce() {
 // returned (see buildOfflineFallbackDecodeMessage) - so the decode card
 // says something true and useful even when the suggestions/timing-insight
 // call itself can't be completed.
-async function fetchPaymentSuggestions() {
+// loadingPhase defaults to "suggestions" ("Checking for a better way to
+// pay…") - the right framing when this is a genuinely fresh look (a first
+// search, or the user explicitly clicking "Check again"). The one caller
+// that just accepted a suggestion passes "repricing" instead ("Updating
+// your price…") - re-validating an action the user JUST took shouldn't
+// visually read as restarting the investigation from scratch (founder
+// catch, 2026-08-10: re-showing "Checking for a better way to pay…"
+// right after "Price updated" read as the app second-guessing itself).
+async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
   paymentGuideState = "loading";
-  guideLoadingPhase = "suggestions";
+  guideLoadingPhase = loadingPhase;
   renderPaymentGuideCard();
 
   const maxAttempts = 3;
@@ -3299,11 +3307,7 @@ async function repriceAndRenderFlights() {
   }
 }
 
-// Used by the normal payment modal's Done/Clear actions only. Re-entering
-// the modal is treated as a deliberate new engagement, so it resumes the
-// normal auto-refreshing guide (unlike accepting a guide suggestion
-// directly, which intentionally stops the auto-loop - see
-// applyPaymentSuggestion).
+// Used by the normal payment modal's Done/Clear actions only.
 async function syncPaymentMethodsPostSearch() {
   guideAwaitingManualRecheck = false;
   // Show the banner's loading state immediately, in step with the flight
@@ -3407,7 +3411,7 @@ async function applyPaymentSuggestion(suggestion) {
     guideAcceptedNote = null;
     guideAcceptedNoteTimer = null;
     guideAwaitingManualRecheck = false;
-    fetchPaymentSuggestions();
+    fetchPaymentSuggestions("repricing");
   }, 4000);
 
   renderPaymentGuideCard();
