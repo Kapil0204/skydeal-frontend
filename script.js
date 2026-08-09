@@ -3064,6 +3064,49 @@ function tripFlightForRepriceRequest(f) {
   return { price: f.price, airlineName: f.airlineName };
 }
 
+async function fetchPaymentSuggestionsOnce() {
+  const body = {
+    from: lastSearchPayload.from,
+    to: lastSearchPayload.to,
+    travelClass: lastSearchPayload.travelClass,
+    tripType: lastSearchPayload.tripType,
+    passengers: lastSearchPayload.passengers,
+    // buildSearchPaymentMethods(), not the raw selectedPaymentMethods -
+    // this must match what /search itself sends, or every EMI-typed
+    // offer is invisible to the backend's suggestions/timing-insight
+    // engine whenever "Show EMI offers" is toggled on but the user never
+    // separately added an EMI entry (found 2026-08-07: a real round-trip
+    // min-transaction insight for an EMI-only offer silently never
+    // appeared, because this request never told the backend EMI was in
+    // play at all).
+    selectedPaymentMethods: buildSearchPaymentMethods(),
+    outboundFlights: outboundAll.map(tripFlightForGuideRequest),
+    returnFlights: returnAll.map(tripFlightForGuideRequest),
+    // Phase 3: used only to bound the timing-insight lookahead horizon
+    // and check travel-period eligibility - never for pricing itself.
+    outboundTravelDate: lastSearchPayload.departureDate || null,
+    returnTravelDate: lastSearchPayload.returnDate || null,
+  };
+
+  const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }, 30000);
+
+  if (!res.ok) throw new Error(`payment-suggestions failed: ${res.status}`);
+  return res.json();
+}
+
+// A bare "we couldn't check for additional savings" dead end (no retry,
+// no fallback) is confusing on a paid always-on backend, where a failed
+// call almost always means something transient - not that the service is
+// actually down (founder direction, 2026-08-09: never show this at all).
+// Two attempts beyond the first before giving up on the richer engine,
+// then a plain summary built entirely from data /search already
+// returned (see buildOfflineFallbackDecodeMessage) - so the decode card
+// says something true and useful even when the suggestions/timing-insight
+// call itself can't be completed.
 async function fetchPaymentSuggestions() {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
@@ -3071,39 +3114,18 @@ async function fetchPaymentSuggestions() {
   guideLoadingPhase = "suggestions";
   renderPaymentGuideCard();
 
-  try {
-    const body = {
-      from: lastSearchPayload.from,
-      to: lastSearchPayload.to,
-      travelClass: lastSearchPayload.travelClass,
-      tripType: lastSearchPayload.tripType,
-      passengers: lastSearchPayload.passengers,
-      // buildSearchPaymentMethods(), not the raw selectedPaymentMethods -
-      // this must match what /search itself sends, or every EMI-typed
-      // offer is invisible to the backend's suggestions/timing-insight
-      // engine whenever "Show EMI offers" is toggled on but the user never
-      // separately added an EMI entry (found 2026-08-07: a real round-trip
-      // min-transaction insight for an EMI-only offer silently never
-      // appeared, because this request never told the backend EMI was in
-      // play at all).
-      selectedPaymentMethods: buildSearchPaymentMethods(),
-      outboundFlights: outboundAll.map(tripFlightForGuideRequest),
-      returnFlights: returnAll.map(tripFlightForGuideRequest),
-      // Phase 3: used only to bound the timing-insight lookahead horizon
-      // and check travel-period eligibility - never for pricing itself.
-      outboundTravelDate: lastSearchPayload.departureDate || null,
-      returnTravelDate: lastSearchPayload.returnDate || null,
-    };
+  const maxAttempts = 3;
+  let json = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      json = await fetchPaymentSuggestionsOnce();
+      break;
+    } catch (e) {
+      console.error(`[SkyDeal] payment-suggestions attempt ${attempt}/${maxAttempts} failed`, e);
+    }
+  }
 
-    const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }, 30000);
-
-    if (!res.ok) throw new Error(`payment-suggestions failed: ${res.status}`);
-
-    const json = await res.json();
+  if (json) {
     paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
     paymentTimingInsights = Array.isArray(json?.timingInsights) ? json.timingInsights : [];
     lastGuideSummary = json?.summary || null;
@@ -3118,17 +3140,76 @@ async function fetchPaymentSuggestions() {
     }
 
     paymentGuideState = "ready";
-  } catch (e) {
-    console.error("[SkyDeal] payment-suggestions failed", e);
+  } else {
     paymentSuggestions = [];
     paymentTimingInsights = [];
-    paymentGuideState = "error";
     lastGuideTruncated = false;
-    lastPrimaryDecodeMessage = null;
+    lastPrimaryDecodeMessage = buildOfflineFallbackDecodeMessage();
+    paymentGuideState = lastPrimaryDecodeMessage ? "ready" : "error";
   }
 
   setDecodeCardRefreshing(false);
   renderPaymentGuideCard();
+}
+
+// Frontend-only equivalent of the backend's Tier 1 / Tier 4 branches
+// (resolvePrimaryDecodeMessage in index.js), built entirely from each
+// flight's own bestDeal - already loaded by /search - since there's no
+// suggestions/timingInsights/offers data to draw on once the dedicated
+// call has failed. Deliberately simpler than the full hierarchy (no
+// Tier 2/3 - those need the backend's candidate-matching engine), but
+// says something true instead of nothing.
+function buildOfflineFallbackDecodeMessage() {
+  if (!selectedPaymentMethods.length) return null;
+
+  const bestOf = (list) =>
+    list.length ? list.reduce((a, b) => {
+      const aPrice = a?.bestDeal?.applied ? a.bestDeal.finalPrice : a.price;
+      const bPrice = b?.bestDeal?.applied ? b.bestDeal.finalPrice : b.price;
+      return aPrice <= bPrice ? a : b;
+    }) : null;
+
+  const candidateDeals = [bestOf(outboundAll), bestOf(returnAll)]
+    .map((f) => f?.bestDeal)
+    .filter(Boolean);
+
+  const tier1Deal = candidateDeals.find((d) => d?.applied && d?.offerDisplayType === "applied_payment_offer");
+  if (tier1Deal) {
+    const label = prettyPaymentLabel(tier1Deal.paymentLabel || "") || "Your payment method";
+    const portal = tier1Deal.portal || "the portal";
+    const discountPhrase = tier1Deal.appliedDiscountText
+      || (Number.isFinite(tier1Deal.actualDiscount) && tier1Deal.actualDiscount > 0
+        ? `₹${Math.round(tier1Deal.actualDiscount).toLocaleString("en-IN")} off`
+        : "a lower price");
+    return {
+      tier: 1,
+      urgent: false,
+      heading: `${label} gets you the best price`,
+      message: `${discountPhrase} on ${portal}.`,
+      warning: null,
+      tip: null,
+      cta: null,
+      upsell: null,
+      mirror: null,
+    };
+  }
+
+  const genericDealApplied = candidateDeals.some((d) => d?.applied && d?.offerDisplayType === "applied_offer_rule");
+  const methodNames = [...new Set(selectedPaymentMethods.map((m) => m.name).filter(Boolean))];
+  const methodLabel = methodNames.length ? methodNames.join(" or ") : "your selected method";
+
+  return {
+    tier: 4,
+    urgent: false,
+    heading: `${methodLabel}: here's your price`,
+    message: "We couldn't fully re-check for extra savings just now, but this is your true final price for today.",
+    warning: null,
+    tip: genericDealApplied ? "Don't worry - we've already applied a site discount for you." : null,
+    cta: null,
+    ctaGeneric: "Add other payment options",
+    upsell: null,
+    mirror: null,
+  };
 }
 
 // Applies to every rendered card regardless of screen size (desktop's
