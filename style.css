@@ -12552,6 +12552,29 @@ body {
   margin-bottom: 4px;
 }
 
+.decode-primary-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.decode-primary-price {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.decode-primary-price-was {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-sm);
+  color: var(--gray-500);
+  text-decoration: line-through;
+}
+
 .decode-primary-body {
   font-size: var(--fs-sm);
   color: var(--gray-700);
@@ -12625,6 +12648,14 @@ body {
 
 .price-intel-hero .decode-primary-heading {
   color: #ffffff;
+}
+
+.price-intel-hero .decode-primary-price {
+  color: #ffffff;
+}
+
+.price-intel-hero .decode-primary-price-was {
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .price-intel-hero .decode-primary-body {

@@ -3789,6 +3789,19 @@ function renderPrimaryDecodeMessageHtml(msg) {
 
   parts.push(`<span class="decode-primary-tag${tagClass}">${safeText(msg.tag || "")}</span>`);
   parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}</div>`);
+
+  if (Number.isFinite(msg.priceNow)) {
+    const wasPart = Number.isFinite(msg.priceWas) && msg.priceWas > msg.priceNow
+      ? `<span class="decode-primary-price-was">${safeText(money(msg.priceWas))}</span>`
+      : "";
+    parts.push(`
+      <div class="decode-primary-price-row">
+        <span class="decode-primary-price">${safeText(money(msg.priceNow))}</span>
+        ${wasPart}
+      </div>
+    `);
+  }
+
   parts.push(`<div class="decode-primary-body">${safeText(msg.message)}</div>`);
 
   if (msg.upsell) {
@@ -5132,9 +5145,18 @@ function getPriceIntelHeroLine() {
   }
 
   if (paymentGuideState === "ready") {
+    // lastPrimaryDecodeMessage.sticky is the decode hierarchy's own
+    // condensed one-liner (built for exactly this - see resolvePrimaryDecodeMessage
+    // in the backend), sized for a single line the way this frozen banner
+    // needs. The old visiblePaymentSuggestions()-based fallback below
+    // predates that hierarchy and normally has nothing left to show once
+    // it's active (its suggestion cards are suppressed whenever
+    // lastPrimaryDecodeMessage exists) - kept only as a defensive
+    // fallback for the rare case primaryDecodeMessage itself is null.
+    if (lastPrimaryDecodeMessage?.sticky) return lastPrimaryDecodeMessage.sticky;
     const visible = visiblePaymentSuggestions();
     return visible.length === 0
-      ? "You've already got the best price"
+      ? "Here's your price"
       : (visible[0]?.heading || "You could save more on this trip");
   }
 
@@ -5256,16 +5278,29 @@ function ensureDesktopDecodeFrozenBanner() {
 
 // Mirrors whatever the full .price-intel-hero card is already showing
 // rather than recomputing suggestion copy separately - reading its
-// rendered suggestion message/Add button means this can never disagree
-// with the full card, and the Add button proxies its click to the real
-// one instead of duplicating the accept-suggestion logic.
+// rendered heading/body means this can never disagree with the full
+// card, and the Add button proxies its click to the real one instead of
+// duplicating the accept-suggestion logic.
+//
+// Reads .decode-primary-heading/.decode-primary-body (the decode
+// hierarchy's own markup) rather than getPriceIntelHeroLine() for the
+// heading slot - that function now returns the CONDENSED one-line
+// "sticky" text meant for the mobile banner's single line; dumping it
+// into this banner's heading would waste the two-line richness this
+// wider desktop banner was specifically built for (founder feedback: "a
+// single truncated line wasn't enough on the extra width desktop has to
+// spend"). Previously queried .payment-guide-suggestion-message, which
+// stopped existing once the decode hierarchy replaced the old suggestion
+// cards it belonged to - this banner's sub-line was silently blank ever
+// since (confirmed 2026-08-10).
 function updateDesktopDecodeFrozenBannerText() {
   const heading = document.getElementById("decodeFrozenHeading");
   const sub = document.getElementById("decodeFrozenSub");
-  if (heading) heading.textContent = getPriceIntelHeroLine();
 
-  const liveMessage = document.querySelector(".price-intel-hero .payment-guide-suggestion-message");
-  if (sub) sub.textContent = liveMessage ? liveMessage.textContent : "";
+  const liveHeading = document.querySelector(".price-intel-hero .decode-primary-heading");
+  const liveBody = document.querySelector(".price-intel-hero .decode-primary-body");
+  if (heading) heading.textContent = liveHeading ? liveHeading.textContent : getPriceIntelHeroLine();
+  if (sub) sub.textContent = liveBody ? liveBody.textContent : "";
 
   const banner = document.getElementById("decodeFrozenBanner");
   const liveAddBtn = document.querySelector(".price-intel-hero .payment-guide-add-btn");
