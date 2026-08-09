@@ -566,6 +566,10 @@ let paymentTimingInsights = [];
 let guideAwaitingManualRecheck = false;
 let guideAcceptedNote = null; // { heading, message, previousBestPrice, newBestPrice, flightsImproved } - transient success banner
 let guideAcceptedNoteTimer = null;
+// Bumped on every applyPaymentSuggestion call - lets an in-flight accept's
+// finalize step detect it's been superseded by a newer one and skip
+// firing a now-stale fetchPaymentSuggestions() call (see applyPaymentSuggestion).
+let guideAcceptGeneration = 0;
 
 // Phase 2 - the backend's own summary from the most recent
 // /payment-suggestions response (selectedPaymentMethodCount,
@@ -3407,15 +3411,36 @@ async function applyPaymentSuggestion(suggestion) {
   // non-comparison thing the rest of the card does - "ICICI Bank EMI gets you
   // the best price" instead of a stale "you've already got it" claim.
   if (guideAcceptedNoteTimer) clearTimeout(guideAcceptedNoteTimer);
-  guideAcceptedNoteTimer = setTimeout(() => {
-    guideAcceptedNote = null;
-    guideAcceptedNoteTimer = null;
-    guideAwaitingManualRecheck = false;
-    fetchPaymentSuggestions("repricing");
-  }, 4000);
+  const myAcceptGeneration = ++guideAcceptGeneration;
 
   renderPaymentGuideCard();
-  await repriceAndRenderFlights();
+
+  // The 4s note timer used to fire fetchPaymentSuggestions() on its OWN
+  // wall-clock schedule, completely decoupled from whether the reprice
+  // below had actually finished - on a slow reprice (Render has taken
+  // 20s+ on this route this session), the recompute fired first and read
+  // outboundAll BEFORE its bestDeal mutations landed, so the "fresh"
+  // recompute sent the OLD pre-accept flight data and came back as if the
+  // just-added method didn't exist at all (founder catch, 2026-08-10:
+  // added ICICI EMI, card still said "Your ICICI Bank Credit Card offer
+  // isn't live yet" with no mention of EMI, despite the flight list right
+  // below already showing it applied). Both the minimum 4s display AND
+  // the real reprice completion are now awaited together, so the
+  // recompute can never fire on stale data regardless of how slow the
+  // network is. myAcceptGeneration guards the (rarer) case where a second
+  // suggestion gets accepted before this one finishes settling - only the
+  // LATEST accept's finalize step is allowed to run.
+  const minDisplayPromise = new Promise((resolve) => {
+    guideAcceptedNoteTimer = setTimeout(resolve, 4000);
+  });
+  await Promise.all([repriceAndRenderFlights(), minDisplayPromise]);
+
+  if (myAcceptGeneration !== guideAcceptGeneration) return;
+
+  guideAcceptedNote = null;
+  guideAcceptedNoteTimer = null;
+  guideAwaitingManualRecheck = false;
+  fetchPaymentSuggestions("repricing");
 }
 
 function dismissPaymentSuggestion(suggestion) {
