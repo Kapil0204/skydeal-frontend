@@ -3310,11 +3310,23 @@ async function applyPaymentSuggestion(suggestion) {
     guideSearchSummary.currentBestPrice = suggestion.newBestPrice;
   }
 
+  // Once the transient note fades, resting on the OLD guideAwaitingManualRecheck
+  // path (renderGuideAcceptedHtml -> renderGuideOptimisedRestingHtml) showed
+  // "You've already got the best price" using selectedPaymentMethods from
+  // BEFORE this method was added - both a stale summary and exactly the
+  // comparison-claim language the sairro decode hierarchy was written to
+  // replace everywhere else (founder catch, 2026-08-09: reappeared here
+  // because this path predates that hierarchy and was never reconnected to
+  // it). A fresh fetchPaymentSuggestions() call recomputes primaryDecodeMessage
+  // for the new selection, so the resting view says the same kind of accurate,
+  // non-comparison thing the rest of the card does - "ICICI Bank EMI gets you
+  // the best price" instead of a stale "you've already got it" claim.
   if (guideAcceptedNoteTimer) clearTimeout(guideAcceptedNoteTimer);
   guideAcceptedNoteTimer = setTimeout(() => {
     guideAcceptedNote = null;
     guideAcceptedNoteTimer = null;
-    renderPaymentGuideCard();
+    guideAwaitingManualRecheck = false;
+    fetchPaymentSuggestions();
   }, 4000);
 
   renderPaymentGuideCard();
@@ -3439,8 +3451,8 @@ function renderGuideOptimisedRestingHtml() {
   return `
     <div class="payment-guide-success-row">
       <div class="payment-guide-success-text">
-        <div class="payment-guide-success-heading">You've already got the best price</div>
-        <div class="payment-guide-success-message payment-guide-resting-message">We checked every other way to pay - add another card, UPI app, or wallet to see if it saves you more.</div>
+        <div class="payment-guide-success-heading">Here's your price</div>
+        <div class="payment-guide-success-message payment-guide-resting-message">Compared across your ${selectedCount} payment methods - add another card, UPI app, or wallet to keep checking.</div>
         ${ownSummaryLine}
       </div>
       <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
