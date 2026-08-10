@@ -7296,6 +7296,17 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   setSearchButtonLoading(true);
   renderSearchLoadingState();
+  // The route/date label next to "Your final price options" is a
+  // separate element from the loading card above and was previously
+  // only touched inside renderOutbound()/renderReturn() - which only
+  // run once real results arrive. On a re-search that left it showing the
+  // PREVIOUS search's route (e.g. "Mumbai -> Delhi") for the entire
+  // loading window, mismatched against the top banner (which updates
+  // immediately from payload) - read as the page showing two different
+  // searches at once (Kapil screen recording, 2026-08-10). Calling this
+  // here, now that lastSearchPayload already reflects the new search,
+  // refreshes it in step with the banner instead of waiting for results.
+  updateFlightSectionHeadings();
   startDecodeWaitStage(payload.from, payload.to);
   if (isReSearch) setDecodeCardRefreshing(true);
   // Collapsing into the results-mode banner used to be a blind 80ms timer
