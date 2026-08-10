@@ -5971,9 +5971,30 @@ function startDecodeWaitStage(fromCode, toCode) {
   var tau = 5500;
   var startTime = performance.now();
 
+  // Flourish-only window (2026-08-10): both loops above used to run for
+  // the ENTIRE wait, not just this opening flourish - on a slow/cold
+  // backend (routinely 20-40s+) that's thousands of continuous
+  // requestAnimationFrame ticks plus a 90ms-interval DOM mutation
+  // fighting the user's own scroll input the whole time. Confirmed live:
+  // scrolling during this window visibly stutters/jumps (Kapil feedback,
+  // 2026-08-10) - reproduced independently by this same automation's own
+  // scroll actions hanging while these timers were still running. The
+  // animation's job is a few seconds of "something is happening", not to
+  // keep animating for the true, unknowable duration - both timers now
+  // freeze wherever they've gotten to after FLOURISH_MS and just sit
+  // still, still fully overwritten the instant real results replace this
+  // view via stopDecodeWaitTimers().
+  var FLOURISH_MS = 3000;
+
   function tick(now) {
     var elapsed = now - startTime;
     decodeWaitApplyProgress(maxProgress * (1 - Math.exp(-elapsed / tau)));
+    if (elapsed >= FLOURISH_MS) {
+      if (decodeWaitCipherInterval) clearInterval(decodeWaitCipherInterval);
+      decodeWaitCipherInterval = null;
+      decodeWaitRafId = null;
+      return;
+    }
     decodeWaitRafId = requestAnimationFrame(tick);
   }
   decodeWaitRafId = requestAnimationFrame(tick);
@@ -7296,6 +7317,14 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   setSearchButtonLoading(true);
   renderSearchLoadingState();
+  // Filters (airlines/airports/departure time) describe THIS search's
+  // results - on a re-search they used to keep showing the previous
+  // search's stale options with nothing to actually filter yet (the new
+  // airline/airport lists aren't known until real results land), which
+  // read as a broken, empty, unscrollable panel. Not needed before
+  // results exist, so hide it for the duration (Kapil feedback,
+  // 2026-08-10) - cleared in every terminal branch below.
+  document.body.classList.add("search-in-flight");
   // The route/date label next to "Your final price options" is a
   // separate element from the loading card above and was previously
   // only touched inside renderOutbound()/renderReturn() - which only
@@ -7482,6 +7511,7 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   finally {
     setSearchButtonLoading(false);
+    document.body.classList.remove("search-in-flight");
   }
 }
 

@@ -1591,6 +1591,18 @@ h3{
   display:none;
 }
 
+/* Same reasoning, re-search case: pre-search only covers the very FIRST
+   search - once results exist, "pre-search" never gets reapplied while
+   a later search is in flight, so Filters kept showing the PREVIOUS
+   search's stale airline/airport options with nothing real to filter
+   yet, reading as a broken, unscrollable, empty-ish panel (Kapil
+   feedback, 2026-08-10). body.search-in-flight is set for the duration
+   of every search (see handleSearch in script.js), first or re-search
+   alike, so this covers what the rule above doesn't. */
+body.search-in-flight .filter-card{
+  display:none;
+}
+
 /* .offers-panel-content now stays visible in both pre-search and
    post-search states: pre-search it shows .payment-profile-static;
    post-search it hosts the intelligent payment guide
