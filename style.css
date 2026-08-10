@@ -3791,7 +3791,21 @@ body {
     overflow: visible !important;
   }
 
-  .pro-results.round-trip-results-mode > :first-child:not(.flights-workspace) {
+  /* Was ":first-child:not(.flights-workspace)" - assumed .filter-panel
+     was the first child of .pro-results, but .how-it-works-presearch
+     (id=hiwPresearch, the pre-search explainer / decode-wait loading
+     card) actually sits before it in the DOM (index.html) and is only
+     ever hidden via its own "display:none" default + .pre-search
+     toggle. This rule's "!important" forced it visible again the moment
+     round-trip-results-mode was added - during the search (screen
+     appeared to split into two overlapping layouts) and, since a
+     successful search never removes hiwPresearch's leftover
+     "decode-wait-active" class (see handleSearch in script.js), even
+     AFTER results loaded (the "Decoding your price" card stayed stuck
+     on screen forever). Targeting .filter-panel by name instead of
+     positional :first-child fixes both (Kapil screenshots, 2026-08-09).
+  */
+  .pro-results.round-trip-results-mode > .filter-panel {
     display: block !important;
     width: 100% !important;
     min-width: 0 !important;

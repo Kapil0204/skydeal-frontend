@@ -7407,6 +7407,14 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     renderAirportFilters();
     setResultsPreSearch(false);
     stopDecodeWaitTimers();
+    // Belt-and-braces alongside the .filter-panel CSS fix above: a
+    // successful search never used to clear this class (only the
+    // error/no-results paths did, via resetDecodeWaitVisualToStatic),
+    // on the assumption that #hiwPresearch was always fully hidden once
+    // pre-search flipped false regardless of its classes - a round-trip
+    // CSS bug proved that assumption false, so clear it explicitly here
+    // too rather than relying solely on the CSS fix to hide it.
+    document.getElementById("hiwPresearch")?.classList.remove("decode-wait-active");
 
     renderOutbound();
     renderReturn();
