@@ -7138,6 +7138,20 @@ function renderOutbound() {
   renderSelectedTripPanel();
   renderPager("out");
   updateMobileRoundTripTabs();
+  // updateFlightSectionHeadings() above (via ensureMobilePriceIntelPlacement)
+  // already calls updateStickyFilterCard() once, but that runs BEFORE
+  // renderList() just above has actually replaced the loading placeholder
+  // with the real flight cards - .filter-panel's stretched height (CSS
+  // grid align-items:stretch) still reflected the short loading card's
+  // height at that point, not the real list about to be inserted, so the
+  // pin/bottom classification it computed was measured against stale,
+  // about-to-be-wrong geometry. That's why Filters could render pinned to
+  // the very bottom of a 9000px+ column - effectively invisible - until a
+  // later scroll event finally recalculated it correctly (Kapil feedback,
+  // 2026-08-10: "doesn't appear till we scroll the flights section").
+  // Recomputing again here, now that the real list is actually in the
+  // DOM, fixes it for the first paint instead of only after user input.
+  scheduleFilterCardStickyCheck();
 }
 function renderReturn() {
   updateFlightSectionHeadings();
@@ -7167,6 +7181,10 @@ function renderReturn() {
   renderSelectedTripPanel();
   renderPager("ret");
   updateMobileRoundTripTabs();
+  // Same reasoning as the end of renderOutbound() - recompute against the
+  // now-final DOM instead of whatever was measured before this leg's real
+  // list replaced its loading placeholder.
+  scheduleFilterCardStickyCheck();
 }
 
 function toggleReturn() {
