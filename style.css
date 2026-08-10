@@ -1598,9 +1598,41 @@ h3{
    yet, reading as a broken, unscrollable, empty-ish panel (Kapil
    feedback, 2026-08-10). body.search-in-flight is set for the duration
    of every search (see handleSearch in script.js), first or re-search
-   alike, so this covers what the rule above doesn't. */
-body.search-in-flight .filter-card{
-  display:none;
+   alike, so this covers what the rule above doesn't.
+
+   Hiding just .filter-card (as a first pass) left .filter-panel itself
+   still reserving its grid column - the "Comparing final prices" wait
+   card sat in a narrowed right column with a dead blank strip on the
+   left where Filters used to be, instead of using that space (Kapil
+   follow-up, 2026-08-10: "wait page should expand across screen where
+   filter section was"). Collapsing .filter-panel entirely and dropping
+   .pro-results back to a single column fixes that - safe to do here
+   since by the time a re-search is possible, hasActiveSearchResults()
+   is already true and ensureMobilePriceIntelPlacement() has already
+   promoted .smart-guide-card out into .price-intel-hero, so nothing
+   still needed inside .filter-panel is lost. The round-trip grid
+   further down uses "!important" on the same property, hence the match
+   here. */
+body.search-in-flight .filter-panel{
+  display:none !important;
+}
+
+body.search-in-flight .pro-results{
+  grid-template-columns:1fr !important;
+}
+
+/* grid-template-columns alone wasn't enough - .flights-workspace is
+   forced into "grid-column: 2 !important" elsewhere (desktop/tablet
+   layout restore, further down), an explicit placement that doesn't
+   exist in this single-column template, so the grid engine was just
+   auto-generating an implicit second column to hold it anyway, sized by
+   content - same dead strip as before, just resized rather than
+   removed. Explicitly re-spanning it across the only real column fixes
+   that; higher specificity here (body + 2 classes vs. plain
+   .pro-results .flights-workspace) wins over that rule regardless of
+   its own "!important". */
+body.search-in-flight .flights-workspace{
+  grid-column:1 / -1 !important;
 }
 
 /* .offers-panel-content now stays visible in both pre-search and
@@ -12717,7 +12749,15 @@ body {
    resolves - see script.js and DECISIONS.md ("Decode card refreshing
    state on re-search"). */
 .smart-guide-card.decode-refreshing .decode-bubble {
-  opacity: 0.55;
+  /* Was opacity:0.55 alone - on the still-fully-colored heading/price
+     text that read as barely-faded normal content, not "this is stale,
+     don't trust it yet" (Kapil feedback, 2026-08-10: wanted it to
+     properly disappear/grey out during a re-search). Grayscale removes
+     the brand-purple/price-green color cues specifically, on top of a
+     lower opacity, so it reads as an inert placeholder instead of live
+     data that merely dimmed a little. */
+  opacity: 0.3;
+  filter: grayscale(1);
   overflow: hidden;
 }
 
