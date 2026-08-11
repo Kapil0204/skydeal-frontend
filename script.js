@@ -2971,10 +2971,12 @@ function normalizeOfferCounts(rawOfferCounts) {
 }
 
 // The 5 UI-facing payment tabs (matches renderPaymentTabs' canonical list).
-// paymentOfferCounts also carries legacy camelCase duplicate keys
+// Backend used to also emit legacy camelCase duplicate keys
 // (CreditCard/DebitCard/NetBanking) pointing at the exact same underlying
-// counts as their spaced equivalents - summing only these 5 avoids
-// double-counting the same offers twice.
+// counts as these spaced equivalents - removed at the source 2026-08-11
+// (QC-caught). Kept as an explicit canonical list (rather than
+// Object.keys(paymentOfferCounts)) since that's a harmless, cheap safety
+// net either way.
 const OFFER_COUNT_CANONICAL_TYPES = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
 
 function computeTotalLiveOfferCount() {
