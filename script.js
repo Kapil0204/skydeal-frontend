@@ -3451,12 +3451,13 @@ function dismissPaymentSuggestion(suggestion) {
 }
 
 function renderGuideLoadingHtml() {
+  // Copy per SAIRRO_VOICE_AND_CONTENT.md A2/A3 (copy audit, 2026-08-11).
   if (guideLoadingPhase === "repricing") {
     return `
       <div class="payment-guide-loading">
         <div class="payment-guide-skeleton"></div>
-        <div class="payment-guide-loading-title">Updating your price…</div>
-        <div class="payment-guide-loading-sub">Applying your new payment method to this search.</div>
+        <div class="payment-guide-loading-title">Checking your new payment option…</div>
+        <div class="payment-guide-loading-sub">We're seeing if it unlocks a better price.</div>
       </div>
     `;
   }
@@ -3464,8 +3465,8 @@ function renderGuideLoadingHtml() {
   return `
     <div class="payment-guide-loading">
       <div class="payment-guide-skeleton"></div>
-      <div class="payment-guide-loading-title">Checking for a better way to pay…</div>
-      <div class="payment-guide-loading-sub">We check your payment methods against today's live offers.</div>
+      <div class="payment-guide-loading-title">Finding a better way to pay…</div>
+      <div class="payment-guide-loading-sub">We're checking your payment options against live offers across portals.</div>
     </div>
   `;
 }
@@ -3489,10 +3490,11 @@ function renderGuideOptimisedHtml() {
   // would be asserting a conclusion the check never actually reached.
   // Say so honestly and offer a retry instead.
   if (lastGuideTruncated) {
+    // Copy per SAIRRO_VOICE_AND_CONTENT.md A5 (copy audit, 2026-08-11).
     return `
       <div class="payment-guide-optimised">
-        <div class="payment-guide-optimised-title">We couldn't finish checking in time</div>
-        <div class="payment-guide-optimised-sub">We checked what we could before timing out, but didn't get through every option - there may still be a better way to pay.</div>
+        <div class="payment-guide-optimised-title">We checked some options, but not all</div>
+        <div class="payment-guide-optimised-sub">We found what we could. Try again to check every payment option.</div>
         ${summaryLine}
         <button type="button" class="payment-guide-check-more-btn" data-guide-action="retry">Check again</button>
       </div>
@@ -3547,12 +3549,18 @@ function renderGuideOptimisedRestingHtml() {
     `
     : "";
 
-  if (selectedCount <= 1) {
+  // Copy per SAIRRO_VOICE_AND_CONTENT.md A6 (copy audit, 2026-08-11) - the
+  // doc's real split is Case 1 (nothing selected yet) vs Case 2 (checked,
+  // nothing better found), not a passenger-card-count split. The per-count
+  // fact ("N payment methods selected") still shows via ownSummaryLine
+  // below, so that information isn't lost, just no longer baked into the
+  // sentence itself.
+  if (selectedCount === 0) {
     return `
       <div class="payment-guide-success-row">
         <div class="payment-guide-success-text">
-          <div class="payment-guide-success-heading">Here's your price</div>
-          <div class="payment-guide-success-message payment-guide-resting-message">Add another card, UPI app, or wallet if you'd like to compare and see if it saves you more.</div>
+          <div class="payment-guide-success-heading">Want to unlock more savings?</div>
+          <div class="payment-guide-success-message payment-guide-resting-message">Add your cards, UPI apps or wallets and sairro will check if they can lower your price.</div>
           ${ownSummaryLine}
         </div>
         <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
@@ -3563,8 +3571,8 @@ function renderGuideOptimisedRestingHtml() {
   return `
     <div class="payment-guide-success-row">
       <div class="payment-guide-success-text">
-        <div class="payment-guide-success-heading">Here's your price</div>
-        <div class="payment-guide-success-message payment-guide-resting-message">Compared across your ${selectedCount} payment methods - add another card, UPI app, or wallet to keep checking.</div>
+        <div class="payment-guide-success-heading">You're already getting the best available price</div>
+        <div class="payment-guide-success-message payment-guide-resting-message">We checked your payment options and booking portals. Nothing else lowers this flight price right now.</div>
         ${ownSummaryLine}
       </div>
       <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
@@ -3573,7 +3581,15 @@ function renderGuideOptimisedRestingHtml() {
 }
 
 function renderGuideErrorHtml() {
-  return `<div class="payment-guide-error-note">We couldn't check for additional savings right now.</div>`;
+  // Copy per SAIRRO_VOICE_AND_CONTENT.md A4 (copy audit, 2026-08-11) -
+  // narrows the failure to the payment check specifically ("we found your
+  // flights") rather than reading like the whole product broke.
+  return `
+    <div class="payment-guide-error-note">
+      <div class="payment-guide-optimised-title">We couldn't check savings right now</div>
+      <div class="payment-guide-optimised-sub">We found your flights, but couldn't complete the payment check.</div>
+    </div>
+  `;
 }
 
 function renderGuideSuggestionCardHtml(s, idx) {
@@ -5152,11 +5168,13 @@ function renderMobileQuickFilters() {
 // mobile banner below - reuses the same state, never a second source
 // of truth for what the guide is currently saying.
 function getPriceIntelHeroLine() {
+  // Copy per SAIRRO_VOICE_AND_CONTENT.md's "Mobile frozen banner" section
+  // (copy audit, 2026-08-11).
   if (!hasActiveSearchResults()) {
     const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
     return n === 0
-      ? "Add how you pay to see your best final price"
-      : "We check your payment methods against today's live offers";
+      ? "Add your payment options to unlock better prices"
+      : "Checking your payment options for hidden savings";
   }
 
   if (guideAwaitingManualRecheck) {
@@ -5164,11 +5182,11 @@ function getPriceIntelHeroLine() {
   }
 
   if (paymentGuideState === "loading") {
-    return guideLoadingPhase === "repricing" ? "Updating your price…" : "Checking for a better way to pay…";
+    return guideLoadingPhase === "repricing" ? "Checking your new payment option…" : "Finding a better way to pay…";
   }
 
   if (paymentGuideState === "error") {
-    return "We couldn't check for additional savings right now";
+    return "We couldn't check savings right now";
   }
 
   if (paymentGuideState === "ready") {
@@ -5183,11 +5201,11 @@ function getPriceIntelHeroLine() {
     if (lastPrimaryDecodeMessage?.sticky) return lastPrimaryDecodeMessage.sticky;
     const visible = visiblePaymentSuggestions();
     return visible.length === 0
-      ? "Here's your price"
+      ? "We've checked your options"
       : (visible[0]?.heading || "You could save more on this trip");
   }
 
-  return "Price intelligence";
+  return "sairro decode";
 }
 
 function ensureMobilePriceIntelFrozenBanner() {
@@ -5200,7 +5218,7 @@ function ensureMobilePriceIntelFrozenBanner() {
   banner.innerHTML = `
     <span class="price-intel-frozen-dot"></span>
     <div class="price-intel-frozen-text">
-      <div class="price-intel-frozen-eyebrow">Price intelligence</div>
+      <div class="price-intel-frozen-eyebrow">sairro decode</div>
       <div class="price-intel-frozen-line" id="priceIntelFrozenLine"></div>
     </div>
     <svg class="price-intel-frozen-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 5V15M10 15L5 10M10 15L15 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
