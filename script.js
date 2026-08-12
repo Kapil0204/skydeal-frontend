@@ -3397,6 +3397,16 @@ async function syncPaymentMethodsPostSearch() {
   paymentGuideState = "loading";
   guideLoadingPhase = "repricing";
   renderPaymentGuideCard();
+
+  // Same gap as applyPaymentSuggestion() (see its comment) - fetchPaymentSuggestions()
+  // below is what normally sets this, but not until after repriceAndRenderFlights()
+  // has already finished, leaving the bottom banner stale with no spinner for the
+  // entire reprice wait when a payment method is changed via the modal's Done button.
+  if (selectedOutboundFlight && selectedReturnFlight) {
+    selectedTripCompareLoading = true;
+    renderSelectedTripPanel();
+  }
+
   await repriceAndRenderFlights();
   await fetchPaymentSuggestions();
 }
@@ -3436,6 +3446,20 @@ async function applyPaymentSuggestion(suggestion) {
   if (!already) selectedPaymentMethods.push({ ...pm });
 
   updatePaymentButtonLabel();
+
+  // fetchPaymentSuggestions() is what normally flips this on, but it isn't
+  // called until AFTER repriceAndRenderFlights() below (18-47s measured
+  // live) plus a 4s min-display have both finished - so without this, the
+  // bottom SELECTED TRIP banner sat on the stale pre-accept price with no
+  // spinner for the entire wait, while the individual flight cards above
+  // it correctly showed their own (Kapil, 2026-08-12: "the bottom banner
+  // also should show being refreshed" - the earlier fix only covered the
+  // brief window inside fetchPaymentSuggestions() itself, not this whole
+  // accept flow that precedes it).
+  if (selectedOutboundFlight && selectedReturnFlight) {
+    selectedTripCompareLoading = true;
+    renderSelectedTripPanel();
+  }
 
   const shortLabel = String(suggestion.primaryActionLabel || "").replace(/^Add\s+/i, "") || paymentMethodDisplayLabel(pm);
   const flightsImproved = Number.isFinite(suggestion.affectedFlights)
