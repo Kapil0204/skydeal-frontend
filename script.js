@@ -6008,6 +6008,39 @@ function enterDesktopResultsMode() {
   document.body.classList.add("desktop-results-mode");
 }
 
+// enterMobileResultsMode()/enterDesktopResultsMode() above are only ever
+// called from search-completion code paths, so resizing the window (or
+// rotating a tablet) after a search was already active never re-evaluated
+// which one should be showing - the results-mode class picked at search
+// time was permanent for the rest of the page's life (QA, 2026-08-12:
+// reproduced live - resizing from desktop to mobile width left the full,
+// uncollapsed search form permanently visible above the results instead
+// of the intended thin summary bar, and the mobile-only quick-filter
+// chips/round-trip tabs never initialized). Mirrors the existing
+// "only act on an actual breakpoint flip" pattern used just above for the
+// decode-banner placement listener, for the same resize-noise reason.
+let lastKnownResultsModeMobile = null;
+window.addEventListener("resize", () => {
+  const inResultsMode =
+    document.body.classList.contains("mobile-results-mode") ||
+    document.body.classList.contains("desktop-results-mode");
+  if (!inResultsMode) return;
+
+  const nowMobile = isSkyDealMobileView();
+  if (lastKnownResultsModeMobile === null) lastKnownResultsModeMobile = nowMobile;
+  if (lastKnownResultsModeMobile === nowMobile) return;
+  lastKnownResultsModeMobile = nowMobile;
+
+  document.body.classList.remove("mobile-results-mode", "desktop-results-mode");
+  if (nowMobile) {
+    enterMobileResultsMode();
+    renderMobileQuickFilters();
+    updateMobileRoundTripTabs();
+  } else {
+    enterDesktopResultsMode();
+  }
+}, { passive: true });
+
 function removeStandaloneSearchError() {
   const existing = document.getElementById("skySearchStandaloneError");
   if (existing) existing.remove();
