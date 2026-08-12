@@ -1022,7 +1022,10 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
   const code = bestDeal.code ? safeText(bestDeal.code) : "";
   const payment = getOfferAwarePaymentLabelForRow(bestDeal);
   const type = bestDeal.offerTypeLabel ? safeText(bestDeal.offerTypeLabel) : "";
-  const showType = type && type.toLowerCase() !== "payment offer";
+  // Suppressed when the payment label above already reads "X's own
+  // discount (any payment method)" - "Checkout offer" right after that
+  // would just repeat the same fact (2026-08-12 texty-line cleanup).
+  const showType = type && type.toLowerCase() !== "payment offer" && !isNonPaymentOfferRow(bestDeal);
   const showCouponChip = !isRoundTripLeg;
   const portalLine = `Best price on ${portal}`;
   const tiedWith = Array.isArray(bestDeal.tiedWithPortals) ? bestDeal.tiedWithPortals : [];
@@ -1047,7 +1050,7 @@ function renderBestDealSummary(bestDeal, context = "default", isSelected = false
         ${savings > 0 ? ` • Save ${money(savings)}` : ""}
         ${payment ? ` • ${payment}` : ""}
         ${showType ? ` • ${type}` : ""}
-        ${isRoundTripLeg ? " • Estimated for this flight" : ""}
+        ${isRoundTripLeg ? " • Estimated" : ""}
       </div>
 
       ${
@@ -1147,10 +1150,26 @@ function getOfferAwarePaymentLabelForRow(item = {}) {
   const offerType = String(item.offerTypeLabel || "").trim().toLowerCase();
   const isNonPaymentOffer = /^(checkout|portal|airline)\b/.test(offerType);
 
+  // Shortened from "X's own discount - already applied, works with any
+  // payment method" (2026-08-12, flagged too texty on the flight card) -
+  // "already applied" is redundant (it's shown as applied by definition)
+  // and "(any payment method)" says the same thing as the longer clause
+  // in far less space.
   if (isNoRestriction && isNonPaymentOffer) {
-    return `${safeText(item.portal)}'s own discount - already applied, works with any payment method`;
+    return `${safeText(item.portal)}'s own discount (any payment method)`;
   }
   return baseLabel;
+}
+
+// True when getOfferAwarePaymentLabelForRow already used the compact
+// "X's own discount (any payment method)" phrasing - in that case the
+// offer-type label (e.g. "Checkout offer") right after it is redundant,
+// since "own discount" already says the same thing.
+function isNonPaymentOfferRow(item = {}) {
+  const baseLabel = getOfferAwarePaymentLabel(item);
+  const isNoRestriction = /^no (payment )?restriction/i.test(baseLabel.trim());
+  const offerType = String(item.offerTypeLabel || "").trim().toLowerCase();
+  return isNoRestriction && /^(checkout|portal|airline)\b/.test(offerType);
 }
 
 function getPortalCtaLabel(portal) {
@@ -3094,11 +3113,22 @@ async function fetchPaymentSuggestionsOnce() {
     returnTravelDate: lastSearchPayload.returnDate || null,
   };
 
+  // 30s was too tight for round-trip: the backend's own internal budgets
+  // (softTimeBudgetMs 20s for the suggestion engine + timingBudgetMs 3.5s
+  // for timing insights, run sequentially) already add up to ~23.5s under
+  // normal conditions, before Mongo/request overhead - a live round-trip
+  // timing test measured 24.6s for a real request. Under any real-world
+  // slowdown (more payment methods, more candidates, Render's documented
+  // shared/bursty CPU) this tips past 30s on EVERY attempt, since a
+  // sustained overrun doesn't improve on retry - all 3 attempts fail
+  // identically and the decode card silently degrades to its offline
+  // fallback (Kapil, 2026-08-12, reproduced twice on round-trip searches).
+  // Same fix pattern as the 2026-07-15 BOM-IXJ /search timeout raise.
   const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }, 30000);
+  }, 45000);
 
   if (!res.ok) throw new Error(`payment-suggestions failed: ${res.status}`);
   return res.json();
@@ -3164,6 +3194,18 @@ async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
 
   setDecodeCardRefreshing(false);
   renderPaymentGuideCard();
+
+  // The round-trip "SELECTED TRIP" bottom banner (refreshSelectedTripComparison)
+  // has its own cache key that already includes the current payment
+  // methods (getSelectedTripComparisonKey), so it WOULD refetch correctly
+  // once asked - it just was never being asked again after a payment
+  // method changed (its only other call site is the flight-selection
+  // click handler). Every real payment-method-change path funnels through
+  // this function, so fixing it once here covers all of them (Kapil,
+  // 2026-08-12: banner kept showing stale pricing after adding a card).
+  if (selectedOutboundFlight && selectedReturnFlight) {
+    refreshSelectedTripComparison();
+  }
 }
 
 // Frontend-only equivalent of the backend's Tier 1 / Tier 4 branches
