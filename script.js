@@ -722,6 +722,20 @@ function resolveLocationToCode(value) {
   return partial ? partial.code : upper;
 }
 
+// resolveLocationToCode() falls back to the raw uppercased input when
+// nothing matches (see its last line) - that fallback exists so a field
+// is never silently blanked, but it means a typo or an unrecognized city
+// silently becomes garbage the backend forwards straight to FlightAPI
+// (QA, 2026-08-12: reproduced live - an unresolved value took ~35s to
+// fail with a 500, instead of a fast, clear local error). This checks
+// whether resolution actually found a real airport, so handleSearch can
+// reject before ever calling the backend.
+function isKnownAirportCode(code) {
+  const upper = String(code || "").trim().toUpperCase();
+  if (!upper) return false;
+  return AIRPORTS.some((x) => x.code === upper);
+}
+
 function cityNameForCode(code) {
   const upper = String(code || "").trim().toUpperCase();
   if (!upper) return "";
@@ -6202,7 +6216,9 @@ function renderSearchErrorState(errorMessage = "We couldn’t load live flights.
       <div class="sky-error-icon" aria-hidden="true">!</div>
       <div class="sky-search-state-title">${safeText(cleanMessage)}</div>
       <div class="sky-search-state-subtitle">
-        Please try again in a few seconds. Your route and payment selections are still saved.
+        This can happen for a live pricing hiccup, or because of something about this search
+        itself (like the date or route). Try again, or edit your search if it doesn't clear up.
+        Your route and payment selections are still saved.
       </div>
       <div class="sky-search-state-actions">
         <button type="button" class="sky-state-primary-btn" id="retrySearchBtn">Try again</button>
@@ -7452,8 +7468,29 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     return;
   }
 
+  // Must run before the from===to check below - an unresolved city on
+  // both sides (e.g. two typos) would otherwise slip past that check by
+  // matching itself and reach the backend as garbage in both fields.
+  if (!isKnownAirportCode(payload.from)) {
+    alert("Please select your departure city from the suggestions list.");
+    return;
+  }
+
+  if (!isKnownAirportCode(payload.to)) {
+    alert("Please select your destination city from the suggestions list.");
+    return;
+  }
+
   if (payload.from === payload.to) {
     alert("Departure and destination airports cannot be the same.");
+    return;
+  }
+
+  // A past date always fails at FlightAPI (QA, 2026-08-12: confirmed live,
+  // deterministic every time) - catching it here instead means a plain
+  // typo'd year doesn't cost the user a ~30s wait for a generic error.
+  if (payload.departureDate && payload.departureDate < todayISO()) {
+    alert("Departure date can't be in the past. Please choose today or a later date.");
     return;
   }
 
