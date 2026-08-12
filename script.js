@@ -3854,6 +3854,20 @@ function renderPrimaryDecodeMessageHtml(msg) {
     parts.push(`<div class="decode-primary-mirror">${safeText(msg.mirror)}</div>`);
   }
 
+  // Warning renders BEFORE the CTA/skip row (moved 2026-08-12, copy audit) -
+  // it qualifies the message/mirror text just above it (e.g. "Estimated
+  // only - the fare shown today may not match Monday's price" describes
+  // the future-offer estimate in the body message, not whatever CTA
+  // happens to render next). Sitting after the CTA read as a caveat on
+  // the button just clicked, which is often about a completely different,
+  // real-and-live offer (e.g. an EMI Add button) - a live screenshot
+  // caught exactly this (Kapil, 2026-08-12). Tip stays AFTER the CTA,
+  // deliberately - it's usually a direct reply to that same CTA (e.g.
+  // "Not into EMI? ...").
+  if (msg.warning) {
+    parts.push(`<div class="decode-primary-warning">${safeText(msg.warning)}</div>`);
+  }
+
   if (msg.cta) {
     parts.push(`
       <div class="decode-primary-actions">
@@ -3869,9 +3883,6 @@ function renderPrimaryDecodeMessageHtml(msg) {
     `);
   }
 
-  if (msg.warning) {
-    parts.push(`<div class="decode-primary-warning">${safeText(msg.warning)}</div>`);
-  }
   if (msg.tip) {
     parts.push(`<div class="decode-primary-tip">${safeText(msg.tip)}</div>`);
   }
