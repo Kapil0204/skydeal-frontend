@@ -3113,22 +3113,21 @@ async function fetchPaymentSuggestionsOnce() {
     returnTravelDate: lastSearchPayload.returnDate || null,
   };
 
-  // 30s was too tight for round-trip: the backend's own internal budgets
-  // (softTimeBudgetMs 20s for the suggestion engine + timingBudgetMs 3.5s
-  // for timing insights, run sequentially) already add up to ~23.5s under
-  // normal conditions, before Mongo/request overhead - a live round-trip
-  // timing test measured 24.6s for a real request. Under any real-world
-  // slowdown (more payment methods, more candidates, Render's documented
-  // shared/bursty CPU) this tips past 30s on EVERY attempt, since a
-  // sustained overrun doesn't improve on retry - all 3 attempts fail
-  // identically and the decode card silently degrades to its offline
-  // fallback (Kapil, 2026-08-12, reproduced twice on round-trip searches).
-  // Same fix pattern as the 2026-07-15 BOM-IXJ /search timeout raise.
+  // 30s, then 45s, both proved too tight for round-trip (Kapil,
+  // 2026-08-12, reproduced repeatedly). Re-measured the REAL sequence a
+  // user actually triggers (accepting a suggestion runs /reprice-flights
+  // first, THEN this call) on a realistic 80-flight round-trip: 18.5s for
+  // reprice-flights alone, then this endpoint ranged 2.9s-31.3s across
+  // separate live runs depending on how "warm" Render's shared/bursty CPU
+  // happened to be - i.e. genuinely variable, not a fixed number safe to
+  // just barely clear. Raised to 60s to match the same ceiling already
+  // used for /search and /compare-selected-trip elsewhere in this app,
+  // rather than inventing a new, narrower one for this endpoint alone.
   const res = await fetchWithTimeout(`${BACKEND}/payment-suggestions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }, 45000);
+  }, 60000);
 
   if (!res.ok) throw new Error(`payment-suggestions failed: ${res.status}`);
   return res.json();
@@ -3158,7 +3157,26 @@ async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
   guideLoadingPhase = loadingPhase;
   renderPaymentGuideCard();
 
-  const maxAttempts = 3;
+  // The round-trip "SELECTED TRIP" bottom banner was showing stale,
+  // pre-change pricing with no visual sign anything was happening for the
+  // ENTIRE duration this call takes (up to a minute) - it only started
+  // showing its own "Checking..." state once refreshSelectedTripComparison()
+  // was called AFTER this whole function already resolved. Kapil,
+  // 2026-08-12: "while the results are being refreshed, the bottom banner
+  // also should show being refreshed." Now flips it into its loading
+  // state at the same moment the top card does, not after the fact.
+  if (selectedOutboundFlight && selectedReturnFlight) {
+    selectedTripCompareLoading = true;
+    renderSelectedTripPanel();
+  }
+
+  // 2, not 3 (the timeout was just raised 30s -> 45s -> 60s): retries only
+  // help a genuinely transient blip, not a sustained slowdown - and with a
+  // 60s per-attempt ceiling, 3 attempts risks up to 180s of total wait
+  // before falling back, which reads as far more broken than the
+  // eventual fallback message itself. 2 keeps the worst case at 120s
+  // while still covering a one-off network hiccup.
+  const maxAttempts = 2;
   let json = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -4927,8 +4945,14 @@ function formatCompactTripBestSummary() {
   const bestInfo = getBestTripPortalInfo();
 
   if (selectedTripCompareLoading) {
+    // Visible spinner, not just changed text (Kapil, 2026-08-12: "like a
+    // circle revolving") - reuses the exact same spin animation flight
+    // cards already use during a reprice (.price-loading in style.css),
+    // so the whole page's "this is recalculating" language stays
+    // consistent rather than inventing a second visual pattern for it.
     return `
       <div class="sky-trip-compact-summary is-loading">
+        <span class="sky-trip-spinner" aria-hidden="true"></span>
         <div class="sky-trip-compact-main">
           <div class="sky-trip-compact-title">Comparing prices across portals…</div>
         </div>
@@ -4951,6 +4975,7 @@ function formatCompactTripBestSummary() {
   if (!comparison || !bestInfo) {
     return `
       <div class="sky-trip-compact-summary is-loading">
+        <span class="sky-trip-spinner" aria-hidden="true"></span>
         <div class="sky-trip-compact-main">
           <div class="sky-trip-compact-title">Calculating your best price…</div>
         </div>
@@ -5014,6 +5039,17 @@ async function refreshSelectedTripComparison() {
   const key = getSelectedTripComparisonKey();
 
   if (selectedTripComparisonKey === key && selectedTripComparison) {
+    // fetchPaymentSuggestions() now speculatively sets
+    // selectedTripCompareLoading=true the moment it starts (see its own
+    // comment), before it's known whether the payment-method change will
+    // actually produce a different comparison key - if it didn't (e.g. a
+    // plain retry with the same methods), this early return used to leave
+    // that flag stuck true forever, since nothing else here would ever
+    // clear it. Clear it explicitly on this path too.
+    if (selectedTripCompareLoading) {
+      selectedTripCompareLoading = false;
+      renderSelectedTripPanel();
+    }
     return;
   }
 

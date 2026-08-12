@@ -8307,6 +8307,20 @@ body #selectedTripPanel .sky-trip-compact-summary {
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
+/* Visible "revolving circle" spinner for the SELECTED TRIP banner while
+   it's recalculating - same spin animation as .price-loading (flight
+   cards), reused here rather than a second one-off pattern (2026-08-12). */
+body #selectedTripPanel .sky-trip-spinner {
+  display: inline-block !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2.5px solid rgba(255, 255, 255, 0.18) !important;
+  border-top-color: var(--brand-200) !important;
+  border-radius: 50% !important;
+  animation: priceLoadingSpin 0.7s linear infinite !important;
+  justify-self: center !important;
+}
+
 body #selectedTripPanel .sky-trip-compact-price {
   min-width: 0 !important;
 }
