@@ -3321,11 +3321,21 @@ async function repriceAndRenderFlights() {
       returnFlights: returnAll.map(tripFlightForRepriceRequest),
     };
 
+    // 30s proved too tight here too (Kapil, 2026-08-12, reproduced live
+    // twice back to back): measured this exact call at 18.5s-47s across
+    // separate runs on a realistic 80-flight round-trip with 2 payment
+    // methods selected. A timeout here doesn't just show a stale price on
+    // the flight cards - it leaves outboundAll/returnAll's bestDeal
+    // un-updated, so the SAIRRO DECODE card's next payment-suggestions call
+    // (which reads bestDeal off these same arrays) describes a payment
+    // method that was just added as if it were still unselected. Raised to
+    // the same 60s ceiling already used for /search and /payment-suggestions
+    // rather than a narrower number specific to this one call.
     const res = await fetchWithTimeout(`${BACKEND}/reprice-flights`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    }, 30000);
+    }, 60000);
 
     if (!res.ok) throw new Error(`reprice-flights failed: ${res.status}`);
 
