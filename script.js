@@ -2617,6 +2617,47 @@ function closeBookingHandoffModal() {
   modal.style.display = "none";
 }
 
+// No modal in the app closed on Escape - the X button, a backdrop click,
+// and (payment modal only) Done/Clear were the only ways out (QA,
+// 2026-08-12: confirmed live, Escape left the payment modal open).
+// Checked highest z-index first (pmDetailModal 10001, tncModal 10000,
+// portalCompareModal 9999) since those are the ones most likely to be
+// showing on top of another already-open modal; closes only the
+// first/topmost one found open, not everything at once, so opening a
+// method's details from inside the payment modal and pressing Escape
+// closes just the details editor, not the payment modal underneath it.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+
+  const pmDetailModal = document.getElementById("pmDetailModal");
+  if (pmDetailModal && pmDetailModal.style.display !== "none") {
+    pmDetailModal.querySelector("#pmDetailClose")?.click();
+    return;
+  }
+
+  const tncModal = document.getElementById("tncModal");
+  if (tncModal && tncModal.classList.contains("open")) {
+    closeTncModal();
+    return;
+  }
+
+  const portalCompareModal = document.getElementById("portalCompareModal");
+  if (portalCompareModal && portalCompareModal.style.display !== "none") {
+    portalCompareModal.querySelector("#portalCompareClose")?.click();
+    return;
+  }
+
+  const bookingHandoffModal = document.getElementById("bookingHandoffModal");
+  if (bookingHandoffModal && bookingHandoffModal.classList.contains("open")) {
+    closeBookingHandoffModal();
+    return;
+  }
+
+  if (paymentModal && paymentModal.classList.contains("open")) {
+    closePaymentModal();
+  }
+});
+
 // One global delegated click handler for all T&C buttons
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".tncBtn");
