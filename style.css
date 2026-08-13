@@ -3986,6 +3986,78 @@ body {
   }
 }
 
+/* Round-trip cards only had this named-area grid layout at >=1100px and
+   the separate mobile rule further below only covers <=760px - tablet
+   widths in between (e.g. 768px) fell through to the generic .card .row
+   rule (max-width:900px, 1fr 1fr with no grid-template-areas and no
+   min-width:0), which was never designed for round-trip's narrower
+   per-card width (outbound/return sit side by side here, roughly halving
+   each card's available width vs one-way mode at the same viewport).
+   QA, 2026-08-12: confirmed live via getBoundingClientRect - .flight-number
+   and .times literally overlapped in pixel space at 768px. One-way mode
+   at the same width was unaffected (its cards get the full row width, so
+   the generic 2-column fallback had enough room).
+   First attempt mirrored the >=1100px rule's 3-column layout (with a
+   reserved "compare" column) - re-verified live and that still overflowed,
+   because round-trip's card at this width is only ~150-190px wide and a
+   column reserved for an infoBtn that doesn't even exist in round-trip
+   cards' markup left too little room for .air/.price. Switched to mirror
+   the <=760px rule's simpler 2-column pattern instead (no reserved
+   compare column, times+stops folded inline via flex) - re-verified live
+   via screenshot, confirmed clean. */
+@media (min-width: 761px) and (max-width: 1099px) {
+  .pro-results.round-trip-results-mode .card .row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "air price"
+      "time compare" !important;
+    column-gap: 10px !important;
+    row-gap: 6px !important;
+    align-items: center !important;
+  }
+
+  .pro-results.round-trip-results-mode .air {
+    grid-area: air !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .pro-results.round-trip-results-mode .timeStopsRow {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    grid-area: time !important;
+    min-width: 0 !important;
+  }
+
+  .pro-results.round-trip-results-mode .times {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .pro-results.round-trip-results-mode .stops {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .pro-results.round-trip-results-mode .price {
+    grid-area: price !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  .pro-results.round-trip-results-mode .airline-name,
+  .pro-results.round-trip-results-mode .flight-number {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
 /* Sticky selected trip bar */
 #selectedTripPanel {
   max-width: min(1160px, calc(100vw - 32px)) !important;
