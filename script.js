@@ -389,8 +389,20 @@ function renderPaxPanel() {
   if (infantsPlusBtn) infantsPlusBtn.disabled = paxState.infants >= paxState.adults;
 
   if (paxPanelNote) {
+    const noteLines = [];
+    // Infant fare isn't in the shown price today - the flight-search
+    // provider doesn't return one for a lap infant, so we can't reflect it
+    // here. Airlines typically add a small infant fee at booking, not at
+    // search time, so this is disclosure rather than a bug workaround.
+    if (paxState.infants > 0) {
+      noteLines.push("Infant fees aren't included in this price - the airline may add them when you book.");
+    }
     if (paxState.infants >= paxState.adults && paxState.adults > 0) {
-      paxPanelNote.textContent = "Each infant must travel with an adult - add another adult for more infants.";
+      noteLines.push("Each infant must travel with an adult - add another adult for more infants.");
+    }
+
+    if (noteLines.length) {
+      paxPanelNote.textContent = noteLines.join(" ");
       paxPanelNote.classList.add("visible");
     } else {
       paxPanelNote.textContent = "";
