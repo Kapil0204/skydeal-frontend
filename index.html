@@ -115,12 +115,48 @@
           <input id="returnInput" type="date" />
         </label>
 
-        <label>Passengers
-          <select id="paxSelect">
-            <option value="1">1</option><option value="2">2</option>
-            <option value="3">3</option><option value="4">4</option>
-          </select>
-        </label>
+        <div class="pax-field" id="paxField">Passengers
+          <button type="button" id="paxTriggerBtn" class="pax-trigger" aria-haspopup="true" aria-expanded="false">
+            <span id="paxTriggerLabel">1 Adult</span>
+          </button>
+          <div id="paxPanel" class="pax-panel" role="dialog" aria-label="Passengers">
+            <div class="pax-row">
+              <div class="pax-row-label">
+                <div class="pax-row-title">Adults</div>
+                <div class="pax-row-sub">12+ years</div>
+              </div>
+              <div class="pax-stepper">
+                <button type="button" class="pax-step-btn" data-pax-type="adults" data-pax-delta="-1" aria-label="Decrease adults">&minus;</button>
+                <span class="pax-count" id="paxAdultsCount">1</span>
+                <button type="button" class="pax-step-btn" data-pax-type="adults" data-pax-delta="1" aria-label="Increase adults">+</button>
+              </div>
+            </div>
+            <div class="pax-row">
+              <div class="pax-row-label">
+                <div class="pax-row-title">Children</div>
+                <div class="pax-row-sub">2-11 years</div>
+              </div>
+              <div class="pax-stepper">
+                <button type="button" class="pax-step-btn" data-pax-type="children" data-pax-delta="-1" aria-label="Decrease children">&minus;</button>
+                <span class="pax-count" id="paxChildrenCount">0</span>
+                <button type="button" class="pax-step-btn" data-pax-type="children" data-pax-delta="1" aria-label="Increase children">+</button>
+              </div>
+            </div>
+            <div class="pax-row">
+              <div class="pax-row-label">
+                <div class="pax-row-title">Infants</div>
+                <div class="pax-row-sub">Under 2 years, on lap</div>
+              </div>
+              <div class="pax-stepper">
+                <button type="button" class="pax-step-btn" data-pax-type="infants" data-pax-delta="-1" aria-label="Decrease infants">&minus;</button>
+                <span class="pax-count" id="paxInfantsCount">0</span>
+                <button type="button" class="pax-step-btn" data-pax-type="infants" data-pax-delta="1" aria-label="Increase infants">+</button>
+              </div>
+            </div>
+            <div class="pax-panel-note" id="paxPanelNote"></div>
+            <button type="button" class="pax-done-btn btn-primary" id="paxDoneBtn">Done</button>
+          </div>
+        </div>
 
         <label>Cabin
           <select id="cabinSelect">

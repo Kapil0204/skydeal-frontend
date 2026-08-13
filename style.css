@@ -121,14 +121,14 @@ body{
   align-items:start;
 }
 
-label{
+label, .pax-field{
   display:flex;
   flex-direction:column;
   gap:6px;
   font-size:var(--fs-sm);
   color:var(--muted);
 }
-.location-field{
+.location-field, .pax-field{
   position:relative;
 }
 
@@ -180,7 +180,7 @@ label{
   color:var(--muted);
 }
 
-input, select{
+input, select, .pax-trigger{
   width:100%;
   padding:10px 12px;
   border-radius:var(--radius-sm);
@@ -188,6 +188,105 @@ input, select{
   background: rgba(0,0,0,0.18);
   color:var(--text);
   outline:none;
+}
+
+.pax-trigger{
+  text-align:left;
+  cursor:pointer;
+  font-size:var(--fs-md);
+}
+
+.pax-panel{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  min-width:280px;
+  margin-top:6px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  box-shadow: var(--shadow);
+  display:none;
+  z-index:50;
+  padding:14px;
+}
+
+.pax-panel.open{
+  display:block;
+}
+
+.pax-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.pax-row:last-of-type{
+  border-bottom:none;
+}
+
+.pax-row-title{
+  font-size:var(--fs-md);
+  color:var(--text);
+  font-weight:600;
+}
+
+.pax-row-sub{
+  font-size:var(--fs-sm);
+  color:var(--muted);
+}
+
+.pax-stepper{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.pax-step-btn{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
+  font-size:16px;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.pax-step-btn:disabled{
+  opacity:0.4;
+  cursor:not-allowed;
+}
+
+.pax-count{
+  min-width:20px;
+  text-align:center;
+  font-size:var(--fs-md);
+  color:var(--text);
+}
+
+.pax-panel-note{
+  display:none;
+  font-size:var(--fs-sm);
+  color:var(--muted);
+  padding:8px 0 2px;
+}
+
+.pax-panel-note.visible{
+  display:block;
+}
+
+.pax-done-btn{
+  width:100%;
+  margin-top:10px;
 }
 
 .trip-toggle{
@@ -4982,13 +5081,16 @@ body {
   }
 
   .search-grid label,
-  .search-card label {
+  .search-card label,
+  .search-grid .pax-field,
+  .search-card .pax-field {
     font-size: var(--fs-2xs) !important;
     line-height: 1.1 !important;
   }
 
   .search-card input,
-  .search-card select {
+  .search-card select,
+  .search-card .pax-trigger {
     min-height: 42px !important;
     height: 42px !important;
     padding: 10px 12px !important;
@@ -5290,7 +5392,8 @@ body {
   }
 
   .search-card input,
-  .search-card select {
+  .search-card select,
+  .search-card .pax-trigger {
     height: 40px !important;
     min-height: 40px !important;
     font-size: var(--fs-base) !important;
@@ -10485,12 +10588,14 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
 }
 
-.search-card label {
+.search-card label,
+.search-card .pax-field {
   color: var(--gray-700) !important;
 }
 
 .search-card input,
-.search-card select {
+.search-card select,
+.search-card .pax-trigger {
   background: var(--white) !important;
   color: var(--gray-900) !important;
   border: 1px solid var(--gray-200) !important;
@@ -10502,9 +10607,35 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 }
 
 .search-card input:focus,
-.search-card select:focus {
+.search-card select:focus,
+.search-card .pax-trigger:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+
+.search-card .pax-panel {
+  background: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14) !important;
+}
+
+.search-card .pax-row-title {
+  color: var(--gray-900) !important;
+}
+
+.search-card .pax-row-sub,
+.search-card .pax-panel-note {
+  color: var(--gray-500) !important;
+}
+
+.search-card .pax-step-btn {
+  border: 1px solid var(--gray-200) !important;
+  color: var(--gray-900) !important;
+  background: var(--white) !important;
+}
+
+.search-card .pax-count {
+  color: var(--gray-900) !important;
 }
 
 #departInput,

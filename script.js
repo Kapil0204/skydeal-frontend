@@ -344,8 +344,115 @@ const fromSuggestions = document.getElementById("fromSuggestions");
 const toSuggestions = document.getElementById("toSuggestions");
 const departInput = document.getElementById("departInput");
 const returnInput = document.getElementById("returnInput");
-const paxSelect = document.getElementById("paxSelect");
+const paxField = document.getElementById("paxField");
+const paxTriggerBtn = document.getElementById("paxTriggerBtn");
+const paxTriggerLabel = document.getElementById("paxTriggerLabel");
+const paxPanel = document.getElementById("paxPanel");
+const paxPanelNote = document.getElementById("paxPanelNote");
+const paxDoneBtn = document.getElementById("paxDoneBtn");
+const paxAdultsCount = document.getElementById("paxAdultsCount");
+const paxChildrenCount = document.getElementById("paxChildrenCount");
+const paxInfantsCount = document.getElementById("paxInfantsCount");
 const cabinSelect = document.getElementById("cabinSelect");
+
+// Adults/Children/Infants state - replaces the old flat #paxSelect dropdown.
+// Caps: adults 1-9, children 0-8, infants 0..adults (max 1 lap infant per
+// adult, standard OTA rule).
+let paxState = { adults: 1, children: 0, infants: 0 };
+
+function formatPaxSummaryLabel({ adults, children, infants }) {
+  const parts = [];
+  if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? "s" : ""}`);
+  if (children > 0) parts.push(`${children} Child${children > 1 ? "ren" : ""}`);
+  if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? "s" : ""}`);
+  return parts.join(", ") || "1 Adult";
+}
+
+function renderPaxPanel() {
+  if (paxAdultsCount) paxAdultsCount.textContent = String(paxState.adults);
+  if (paxChildrenCount) paxChildrenCount.textContent = String(paxState.children);
+  if (paxInfantsCount) paxInfantsCount.textContent = String(paxState.infants);
+  if (paxTriggerLabel) paxTriggerLabel.textContent = formatPaxSummaryLabel(paxState);
+
+  const adultsMinusBtn = paxPanel?.querySelector('[data-pax-type="adults"][data-pax-delta="-1"]');
+  const adultsPlusBtn = paxPanel?.querySelector('[data-pax-type="adults"][data-pax-delta="1"]');
+  const childrenMinusBtn = paxPanel?.querySelector('[data-pax-type="children"][data-pax-delta="-1"]');
+  const childrenPlusBtn = paxPanel?.querySelector('[data-pax-type="children"][data-pax-delta="1"]');
+  const infantsMinusBtn = paxPanel?.querySelector('[data-pax-type="infants"][data-pax-delta="-1"]');
+  const infantsPlusBtn = paxPanel?.querySelector('[data-pax-type="infants"][data-pax-delta="1"]');
+
+  if (adultsMinusBtn) adultsMinusBtn.disabled = paxState.adults <= 1;
+  if (adultsPlusBtn) adultsPlusBtn.disabled = paxState.adults >= 9;
+  if (childrenMinusBtn) childrenMinusBtn.disabled = paxState.children <= 0;
+  if (childrenPlusBtn) childrenPlusBtn.disabled = paxState.children >= 8;
+  if (infantsMinusBtn) infantsMinusBtn.disabled = paxState.infants <= 0;
+  if (infantsPlusBtn) infantsPlusBtn.disabled = paxState.infants >= paxState.adults;
+
+  if (paxPanelNote) {
+    if (paxState.infants >= paxState.adults && paxState.adults > 0) {
+      paxPanelNote.textContent = "Each infant must travel with an adult - add another adult for more infants.";
+      paxPanelNote.classList.add("visible");
+    } else {
+      paxPanelNote.textContent = "";
+      paxPanelNote.classList.remove("visible");
+    }
+  }
+}
+
+function openPaxPanel() {
+  paxPanel?.classList.add("open");
+  paxTriggerBtn?.setAttribute("aria-expanded", "true");
+}
+
+function closePaxPanel() {
+  paxPanel?.classList.remove("open");
+  paxTriggerBtn?.setAttribute("aria-expanded", "false");
+}
+
+function wirePaxSelector() {
+  if (!paxTriggerBtn || !paxPanel) return;
+
+  paxTriggerBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (paxPanel.classList.contains("open")) {
+      closePaxPanel();
+    } else {
+      openPaxPanel();
+    }
+  });
+
+  paxPanel.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pax-step-btn");
+    if (!btn) return;
+    const type = btn.getAttribute("data-pax-type");
+    const delta = Number(btn.getAttribute("data-pax-delta"));
+    if (!type || !Number.isFinite(delta)) return;
+
+    if (type === "adults") {
+      paxState.adults = Math.min(9, Math.max(1, paxState.adults + delta));
+      // Decrementing adults below the current infant count would leave a
+      // stale infants value (more infants than adults to hold them) - clamp
+      // infants down to match.
+      if (paxState.infants > paxState.adults) paxState.infants = paxState.adults;
+    } else if (type === "children") {
+      paxState.children = Math.min(8, Math.max(0, paxState.children + delta));
+    } else if (type === "infants") {
+      paxState.infants = Math.min(paxState.adults, Math.max(0, paxState.infants + delta));
+    }
+
+    renderPaxPanel();
+  });
+
+  paxDoneBtn?.addEventListener("click", () => closePaxPanel());
+
+  document.addEventListener("click", (e) => {
+    if (!paxPanel.classList.contains("open")) return;
+    if (paxField?.contains(e.target)) return;
+    closePaxPanel();
+  });
+
+  renderPaxPanel();
+}
 const oneWayRadio = document.getElementById("oneWay");
 const roundTripRadio = document.getElementById("roundTrip");
 
@@ -1704,7 +1811,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     ? (payload?.returnDate || payload?.retDate || lastSearchPayload?.returnDate || returnInput?.value || "")
     : "";
 
-  const adults = Number(payload?.passengers || payload?.adults || lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
+  const adults = Number(payload?.passengers || payload?.adults || lastSearchPayload?.passengers || 1) || 1;
 
   const departDmy = formatDateForMmtUrl(depart);
   const retDmy = formatDateForMmtUrl(ret);
@@ -2628,6 +2735,11 @@ function closeBookingHandoffModal() {
 // closes just the details editor, not the payment modal underneath it.
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+
+  if (paxPanel && paxPanel.classList.contains("open")) {
+    closePaxPanel();
+    return;
+  }
 
   const pmDetailModal = document.getElementById("pmDetailModal");
   if (pmDetailModal && pmDetailModal.style.display !== "none") {
@@ -5834,14 +5946,12 @@ function tagMobileSearchFieldWrappers() {
     "#to",
     "#departureDate",
     "#returnDate",
-    "#passengers",
-    "#travelClass",
     "#fromInput",
     "#toInput",
     "#departInput",
     "#returnInput",
-    "#passengerInput",
-    "#cabinInput"
+    "#paxTriggerBtn",
+    "#cabinSelect"
   ];
 
   fieldSelectors.forEach((selector) => {
@@ -5923,8 +6033,12 @@ function renderMobileSearchSummary() {
   const depart = formatMobileSummaryDate(lastSearchPayload?.departureDate || departInput?.value || "");
   const ret = formatMobileSummaryDate(lastSearchPayload?.returnDate || returnInput?.value || "");
 
-  const passengers = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
-  const cabin = lastSearchPayload?.travelClass || cabinInput?.value || "Economy";
+  const paxSummary = formatPaxSummaryLabel({
+    adults: Number(lastSearchPayload?.adults ?? paxState.adults ?? 1) || 1,
+    children: Number(lastSearchPayload?.children ?? paxState.children ?? 0) || 0,
+    infants: Number(lastSearchPayload?.infants ?? paxState.infants ?? 0) || 0
+  });
+  const cabin = lastSearchPayload?.travelClass || "Economy";
 
   const isRound = isRoundTripModeActive();
   const dateText = isRound && ret ? `${depart} - ${ret}` : depart;
@@ -5932,7 +6046,7 @@ function renderMobileSearchSummary() {
   summary.innerHTML = `
     <div class="mobile-search-summary-left">
       <div class="mobile-search-route">${safeText(from)} ${getRouteArrowForSearchState()} ${safeText(to)}</div>
-      <div class="mobile-search-meta">${safeText(dateText)} · ${passengers} Adult${passengers > 1 ? "s" : ""} · ${safeText(cabin)}</div>
+      <div class="mobile-search-meta">${safeText(dateText)} · ${safeText(paxSummary)} · ${safeText(cabin)}</div>
     </div>
     <button type="button" id="mobileEditSearchBtn" class="mobile-edit-search-btn">Edit</button>
   `;
@@ -6001,8 +6115,12 @@ function renderDesktopSearchSummary() {
   const depart = formatMobileSummaryDate(lastSearchPayload?.departureDate || departInput?.value || "");
   const ret = formatMobileSummaryDate(lastSearchPayload?.returnDate || returnInput?.value || "");
 
-  const passengers = Number(lastSearchPayload?.passengers || passengerInput?.value || 1) || 1;
-  const cabin = lastSearchPayload?.travelClass || cabinInput?.value || "Economy";
+  const paxSummary = formatPaxSummaryLabel({
+    adults: Number(lastSearchPayload?.adults ?? paxState.adults ?? 1) || 1,
+    children: Number(lastSearchPayload?.children ?? paxState.children ?? 0) || 0,
+    infants: Number(lastSearchPayload?.infants ?? paxState.infants ?? 0) || 0
+  });
+  const cabin = lastSearchPayload?.travelClass || "Economy";
 
   const isRound = isRoundTripModeActive();
   const dateText = isRound && ret ? `${depart} - ${ret}` : depart;
@@ -6011,7 +6129,7 @@ function renderDesktopSearchSummary() {
     <div class="desktop-search-route">
       ${safeText(from)} ${getRouteArrowForSearchState()} ${safeText(to)}
       <span class="sep">&middot;</span>${safeText(dateText)}
-      <span class="sep">&middot;</span>${passengers} Adult${passengers > 1 ? "s" : ""}
+      <span class="sep">&middot;</span>${safeText(paxSummary)}
       <span class="sep">&middot;</span>${safeText(cabin)}
     </div>
     <div class="desktop-search-summary-right">
@@ -7520,7 +7638,15 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     departureDate: toISO(departInput?.value || ""),
     returnDate: roundTripRadio?.checked ? toISO(returnInput?.value || "") : "",
     tripType: roundTripRadio?.checked ? "round-trip" : "one-way",
-    passengers: Number(paxSelect?.value || 1),
+    adults: paxState.adults,
+    children: paxState.children,
+    infants: paxState.infants,
+    // Offer-eligibility passenger count (adults+children); infants excluded
+    // per product decision - they don't get a fare or count toward
+    // passenger-count offer restrictions. Kept under the pre-existing
+    // "passengers" field name for backward compatibility with every
+    // downstream consumer already keyed on lastSearchPayload.passengers.
+    passengers: paxState.adults + paxState.children,
     travelClass: cabinSelect?.value || "economy",
 
     // ✅ enable backend checkout/generic offer display layer
@@ -7903,6 +8029,7 @@ ensureMobilePriceIntelPlacement();
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);
+wirePaxSelector();
 wirePopularRoutes();
 updatePaymentButtonLabel();
 
