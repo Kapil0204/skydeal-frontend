@@ -6016,20 +6016,20 @@ function enterDesktopResultsMode() {
 // reproduced live - resizing from desktop to mobile width left the full,
 // uncollapsed search form permanently visible above the results instead
 // of the intended thin summary bar, and the mobile-only quick-filter
-// chips/round-trip tabs never initialized). Mirrors the existing
-// "only act on an actual breakpoint flip" pattern used just above for the
-// decode-banner placement listener, for the same resize-noise reason.
-let lastKnownResultsModeMobile = null;
+// chips/round-trip tabs never initialized). Reads which mode is ACTUALLY
+// active straight off the body class every time, rather than tracking a
+// separately-initialized "last known" flag - an earlier version of this
+// fix used a nullable tracking variable that got initialized to the
+// current value before ever comparing it, so the first resize after a
+// search could never detect a flip (caught in this same QA/fix pass by
+// re-testing live before shipping, not left in).
 window.addEventListener("resize", () => {
-  const inResultsMode =
-    document.body.classList.contains("mobile-results-mode") ||
-    document.body.classList.contains("desktop-results-mode");
-  if (!inResultsMode) return;
+  const isMobileModeActive = document.body.classList.contains("mobile-results-mode");
+  const isDesktopModeActive = document.body.classList.contains("desktop-results-mode");
+  if (!isMobileModeActive && !isDesktopModeActive) return;
 
   const nowMobile = isSkyDealMobileView();
-  if (lastKnownResultsModeMobile === null) lastKnownResultsModeMobile = nowMobile;
-  if (lastKnownResultsModeMobile === nowMobile) return;
-  lastKnownResultsModeMobile = nowMobile;
+  if (isMobileModeActive === nowMobile) return;
 
   document.body.classList.remove("mobile-results-mode", "desktop-results-mode");
   if (nowMobile) {
