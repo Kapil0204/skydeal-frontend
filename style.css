@@ -12791,6 +12791,27 @@ body {
   transition: opacity 0.3s ease;
 }
 
+/* Mobile (founder catch, 2026-08-15): the 42px avatar + 14px row gap eats
+   56px of an already-narrow card, and pushes the bubble's content out of
+   alignment with the "sairro decode" eyebrow and route header above it -
+   both of which sit flush at the card's own left padding, so the bubble
+   reads as indented for no reason. The avatar is a deliberate desktop
+   chat-bubble touch (2026-07-30 approved mockup) that isn't worth the
+   width cost this narrow; shrinking it would still cost padding+gap and
+   still break the flush-left alignment, so it's hidden outright below
+   760px instead. The bubble's top-left corner (4px vs 16px elsewhere) was
+   shaped to point at the avatar as a speech-bubble tail - normalized to a
+   plain rounded corner once there's nothing for it to point at.
+   .payment-timing-insight's own margin-left:56px (added specifically to
+   line up with the avatar-offset bubble above it, see its comment) is
+   zeroed to match. */
+@media (max-width: 760px) {
+  .decode-avatar { display: none; }
+  .decode-assistant-row { gap: 0; }
+  .decode-bubble { border-radius: 16px; }
+  .payment-timing-insight { margin-left: 0; }
+}
+
 /* Sairro decode priority hierarchy (2026-08-08) - the single ordered
    message (renderPrimaryDecodeMessageHtml in script.js). Light/base
    styling here; .price-intel-hero overrides below match the dark hero
