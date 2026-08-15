@@ -6312,9 +6312,33 @@ function startDecodeWaitStage(fromCode, toCode) {
   var subtext = document.getElementById("dwsSubtext");
   if (subtext) subtext.textContent = " ";
 
+  // Domestic fares are realistically ~5-10k; the plain per-digit
+  // randomizer below has no concept of that and can just as easily land
+  // on an international-scale number (e.g. ₹80,000+) mid-decode, which
+  // reads as alarming for the second or two before the real, much lower
+  // price replaces it (founder catch, 2026-08-15). isDomesticSearchTrip()
+  // already reads lastSearchPayload, which is set before this function is
+  // called (script.js:7674 runs before the 7752 call site), so it
+  // reflects the search actually in flight, not a stale one.
+  var isDomestic = isDomesticSearchTrip() === true;
+
   var digits = document.querySelectorAll("#dwsTicketPrice .dws-digit");
   var cipherDigitIndex = 0;
+  function randomDomesticTicketDigits() {
+    var n = 5000 + Math.floor(Math.random() * 5000); // 5000..9999
+    return String(n).padStart(5, "0");
+  }
   function advanceCipherDigits(count) {
+    if (isDomestic) {
+      // Refreshed as one coherent number (not per-digit) so it always
+      // reads as a plausible domestic fare, never a patchwork of
+      // independently-drawn digits that could drift out of range.
+      var s = randomDomesticTicketDigits();
+      for (var j = 0; j < digits.length; j++) {
+        if (digits[j]) digits[j].textContent = s[j];
+      }
+      return;
+    }
     for (var i = 0; i < count; i++) {
       var d = digits[cipherDigitIndex % digits.length];
       if (d) d.textContent = Math.floor(Math.random() * 10);
