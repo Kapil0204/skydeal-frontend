@@ -6230,8 +6230,7 @@ function removeStandaloneSearchError() {
 // or its timing - only the inner content of the pre-search explainer
 // changes; a re-search (pre-search already false from a prior search)
 // is untouched and keeps today's behavior. See DECISIONS.md.
-var decodeWaitRafId = null;
-var decodeWaitCipherInterval = null;
+var decodeWaitTimerId = null;
 var decodeWaitCurrentPhase = 0;
 
 function decodeWaitPhaseForProgress(pct) {
@@ -6269,10 +6268,8 @@ function decodeWaitApplyProgress(pct) {
 }
 
 function stopDecodeWaitTimers() {
-  if (decodeWaitRafId) cancelAnimationFrame(decodeWaitRafId);
-  decodeWaitRafId = null;
-  if (decodeWaitCipherInterval) clearInterval(decodeWaitCipherInterval);
-  decodeWaitCipherInterval = null;
+  if (decodeWaitTimerId) clearTimeout(decodeWaitTimerId);
+  decodeWaitTimerId = null;
 }
 
 // Reverts .how-it-works-presearch back to its normal static explainer -
@@ -6316,49 +6313,55 @@ function startDecodeWaitStage(fromCode, toCode) {
   if (subtext) subtext.textContent = " ";
 
   var digits = document.querySelectorAll("#dwsTicketPrice .dws-digit");
-  decodeWaitCipherInterval = setInterval(function () {
-    digits.forEach(function (d) { d.textContent = Math.floor(Math.random() * 10); });
-  }, 90);
+  var cipherDigitIndex = 0;
+  function advanceCipherDigits(count) {
+    for (var i = 0; i < count; i++) {
+      var d = digits[cipherDigitIndex % digits.length];
+      if (d) d.textContent = Math.floor(Math.random() * 10);
+      cipherDigitIndex++;
+    }
+  }
 
   // Unknown real duration (no fixed schedule) - a fixed time constant
-  // eases progress toward ~90% and lets it slow down the longer it runs,
+  // eases progress toward ~94% and lets it slow down the longer it runs,
   // but never claims 100% until stopDecodeWaitTimers() is actually
   // called from the real /search + /payment-suggestions completion. A
-  // fast ~6s response just catches this curve early; a slow ~20s+ one
+  // fast ~6s response just catches this curve early; a slow ~30s+ one
   // keeps creeping upward instead of looking stalled. See DECISIONS.md
   // ("Sairro decode wait stage") for why this replaced an earlier,
   // wall-clock-scheduled version.
-  var maxProgress = 90;
-  var tau = 5500;
+  var maxProgress = 94;
+  var tau = 9000;
   var startTime = performance.now();
 
-  // Flourish-only window (2026-08-10): both loops above used to run for
-  // the ENTIRE wait, not just this opening flourish - on a slow/cold
-  // backend (routinely 20-40s+) that's thousands of continuous
-  // requestAnimationFrame ticks plus a 90ms-interval DOM mutation
-  // fighting the user's own scroll input the whole time. Confirmed live:
-  // scrolling during this window visibly stutters/jumps (Kapil feedback,
-  // 2026-08-10) - reproduced independently by this same automation's own
-  // scroll actions hanging while these timers were still running. The
-  // animation's job is a few seconds of "something is happening", not to
-  // keep animating for the true, unknowable duration - both timers now
-  // freeze wherever they've gotten to after FLOURISH_MS and just sit
-  // still, still fully overwritten the instant real results replace this
-  // view via stopDecodeWaitTimers().
+  // Runs for the WHOLE wait (2026-08-14), not just an opening flourish -
+  // a stalled progress bar/frozen price reads as broken and makes the
+  // wait feel longer, which is exactly backwards on searches that
+  // routinely run 20-50s+ (live-measured this session). The 2026-08-09
+  // fix that capped this to a 3s flourish was solving a real problem
+  // (continuous 60fps rAF + a 90ms DOM-mutation interval fighting the
+  // user's scroll for the entire wait) but over-corrected by freezing
+  // outright instead of just slowing down. This keeps the original fast,
+  // smooth cadence for the first FLOURISH_MS (proven fine), then drops
+  // to a self-rescheduling setTimeout at ~9x lower frequency for the
+  // remainder - .dws-fill's existing `transition: width 0.5s ease`
+  // (style.css) smooths the visual motion between those sparser updates,
+  // and the cipher only touches one digit per tick post-flourish instead
+  // of all five - both together keep something visibly moving until the
+  // real result arrives without reintroducing the churn that caused the
+  // original scroll-jank bug.
   var FLOURISH_MS = 3000;
+  var FLOURISH_INTERVAL_MS = 90;
+  var SUSTAINED_INTERVAL_MS = 700;
 
-  function tick(now) {
-    var elapsed = now - startTime;
+  function tick() {
+    var elapsed = performance.now() - startTime;
+    var inFlourish = elapsed < FLOURISH_MS;
     decodeWaitApplyProgress(maxProgress * (1 - Math.exp(-elapsed / tau)));
-    if (elapsed >= FLOURISH_MS) {
-      if (decodeWaitCipherInterval) clearInterval(decodeWaitCipherInterval);
-      decodeWaitCipherInterval = null;
-      decodeWaitRafId = null;
-      return;
-    }
-    decodeWaitRafId = requestAnimationFrame(tick);
+    advanceCipherDigits(inFlourish ? digits.length : 1);
+    decodeWaitTimerId = setTimeout(tick, inFlourish ? FLOURISH_INTERVAL_MS : SUSTAINED_INTERVAL_MS);
   }
-  decodeWaitRafId = requestAnimationFrame(tick);
+  decodeWaitTimerId = setTimeout(tick, 0);
 }
 
 function renderSearchLoadingState(message = "Comparing final prices") {
