@@ -6585,6 +6585,20 @@ function setResultsPreSearch(isPreSearch) {
 }
 
 function renderSearchNoResultsState(details = {}) {
+  // Do NOT add "search-error-mode" here (tried, then reverted, 2026-08-15)
+  // - that class triggers "body.search-error-mode .pro-results
+  // { display: none !important; }" (style.css), which is the mechanism
+  // renderSearchErrorState() actually depends on: it deliberately hides
+  // the whole .pro-results and injects a completely separate standalone
+  // element after .search-card instead. This function takes the simpler,
+  // already-correct approach of rendering straight into #outboundList
+  // (inside .flights-workspace/.pro-results) - the only thing that was
+  // ever wrong is the caller re-adding "pre-search" to .pro-results
+  // (see handleSearch's missingOutbound/missingReturn branch), which
+  // force-hides .flights-workspace via ".pro-results.pre-search
+  // .flights-workspace { display: none !important; }" regardless of
+  // anything set here. Fixed at the source (setResultsPreSearch(false)
+  // instead of true) rather than here.
   document.body.classList.remove("search-error-mode");
   const outHost = document.getElementById("outboundList") || document.getElementById("outboundCards") || document.getElementById("outCards");
   const retHost = document.getElementById("returnList") || document.getElementById("returnCards") || document.getElementById("retCards");
@@ -7865,7 +7879,28 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
       activeFilters.airlines = [];
       renderAirlineFilters();
       renderAirportFilters();
-      setResultsPreSearch(true);
+      // false, not true (2026-08-15 founder+user catch): a completed
+      // search with zero flights is NOT the same as "never searched" -
+      // setResultsPreSearch(true) re-adds .pro-results' "pre-search"
+      // class, and ".pro-results.pre-search .flights-workspace
+      // { display: none !important; }" (style.css) unconditionally hides
+      // the very container renderSearchNoResultsState() renders its card
+      // into (#outboundList, inside .flights-workspace). The card was
+      // rendering correctly into the DOM the whole time, just inside a
+      // force-hidden container, so a genuinely empty result silently
+      // looked identical to the button doing nothing at all. Fix is
+      // simply not re-entering pre-search state - .flights-workspace
+      // renders fine once "pre-search" is absent, no other override
+      // needed (verified: adding "search-error-mode" here instead was
+      // tried and reverted - that class triggers a DIFFERENT rule,
+      // "body.search-error-mode .pro-results { display: none !important; }",
+      // which hides the results column entirely; it's the mechanism
+      // renderSearchErrorState() actually depends on for its own separate
+      // standalone-element error UI, not applicable here). This only
+      // reproduces for a route/date combo that truly returns zero flights
+      // (e.g. same-day domestic on an unlucky day), which is why it went
+      // unnoticed until now.
+      setResultsPreSearch(false);
       resetDecodeWaitVisualToStatic();
       setDecodeCardRefreshing(false);
       updateFlightSectionHeadings();
@@ -7935,7 +7970,17 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     selectedReturnFlight = null;
     selectedTripComparison = null;
 
-    setResultsPreSearch(true);
+    // false, not true - same "not really pre-search" fix as the
+    // no-results branch above (see its comment for the full explanation).
+    // renderSearchErrorState() actually hides .pro-results itself via a
+    // direct inline style and shows a separate standalone element instead,
+    // so this specific change doesn't change what the user sees for a
+    // real error - it's here so the "pre-search" flag stays semantically
+    // correct (a failed search still isn't "never searched"), since
+    // hasActiveSearchResults() and anything else reading that flag would
+    // otherwise incorrectly treat a failed search the same as no search
+    // ever having happened.
+    setResultsPreSearch(false);
     resetDecodeWaitVisualToStatic();
     setDecodeCardRefreshing(false);
     updateFlightSectionHeadings();
