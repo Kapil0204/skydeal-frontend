@@ -563,8 +563,16 @@ const pmDone = document.getElementById("pmDone");
 
 // Tabs container
 const pmTabsContainer = document.querySelector(".pm-tabs");
+const pmSearchInput = document.getElementById("pmSearch");
+const pmSearchClearBtn = document.getElementById("pmSearchClear");
 // Payment details editor
 let editingPaymentIndex = null;
+// Filters the bank/card list within the active category tab - reset on
+// every modal open and every category switch (see openPaymentModal() and
+// renderPaymentTabs()) so a stale filter never silently hides everything
+// on the next tab/open (2026-08-16, founder catch: "too much scrolling
+// and finding to locate your payment option").
+let pmSearchQuery = "";
 
 // ---------- State ----------
 let paymentOptions = {}; // { "Credit Card":[...], ... }
@@ -2797,6 +2805,9 @@ function openPaymentModal() {
   if (!paymentModal) return;
   paymentModal.setAttribute("aria-hidden", "false");
   paymentModal.classList.add("open");
+  pmSearchQuery = "";
+  if (pmSearchInput) pmSearchInput.value = "";
+  if (pmSearchClearBtn) pmSearchClearBtn.hidden = true;
   renderPaymentTabs();
   renderPaymentList();
 }
@@ -2882,12 +2893,23 @@ function renderPaymentTabs() {
     </div>
   `;
 
-  pmTabsContainer.innerHTML = tabsHtml + emiToggleHtml;
+  // Category buttons live in their own scrollable strip, separate from
+  // the EMI toggle row below - previously all one flex container that
+  // wrapped to 2 lines on mobile despite the "swipe for more" hint
+  // implying horizontal scroll (founder catch, 2026-08-16: the CSS had
+  // flex-wrap:wrap the whole time, so the hint was always inaccurate).
+  pmTabsContainer.innerHTML = `<div class="pm-tabs-scroll">${tabsHtml}</div>${emiToggleHtml}`;
   cleanupPaymentTabsDom();
 
   pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       activePaymentType = normalizePaymentTabLabel(btn.getAttribute("data-tab"));
+      // Fresh search per category - a filter that matched "HDFC" on
+      // Credit Card would otherwise silently carry over and hide
+      // everything on Debit Card until the user notices and clears it.
+      pmSearchQuery = "";
+      if (pmSearchInput) pmSearchInput.value = "";
+      if (pmSearchClearBtn) pmSearchClearBtn.hidden = true;
       renderPaymentTabs();
       renderPaymentList();
     });
@@ -2930,10 +2952,34 @@ function renderPaymentList() {
   if (!pmList) return;
   const type = activePaymentType;
   const raw = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
-  const list = [...new Set(raw.map((x) => String(x || "").trim()).filter(Boolean))];
+  const allForType = [...new Set(raw.map((x) => String(x || "").trim()).filter(Boolean))];
+
+  if (allForType.length === 0) {
+    pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
+    return;
+  }
+
+  // Search filters within the active category only - see pmSearchQuery's
+  // own comment for why it resets on tab switch/modal open rather than
+  // persisting globally.
+  const query = pmSearchQuery.trim().toLowerCase();
+  const list = query
+    ? allForType.filter((name) => name.toLowerCase().includes(query))
+    : allForType;
 
   if (list.length === 0) {
-    pmList.innerHTML = `<div class="empty">No options found for ${type}.</div>`;
+    pmList.innerHTML = `
+      <div class="empty pm-search-empty">
+        No matches for "${safeText(pmSearchQuery.trim())}" in ${safeText(type)}.
+        <button type="button" id="pmSearchEmptyClear" class="pm-search-empty-clear">Clear search</button>
+      </div>
+    `;
+    document.getElementById("pmSearchEmptyClear")?.addEventListener("click", () => {
+      pmSearchQuery = "";
+      if (pmSearchInput) { pmSearchInput.value = ""; pmSearchInput.focus(); }
+      if (pmSearchClearBtn) pmSearchClearBtn.hidden = true;
+      renderPaymentList();
+    });
     return;
   }
  pmList.innerHTML = list
@@ -6752,35 +6798,13 @@ function syncReturnDateAutoRoundTrip() {
   }
 }
 
-function decoratePaymentTabsForMobile() {
-  const modal = document.getElementById("paymentModal");
-  if (!modal) return;
-
-  const possibleTabRows = Array.from(
-    modal.querySelectorAll(".tabs, .pm-tabs, .payment-tabs, [role='tablist'], .tab-row, .modal-tabs")
-  );
-
-  possibleTabRows.forEach((row) => {
-    const text = (row.textContent || "").toLowerCase();
-    if (!text.includes("credit") && !text.includes("debit") && !text.includes("emi")) return;
-
-    row.classList.add("sky-payment-tabs-mobile");
-
-    const buttons = Array.from(row.querySelectorAll("button, .tab, [role='tab'], label, div"));
-    buttons.forEach((btn) => {
-      const label = (btn.textContent || "").trim().toLowerCase();
-      if (!label) return;
-      if (label.includes("emi")) btn.classList.add("sky-payment-tab-emi");
-    });
-
-    if (!row.parentElement?.querySelector(".sky-payment-tabs-hint")) {
-      const hint = document.createElement("div");
-      hint.className = "sky-payment-tabs-hint";
-      hint.innerHTML = `<span>Swipe for more payment types</span><span aria-hidden="true">→</span>`;
-      row.parentElement?.insertBefore(hint, row.nextSibling);
-    }
-  });
-}
+// decoratePaymentTabsForMobile() removed 2026-08-16 - it used to sniff
+// .pm-tabs' text content to guess which row was the category-tab row and
+// tag it/its EMI child with classes for CSS to key off. Now unnecessary:
+// renderPaymentTabs() itself always wraps the category buttons in a
+// stable ".pm-tabs-scroll" child, and the "swipe" hint is a static
+// sibling in index.html (#pmTabsHint) shown/hidden by a plain min-width
+// media query - both directly selectable, no text-sniffing needed.
 
 function updateSelectedTripMobileClasses() {
   const hasOut = typeof selectedOutboundFlight !== "undefined" && !!selectedOutboundFlight;
@@ -6829,7 +6853,6 @@ function updateSelectedTripFade() {
 
 function installMobileUxPolish() {
   syncReturnDateAutoRoundTrip();
-  decoratePaymentTabsForMobile();
   updateSelectedTripMobileClasses();
   updateSelectedTripFade();
 }
@@ -8044,6 +8067,18 @@ toggleReturn();
   pmClose?.addEventListener("click", closePaymentModal);
   paymentModal?.addEventListener("click", (e) => {
     if (e.target === paymentModal) closePaymentModal();
+  });
+
+  pmSearchInput?.addEventListener("input", () => {
+    pmSearchQuery = pmSearchInput.value;
+    if (pmSearchClearBtn) pmSearchClearBtn.hidden = pmSearchQuery.trim().length === 0;
+    renderPaymentList();
+  });
+  pmSearchClearBtn?.addEventListener("click", () => {
+    pmSearchQuery = "";
+    if (pmSearchInput) { pmSearchInput.value = ""; pmSearchInput.focus(); }
+    pmSearchClearBtn.hidden = true;
+    renderPaymentList();
   });
 
   const bookingHandoffModal = document.getElementById("bookingHandoffModal");

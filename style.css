@@ -3151,6 +3151,95 @@ body.search-in-flight .flights-workspace{
     var(--white);
 }
 
+/* Search/filter for the bank+card list (2026-08-16, founder catch: "too
+   much scrolling and finding to locate your payment option" - typing 3-4
+   letters beats scanning ~20-40 alphabetical entries every time,
+   regardless of screen size). Sticky within .pm-body's own scroll area
+   (overflow:auto above) so it stays reachable without scrolling back up. */
+.pm-search-wrap{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  background:var(--white);
+  padding-bottom:10px;
+  margin-bottom:2px;
+}
+
+.pm-search-icon{
+  position:absolute;
+  left:14px;
+  width:16px;
+  height:16px;
+  color:var(--gray-500);
+  pointer-events:none;
+}
+
+.pm-search{
+  width:100%;
+  box-sizing:border-box;
+  min-height:44px;
+  padding:10px 36px 10px 38px;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--gray-200);
+  background:var(--gray-50);
+  color:var(--gray-900);
+  font-size:var(--fs-md);
+  font-weight:750;
+}
+
+.pm-search::placeholder{
+  color:var(--gray-500);
+  font-weight:650;
+}
+
+.pm-search:focus{
+  outline:none;
+  border-color:var(--info);
+  background:var(--white);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.10);
+}
+
+.pm-search-clear{
+  position:absolute;
+  right:10px;
+  width:24px;
+  height:24px;
+  border:none;
+  border-radius:50%;
+  background:var(--gray-200);
+  color:var(--gray-700);
+  font-size:15px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.pm-search-clear:hover{
+  background:var(--gray-300, var(--gray-200));
+}
+
+.pm-search-empty{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  text-align:center;
+  color:var(--gray-500);
+  padding:28px 12px;
+}
+
+.pm-search-empty-clear{
+  border:1px solid var(--info-light);
+  background:var(--info-light);
+  color:var(--info);
+  font-weight:800;
+  font-size:var(--fs-sm);
+  padding:8px 16px;
+  border-radius:var(--radius-pill);
+  cursor:pointer;
+}
+
 .pm-list{
   grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:10px;
@@ -7216,51 +7305,64 @@ body.search-error-mode .results-top-filter-row {
   cursor: pointer;
 }
 
-/* Desktop safety: do not alter desktop layout */
+/* =====================================================
+   Payment modal mobile tabs (rebuilt 2026-08-16 - founder catch: the
+   category pills were wrapping into 2 lines, and a "swipe for more" hint
+   that used to describe horizontal scroll had been switched off entirely
+   ("Payment type pills now wrap into two rows, so swipe hint is no
+   longer needed") - an earlier, less satisfying fix for the same
+   complaint being raised again. Root cause of why scroll didn't work
+   cleanly before: the EMI toggle shared the same flex row as the
+   category buttons, so a naive nowrap+scroll would have dragged a wide
+   toggle control into the scroll strip too. renderPaymentTabs() (script.js)
+   now wraps just the category buttons in their own ".pm-tabs-scroll"
+   child, with the EMI toggle as a separate full-width row below it - so
+   real horizontal scroll works cleanly this time. ===================================================== */
+
 @media (min-width: 761px) {
-  .sky-payment-tabs-hint {
+  .pm-tabs-hint {
     display: none !important;
   }
 }
 
 @media (max-width: 760px) {
-  /* -----------------------------
-     Payment modal mobile tabs
-  ------------------------------ */
-  #paymentModal .sky-payment-tabs-mobile {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    overflow-x: visible !important;
-    white-space: normal !important;
-    padding-bottom: 8px !important;
+  #paymentModal .pm-tabs {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  #paymentModal .sky-payment-tabs-mobile > * {
-    flex: 0 0 auto !important;
+  #paymentModal .pm-tabs-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: 6px;
   }
 
-  /* EMI appears as second-row priority pill */
-  #paymentModal .sky-payment-tabs-mobile .sky-payment-tab-emi {
-    order: 20 !important;
-    flex: 0 0 auto !important;
-    min-width: 132px !important;
+  #paymentModal .pm-tabs-scroll .tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
   }
 
-  .sky-payment-tabs-hint {
+  #paymentModal .emiToggleWrap {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pm-tabs-hint {
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-    margin: 0 18px 10px !important;
-    padding: 8px 12px !important;
-    border-radius: var(--radius-pill) !important;
-    color: var(--brand-200) !important;
-    background: rgba(168, 85, 247, 0.12) !important;
-    border: 1px solid rgba(168, 85, 247, 0.24) !important;
-    font-size: var(--fs-sm) !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.01em !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    margin: 4px 20px 0 !important;
+    color: var(--gray-500) !important;
+    font-size: var(--fs-2xs) !important;
+    font-weight: 700 !important;
   }
 
   /* Once both are selected, show both normally with selected-trip bar handling summary */
@@ -7273,17 +7375,6 @@ body.search-error-mode .results-top-filter-row {
 
   body.sky-mobile-trip-complete #outboundResultsPanel::after,
   body.sky-mobile-trip-complete #returnResultsPanel::after {
-    display: none !important;
-  }
-}
-
-/* =====================================================
-   Mobile payment modal cleanup
-   Payment type pills now wrap into two rows, so swipe hint is no longer needed.
-===================================================== */
-
-@media (max-width: 760px) {
-  .sky-payment-tabs-hint {
     display: none !important;
   }
 }

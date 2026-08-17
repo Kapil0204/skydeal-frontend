@@ -534,10 +534,24 @@
       </div>
 
       <div class="pm-tabs" id="pmTabs"></div>
+      <!-- Static sibling, not inside #pmTabs's own innerHTML (which
+           renderPaymentTabs() fully replaces on every category switch) -
+           only shown on mobile via CSS, mirrors #pmTabs-scroll's actual
+           scroll behavior now instead of describing wrapping as if it
+           were scrolling (founder catch, 2026-08-16). -->
+      <div class="pm-tabs-hint" id="pmTabsHint" aria-hidden="true"><span>Swipe for more</span><span>→</span></div>
 
       <div class="pm-offer-disclaimer"><strong>Heads up:</strong> these offer counts are bank-wide - not all of them might apply to your exact route.</div>
 
       <div class="pm-body">
+        <div class="pm-search-wrap">
+          <svg class="pm-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M18 18l-4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="pmSearch" class="pm-search" placeholder="Search bank or card" autocomplete="off" />
+          <button type="button" id="pmSearchClear" class="pm-search-clear" aria-label="Clear search" hidden>&times;</button>
+        </div>
         <div id="pmList" class="pm-list"></div>
       </div>
 
