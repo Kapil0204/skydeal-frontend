@@ -8133,6 +8133,21 @@ toggleReturn();
     if (e.target === paymentModal) closePaymentModal();
   });
 
+  // Tap-to-open/close for the "why offer counts might not apply" info
+  // icon (replaced the old permanent .pm-offer-disclaimer banner,
+  // 2026-08-17). Same tap-toggle + tap-outside-to-close idea as the
+  // flight-card layover tooltip, but that one's handler is wired per
+  // rendered card - this icon is static markup, so it gets its own.
+  const pmInfoIcon = document.getElementById("pmInfoIcon");
+  pmInfoIcon?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pmInfoIcon.classList.toggle("tooltip-open");
+  });
+  document.addEventListener("click", (e) => {
+    if (!pmInfoIcon || e.target.closest("#pmInfoIcon")) return;
+    pmInfoIcon.classList.remove("tooltip-open");
+  });
+
   pmSearchInput?.addEventListener("input", () => {
     pmSearchQuery = pmSearchInput.value;
     if (pmSearchClearBtn) pmSearchClearBtn.hidden = pmSearchQuery.trim().length === 0;

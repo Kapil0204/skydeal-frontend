@@ -3257,7 +3257,7 @@ body.search-in-flight .flights-workspace{
    height single-line .pm-item for space. */
 .pm-item.pm-item-tagged{
   height:auto;
-  min-height:52px;
+  min-height:44px;
 }
 
 .pm-item-main{
@@ -3291,9 +3291,14 @@ body.search-in-flight .flights-workspace{
 }
 
 .pm-item{
-  min-height:52px;
-  height:52px;
-  padding:10px 14px;
+  /* 52px -> 44px (2026-08-17, founder catch: rows felt oversized, only
+     ~6 fit on screen before scrolling against lists that can run 20-40
+     entries). 44px keeps the accepted minimum comfortable tap-target
+     size - the same floor already used elsewhere in this modal - while
+     fitting ~7-8 rows in the same visible area. */
+  min-height:44px;
+  height:44px;
+  padding:8px 14px;
   border-radius:var(--radius-lg);
   background:var(--white);
   border:1px solid var(--gray-200);
@@ -3901,7 +3906,7 @@ body{
 }
 
 .pm-item span{
-  font-size:var(--fs-md) !important;
+  font-size:var(--fs-base) !important;
   font-weight:650 !important;
   letter-spacing:-0.01em;
 }
@@ -11673,21 +11678,60 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 /* Payment modal: sets expectations once for the whole list instead of
    re-litigating "will this actually apply?" on every single row's
-   offer-count badge. Same purple-callout treatment as
-   .sky-payment-nudge so it reads as a real heads-up, not a footnote. */
-.pm-offer-disclaimer {
-  margin: 8px 0 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  border-radius: var(--radius-md);
-  background: rgba(168, 85, 247, 0.09);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: var(--fs-sm);
-  line-height: 1.45;
+   offer-count badge. Used to be a permanent 57px banner (.pm-offer-
+   disclaimer) - founder catch 2026-08-17: "taking too much space,
+   should we put it as an 'i' or '*' somewhere?" - now a small info icon
+   next to the modal title, revealing the same text in a tap-to-open
+   tooltip (#pmInfoIcon click handler, script.js). Same tap-toggle +
+   tap-outside-to-close idea as the flight-card layover tooltip
+   (.stopsHoverable/.tooltip-open), given its own small handler here
+   since that one is wired per rendered flight card, not globally. */
+.pmHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.pm-offer-disclaimer strong {
+.pmInfoHoverable {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--muted);
+  cursor: help;
+}
+
+.pmInfoIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.pmInfoTooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max-content;
+  max-width: min(260px, 78vw);
+  background: var(--gray-900);
   color: var(--white);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.3);
+  z-index: 20;
+}
+
+.pmInfoHoverable:hover .pmInfoTooltip,
+.pmInfoHoverable.tooltip-open .pmInfoTooltip {
+  display: block;
 }
 
 /* Booking handoff modal: a quick "here's what you picked, here's your

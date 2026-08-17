@@ -530,12 +530,20 @@
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
       <div class="modal-head">
         <h2 id="pmTitle"><svg class="modal-head-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#sairroMark"/></svg>Add your payment options</h2>
-        <button id="pmClose" class="x" aria-label="Close">&times;</button>
+        <div class="pmHeadActions">
+          <span class="pmInfoHoverable" id="pmInfoIcon" tabindex="0" role="button" aria-label="Why offer counts might not all apply to your route">
+            <svg class="pmInfoIcon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="8.3" stroke="currentColor" stroke-width="1.4"/>
+              <line x1="10" y1="9" x2="10" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="10" cy="6.3" r="1" fill="currentColor"/>
+            </svg>
+            <div class="pmInfoTooltip">These offer counts are bank-wide - not all of them might apply to your exact route.</div>
+          </span>
+          <button id="pmClose" class="x" aria-label="Close">&times;</button>
+        </div>
       </div>
 
       <div class="pm-tabs" id="pmTabs"></div>
-
-      <div class="pm-offer-disclaimer"><strong>Heads up:</strong> these offer counts are bank-wide - not all of them might apply to your exact route.</div>
 
       <div class="pm-body">
         <div class="pm-search-wrap">
