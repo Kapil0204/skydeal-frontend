@@ -11982,6 +11982,64 @@ body {
   margin-left: calc(clamp(24px, 2.4vw, 34px) + 8px);
 }
 
+/* =====================================================
+   Header size reduction (2026-08-17): founder catch - the hero
+   banner (logo/tagline block) was taking up too much room, especially
+   on mobile ("The true final price..." pushed the actual search card
+   further down than it needed to). Desktop trimmed ~10% (padding only,
+   type scale untouched); mobile trimmed ~45-50% (padding, type scale,
+   icon size, and stack gaps all reduced together - same visual
+   hierarchy, just smaller). Appended at the end of the cascade per this
+   file's own established pattern so these values win regardless of the
+   many earlier hero-header declarations above.
+===================================================== */
+@media (min-width: 761px) {
+  .skydeal-hero-header {
+    padding: 30px 0 26px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .skydeal-hero-header {
+    padding: 9px 0 !important;
+  }
+
+  .skydeal-brand-lockup {
+    gap: 4px !important;
+  }
+
+  .skydeal-hero-header .brand-name {
+    font-size: 24px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .skydeal-logo-mark {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .skydeal-hero-line {
+    font-size: 16px !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+    margin-top: 3px !important;
+    max-width: 100% !important;
+  }
+
+  .skydeal-hero-subline {
+    font-size: 12.5px !important;
+    margin-top: 2px !important;
+  }
+
+  /* Matches the smaller mobile icon (20px + the brand row's 8px gap)
+     instead of the desktop-size formula above, which would otherwise
+     over-indent the tagline past where the now-smaller wordmark sits. */
+  .skydeal-tagline-stack {
+    margin-left: 28px !important;
+  }
+}
+
 /* ---- Footer: brought to the same dark family as the header. Its own
    documented intent ("dark bookend matching the header palette", see
    PROJECT_STATE.md 2026-07-15) already called for this - the live CSS
