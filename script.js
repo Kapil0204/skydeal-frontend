@@ -567,11 +567,13 @@ const pmSearchInput = document.getElementById("pmSearch");
 const pmSearchClearBtn = document.getElementById("pmSearchClear");
 // Payment details editor
 let editingPaymentIndex = null;
-// Filters the bank/card list within the active category tab - reset on
-// every modal open and every category switch (see openPaymentModal() and
-// renderPaymentTabs()) so a stale filter never silently hides everything
-// on the next tab/open (2026-08-16, founder catch: "too much scrolling
-// and finding to locate your payment option").
+// Filters the bank/card list across ALL categories at once, not just the
+// active tab (2026-08-17 - typing "hdfc" should surface it under Credit
+// Card, Debit Card and Net Banking together, see renderPaymentList()).
+// Reset on every modal open and every category switch (see
+// openPaymentModal() and renderPaymentTabs()) so a stale filter never
+// silently hides everything on the next tab/open (2026-08-16, founder
+// catch: "too much scrolling and finding to locate your payment option").
 let pmSearchQuery = "";
 
 // ---------- State ----------
@@ -2962,8 +2964,87 @@ function toggleSelected(type, name, checked) {
   updatePaymentButtonLabel();
 }
 
+function offerCountFor(type, name) {
+  const key = String(name).toLowerCase();
+  const baseCount = paymentOfferCounts?.[type]?.[key] || 0;
+  // On Credit Card, selecting a card with the EMI toggle on also tries
+  // that same card's EMI offers during search (see buildSearchPaymentMethods),
+  // so the badge should reflect that combined total once the toggle is on.
+  const emiCount = (type === "Credit Card" && includeEmiOffers)
+    ? (paymentOfferCounts?.EMI?.[key] || 0)
+    : 0;
+  return baseCount + emiCount;
+}
+
 function renderPaymentList() {
   if (!pmList) return;
+  const query = pmSearchQuery.trim().toLowerCase();
+
+  // Searching looks across every category at once (not just the active
+  // tab) - founder feedback 2026-08-17: typing a bank should surface it
+  // under Credit Card/Debit Card/Net Banking together rather than making
+  // you re-search per tab. Since the same name can be a different
+  // selectable payment method per category, each result is tagged with
+  // its category so isSelected()/toggleSelected() still key off the
+  // right {type, name} pair.
+  if (query) {
+    const allTypes = ["Credit Card", "Debit Card", "Net Banking", "UPI", "Wallet"];
+    const matches = [];
+    allTypes.forEach((t) => {
+      const raw = Array.isArray(paymentOptions?.[t]) ? paymentOptions[t] : [];
+      const names = [...new Set(raw.map((x) => String(x || "").trim()).filter(Boolean))];
+      names.forEach((name) => {
+        if (name.toLowerCase().includes(query)) matches.push({ type: t, name });
+      });
+    });
+
+    if (matches.length === 0) {
+      pmList.innerHTML = `
+        <div class="empty pm-search-empty">
+          No matches for "${safeText(pmSearchQuery.trim())}" across any payment type.
+          <button type="button" id="pmSearchEmptyClear" class="pm-search-empty-clear">Clear search</button>
+        </div>
+      `;
+      document.getElementById("pmSearchEmptyClear")?.addEventListener("click", () => {
+        pmSearchQuery = "";
+        if (pmSearchInput) { pmSearchInput.value = ""; pmSearchInput.focus(); }
+        if (pmSearchClearBtn) pmSearchClearBtn.hidden = true;
+        renderPaymentList();
+      });
+      return;
+    }
+
+    pmList.innerHTML = matches
+      .map(({ type: t, name }, idx) => {
+        const id = `pm_search_${idx}`.replace(/\s+/g, "_");
+        const checked = isSelected(t, name) ? "checked" : "";
+        const offerCount = offerCountFor(t, name);
+        const badge = offerCount > 0
+          ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
+          : "";
+        return `
+          <label class="pm-item pm-item-tagged" for="${id}">
+            <input id="${id}" type="checkbox" ${checked} />
+            <span class="pm-item-main">
+              <span class="pm-item-name">${safeText(name)}</span>
+              <span class="pm-item-category">${safeText(t)}</span>
+            </span>
+            ${badge}
+          </label>
+        `;
+      })
+      .join("");
+
+    pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
+      cb.addEventListener("change", (e) => {
+        const { type: t, name } = matches[idx];
+        toggleSelected(t, name, e.target.checked);
+      });
+    });
+    return;
+  }
+
+  // No active search - normal single-category browsing, unchanged.
   const type = activePaymentType;
   const raw = Array.isArray(paymentOptions?.[type]) ? paymentOptions[type] : [];
   const allForType = [...new Set(raw.map((x) => String(x || "").trim()).filter(Boolean))];
@@ -2973,42 +3054,11 @@ function renderPaymentList() {
     return;
   }
 
-  // Search filters within the active category only - see pmSearchQuery's
-  // own comment for why it resets on tab switch/modal open rather than
-  // persisting globally.
-  const query = pmSearchQuery.trim().toLowerCase();
-  const list = query
-    ? allForType.filter((name) => name.toLowerCase().includes(query))
-    : allForType;
-
-  if (list.length === 0) {
-    pmList.innerHTML = `
-      <div class="empty pm-search-empty">
-        No matches for "${safeText(pmSearchQuery.trim())}" in ${safeText(type)}.
-        <button type="button" id="pmSearchEmptyClear" class="pm-search-empty-clear">Clear search</button>
-      </div>
-    `;
-    document.getElementById("pmSearchEmptyClear")?.addEventListener("click", () => {
-      pmSearchQuery = "";
-      if (pmSearchInput) { pmSearchInput.value = ""; pmSearchInput.focus(); }
-      if (pmSearchClearBtn) pmSearchClearBtn.hidden = true;
-      renderPaymentList();
-    });
-    return;
-  }
- pmList.innerHTML = list
+  pmList.innerHTML = allForType
     .map((name, idx) => {
       const id = `pm_${type}_${idx}`.replace(/\s+/g, "_");
       const checked = isSelected(type, name) ? "checked" : "";
-      const key = String(name).toLowerCase();
-      const baseCount = paymentOfferCounts?.[type]?.[key] || 0;
-      // On Credit Card, selecting a card with the EMI toggle on also tries
-      // that same card's EMI offers during search (see buildSearchPaymentMethods),
-      // so the badge should reflect that combined total once the toggle is on.
-      const emiCount = (type === "Credit Card" && includeEmiOffers)
-        ? (paymentOfferCounts?.EMI?.[key] || 0)
-        : 0;
-      const offerCount = baseCount + emiCount;
+      const offerCount = offerCountFor(type, name);
       const badge = offerCount > 0
         ? `<span class="pm-offer-badge">${offerCount} offer${offerCount === 1 ? "" : "s"}</span>`
         : "";
@@ -3024,7 +3074,7 @@ function renderPaymentList() {
 
   pmList.querySelectorAll("input[type=checkbox]").forEach((cb, idx) => {
     cb.addEventListener("change", (e) => {
-      const name = list[idx];
+      const name = allForType[idx];
       toggleSelected(type, name, e.target.checked);
     });
   });

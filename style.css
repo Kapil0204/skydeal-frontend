@@ -3143,7 +3143,16 @@ body.search-in-flight .flights-workspace{
 }
 
 .pm-body{
-  padding:14px 20px;
+  /* top padding intentionally 0 - see .pm-search-wrap's own padding-top
+     (2026-08-17 founder catch: bank rows were sliding up through a gap
+     above the sticky search bar. Root cause: the sticky bar sits flush
+     with the scrollport's true top edge, but that top edge was 14px
+     *below* this container's own edge because the padding lived here -
+     scrolled content slides through that padding band on its way past,
+     same as any other scrolled content would. Moving the padding onto
+     the sticky element itself means its own opaque background now covers
+     that band instead of leaving it open). */
+  padding:0 20px 14px;
   max-height:56vh;
   overflow:auto;
   background:
@@ -3163,6 +3172,7 @@ body.search-in-flight .flights-workspace{
   display:flex;
   align-items:center;
   background:var(--panel);
+  padding-top:14px;
   padding-bottom:10px;
   margin-bottom:2px;
 }
@@ -3238,6 +3248,41 @@ body.search-in-flight .flights-workspace{
   padding:8px 16px;
   border-radius:var(--radius-pill);
   cursor:pointer;
+}
+
+/* Cross-category search results (renderPaymentList()) - each row also
+   shows which category it belongs to, since the same bank/card name is a
+   different selectable payment method per category. Stacked under the
+   name rather than crammed onto one line so it never fights the fixed-
+   height single-line .pm-item for space. */
+.pm-item.pm-item-tagged{
+  height:auto;
+  min-height:52px;
+}
+
+.pm-item-main{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+
+.pm-item-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* !important: this file has several older, higher-specificity/later
+   ".pm-item span" rules (dark-theme refresh, size/weight overrides) that
+   would otherwise force this back to the name's own size/color - see the
+   file's own established pattern of stacking !important for exactly this
+   reason rather than chasing every prior declaration. */
+.pm-item .pm-item-category{
+  font-size:var(--fs-2xs) !important;
+  font-weight:700 !important;
+  letter-spacing:0.02em;
+  color:var(--muted) !important;
 }
 
 .pm-list{
@@ -6776,6 +6821,14 @@ body {
     top: 0 !important;
     z-index: 5 !important;
     background: inherit !important;
+  }
+
+  /* "Add your payment options" was wrapping to 2 lines at the base 26px
+     (--fs-2xl) size, which also pushed the tabs/list down and looked
+     misaligned with the rest of the mobile page (founder catch,
+     2026-08-17). Sized to fit one line at 375px with the icon + padding. */
+  #paymentModal #pmTitle {
+    font-size: 19px !important;
   }
 
   #paymentModal .tabs,
