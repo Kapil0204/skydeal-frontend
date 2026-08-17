@@ -106,12 +106,42 @@ body{
   padding:0 16px 40px;
 }
 
+/* Consolidated 2026-08-17 - .search-card's box styling (background,
+   border, radius, shadow, padding, margin, and its mobile width/margin/
+   overflow) used to be spread across 11 separate declarations at 9
+   different points in this file (a snapshot of every redesign pass that
+   ever touched it, none removing the last). Verified via real
+   getComputedStyle() at both breakpoints before touching anything, so
+   these are the actual values already winning today, not new ones -
+   this is a no-visual-change consolidation, not a redesign. The other
+   10 former declarations are removed; body.mobile-results-mode/
+   body.desktop-results-mode's own "display:none" rules (a different,
+   non-conflicting property) are untouched and still apply on top of
+   this. The mobile block below deliberately keeps the
+   ".search-card.mobile-compact-search-card" compound selector (matching
+   its original specificity) rather than simplifying to plain
+   ".search-card" - a first attempt at that simplification was caught
+   live: it drops specificity below "body .search-card, body .pro-results,
+   ..." (a separate, unrelated-looking rule elsewhere in this file) and
+   silently loses the cascade to it, changing the real layout. */
 .search-card{
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow: var(--shadow);
-  padding:16px;
+  background: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+  padding: 20px;
+  margin: 0 0 20px;
+}
+
+@media (max-width: 760px) {
+  .search-card.mobile-compact-search-card{
+    width: calc(100% - 20px) !important;
+    max-width: 100% !important;
+    margin: 12px auto 14px !important;
+    padding: 14px !important;
+    border-radius: var(--radius-xl) !important;
+    overflow: visible !important;
+  }
 }
 
 .grid{
@@ -1159,14 +1189,6 @@ body{
 .wrap{
   max-width:1280px;
   margin:24px auto;
-}
-
-.search-card{
-  background:linear-gradient(135deg, var(--white) 0%, var(--info-light) 100%);
-  border:1px solid rgba(37,99,235,0.12);
-  border-radius:var(--radius-xl);
-  box-shadow:var(--shadow);
-  padding:20px;
 }
 
 label{
@@ -2665,7 +2687,6 @@ body.search-in-flight .flights-workspace{
     margin:14px auto;
   }
 
-  .search-card,
   .col,
   .filter-card,
   .smart-guide-card{
@@ -2685,10 +2706,6 @@ body.search-in-flight .flights-workspace{
    SkyDeal polish pass v2
    Cleaner cards, compact radios, readable modal/payment UI
    ========================= */
-
-.search-card{
-  margin-bottom:20px;
-}
 
 .trip-toggle{
   gap:10px;
@@ -3504,7 +3521,6 @@ body{
   color:var(--muted);
 }
 
-.search-card,
 .filter-card,
 .smart-guide-card,
 .col,
@@ -3710,9 +3726,9 @@ body{
     var(--gray-50);
 }
 
-/* Keep top/search area premium dark */
-.nav,
-.search-card{
+/* Keep top nav area premium dark (search-card's own background/border are
+   consolidated in its own rule near the top of this file, 2026-08-17) */
+.nav{
   background:linear-gradient(135deg, rgba(17,17,31,0.98), rgba(24,24,42,0.98));
   border-color:rgba(168,85,247,0.34);
 }
@@ -5202,13 +5218,6 @@ body {
     max-width: 100%;
   }
 
-  /* Reduce top search banner height */
-  .search-card {
-    margin: 12px 10px 14px !important;
-    padding: 16px !important;
-    border-radius: var(--radius-xl) !important;
-  }
-
   .search-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -5520,11 +5529,6 @@ body {
 ===================================================== */
 
 @media (max-width: 760px) {
-  /* Make search card less tall while keeping it usable */
-  .search-card {
-    padding: 14px !important;
-  }
-
   .search-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 9px !important;
@@ -5778,15 +5782,9 @@ body {
 ===================================================== */
 
 @media (max-width: 760px) {
-  /* Force the actual search fields into a 2-column compact app layout */
-  .search-card.mobile-compact-search-card {
-    width: calc(100% - 20px) !important;
-    max-width: 100% !important;
-    margin: 12px auto 14px !important;
-    padding: 14px !important;
-    border-radius: var(--radius-xl) !important;
-  }
-
+  /* Force the actual search fields into a 2-column compact app layout
+     (.search-card's own width/margin/padding/border-radius are
+     consolidated into its own rule near the top of this file, 2026-08-17) */
   .search-card.mobile-compact-search-card form,
   .search-card.mobile-compact-search-card .search-grid,
   .search-card.mobile-compact-search-card .form-grid,
@@ -6753,11 +6751,8 @@ body {
     font-size: var(--fs-lg) !important;
   }
 
-  /* Keep the compact search grid, but make fields behave properly */
-  .search-card.mobile-compact-search-card {
-    overflow: visible !important;
-  }
-
+  /* Keep the compact search grid, but make fields behave properly
+     (.search-card's own overflow is in its consolidated rule now) */
   .search-card.mobile-compact-search-card .mobile-search-field {
     min-width: 0 !important;
     overflow: visible !important;
@@ -10724,12 +10719,6 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 .skydeal-hero-header .sub {
   color: var(--gray-500) !important;
-}
-
-.search-card {
-  background: var(--white) !important;
-  border: 1px solid var(--gray-200) !important;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
 }
 
 .search-card label,
