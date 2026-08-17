@@ -6342,6 +6342,15 @@ function removeStandaloneSearchError() {
 // is untouched and keeps today's behavior. See DECISIONS.md.
 var decodeWaitTimerId = null;
 var decodeWaitCurrentPhase = 0;
+var decodeWaitCountdownTimerId = null;
+// Real waits here range roughly 6-20s+ (see comment above) with no fixed
+// schedule - this is a target for the countdown/plane to aim at, not a
+// guarantee. Picked from the founder's own stated typical experience
+// (2026-08-17: "right now we're taking fifteen to twenty seconds"), not
+// the worst case, since a countdown tuned to the worst case would read
+// as too slow on every normal search. Runs past this are expected and
+// handled explicitly (decodeWaitTick() below), not an error state.
+var DECODE_WAIT_ESTIMATE_SECONDS = 18;
 
 function decodeWaitPhaseForProgress(pct) {
   if (pct < 20) return 1;
@@ -6371,15 +6380,69 @@ function decodeWaitApplyProgress(pct) {
   if (phase !== decodeWaitCurrentPhase) {
     if (decodeWaitCurrentPhase) decodeWaitSetStep(decodeWaitCurrentPhase, "done");
     decodeWaitSetStep(phase, "active");
-    var subtext = document.getElementById("dwsSubtext");
-    if (subtext) subtext.textContent = DECODE_WAIT_SUBTEXTS[phase];
+    // Once overrun, decodeWaitTick() owns the subtext (reassurance
+    // message) - this phase-based text would otherwise stomp it back on
+    // the next progress tick, which fire independently of each other.
+    if (!decodeWaitIsOverrun) {
+      var subtext = document.getElementById("dwsSubtext");
+      if (subtext) subtext.textContent = DECODE_WAIT_SUBTEXTS[phase];
+    }
     decodeWaitCurrentPhase = phase;
+  }
+}
+
+var decodeWaitIsOverrun = false;
+var decodeWaitStartMs = 0;
+var DECODE_WAIT_OVERRUN_SUBTEXT = "A couple of portals are taking a little longer than usual";
+
+// Countdown + plane (2026-08-17): "sairro decode" in the eyebrow read as
+// a stray label with nothing to anchor it to (founder catch) - replaced
+// with a live "Xs left" ticking down against DECODE_WAIT_ESTIMATE_SECONDS,
+// and the plane (previously a decorative fixed-loop animation, see
+// dwsFly's removal in style.css) now actually glides from BOM to DEL in
+// sync with it. Since real waits commonly run past the estimate (see
+// DECODE_WAIT_ESTIMATE_SECONDS' own comment), this explicitly does NOT
+// let the countdown hit a bare "0s" or the plane land mid-request -
+// past the estimate both switch to an "almost there" holding state that
+// keeps reading as "still working," not "broken" or "done."
+function decodeWaitTick() {
+  var elapsedMs = performance.now() - decodeWaitStartMs;
+  var estimateMs = DECODE_WAIT_ESTIMATE_SECONDS * 1000;
+  var eyebrowText = document.getElementById("dwsEyebrowText");
+  var eyebrow = document.getElementById("dwsEyebrow");
+  var plane = document.getElementById("dwsFlyingPlane");
+  var subtext = document.getElementById("dwsSubtext");
+
+  if (elapsedMs < estimateMs) {
+    var remain = Math.max(0, Math.ceil((estimateMs - elapsedMs) / 1000));
+    if (eyebrowText) eyebrowText.textContent = remain + "s left";
+    if (eyebrow) eyebrow.classList.remove("overrun");
+    if (subtext) subtext.classList.remove("overrun");
+    if (plane) {
+      var planePct = 2 + (elapsedMs / estimateMs) * 96;
+      plane.style.left = planePct + "%";
+      plane.classList.remove("holding");
+    }
+  } else {
+    if (!decodeWaitIsOverrun) {
+      decodeWaitIsOverrun = true;
+      if (subtext) subtext.textContent = DECODE_WAIT_OVERRUN_SUBTEXT;
+    }
+    if (eyebrowText) eyebrowText.textContent = "almost there";
+    if (eyebrow) eyebrow.classList.add("overrun");
+    if (subtext) subtext.classList.add("overrun");
+    if (plane) {
+      plane.style.left = "98%";
+      plane.classList.add("holding");
+    }
   }
 }
 
 function stopDecodeWaitTimers() {
   if (decodeWaitTimerId) clearTimeout(decodeWaitTimerId);
   decodeWaitTimerId = null;
+  if (decodeWaitCountdownTimerId) clearInterval(decodeWaitCountdownTimerId);
+  decodeWaitCountdownTimerId = null;
 }
 
 // Reverts .how-it-works-presearch back to its normal static explainer -
@@ -6401,6 +6464,7 @@ function resetDecodeWaitVisualToStatic() {
 function startDecodeWaitStage(fromCode, toCode) {
   stopDecodeWaitTimers();
   decodeWaitCurrentPhase = 0;
+  decodeWaitIsOverrun = false;
 
   var hiwPresearch = document.getElementById("hiwPresearch");
   var waitStage = document.getElementById("decodeWaitStage");
@@ -6415,6 +6479,19 @@ function startDecodeWaitStage(fromCode, toCode) {
   var toEl = document.getElementById("dwsTo");
   if (fromEl) fromEl.textContent = safeText(String(fromCode || "").toUpperCase() || "—");
   if (toEl) toEl.textContent = safeText(String(toCode || "").toUpperCase() || "—");
+
+  var eyebrow = document.getElementById("dwsEyebrow");
+  var eyebrowText = document.getElementById("dwsEyebrowText");
+  var plane = document.getElementById("dwsFlyingPlane");
+  if (eyebrow) eyebrow.classList.remove("overrun");
+  if (eyebrowText) eyebrowText.textContent = DECODE_WAIT_ESTIMATE_SECONDS + "s left";
+  if (plane) {
+    plane.classList.remove("holding");
+    plane.style.left = "2%";
+  }
+  decodeWaitStartMs = performance.now();
+  decodeWaitTick();
+  decodeWaitCountdownTimerId = setInterval(decodeWaitTick, 250);
 
   [1, 2, 3, 4].forEach(function (n) { decodeWaitSetStep(n, null); });
   var fill = document.getElementById("dwsFill");

@@ -214,11 +214,11 @@
              ("Sairro decode wait stage"). -->
         <div id="decodeWaitStage" class="decode-wait-stage" style="display:none;">
           <div class="dws-glow" aria-hidden="true"></div>
-          <div class="dws-eyebrow"><span class="dws-dot" aria-hidden="true"></span>sairro decode</div>
+          <div class="dws-eyebrow" id="dwsEyebrow"><span class="dws-dot" aria-hidden="true"></span><span id="dwsEyebrowText"></span></div>
 
           <div class="dws-route">
             <span class="dws-airport" id="dwsFrom">&mdash;</span>
-            <span class="dws-track"><svg class="dws-plane" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12l19-9-7 9 7 9z"/></svg></span>
+            <span class="dws-track"><svg class="dws-plane" id="dwsFlyingPlane" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12l19-9-7 9 7 9z"/></svg></span>
             <span class="dws-airport" id="dwsTo">&mdash;</span>
           </div>
 

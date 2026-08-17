@@ -12408,12 +12408,21 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--fs-sm);
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--brand-300);
   margin-bottom: 22px;
+  transition: color 0.3s ease;
+}
+
+/* Past the estimate but still loading (decodeWaitTick(), script.js) -
+   amber instead of alarming red/error color, since this is still a
+   normal, expected outcome for slower routes/portals, not a failure. */
+.dws-eyebrow.overrun {
+  color: var(--warning);
 }
 
 .dws-dot {
@@ -12421,6 +12430,18 @@ body {
   height: 6px;
   border-radius: 50%;
   background: var(--brand-400);
+  flex: 0 0 auto;
+  animation: dwsDotPulse 1.4s ease-in-out infinite;
+  transition: background 0.3s ease;
+}
+
+.dws-eyebrow.overrun .dws-dot {
+  background: var(--warning);
+}
+
+@keyframes dwsDotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 .dws-route {
@@ -12452,21 +12473,32 @@ body {
   background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 6px, transparent 6px 12px);
 }
 
+/* Was a decorative 2.6s infinite loop (dwsFly, unrelated to real
+   progress). Now driven by decodeWaitTick() (script.js) via inline
+   `left`, moving from BOM to DEL over the ~18s estimate - the CSS
+   transition below smooths the per-tick position updates into one
+   continuous glide instead of visible jumps. */
 .dws-plane {
   position: absolute;
   top: 50%;
-  left: 0;
+  left: 2%;
   width: 16px;
   height: 16px;
   color: #ffd77a;
-  transform: translate(-50%, -50%);
-  animation: dwsFly 2.6s ease-in-out infinite;
+  transform: translate(-50%, -65%);
+  transition: left 0.4s linear;
 }
 
-@keyframes dwsFly {
-  0% { left: 2%; transform: translate(-50%, -65%); }
-  50% { left: 50%; transform: translate(-50%, -135%); }
-  100% { left: 98%; transform: translate(-50%, -65%); }
+/* Past the estimate: holds just short of the destination in a small
+   loop instead of sitting frozen (which would read as stuck/broken) or
+   completing a journey that hasn't actually finished. */
+.dws-plane.holding {
+  animation: dwsHold 1.8s ease-in-out infinite;
+}
+
+@keyframes dwsHold {
+  0%, 100% { transform: translate(-50%, -65%) rotate(0deg); }
+  50% { transform: translate(-50%, -95%) rotate(-6deg); }
 }
 
 .dws-ticket {
@@ -12627,6 +12659,11 @@ body {
   font-weight: 700;
   margin-top: 18px;
   min-height: 16px;
+  transition: color 0.3s ease;
+}
+
+.dws-subtext.overrun {
+  color: var(--warning);
 }
 
 @media (max-width: 760px) {
