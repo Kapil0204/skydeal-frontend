@@ -3162,7 +3162,7 @@ body.search-in-flight .flights-workspace{
   z-index:2;
   display:flex;
   align-items:center;
-  background:var(--white);
+  background:var(--panel);
   padding-bottom:10px;
   margin-bottom:2px;
 }
@@ -3172,7 +3172,7 @@ body.search-in-flight .flights-workspace{
   left:14px;
   width:16px;
   height:16px;
-  color:var(--gray-500);
+  color:var(--muted);
   pointer-events:none;
 }
 
@@ -3182,23 +3182,23 @@ body.search-in-flight .flights-workspace{
   min-height:44px;
   padding:10px 36px 10px 38px;
   border-radius:var(--radius-pill);
-  border:1px solid var(--gray-200);
-  background:var(--gray-50);
-  color:var(--gray-900);
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.045);
+  color:var(--gray-50);
   font-size:var(--fs-md);
   font-weight:750;
 }
 
 .pm-search::placeholder{
-  color:var(--gray-500);
+  color:var(--muted);
   font-weight:650;
 }
 
 .pm-search:focus{
   outline:none;
-  border-color:var(--info);
-  background:var(--white);
-  box-shadow:0 0 0 3px rgba(37,99,235,0.10);
+  border-color:var(--primary2);
+  background:rgba(255,255,255,0.07);
+  box-shadow:0 0 0 3px rgba(168,85,247,0.25);
 }
 
 .pm-search-clear{
@@ -3208,15 +3208,15 @@ body.search-in-flight .flights-workspace{
   height:24px;
   border:none;
   border-radius:50%;
-  background:var(--gray-200);
-  color:var(--gray-700);
+  background:rgba(255,255,255,0.10);
+  color:var(--gray-50);
   font-size:15px;
   line-height:1;
   cursor:pointer;
 }
 
 .pm-search-clear:hover{
-  background:var(--gray-300, var(--gray-200));
+  background:rgba(255,255,255,0.16);
 }
 
 .pm-search-empty{
@@ -3225,14 +3225,14 @@ body.search-in-flight .flights-workspace{
   align-items:center;
   gap:10px;
   text-align:center;
-  color:var(--gray-500);
+  color:var(--muted);
   padding:28px 12px;
 }
 
 .pm-search-empty-clear{
-  border:1px solid var(--info-light);
-  background:var(--info-light);
-  color:var(--info);
+  border:1px solid rgba(236,72,153,0.38);
+  background:rgba(139,92,246,0.16);
+  color:var(--brand-200);
   font-weight:800;
   font-size:var(--fs-sm);
   padding:8px 16px;
@@ -7319,10 +7319,14 @@ body.search-error-mode .results-top-filter-row {
    child, with the EMI toggle as a separate full-width row below it - so
    real horizontal scroll works cleanly this time. ===================================================== */
 
-@media (min-width: 761px) {
-  .pm-tabs-hint {
-    display: none !important;
-  }
+/* "Swipe for more" hint retired 2026-08-17: the category labels now
+   shrink+shorten on mobile (see renderPaymentTabs() in script.js) so all
+   five fit on one line on real devices (measured: 327px of content in a
+   335px row at 375px viewport) - horizontal scroll is kept as a fallback
+   for narrower phones (~360px and below) but no longer needs a hint since
+   it's not the expected path anymore. */
+.pm-tabs-hint {
+  display: none !important;
 }
 
 @media (max-width: 760px) {
@@ -7334,7 +7338,7 @@ body.search-error-mode .results-top-filter-row {
   #paymentModal .pm-tabs-scroll {
     display: flex;
     flex-wrap: nowrap;
-    gap: 10px;
+    gap: 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
@@ -7345,6 +7349,8 @@ body.search-error-mode .results-top-filter-row {
     flex: 0 0 auto;
     scroll-snap-align: start;
     white-space: nowrap;
+    font-size: 11px;
+    padding: 5px 8px;
   }
 
   #paymentModal .emiToggleWrap {
@@ -7352,17 +7358,6 @@ body.search-error-mode .results-top-filter-row {
     margin-top: 10px;
     width: 100%;
     justify-content: space-between;
-  }
-
-  .pm-tabs-hint {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 6px !important;
-    margin: 4px 20px 0 !important;
-    color: var(--gray-500) !important;
-    font-size: var(--fs-2xs) !important;
-    font-weight: 700 !important;
   }
 
   /* Once both are selected, show both normally with selected-trip bar handling summary */

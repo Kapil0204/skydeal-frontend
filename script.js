@@ -2839,7 +2839,11 @@ function cleanupPaymentTabsDom() {
   const seen = new Set();
 
   pmTabsContainer.querySelectorAll(".tab").forEach((btn) => {
-    const normalized = normalizePaymentTabLabel(btn.textContent || btn.getAttribute("data-tab"));
+    // data-tab is always the canonical full label (renderPaymentTabs() sets
+    // it regardless of what's displayed), so normalize from that - not from
+    // textContent, which may legitimately be a shortened mobile label like
+    // "Credit" and would otherwise fail the `allowed` check and get removed.
+    const normalized = normalizePaymentTabLabel(btn.getAttribute("data-tab") || btn.textContent);
 
     if (!allowed.includes(normalized) || seen.has(normalized)) {
       btn.remove();
@@ -2847,7 +2851,6 @@ function cleanupPaymentTabsDom() {
     }
 
     seen.add(normalized);
-    btn.textContent = normalized;
     btn.setAttribute("data-tab", normalized);
     btn.classList.toggle("active", normalized === normalizePaymentTabLabel(activePaymentType));
   });
@@ -2863,8 +2866,19 @@ function renderPaymentTabs() {
     ...types.filter((t) => !ordered.includes(t) && t !== "EMI")
   ];
 
+  // On narrow screens "Credit Card"/"Debit Card" become "Credit"/"Debit" so
+  // all five category tabs fit on one line instead of scrolling (measured
+  // against the real component, 2026-08-17: full labels need 523px in a
+  // 335px row - even shrinking the font to 9px still doesn't close that
+  // gap, only shortening the two long labels does). data-tab keeps the
+  // canonical full name regardless, since that's what drives filtering.
+  const isNarrowViewport = typeof window !== "undefined" && window.innerWidth <= 760;
+  const mobileShortLabels = { "Credit Card": "Credit", "Debit Card": "Debit" };
   const tabsHtml = finalTypes
-    .map((t) => `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${t}</button>`)
+    .map((t) => {
+      const label = isNarrowViewport && mobileShortLabels[t] ? mobileShortLabels[t] : t;
+      return `<button data-tab="${t}" class="tab ${t === activePaymentType ? "active" : ""}">${label}</button>`;
+    })
     .join("");
 
   const unlockCount = computeEmiUnlockCount();
@@ -6802,9 +6816,9 @@ function syncReturnDateAutoRoundTrip() {
 // .pm-tabs' text content to guess which row was the category-tab row and
 // tag it/its EMI child with classes for CSS to key off. Now unnecessary:
 // renderPaymentTabs() itself always wraps the category buttons in a
-// stable ".pm-tabs-scroll" child, and the "swipe" hint is a static
-// sibling in index.html (#pmTabsHint) shown/hidden by a plain min-width
-// media query - both directly selectable, no text-sniffing needed.
+// stable ".pm-tabs-scroll" child, directly selectable, no text-sniffing
+// needed. The "swipe for more" hint was retired 2026-08-17 once shorter
+// mobile labels made scrolling the exception rather than the norm.
 
 function updateSelectedTripMobileClasses() {
   const hasOut = typeof selectedOutboundFlight !== "undefined" && !!selectedOutboundFlight;
