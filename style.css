@@ -5810,7 +5810,8 @@ body {
   }
 
   .search-card.mobile-compact-search-card label,
-  .search-card.mobile-compact-search-card .mobile-search-field label {
+  .search-card.mobile-compact-search-card .mobile-search-field label,
+  .search-card.mobile-compact-search-card .pax-field {
     font-size: var(--fs-2xs) !important;
     line-height: 1.1 !important;
     margin-bottom: 5px !important;
@@ -6936,7 +6937,8 @@ body {
 
   /* Slightly tighten field labels so dates have breathing room */
   .search-card.mobile-compact-search-card .mobile-search-field label,
-  .search-card.mobile-compact-search-card label {
+  .search-card.mobile-compact-search-card label,
+  .search-card.mobile-compact-search-card .pax-field {
     margin-bottom: 6px !important;
   }
 
