@@ -57,6 +57,24 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
   }
 }
 
+// A bank/app only ever appears here if it's currently selectable - this
+// list is merged with whatever the backend's live-offer-based catalog
+// returns (mergeMasterCatalogWithBackend()), so a bank with genuinely
+// ZERO current offers (any bank's offers can lapse for a day or more,
+// e.g. a booking-day-restricted coupon, or one that expired and hasn't
+// been replaced yet) simply disappears from the picker entirely - a
+// cardholder whose bank happens to be between offers sees no sign we
+// support them at all, not "no live offer today." Founder, 2026-08-17:
+// "if their credit cards are not listed at all, they'll not come back to
+// the app again... we have to show all the major credit cards." First
+// hit exactly this way 2026-08-04 (PNB/Standard Chartered/Canara/DBS
+// added then) and again 2026-08-17 when RBL Bank's one live Ixigo offer
+// (IXRBL) expired mid-session and RBL vanished from the list entirely.
+// This list should stay aligned with the full bank set this app already
+// recognizes elsewhere (normalizePmNameForUI below, and the backend's
+// own normalizeBankName/normalizeBankDisplayName) - if the system
+// already treats a bank as real enough to normalize its display name,
+// it should be selectable here regardless of today's live-offer count.
 const MASTER_PAYMENT_CATALOG = {
   "Credit Card": [
     "HDFC Bank",
@@ -82,6 +100,20 @@ const MASTER_PAYMENT_CATALOG = {
     "Standard Chartered Bank",
     "Canara Bank",
     "DBS Bank",
+    // Added 2026-08-17 (see comment above the catalog): RBL Bank is the
+    // bank that surfaced this whole gap - a real, major private-sector
+    // card issuer, just between live offers when it disappeared. IDBI
+    // Bank and J&K Bank confirmed via a live diff against the backend's
+    // catalog (both had a currently-live offer that also wasn't
+    // selectable here). Central Bank of India and Bank of India added
+    // for consistency with the system's own recognized bank set
+    // (normalizePmNameForUI below) even without a currently-live offer
+    // to prove it, per the founder's "show all the major banks" direction.
+    "RBL Bank",
+    "IDBI Bank",
+    "J&K Bank",
+    "Central Bank of India",
+    "Bank of India",
     "Other"
   ],
   "Debit Card": [
@@ -97,6 +129,11 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
+    // Added 2026-08-17: RBL Bank (major issuer) and J&K Bank (confirmed
+    // via live diff - had a currently-live debit-card offer that wasn't
+    // selectable here) - see comment above the catalog.
+    "RBL Bank",
+    "J&K Bank",
     "Other"
   ],
   "Net Banking": [
@@ -112,6 +149,9 @@ const MASTER_PAYMENT_CATALOG = {
     "Yes Bank",
     "Federal Bank",
     "Bank of Baroda",
+    // Added 2026-08-17: RBL Bank, for consistency with Credit/Debit Card
+    // above - see comment above the catalog.
+    "RBL Bank",
     "Other"
   ],
   "UPI": [
@@ -120,6 +160,10 @@ const MASTER_PAYMENT_CATALOG = {
     "Paytm UPI",
     "CRED",
     "BHIM",
+    // Added 2026-08-17: confirmed via live diff - MobiKwik has a
+    // currently-live UPI-type offer (separate from its existing Wallet
+    // entry below) that wasn't selectable here.
+    "MobiKwik",
     "Other"
   ],
   "Wallet": [
@@ -145,6 +189,12 @@ const MASTER_PAYMENT_CATALOG = {
     "Punjab National Bank",
     "Canara Bank",
     "DBS Bank",
+    // Added 2026-08-17: American Express and OneCard confirmed via live
+    // diff (both had a currently-live EMI offer that wasn't selectable
+    // here); RBL Bank for consistency with Credit Card above.
+    "American Express",
+    "OneCard",
+    "RBL Bank",
     "Other"
   ]
 };
