@@ -134,6 +134,19 @@ const MASTER_PAYMENT_CATALOG = {
     // selectable here) - see comment above the catalog.
     "RBL Bank",
     "J&K Bank",
+    // Added 2026-08-17, later: brought this category to full parity with
+    // Credit Card's bank set (founder: "did we fix this just for RBL or
+    // in general for all?" - answer was "partial," so closing the rest
+    // properly rather than leaving it live-diff-dependent again).
+    // American Express/OneCard deliberately excluded - neither is a
+    // deposit-taking bank, so a debit card from either isn't a real
+    // product to offer as an option.
+    "Punjab National Bank",
+    "Standard Chartered Bank",
+    "Canara Bank",
+    "DBS Bank",
+    "Central Bank of India",
+    "Bank of India",
     "Other"
   ],
   "Net Banking": [
@@ -152,6 +165,16 @@ const MASTER_PAYMENT_CATALOG = {
     // Added 2026-08-17: RBL Bank, for consistency with Credit/Debit Card
     // above - see comment above the catalog.
     "RBL Bank",
+    // Added 2026-08-17, later: full parity pass (see Debit Card comment
+    // above) - same reasoning, American Express/OneCard excluded (not
+    // deposit-taking banks, no net banking product to offer).
+    "Punjab National Bank",
+    "Standard Chartered Bank",
+    "Canara Bank",
+    "DBS Bank",
+    "J&K Bank",
+    "Central Bank of India",
+    "Bank of India",
     "Other"
   ],
   "UPI": [
@@ -195,6 +218,14 @@ const MASTER_PAYMENT_CATALOG = {
     "American Express",
     "OneCard",
     "RBL Bank",
+    // Added 2026-08-17, later: full parity pass (see Debit Card comment
+    // above) - EMI is credit-card-linked, so this mirrors Credit Card's
+    // now-complete bank set exactly, unlike Debit/Net Banking where
+    // Amex/OneCard were deliberately excluded.
+    "Standard Chartered Bank",
+    "J&K Bank",
+    "Central Bank of India",
+    "Bank of India",
     "Other"
   ]
 };
