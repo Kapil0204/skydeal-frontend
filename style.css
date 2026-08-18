@@ -223,7 +223,6 @@ input, select, .pax-trigger{
 .pax-trigger{
   text-align:left;
   cursor:pointer;
-  font-size:var(--fs-md);
 }
 
 .pax-panel{
@@ -1197,7 +1196,8 @@ label{
 }
 
 input,
-select{
+select,
+.pax-trigger{
   background:var(--white);
   color:var(--gray-900);
   border:1px solid var(--gray-200);
@@ -5817,7 +5817,8 @@ body {
   }
 
   .search-card.mobile-compact-search-card input,
-  .search-card.mobile-compact-search-card select {
+  .search-card.mobile-compact-search-card select,
+  .search-card.mobile-compact-search-card .pax-trigger {
     width: 100% !important;
     min-width: 0 !important;
     height: 40px !important;
@@ -6746,8 +6747,10 @@ body {
 
   .search-card.mobile-compact-search-card input,
   .search-card.mobile-compact-search-card select,
+  .search-card.mobile-compact-search-card .pax-trigger,
   .search-card input,
-  .search-card select {
+  .search-card select,
+  .search-card .pax-trigger {
     font-size: var(--fs-lg) !important;
   }
 
