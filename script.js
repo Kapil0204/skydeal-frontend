@@ -383,6 +383,36 @@ const CARD_TYPE_OPTIONS_BY_BANK = {
   "DBS Bank": [
     "Other DBS Card"
   ],
+  // Added 2026-08-17, alongside the bank-picker completion pass above -
+  // same gap, same root cause: a bank missing here silently offered only
+  // "Other" with no way to name the actual card. RBL Bank is a major
+  // issuer with several well-known named products, listed the same way
+  // as other major banks above. IDBI Bank/J&K Bank/Central Bank of
+  // India/Bank of India deliberately get "Other X Card" only, matching
+  // the existing Canara Bank/DBS Bank precedent just above - low
+  // confidence in specific current product names for these smaller/
+  // regional issuers, and a wrong guessed name is worse than an honest
+  // "Other."
+  "RBL Bank": [
+    "RBL World Safari",
+    "RBL Icon",
+    "RBL Insignia",
+    "RBL Play",
+    "RBL ShopRite",
+    "Other RBL Card"
+  ],
+  "IDBI Bank": [
+    "Other IDBI Bank Card"
+  ],
+  "J&K Bank": [
+    "Other J&K Bank Card"
+  ],
+  "Central Bank of India": [
+    "Other Central Bank of India Card"
+  ],
+  "Bank of India": [
+    "Other Bank of India Card"
+  ],
   "Other": [
     "Other"
   ]
@@ -401,6 +431,20 @@ const DEBIT_CARD_TYPE_OPTIONS_BY_BANK = {
   "Yes Bank": ["Classic", "Platinum", "Other Yes Bank Debit Card"],
   "Federal Bank": ["Classic", "Visa Platinum", "Other Federal Debit Card"],
   "Bank of Baroda": ["Classic", "Platinum", "Other Bank of Baroda Debit Card"],
+  // Added 2026-08-17, same gap/reasoning as CARD_TYPE_OPTIONS_BY_BANK
+  // above - debit card tiers are far more standardized across Indian
+  // banks than credit cards, so the same generic Classic/Platinum
+  // pattern already used for AU Bank/Yes Bank/Federal Bank above is a
+  // safe, realistic default for these too, not a guess specific to each.
+  "RBL Bank": ["Classic", "Platinum", "Other RBL Debit Card"],
+  "IDBI Bank": ["Classic", "Platinum", "Other IDBI Bank Debit Card"],
+  "J&K Bank": ["Classic", "Platinum", "Other J&K Bank Debit Card"],
+  "Central Bank of India": ["Classic", "Platinum", "Other Central Bank of India Debit Card"],
+  "Bank of India": ["Classic", "Platinum", "Other Bank of India Debit Card"],
+  "Punjab National Bank": ["Classic", "Platinum", "Other PNB Debit Card"],
+  "Standard Chartered Bank": ["Classic", "Platinum", "Other Standard Chartered Debit Card"],
+  "Canara Bank": ["Classic", "Platinum", "Other Canara Bank Debit Card"],
+  "DBS Bank": ["Classic", "Platinum", "Other DBS Debit Card"],
   "Other": ["Other"]
 };
 
