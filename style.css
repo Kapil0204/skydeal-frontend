@@ -1190,17 +1190,35 @@ body{
   margin:24px auto;
 }
 
+/* color:var(--gray-500) removed here (2026-08-19 CSS consolidation) - a
+   later global `label` rule (search "input, select {" consolidation note
+   below) always overrode it to var(--muted) anyway, so it never actually
+   applied to anything; font-weight:700 is the only property that ever
+   won from this rule. */
 label{
-  color:var(--gray-500);
   font-weight:700;
 }
 
+/* Consolidated (2026-08-19): this used to be two separate global blocks
+   fighting each other by cascade order - an earlier light-theme pass
+   (background/color/border: white/gray-900/gray-200) and a later
+   dark-theme-for-modals pass (background/color/border: --bg/--text/
+   purple-tinted, which always won for those 3 properties since it came
+   later at equal specificity) - with border-radius/min-height/font-weight
+   only ever set by the earlier block, so those "leaked through" as the
+   real default regardless. Merged into one rule using the actual winning
+   value for every property (verified via a live bare-element computed-
+   style capture before touching this, not manual cascade reasoning), so
+   this now says what elements actually look like instead of two rules
+   whose outcome you'd have to trace to know. Zero visual change - every
+   `.search-card input` / `.pm-item input` / etc. scoped override further
+   down the file still wins exactly as before. */
 input,
 select,
 .pax-trigger{
-  background:var(--white);
-  color:var(--gray-900);
-  border:1px solid var(--gray-200);
+  background:var(--bg);
+  color:var(--text);
+  border:1px solid rgba(139,92,246,0.24);
   border-radius:var(--radius-md);
   min-height:44px;
   font-weight:650;
@@ -1208,8 +1226,8 @@ select,
 
 input:focus,
 select:focus{
-  border-color:rgba(37,99,235,0.65);
-  box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+  border-color:var(--primary2);
+  box-shadow:0 0 0 3px rgba(168,85,247,0.25);
 }
 
 .location-suggestions{
@@ -3556,18 +3574,11 @@ h3,
   color:var(--text);
 }
 
-input,
-select{
-  background:var(--bg);
-  color:var(--text);
-  border:1px solid rgba(139,92,246,0.24);
-}
-
-input:focus,
-select:focus{
-  border-color:var(--primary2);
-  box-shadow:0 0 0 3px rgba(168,85,247,0.25);
-}
+/* Consolidated 2026-08-19 into the single global input/select/.pax-trigger
+   rule near the top of this file (search "Consolidated (2026-08-19)") -
+   this block's two properties (background/color/border, plus the :focus
+   variant) were fully absorbed there, since they always won over the
+   earlier light-theme block anyway. */
 
 .btn-primary{
   background:var(--primary2);
