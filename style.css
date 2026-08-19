@@ -392,12 +392,9 @@ input, select, .pax-trigger{
   gap:14px;
 }
 
-.col{
-  background: rgba(255,255,255,0.04);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:14px;
-}
+/* .col consolidated 2026-08-19 into the single rules near "Results area
+   becomes clean and trustworthy" further down this file (same fighting-
+   by-cascade-order pattern as .card/.filter-card, fixed the same way). */
 
 .col-head{
   display:flex;
@@ -1635,13 +1632,9 @@ select:focus{
   display:none;
 }
 
-.col{
-  background:var(--white);
-  border:1px solid var(--line);
-  border-radius:var(--radius-xl);
-  box-shadow:var(--shadow);
-  padding:16px;
-}
+/* .col consolidated 2026-08-19 - see the pointer comment near the top of
+   this file and the final merged rules near "Results area becomes clean
+   and trustworthy" further down. */
 
 .col-head{
   padding-bottom:12px;
@@ -3742,6 +3735,12 @@ body{
   display:flex;
   flex-direction:column;
   box-sizing:border-box;
+}
+
+/* .col-only properties, same story as .filter-card above. */
+.col{
+  border-radius:var(--radius-xl);
+  padding:16px;
 }
 
 /* Same treatment, but keeps its own purple accent border (see the base
