@@ -4453,181 +4453,32 @@ body {
 }
 
 /* Best full-trip offer inside selected round-trip bar */
-.sky-trip-best-card {
-  margin-top: 10px;
-  border: 1px solid rgba(216, 180, 254, 0.18);
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 
-.sky-trip-best-card.is-ready {
-  border-color: rgba(16, 185, 129, 0.34);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(168, 85, 247, 0.12));
-}
 
-.sky-trip-best-card.is-loading {
-  border-color: rgba(168, 85, 247, 0.26);
-}
 
-.sky-trip-best-card.is-warning {
-  border-color: rgba(245, 158, 11, 0.32);
-  background: rgba(245, 158, 11, 0.10);
-}
 
-.sky-trip-best-left {
-  min-width: 0;
-}
 
-.sky-trip-best-label {
-  color: var(--gray-200);
-  font-size: var(--fs-2xs);
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
 
-.sky-trip-best-main {
-  margin-top: 3px;
-  color: var(--white);
-  font-size: var(--fs-md);
-  font-weight: 950;
-  line-height: 1.2;
-}
 
-.sky-trip-best-sub {
-  margin-top: 3px;
-  color: var(--brand-200);
-  font-size: var(--fs-sm);
-  font-weight: 750;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.sky-trip-best-save {
-  color: var(--success);
-  font-size: var(--fs-base);
-  font-weight: 950;
-  white-space: nowrap;
-}
 
 @media (max-width: 980px) {
-  .sky-trip-best-card {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }
 
 /* ===== Improved selected round-trip best offer card + CTAs ===== */
 
-.sky-trip-best-card {
-  margin-top: 12px;
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(196, 181, 253, 0.22);
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.94), rgba(49, 46, 129, 0.92));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
 
-.sky-trip-best-card.is-ready {
-  border-color: rgba(52, 211, 153, 0.34);
-  background:
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 35%),
-    linear-gradient(135deg, rgba(30, 41, 59, 0.96), rgba(49, 46, 129, 0.92));
-}
 
-.sky-trip-best-card.is-loading {
-  border-color: rgba(168, 85, 247, 0.28);
-}
 
-.sky-trip-best-card.is-warning {
-  border-color: rgba(251, 191, 36, 0.35);
-  background: linear-gradient(135deg, rgba(69, 39, 0, 0.9), rgba(55, 48, 163, 0.85));
-}
 
-.sky-trip-best-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
 
-.sky-trip-best-kicker {
-  font-size: var(--fs-2xs);
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--brand-200);
-}
 
-.sky-trip-best-context,
-.sky-trip-best-status {
-  margin-top: 3px;
-  font-size: var(--fs-sm);
-  font-weight: 750;
-  color: var(--gray-200);
-}
 
-.sky-trip-best-portal-chip {
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(168, 85, 247, 0.18);
-  border: 1px solid rgba(196, 181, 253, 0.24);
-  color: var(--brand-100);
-  font-size: var(--fs-sm);
-  font-weight: 900;
-  white-space: nowrap;
-}
 
-.sky-trip-best-price-row {
-  margin-top: 10px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-}
 
-.sky-trip-best-final {
-  font-size: var(--fs-3xl);
-  font-weight: 950;
-  line-height: 1;
-  color: var(--white);
-}
 
-.sky-trip-best-save {
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(16, 185, 129, 0.16);
-  border: 1px solid rgba(52, 211, 153, 0.3);
-  color: var(--success);
-  font-size: var(--fs-md);
-  font-weight: 950;
-  white-space: nowrap;
-}
 
-.sky-trip-best-meta {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  align-items: center;
-  color: var(--gray-200);
-  font-size: var(--fs-sm);
-  font-weight: 750;
-}
 
-.sky-trip-best-footnote,
-.sky-trip-best-loading {
-  margin-top: 8px;
-  font-size: var(--fs-sm);
-  line-height: 1.45;
-  color: var(--info-light);
-}
 
 .sky-trip-bar-actions {
   display: flex;
@@ -4666,10 +4517,6 @@ body {
 }
 
 @media (max-width: 1180px) {
-  .sky-trip-best-price-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 
   .sky-trip-bar-actions,
   .sky-trip-book-btn,
@@ -4680,137 +4527,21 @@ body {
 
 /* ===== SkyDeal best full-trip bar: exact portal, offer, coupon formatting ===== */
 
-.sky-trip-best-card {
-  margin-top: 12px;
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(52, 211, 153, 0.32);
-  background:
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.16), transparent 32%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(49, 46, 129, 0.94));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-}
 
-.sky-trip-best-card.is-loading {
-  border-color: rgba(168, 85, 247, 0.28);
-}
 
-.sky-trip-best-card.is-warning {
-  border-color: rgba(251, 191, 36, 0.38);
-}
 
-.sky-trip-best-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
-}
 
-.sky-trip-best-kicker {
-  font-size: var(--fs-2xs);
-  font-weight: 950;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--brand-200);
-}
 
-.sky-trip-best-context {
-  margin-top: 3px;
-  color: var(--gray-200);
-  font-size: var(--fs-sm);
-  font-weight: 750;
-}
 
-.sky-trip-best-portal-chip {
-  flex-shrink: 0;
-  border-radius: var(--radius-pill);
-  padding: 7px 11px;
-  background: rgba(168, 85, 247, 0.20);
-  border: 1px solid rgba(216, 180, 254, 0.28);
-  color: var(--white);
-  font-size: var(--fs-sm);
-  font-weight: 950;
-}
 
-.sky-trip-best-price-row {
-  margin-top: 12px;
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-end;
-}
 
-.sky-trip-best-final {
-  color: var(--white);
-  font-size: var(--fs-3xl);
-  font-weight: 950;
-  line-height: 1;
-}
 
-.sky-trip-best-base {
-  margin-top: 5px;
-  color: var(--gray-200);
-  font-size: var(--fs-sm);
-  font-weight: 750;
-}
 
-.sky-trip-best-save {
-  border-radius: var(--radius-pill);
-  padding: 7px 11px;
-  background: rgba(16, 185, 129, 0.17);
-  border: 1px solid rgba(52, 211, 153, 0.32);
-  color: var(--success);
-  font-size: var(--fs-md);
-  font-weight: 950;
-  white-space: nowrap;
-}
 
-.sky-trip-offer-box {
-  margin-top: 12px;
-  padding: 11px 12px;
-  border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.10);
-}
 
-.sky-trip-offer-title {
-  color: var(--white);
-  font-size: var(--fs-base);
-  font-weight: 950;
-}
 
-.sky-trip-offer-meta {
-  margin-top: 5px;
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  color: var(--gray-200);
-  font-size: var(--fs-sm);
-  font-weight: 750;
-}
 
-.sky-trip-coupon-row {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: var(--gray-200);
-  font-size: var(--fs-sm);
-  font-weight: 800;
-}
 
-.sky-trip-code-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: var(--radius-pill);
-  padding: 5px 9px;
-  background: rgba(168, 85, 247, 0.22);
-  border: 1px solid rgba(216, 180, 254, 0.30);
-  color: var(--white);
-  font-weight: 950;
-  letter-spacing: 0.02em;
-}
 
 .copyTripCouponBtn {
   border: 1px solid rgba(216, 180, 254, 0.25);
@@ -4827,12 +4558,6 @@ body {
   background: rgba(168, 85, 247, 0.22);
 }
 
-.sky-trip-best-footnote {
-  margin-top: 9px;
-  color: var(--info-light);
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-}
 
 .sky-trip-bar-actions {
   display: flex;
@@ -4866,10 +4591,6 @@ body {
 }
 
 @media (max-width: 1180px) {
-  .sky-trip-best-price-row {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 
   .sky-trip-bar-actions,
   .sky-trip-book-btn,
@@ -4880,18 +4601,6 @@ body {
 
 /* ===== Professional recommended booking card overrides ===== */
 
-.sky-trip-best-card.sky-trip-best-pro {
-  margin-top: 12px !important;
-  padding: 16px !important;
-  border-radius: var(--radius-lg) !important;
-  border: 1px solid rgba(52, 211, 153, 0.28) !important;
-  background:
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 34%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(40, 37, 99, 0.96)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 16px 36px rgba(0, 0, 0, 0.22);
-}
 
 .trip-rec-head {
   display: flex;
@@ -5114,9 +4823,6 @@ body {
   white-space: nowrap !important;
 }
 
-.sky-trip-best-card.sky-trip-best-pro {
-  padding: 16px !important;
-}
 
 .trip-rec-title {
   font-size: var(--fs-lg) !important;
@@ -5886,9 +5592,11 @@ body {
     width: 100% !important;
   }
 
-  .sky-trip-bar-left,
-  .sky-trip-best-card,
-  .sky-trip-best-card.sky-trip-best-pro {
+  /* .sky-trip-best-card / .sky-trip-best-card.sky-trip-best-pro removed
+     from this selector list (2026-08-19) - confirmed dead code, see the
+     big dead-code removal note near "Selected trip" summary section
+     below. */
+  .sky-trip-bar-left {
     min-width: 0 !important;
     width: 100% !important;
   }
@@ -5903,10 +5611,6 @@ body {
     gap: 8px !important;
   }
 
-  .sky-trip-leg-item {
-    min-width: 0 !important;
-    width: 100% !important;
-  }
 
   .sky-trip-leg-main {
     white-space: normal !important;
@@ -6053,11 +5757,6 @@ body {
     gap: 7px !important;
   }
 
-  body #selectedTripPanel .sky-trip-leg-item {
-    padding: 8px 10px !important;
-    border-radius: var(--radius-md) !important;
-    min-width: 0 !important;
-  }
 
   body #selectedTripPanel .sky-trip-leg-label {
     font-size: var(--fs-3xs) !important;
@@ -6072,12 +5771,6 @@ body {
     text-overflow: ellipsis !important;
   }
 
-  body #selectedTripPanel .sky-trip-best-card,
-  body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-    padding: 11px !important;
-    border-radius: var(--radius-lg) !important;
-    margin-top: 8px !important;
-  }
 
   body #selectedTripPanel .trip-rec-head {
     display: flex !important;
@@ -6185,11 +5878,6 @@ body {
     gap: 6px !important;
   }
 
-  body #selectedTripPanel .sky-trip-leg-item {
-    padding: 7px 9px !important;
-    border-radius: var(--radius-md) !important;
-    background: rgba(255, 255, 255, 0.07) !important;
-  }
 
   body #selectedTripPanel .sky-trip-leg-label {
     font-size: var(--fs-3xs) !important;
@@ -6202,12 +5890,6 @@ body {
     line-height: 1.2 !important;
   }
 
-  body #selectedTripPanel .sky-trip-best-card,
-  body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-    padding: 10px !important;
-    margin-top: 6px !important;
-    border-radius: var(--radius-md) !important;
-  }
 
   body #selectedTripPanel .trip-rec-head {
     margin-bottom: 6px !important;
@@ -7468,15 +7150,6 @@ body #selectedTripPanel .sky-trip-leg-grid {
   margin-bottom: 10px !important;
 }
 
-body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-  margin-top: 10px !important;
-  padding: 16px 18px !important;
-  border-radius: var(--radius-lg) !important;
-  background:
-    radial-gradient(circle at top left, rgba(168, 85, 247, 0.14), transparent 34%),
-    linear-gradient(135deg, rgba(12, 20, 48, 0.98), rgba(45, 38, 101, 0.95)) !important;
-  border: 1px solid rgba(52, 211, 153, 0.24) !important;
-}
 
 body #selectedTripPanel .trip-rec-head {
   margin-bottom: 10px !important;
@@ -7626,10 +7299,6 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 @media (max-width: 760px) {
-  body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-    padding: 11px !important;
-    border-radius: var(--radius-md) !important;
-  }
 
   body #selectedTripPanel .trip-rec-body {
     gap: 8px !important;
@@ -8025,7 +7694,8 @@ body #selectedTripPanel .sky-trip-bar-title-row > div:first-child {
   font-weight: 900 !important;
 }
 
-body #selectedTripPanel .sky-trip-bar-subtitle,
+/* .sky-trip-bar-subtitle removed from this selector list (2026-08-19) -
+   confirmed dead code (never referenced anywhere in script.js). */
 body #selectedTripPanel .sky-trip-bar-title-row > div:nth-child(2) {
   font-size: var(--fs-base) !important;
   color: rgba(255, 255, 255, 0.84) !important;
@@ -8065,14 +7735,6 @@ body #selectedTripPanel .sky-trip-leg-main {
   text-overflow: ellipsis !important;
 }
 
-body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-  margin-top: 0 !important;
-  padding: 13px 14px !important;
-  border-radius: var(--radius-lg) !important;
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(67, 56, 202, 0.30)) !important;
-  border: 1px solid rgba(52, 211, 153, 0.22) !important;
-}
 
 body #selectedTripPanel .trip-rec-head {
   display: none !important;
@@ -8301,12 +7963,6 @@ body #selectedTripPanel .sky-trip-leg-main {
   font-weight: 850 !important;
 }
 
-body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
 body #selectedTripPanel .trip-rec-body {
   grid-template-columns: 190px minmax(0, 1fr) !important;
@@ -8441,13 +8097,6 @@ body #selectedTripPanel .sky-trip-leg-main {
   line-height: 1.25 !important;
 }
 
-body #selectedTripPanel .sky-trip-best-card.sky-trip-best-pro {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
 body #selectedTripPanel .trip-rec-body {
   display: grid !important;
