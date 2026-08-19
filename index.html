@@ -6,6 +6,69 @@
   <title>sairro</title>
   <meta name="description" content="sairro — Flight prices, decoded. The true final price on every flight, based on how you pay." />
 
+  <!-- BETA GATE (2026-08-19) - TEMPORARY, remove this whole block (meta tag,
+       style block, and the body-open script/overlay below) after the initial
+       2-week private testing window. Client-side only, not real security -
+       just keeps casual visitors/bots/search crawlers out while gathering
+       feedback from a handful of testers. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    #betaGateOverlay { display: none; }
+    body.gate-locked #betaGateOverlay {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      background: #181228;
+    }
+    body.gate-locked > *:not(#betaGateOverlay) { display: none !important; }
+    #betaGateOverlay form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 280px;
+      text-align: center;
+    }
+    #betaGateOverlay .beta-gate-title {
+      font-family: "Cabinet Grotesk", sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    #betaGateOverlay .beta-gate-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+    }
+    #betaGateOverlay input {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      color: #ffffff;
+      font-size: 15px;
+      text-align: center;
+    }
+    #betaGateOverlay button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #7a06ef;
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #betaGateOverlay .beta-gate-error {
+      display: none;
+      color: #f87171;
+      font-size: 13px;
+    }
+  </style>
+  <!-- END BETA GATE head block -->
+
   <!-- Favicon/social-preview assets (2026-08-18) - built from the real
        #sairroMark geometry + brand.md's dark-surface palette (#181228 base,
        brand-600 #7a06ef for the flat favicon background). Closes the gap
@@ -48,6 +111,39 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<!-- BETA GATE (2026-08-19) - TEMPORARY, remove with the head block above
+     after the 2-week testing window. Runs synchronously as the very first
+     thing in <body> so the real page never flashes before the check runs. -->
+<script>
+  if (localStorage.getItem('sairro_beta_unlocked') !== 'true') {
+    document.body.classList.add('gate-locked');
+  }
+</script>
+<div id="betaGateOverlay">
+  <form id="betaGateForm">
+    <div class="beta-gate-title">sairro — private testing</div>
+    <div class="beta-gate-sub">Enter the access code you were given.</div>
+    <input type="password" id="betaGateInput" autocomplete="off" placeholder="Access code" />
+    <button type="submit">Enter</button>
+    <div class="beta-gate-error" id="betaGateError">That code isn't right — try again.</div>
+  </form>
+</div>
+<script>
+  document.getElementById('betaGateForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const input = document.getElementById('betaGateInput');
+    const error = document.getElementById('betaGateError');
+    if (input.value === '121212') {
+      localStorage.setItem('sairro_beta_unlocked', 'true');
+      document.body.classList.remove('gate-locked');
+    } else {
+      error.style.display = 'block';
+      input.value = '';
+      input.focus();
+    }
+  });
+</script>
+<!-- END BETA GATE body block -->
 <!-- sairro rebrand (2026-07-29, mark revised 2026-07-30): literal
      dart/cross plane silhouette (fuselage + swept main wings, banked
      28deg), gradient-shaded facets + a gold nose-spark. Reused via
