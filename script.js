@@ -9,6 +9,14 @@
 import { AIRPORTS } from "./airports.js";
 const BACKEND = "https://skydeal-backend.onrender.com";
 
+// GA4 custom events for the real product funnel (search -> payment method
+// added -> book click), not just pageviews - launch checklist item 2. Guarded
+// since gtag may not exist yet (script tag still loading, or blocked by an
+// ad-blocker) - a tracking miss should never be able to break the app.
+function trackEvent(name, params = {}) {
+  if (typeof gtag === "function") gtag("event", name, params);
+}
+
 // No explicit "country" field exists on AIRPORTS entries (see airports.js -
 // a worldwide dataset with no country property), so domestic-vs-
 // international is determined by an explicit IATA code list instead of
@@ -2812,6 +2820,8 @@ function closeTncModal() {
 function openBookingHandoffModal({ portal, url, code, legs }) {
   if (!url) return;
 
+  trackEvent("book_click", { portal: safeText(portal, "unknown") });
+
   const modal = document.getElementById("bookingHandoffModal");
   const body = document.getElementById("bookingHandoffBody");
   if (!modal || !body) {
@@ -3850,6 +3860,12 @@ async function applyPaymentSuggestion(suggestion) {
   const pm = suggestion?.paymentMethod;
   if (!pm) return;
 
+  trackEvent("decode_suggestion_accepted", {
+    payment_type: pm.type || "unknown",
+    payment_name: pm.name || "unknown",
+    additional_saving: suggestion.additionalSaving || 0,
+  });
+
   const already = selectedPaymentMethods.some(
     (existing) =>
       String(existing?.type || "").toLowerCase() === String(pm.type || "").toLowerCase() &&
@@ -3954,6 +3970,10 @@ async function applyPaymentSuggestion(suggestion) {
 }
 
 function dismissPaymentSuggestion(suggestion) {
+  trackEvent("decode_suggestion_dismissed", {
+    payment_type: suggestion?.paymentMethod?.type || "unknown",
+    payment_name: suggestion?.paymentMethod?.name || "unknown",
+  });
   dismissedSuggestionKeys.add(suggestionKey(suggestion));
   renderPaymentGuideCard();
 }
@@ -4679,6 +4699,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
 });
 
   console.log("[SkyDeal] portalPrices for clicked flight:", portalPrices);
+  trackEvent("compare_portals_click", { portal_count: portalPrices.length });
 
   if (portalPrices.length === 0) {
     body.innerHTML = `<div class="portalModalEmpty">No portal-wise price data available for this flight.</div>`;
@@ -8051,6 +8072,15 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     return;
   }
 
+  trackEvent("search_submitted", {
+    trip_type: payload.tripType,
+    from: payload.from,
+    to: payload.to,
+    cabin: payload.travelClass,
+    passengers: payload.passengers,
+    payment_methods_count: (payload.paymentMethods || []).length,
+  });
+
   const thisSearchGeneration = ++searchGeneration;
 
   const isReSearch = hasActiveSearchResults();
@@ -8380,6 +8410,10 @@ toggleReturn();
   });
 
   pmDone?.addEventListener("click", () => {
+    trackEvent("payment_method_added", {
+      payment_methods_count: selectedPaymentMethods.length,
+      payment_method_types: [...new Set(selectedPaymentMethods.map((pm) => pm.type))].join(","),
+    });
     updatePaymentButtonLabel();
     closePaymentModal();
     syncPaymentMethodsPostSearch();

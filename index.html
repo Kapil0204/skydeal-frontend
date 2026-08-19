@@ -33,6 +33,18 @@
   <meta name="twitter:description" content="The true final price on every flight, based on how you pay." />
   <meta name="twitter:image" content="https://skydeal-frontend.vercel.app/og-image.png" />
 
+  <!-- Google Analytics (GA4) - 2026-08-18, launch checklist item 2.
+       Custom events (search_submitted, payment_method_added, book_click)
+       are fired from script.js at the actual funnel touchpoints, not just
+       pageviews - see the trackEvent() helper near the top of that file. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-SBD63ZQPSQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-SBD63ZQPSQ');
+  </script>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
