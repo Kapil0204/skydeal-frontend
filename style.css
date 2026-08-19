@@ -13419,3 +13419,12 @@ body {
   font-weight: 600;
 }
 
+/* Homepage logo click-to-reload (2026-08-19) - display:contents so the
+   anchor introduces no box of its own, leaving .brand's existing flex
+   layout completely untouched. */
+.brand-link {
+  display: contents;
+  text-decoration: none;
+  cursor: pointer;
+}
+
