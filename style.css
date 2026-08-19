@@ -220,6 +220,19 @@ input, select, .pax-trigger{
   outline:none;
 }
 
+/* Safari draws its own chrome for <select> (distinct border/inset from a
+   custom-styled element) even when every box-model property computes
+   identically to a sibling like .pax-trigger - confirmed via Chrome/Safari
+   getComputedStyle() parity check (2026-08-19). #cabinSelect sits directly
+   next to the arrow-less .pax-trigger "Passengers" button, so suppressing
+   native appearance here matches that existing precedent exactly, rather
+   than adding a new arrow affordance the neighboring control doesn't have. */
+#cabinSelect{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+}
+
 .pax-trigger{
   text-align:left;
   cursor:pointer;
