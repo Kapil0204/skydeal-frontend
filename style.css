@@ -422,12 +422,10 @@ h3{ margin:0; font-size:var(--fs-lg); }
 .cards{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
 .empty{ color:var(--muted); padding:12px; }
 
-.card{
-  border:1px solid var(--line);
-  border-radius:var(--radius-md);
-  padding:12px;
-  background: rgba(0,0,0,0.18);
-}
+/* .card consolidated 2026-08-19 into the single rule near "Light result
+   flight cards" further down this file - this was the original
+   dark-theme version, fully overridden by later passes for every
+   property it set. */
 .row{
   display:grid;
   grid-template-columns: 1.3fr 1.05fr 0.75fr 0.7fr auto;
@@ -1336,16 +1334,8 @@ select:focus{
    still stretches the *panel* to match the flights column, but leaving
    .filter-card at natural height means the extra space just shows as page
    background beneath both cards, not as a tall card with a blank bottom. */
-.filter-card{
-  background:var(--white);
-  border:1px solid var(--line);
-  border-radius:var(--radius-xl);
-  padding:16px;
-  box-shadow:var(--shadow);
-  display:flex;
-  flex-direction:column;
-  box-sizing:border-box;
-}
+/* .filter-card consolidated 2026-08-19 into the single rule at "Results
+   area becomes clean and trustworthy" further down this file. */
 
 /* Price intelligence - the featured card: same base chrome as .filter-card
    plus a purple accent border so it reads as the headline surface, with
@@ -2414,19 +2404,8 @@ body.search-in-flight .flights-workspace{
   outline-offset:2px;
 }
 
-.card{
-  background:var(--white);
-  border:1px solid var(--gray-200);
-  border-radius:var(--radius-xl);
-  box-shadow:0 10px 24px rgba(15,23,42,0.05);
-  padding:14px;
-}
-
-.card:hover{
-  border-color:rgba(37,99,235,0.35);
-  box-shadow:0 16px 34px rgba(15,23,42,0.09);
-  transform:translateY(-1px);
-}
+/* .card / .card:hover consolidated 2026-08-19 into the single rules near
+   "Light result flight cards" further down this file. */
 
 .row{
   grid-template-columns:1.45fr 1fr 0.7fr 0.75fr auto;
@@ -2744,9 +2723,8 @@ body.search-in-flight .flights-workspace{
   min-height:14px;
 }
 
-.filter-card{
-  padding:16px;
-}
+/* Fully redundant with the base .filter-card rule above (2026-08-19) -
+   same padding:16px value, removed. */
 
 .filter-option{
   min-height:26px;
@@ -2772,9 +2750,8 @@ body.search-in-flight .flights-workspace{
   gap:2px;
 }
 
-.card{
-  padding:16px;
-}
+/* .card padding consolidated 2026-08-19 into the single rule near
+   "Light result flight cards" further down this file. */
 
 .card .row{
   display:grid;
@@ -3539,7 +3516,9 @@ body{
   color:var(--muted);
 }
 
-.filter-card,
+/* .filter-card removed from this list (2026-08-19) - a later, light-theme
+   rule further down this file always won for background/border/box-shadow,
+   so its membership here was dead. The other 4 selectors are untouched. */
 .smart-guide-card,
 .col,
 .modal-content,
@@ -3607,17 +3586,17 @@ h3,
   border:1px solid var(--gray-200);
 }
 
-.card,
+/* .card removed from this selector list (2026-08-19) - it's a later,
+   more-specific-in-source-order rule further down this file that always
+   won for background/border, so .card's membership here was dead/
+   misleading. The other three selectors are untouched and still get
+   these values. That .card:hover block below was fully dead for the
+   same reason (always overridden later) - removed. */
 .portalRow,
 .pm-item,
 .empty-state{
   background:rgba(255,255,255,0.045);
   border:1px solid rgba(255,255,255,0.10);
-}
-
-.card:hover{
-  border-color:rgba(236,72,153,0.44);
-  box-shadow:0 20px 42px rgba(236,72,153,0.10);
 }
 
 .bestDealBanner,
@@ -3753,6 +3732,18 @@ body{
   box-shadow:0 18px 44px rgba(15,23,42,0.08);
 }
 
+/* .filter-card-only properties, consolidated here 2026-08-19 (see the
+   two "consolidated" pointer comments earlier in this file) - these never
+   had a competing value from any later rule, so they're unchanged, just
+   no longer split across 3 separate rule locations to trace. */
+.filter-card{
+  border-radius:var(--radius-xl);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+}
+
 /* Same treatment, but keeps its own purple accent border (see the base
    .smart-guide-card rule) instead of the plain gray one above. */
 .smart-guide-card{
@@ -3797,16 +3788,30 @@ body{
   accent-color:var(--primary2);
 }
 
-/* Light result flight cards */
+/* Light result flight cards. Consolidated 2026-08-19 - this used to be 4
+   separate global .card rules (a dark-theme original plus 3 later
+   light-theme passes) fighting by cascade order, each only ever winning
+   for whichever properties the next pass didn't touch. Merged into one
+   rule using the actual current winning value for every property
+   (verified via a live bare-element getComputedStyle() capture before
+   editing), so it says what a card actually looks like instead of
+   requiring a 4-rule trace to know. Zero visual change - border-radius
+   (var(--radius-xl)) and padding (16px) both "leaked through" from
+   earlier passes since nothing later ever redeclared them; the
+   translateY(-1px) hover lift is the same story, from a hover block two
+   passes back. */
 .card{
   background:var(--white);
   border:1px solid var(--gray-200);
+  border-radius:var(--radius-xl);
   box-shadow:0 10px 24px rgba(15,23,42,0.05);
+  padding:16px;
 }
 
 .card:hover{
   border-color:rgba(168,85,247,0.38);
   box-shadow:0 18px 38px rgba(168,85,247,0.10);
+  transform:translateY(-1px);
 }
 
 /* Best deal / no offer block. Deliberately neutral, not brand-tinted -
