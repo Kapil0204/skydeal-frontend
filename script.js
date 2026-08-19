@@ -2220,6 +2220,26 @@ function buildPortalSearchUrl(portal, payload) {
   return buildSkyDealPortalRoundTripUrl(portal, payload || lastSearchPayload || {});
 }
 
+// Deep-link airport bug fix (2026-08-19, launch checklist item 8): on the 3
+// metro-group routes (Mumbai/Delhi-NCR/Goa), a flight's real departure/
+// arrival airport can differ from the searched from/to (e.g. searched
+// Mumbai->Delhi, real flight is Navi Mumbai->Hindon) - see the 2026-07-16
+// metro-merge feature. buildPortalSearchUrl() always used the SEARCH's
+// from/to, so "Book with X" sent users to the portal's results for the
+// wrong airport pair entirely, where this exact flight often doesn't even
+// appear. Falls back to the search's from/to whenever the flight doesn't
+// carry its own codes (ordinary non-substituted flights - the vast
+// majority), so this is a no-op everywhere except the 3 affected routes.
+function buildFlightPortalSearchUrl(portal, flight, payload) {
+  const basePayload = payload || lastSearchPayload || {};
+  const overridePayload = {
+    ...basePayload,
+    from: flight?.departureAirportCode || basePayload.from,
+    to: flight?.arrivalAirportCode || basePayload.to,
+  };
+  return buildPortalSearchUrl(portal, overridePayload);
+}
+
 function buildSelectedPaymentMethod(type, name) {
   const obj = {
     type,
@@ -4713,7 +4733,7 @@ const portalPrices = [...portalPricesRaw].sort((a, b) => {
       <div class="portalCompareList">
         ${portalPrices
           .map((p, idx) => {
-            const href = buildPortalSearchUrl(p.portal, lastSearchPayload);
+            const href = buildFlightPortalSearchUrl(p.portal, flight, lastSearchPayload);
             const isBest = idx === 0;
              const portalSavings = getSavingsAmount(p.basePrice, p.finalPrice);
 
@@ -7750,7 +7770,7 @@ function renderList(el, items, direction = "out") {
       const flight = all.find((x) => flightKey(x) === key);
       if (!flight || !portal) return;
 
-      const href = buildPortalSearchUrl(portal, lastSearchPayload);
+      const href = buildFlightPortalSearchUrl(portal, flight, lastSearchPayload);
       if (href) {
         openBookingHandoffModal({
           portal,
