@@ -1947,6 +1947,15 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
   const from = String(payload?.from || lastSearchPayload?.from || fromInput?.value || "").toUpperCase();
   const to = String(payload?.to || lastSearchPayload?.to || toInput?.value || "").toUpperCase();
 
+  // Return leg's own airports (2026-08-19, round-trip half of the metro-
+  // substitution deep-link fix - see buildFlightPortalSearchUrl below for
+  // the one-way half). Defaults to the plain mirror (to->from) that every
+  // caller relied on before this existed, so nothing changes unless a
+  // caller explicitly passes a different pair (i.e. the selected return
+  // flight actually departs/arrives a substituted metro airport).
+  const returnFrom = String(payload?.returnFrom || to).toUpperCase();
+  const returnTo = String(payload?.returnTo || from).toUpperCase();
+
   const depart =
     payload?.departureDate ||
     payload?.departDate ||
@@ -1987,7 +1996,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
 
   if (portal.includes("makemytrip")) {
     if (hasRoundTrip) {
-      url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${to}-${from}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+      url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${returnFrom}-${returnTo}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
     } else if (hasOneWay) {
       url = `https://www.makemytrip.com/flight/search?tripType=O&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
     } else {
@@ -2007,7 +2016,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     if (hasRoundTrip) {
       const params = new URLSearchParams({
         tripType: "R",
-        itinerary: `${from}-${to}-${departDmy}_${to}-${from}-${retDmy}`,
+        itinerary: `${from}-${to}-${departDmy}_${returnFrom}-${returnTo}-${retDmy}`,
         paxType: `A-${adults}_C-0_I-0`,
         cabinClass: "E",
         intl: "false",
@@ -2236,6 +2245,16 @@ function buildFlightPortalSearchUrl(portal, flight, payload) {
     ...basePayload,
     from: flight?.departureAirportCode || basePayload.from,
     to: flight?.arrivalAirportCode || basePayload.to,
+    // Optional return-leg override (2026-08-19) - only set on the synthetic
+    // "selected round trip" comparison flight built in
+    // compareSelectedRoundTrip(), never on a real single-flight object, so
+    // this stays a no-op for every ordinary one-way call site.
+    ...(flight?.returnDepartureAirportCode
+      ? { returnFrom: flight.returnDepartureAirportCode }
+      : {}),
+    ...(flight?.returnArrivalAirportCode
+      ? { returnTo: flight.returnArrivalAirportCode }
+      : {}),
   };
   return buildPortalSearchUrl(portal, overridePayload);
 }
@@ -5303,8 +5322,23 @@ function airportPlainCity(iata) {
 }
 
 
+// Round-trip half of the metro-substitution deep-link fix (2026-08-19,
+// see buildFlightPortalSearchUrl above for the one-way half). Overrides
+// both legs independently with the actual selected flights' real airport
+// codes when present - outbound from selectedOutboundFlight, return from
+// selectedReturnFlight - falling back to the searched route (mirrored,
+// exactly as before) whenever either flight isn't selected yet or doesn't
+// carry substituted codes, so this is a no-op for ordinary trips.
 function buildPortalBookingUrl(portalName) {
-  return buildSkyDealPortalRoundTripUrl(portalName, lastSearchPayload || {});
+  const basePayload = lastSearchPayload || {};
+  const overridePayload = {
+    ...basePayload,
+    from: selectedOutboundFlight?.departureAirportCode || basePayload.from,
+    to: selectedOutboundFlight?.arrivalAirportCode || basePayload.to,
+    returnFrom: selectedReturnFlight?.departureAirportCode || basePayload.to,
+    returnTo: selectedReturnFlight?.arrivalAirportCode || basePayload.from,
+  };
+  return buildSkyDealPortalRoundTripUrl(portalName, overridePayload);
 }
 
 function bookSelectedRoundTripBestPortal() {
@@ -5556,7 +5590,15 @@ async function refreshSelectedTripComparison() {
       price: comparison.baseTotal,
       bestDeal: comparison.bestDeal || null,
       portalPrices: comparison.portalPrices || [],
-      tripComparison: comparison
+      tripComparison: comparison,
+      // Metro-substitution deep-link fix (2026-08-19) - without these,
+      // buildFlightPortalSearchUrl() had nothing to read and silently fell
+      // back to the searched route for both legs, even when one or both
+      // selected flights actually depart/arrive a substituted airport.
+      departureAirportCode: selectedOutboundFlight.departureAirportCode,
+      arrivalAirportCode: selectedOutboundFlight.arrivalAirportCode,
+      returnDepartureAirportCode: selectedReturnFlight.departureAirportCode,
+      returnArrivalAirportCode: selectedReturnFlight.arrivalAirportCode
     };
 
     showPortalCompare(comparisonFlight);
@@ -7406,7 +7448,15 @@ async function compareSelectedRoundTrip() {
       price: comparison.baseTotal,
       bestDeal: comparison.bestDeal || null,
       portalPrices: comparison.portalPrices || [],
-      tripComparison: comparison
+      tripComparison: comparison,
+      // Metro-substitution deep-link fix (2026-08-19) - without these,
+      // buildFlightPortalSearchUrl() had nothing to read and silently fell
+      // back to the searched route for both legs, even when one or both
+      // selected flights actually depart/arrive a substituted airport.
+      departureAirportCode: selectedOutboundFlight.departureAirportCode,
+      arrivalAirportCode: selectedOutboundFlight.arrivalAirportCode,
+      returnDepartureAirportCode: selectedReturnFlight.departureAirportCode,
+      returnArrivalAirportCode: selectedReturnFlight.arrivalAirportCode
     };
 
     showPortalCompare(comparisonFlight);
