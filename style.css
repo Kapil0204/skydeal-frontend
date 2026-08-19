@@ -13361,3 +13361,61 @@ body {
   padding: 0;
 }
 
+/* =====================================================
+   Privacy Policy / Terms of Service pages (2026-08-19,
+   launch checklist item 7) - self-contained, new section
+   rather than scattered rules, on purpose.
+===================================================== */
+
+.skydeal-footer-legal p a {
+  color: #c9a8ff !important;
+  text-decoration: none;
+}
+
+.skydeal-footer-legal p a:hover {
+  text-decoration: underline;
+}
+
+.legal-page {
+  max-width: 760px;
+}
+
+.legal-card {
+  padding: 32px 36px 40px;
+}
+
+.legal-card h1 {
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: var(--fs-3xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--gray-900);
+  margin: 0 0 4px;
+}
+
+.legal-updated {
+  color: var(--gray-500);
+  font-size: var(--fs-sm);
+  margin: 0 0 24px;
+}
+
+.legal-card h2 {
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  color: var(--gray-900);
+  margin: 28px 0 8px;
+}
+
+.legal-card p {
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--gray-700);
+  margin: 0 0 12px;
+}
+
+.legal-card a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
