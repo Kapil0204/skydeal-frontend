@@ -1608,28 +1608,41 @@ select:focus{
   margin-bottom:12px;
 }
 
-/* Onward/Return Journey Airport groups only - side-by-side Departure/
-   Arrival columns (2026-08-20), matching MMT's layout. The sidebar is a
-   fixed ~220px regardless of viewport (confirmed live), too narrow for
-   two columns of full airport names, so these lists show IATA codes
-   only (.filter-option's title attribute carries the full name as a
-   native hover tooltip) rather than wrapping "Chhatrapati Shivaji
-   Maharaj International Airport" across 2 columns x 4-5 lines each. */
-.filter-journey-columns{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-
-.airline-filter-list-compact .filter-option{
+/* Onward/Return Journey Airports (2026-08-20, replacing an earlier
+   2-column-of-codes attempt that user-tested as hard to read - MMT's
+   actual pattern is a Departure/Arrival toggle showing ONE full-width
+   list at a time, not two side-by-side ones, which is what actually
+   gives full airport names room to read). */
+.filter-airport-toggle{
+  display:flex;
   gap:6px;
-  margin:6px 0;
+  margin-bottom:12px;
+  padding:3px;
+  background:var(--gray-50);
+  border-radius:var(--radius-pill);
 }
 
-.airline-filter-list-compact .filter-option span{
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+.filter-airport-tab{
+  flex:1;
+  border:0;
+  background:transparent;
+  border-radius:var(--radius-pill);
+  padding:6px 10px;
+  font-size:var(--fs-sm);
+  font-weight:800;
+  color:var(--gray-500);
+  cursor:pointer;
+}
+
+.filter-airport-tab.is-active{
+  background:var(--white);
+  color:var(--gray-900);
+  box-shadow:0 1px 4px rgba(15,23,42,0.14);
+}
+
+.filter-airport-count{
+  color:var(--gray-500);
+  font-weight:700;
 }
 
 .filter-option{
@@ -1642,6 +1655,14 @@ select:focus{
   font-size:var(--fs-sm);
   font-weight:600;
   margin:10px 0;
+}
+
+/* Airport list items only - the flight-count badge (see
+   renderAirportFilterGroup's showCount param) pushes to the far edge,
+   unlike every other .filter-option (Airlines, Popular filters, etc.)
+   which just has a checkbox + label with no third element. */
+.filter-option-airport{
+  justify-content:space-between;
 }
 
 .filter-option input{

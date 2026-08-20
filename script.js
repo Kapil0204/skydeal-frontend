@@ -1673,6 +1673,20 @@ function getAvailableAirportCodes(field, pool) {
     .sort((a, b) => airportNameForCode(a).localeCompare(airportNameForCode(b)));
 }
 
+// How many flights in the same pool match each airport code - shown as a
+// count badge next to the airport name (MMT-style), round-trip journey
+// groups only (see renderAirportFilterGroup's showCount param).
+function getAirportCodeCounts(field, pool) {
+  const all = Array.isArray(pool) ? pool : [...(outboundAll || []), ...(returnAll || [])];
+  const counts = {};
+  all.forEach((f) => {
+    const code = String(f?.[field] || "").trim();
+    if (!code) return;
+    counts[code] = (counts[code] || 0) + 1;
+  });
+  return counts;
+}
+
 function renderAirlineFilters() {
   const host = document.getElementById("airlineFilters");
   if (!host) return;
@@ -1721,13 +1735,14 @@ function renderAirlineFilters() {
 // visible, so a round-trip journey's outer wrapper can hide itself when
 // neither of its two sub-groups has anything to show.
 //
-// compact (2026-08-20) shows the bare IATA code instead of the full
-// airport name, with the full name as a native title-attribute tooltip -
-// used for the round-trip journey groups, which sit two-to-a-row in a
-// sidebar that's a fixed ~220px wide regardless of viewport (confirmed
-// live), nowhere near enough room for two columns of full names like
-// "Chhatrapati Shivaji Maharaj International Airport".
-function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterState, pool, compact }) {
+// showCount (2026-08-20) adds a flight-count badge next to each airport
+// name (MMT-style) - used for the round-trip journey groups, which each
+// sit behind a Departure/Arrival toggle (see renderAirportFilters() and
+// wireAirportToggles()) rather than showing both lists at once, so full
+// names have the sidebar's full ~220px width to themselves. An earlier
+// attempt showed both lists side by side with codes only - user-tested
+// as hard to read ("shortforms aren't working"), replaced same-day.
+function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterState, pool, showCount }) {
   const host = document.getElementById(hostId);
   const section = document.getElementById(sectionId);
   if (!host || !section) return false;
@@ -1742,18 +1757,20 @@ function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterS
     return false;
   }
 
+  const counts = showCount ? getAirportCodeCounts(field, pool) : null;
+
   section.style.display = "";
-  host.innerHTML = codes.map((code) => {
-    const fullName = airportNameForCode(code);
-    return `
-    <label class="filter-option" ${compact ? `title="${safeText(fullName)}"` : ""}>
-      <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
-        state[activeKey].includes(code) ? "checked" : ""
-      } />
-      <span>${compact ? safeText(code) : safeText(fullName)}</span>
+  host.innerHTML = codes.map((code) => `
+    <label class="filter-option${showCount ? " filter-option-airport" : ""}">
+      <span class="filter-option-label">
+        <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
+          state[activeKey].includes(code) ? "checked" : ""
+        } />
+        <span>${safeText(airportNameForCode(code))}</span>
+      </span>
+      ${counts ? `<span class="filter-airport-count">${counts[code] || 0}</span>` : ""}
     </label>
-  `;
-  }).join("");
+  `).join("");
 
   host.querySelectorAll(`.${hostId}-option`).forEach((cb) => {
     cb.addEventListener("change", () => {
@@ -1798,50 +1815,89 @@ function renderAirportFilters() {
   if (flatOut) flatOut.style.display = "none";
   if (flatRet) flatRet.style.display = "none";
 
-  const outVisible = [
-    renderAirportFilterGroup({
-      hostId: "outDepartureAirportFilters",
-      sectionId: "outDepartureAirportFilterGroup",
-      field: "departureAirportCode",
-      activeKey: "departureAirports",
-      filterState: activeFilters.out,
-      pool: outboundAll,
-      compact: true
-    }),
-    renderAirportFilterGroup({
-      hostId: "outArrivalAirportFilters",
-      sectionId: "outArrivalAirportFilterGroup",
-      field: "arrivalAirportCode",
-      activeKey: "arrivalAirports",
-      filterState: activeFilters.out,
-      pool: outboundAll,
-      compact: true
-    })
-  ].some(Boolean);
+  const outDepVisible = renderAirportFilterGroup({
+    hostId: "outDepartureAirportFilters",
+    sectionId: "outDepartureAirportFilterGroup",
+    field: "departureAirportCode",
+    activeKey: "departureAirports",
+    filterState: activeFilters.out,
+    pool: outboundAll,
+    showCount: true
+  });
+  const outArrVisible = renderAirportFilterGroup({
+    hostId: "outArrivalAirportFilters",
+    sectionId: "outArrivalAirportFilterGroup",
+    field: "arrivalAirportCode",
+    activeKey: "arrivalAirports",
+    filterState: activeFilters.out,
+    pool: outboundAll,
+    showCount: true
+  });
+  syncAirportToggle("out", outDepVisible, outArrVisible);
 
-  const retVisible = [
-    renderAirportFilterGroup({
-      hostId: "retDepartureAirportFilters",
-      sectionId: "retDepartureAirportFilterGroup",
-      field: "departureAirportCode",
-      activeKey: "departureAirports",
-      filterState: activeFilters.ret,
-      pool: returnAll,
-      compact: true
-    }),
-    renderAirportFilterGroup({
-      hostId: "retArrivalAirportFilters",
-      sectionId: "retArrivalAirportFilterGroup",
-      field: "arrivalAirportCode",
-      activeKey: "arrivalAirports",
-      filterState: activeFilters.ret,
-      pool: returnAll,
-      compact: true
-    })
-  ].some(Boolean);
+  const retDepVisible = renderAirportFilterGroup({
+    hostId: "retDepartureAirportFilters",
+    sectionId: "retDepartureAirportFilterGroup",
+    field: "departureAirportCode",
+    activeKey: "departureAirports",
+    filterState: activeFilters.ret,
+    pool: returnAll,
+    showCount: true
+  });
+  const retArrVisible = renderAirportFilterGroup({
+    hostId: "retArrivalAirportFilters",
+    sectionId: "retArrivalAirportFilterGroup",
+    field: "arrivalAirportCode",
+    activeKey: "arrivalAirports",
+    filterState: activeFilters.ret,
+    pool: returnAll,
+    showCount: true
+  });
+  syncAirportToggle("ret", retDepVisible, retArrVisible);
 
-  if (outGroup) outGroup.style.display = outVisible ? "" : "none";
-  if (retGroup) retGroup.style.display = retVisible ? "" : "none";
+  if (outGroup) outGroup.style.display = (outDepVisible || outArrVisible) ? "" : "none";
+  if (retGroup) retGroup.style.display = (retDepVisible || retArrVisible) ? "" : "none";
+}
+
+// Shows the Departure/Arrival toggle only when both sides actually have
+// something to filter - a lone visible side is shown directly with no
+// toggle, since switching to an empty tab would be pointless. When both
+// are visible, re-applies whichever tab is currently marked .is-active
+// (renderAirportFilterGroup's own display:"" for both would otherwise
+// show them stacked, undoing the toggle).
+function syncAirportToggle(journeyPrefix, depVisible, arrVisible) {
+  const toggle = document.getElementById(`${journeyPrefix}AirportToggle`);
+  const depGroup = document.getElementById(`${journeyPrefix}DepartureAirportFilterGroup`);
+  const arrGroup = document.getElementById(`${journeyPrefix}ArrivalAirportFilterGroup`);
+  if (!toggle || !depGroup || !arrGroup) return;
+
+  if (depVisible && arrVisible) {
+    toggle.style.display = "";
+    const activeTab = toggle.querySelector(".filter-airport-tab.is-active")?.dataset.airportTab || "departure";
+    depGroup.style.display = activeTab === "departure" ? "" : "none";
+    arrGroup.style.display = activeTab === "arrival" ? "" : "none";
+  } else {
+    toggle.style.display = "none";
+  }
+}
+
+function wireAirportToggles() {
+  document.querySelectorAll(".filter-airport-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", (event) => {
+      const btn = event.target.closest(".filter-airport-tab");
+      if (!btn || !toggle.contains(btn)) return;
+
+      toggle.querySelectorAll(".filter-airport-tab").forEach((tab) => {
+        tab.classList.toggle("is-active", tab === btn);
+      });
+
+      const journeyPrefix = toggle.dataset.journey;
+      const depGroup = document.getElementById(`${journeyPrefix}DepartureAirportFilterGroup`);
+      const arrGroup = document.getElementById(`${journeyPrefix}ArrivalAirportFilterGroup`);
+      if (depGroup) depGroup.style.display = btn.dataset.airportTab === "departure" ? "" : "none";
+      if (arrGroup) arrGroup.style.display = btn.dataset.airportTab === "arrival" ? "" : "none";
+    });
+  });
 }
 
 function wireFilters() {
@@ -8632,6 +8688,7 @@ retSortSelect?.addEventListener("change", () => {
   renderReturn();
 });
    wireFilters();
+  wireAirportToggles();
   renderAirlineFilters();
   renderAirportFilters();
 
