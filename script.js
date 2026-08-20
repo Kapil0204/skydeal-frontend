@@ -6039,6 +6039,27 @@ window.addEventListener("resize", scheduleDecodeFrozenBannerCheck, { passive: tr
 // to match .flights-workspace) still has room, then absolute at the
 // panel's own bottom edge once it runs out - so it settles above the
 // footer instead of overlapping it.
+//
+// roomLeft's height term is cached, not live-measured, whenever the card
+// isn't already pinned/bottomed (2026-08-20 fix, same idea as the
+// existing cardHeight cache below). .filter-panel and .flights-workspace
+// are sibling grid items under align-items:stretch, both stretched to
+// match whichever one's OWN natural content is tallest - which is
+// .filter-card's, since round-trip mode paginates each results column to
+// one card at a time (short) while the filter list (airlines, airports,
+// departure time, etc.) runs long. So .flights-workspace isn't a stable
+// substitute either: the instant .filter-card leaves flow (fixed or
+// absolute), the row's natural-content max drops, and BOTH siblings'
+// stretched height collapses together - confirmed live (.flights-
+// workspace's own rect shrank in lockstep with .filter-panel's). Feeding
+// that live height back into the very calculation that decides whether
+// to take the card out of flow is what caused the bug: roomLeft swings
+// deeply negative the instant the card leaves flow, flipping it straight
+// back to static, which re-inflates both siblings, flipping it right
+// back out - an infinite same-frame oscillation (window.scrollY got
+// stuck mid-page, .filter-card flickered between on-screen and 1600px
+// off-screen every animation frame). Caching the height only while
+// everything is still in its normal, uncollapsed state breaks the loop.
 const FILTER_CARD_TOP_OFFSET = 92;
 
 function updateStickyFilterCard() {
@@ -6054,16 +6075,37 @@ function updateStickyFilterCard() {
   }
 
   const panelRect = panel.getBoundingClientRect();
+  const cardIsOutOfFlow = card.classList.contains("is-pinned") || card.classList.contains("is-bottomed");
   // Same reasoning as updateDesktopStickyFilterPanel used to have: only
   // remeasure while not already fixed, since a fixed element's own rect
   // no longer reflects its natural content height once pinned.
-  if (!card.classList.contains("is-pinned")) {
+  if (!cardIsOutOfFlow) {
     updateStickyFilterCard._lastHeight = card.getBoundingClientRect().height;
+    updateStickyFilterCard._lastPanelHeight = panelRect.height;
   }
   const cardHeight = updateStickyFilterCard._lastHeight || card.getBoundingClientRect().height;
+  const panelHeight = updateStickyFilterCard._lastPanelHeight || panelRect.height;
 
   const pastTop = panelRect.top < FILTER_CARD_TOP_OFFSET;
-  const roomLeft = (panelRect.top + panelRect.height) - (FILTER_CARD_TOP_OFFSET + cardHeight);
+  const roomLeft = (panelRect.top + panelHeight) - (FILTER_CARD_TOP_OFFSET + cardHeight);
+
+  // Taking .filter-card out of flow (fixed or absolute) also has to hold
+  // .filter-panel's own height where it was - otherwise the parent
+  // collapses toward zero the instant its only in-flow child disappears,
+  // a multi-hundred-pixel same-frame layout shift right at the scroll
+  // position that triggered it. That's large enough to trip Chrome's
+  // scroll anchoring, which yanks window.scrollY to compensate, which
+  // fires another scroll event with a different panelRect.top, which can
+  // flip pastTop and undo the very change that caused the shift -
+  // confirmed live as a permanent scrollY-stuck flicker between pinned
+  // and static every animation frame. Pinning/bottoming and un-pinning
+  // must not change how much vertical space the layout thinks this
+  // column occupies.
+  if (pastTop) {
+    panel.style.minHeight = `${panelHeight}px`;
+  } else {
+    panel.style.minHeight = "";
+  }
 
   if (pastTop && roomLeft > 0) {
     card.classList.add("is-pinned");
