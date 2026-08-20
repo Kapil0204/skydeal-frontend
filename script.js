@@ -1581,6 +1581,11 @@ function getSortValue(selectEl) {
   ) return "price-asc";
 
   if (
+    raw === "arrival-asc" ||
+    raw.includes("arrival")
+  ) return "arrival-asc";
+
+  if (
     raw === "departure-asc" ||
     raw.includes("departure") ||
     raw.includes("early")
@@ -1982,6 +1987,10 @@ function sortFlightsForDisplay(items, sortValue) {
 
   if (sortValue === "departure-asc") {
     return arr.sort((a, b) => String(a?.departureTime || "").localeCompare(String(b?.departureTime || "")));
+  }
+
+  if (sortValue === "arrival-asc") {
+    return arr.sort((a, b) => String(a?.arrivalTime || "").localeCompare(String(b?.arrivalTime || "")));
   }
 
   if (sortValue === "savings-desc") {
@@ -5869,27 +5878,27 @@ function scrollToReturnFlightsOnMobile() {
   }, 250);
 }
 
-function findMobileFilterCheckboxByText(matchText) {
-  const wanted = String(matchText || "").toLowerCase();
-  const labels = Array.from(document.querySelectorAll(".filter-card label, .filter-panel label"));
-
-  for (const label of labels) {
-    const labelText = (label.textContent || "").toLowerCase();
-    if (!labelText.includes(wanted)) continue;
-
-    const input = label.querySelector("input[type='checkbox']");
-    if (input) return input;
-  }
-
-  return null;
+// The <select> backing whichever leg is currently active in the mobile
+// round-trip toggle - "out" whenever the toggle itself isn't showing
+// (one-way search, or round-trip results not both ready yet), same
+// fallback isRoundTripModeActive() ? "out" : undefined pattern already
+// used for the per-leg airport filters.
+function activeMobileSortSelect() {
+  const leg = isRoundTripModeActive() ? mobileRoundTripActiveLeg : "out";
+  return leg === "ret" ? retSortSelect : outSortSelect;
 }
 
-function toggleMobileQuickFilter(matchText) {
-  const input = findMobileFilterCheckboxByText(matchText);
-  if (!input) return;
+// Mirrors the active leg's <select> value onto the 3 sort chips'
+// .is-active state - called from updateMobileRoundTripTabs() so it stays
+// in sync both on tab switch and on every render.
+function syncMobileSortChips() {
+  const bar = document.getElementById("mobileQuickFilters");
+  if (!bar) return;
 
-  input.checked = !input.checked;
-  input.dispatchEvent(new Event("change", { bubbles: true }));
+  const value = activeMobileSortSelect()?.value || "price-asc";
+  bar.querySelectorAll("[data-mobile-sort]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.getAttribute("data-mobile-sort") === value);
+  });
 }
 
 function ensureMobileQuickFilters() {
@@ -5906,18 +5915,21 @@ function ensureMobileQuickFilters() {
   bar.className = "mobile-quick-filters";
 
   bar.innerHTML = `
-    <button type="button" class="mobile-chip mobile-chip-sort">Sorted by<br><b>Cheapest</b></button>
-    <button type="button" class="mobile-chip" data-mobile-filter="Non-stop">Non-stop</button>
-    <button type="button" class="mobile-chip" data-mobile-filter="Best offer">Best offer</button>
+    <button type="button" class="mobile-chip" data-mobile-sort="price-asc">Cost</button>
+    <button type="button" class="mobile-chip" data-mobile-sort="departure-asc">Departure</button>
+    <button type="button" class="mobile-chip" data-mobile-sort="arrival-asc">Arrival</button>
     <button type="button" class="mobile-chip mobile-chip-filter">Filter</button>
   `;
 
   workspace.parentNode.insertBefore(bar, workspace);
 
-  bar.querySelectorAll("[data-mobile-filter]").forEach((btn) => {
+  bar.querySelectorAll("[data-mobile-sort]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      toggleMobileQuickFilter(btn.getAttribute("data-mobile-filter"));
-      btn.classList.toggle("is-active");
+      const select = activeMobileSortSelect();
+      if (!select) return;
+      select.value = btn.getAttribute("data-mobile-sort");
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncMobileSortChips();
     });
   });
 
@@ -5925,6 +5937,7 @@ function ensureMobileQuickFilters() {
     document.body.classList.toggle("mobile-filter-drawer-open");
   });
 
+  syncMobileSortChips();
   return bar;
 }
 
@@ -6320,7 +6333,10 @@ function ensureMobilePriceIntelPlacement() {
     // insertBefore calls are safe to repeat even when nothing needs to
     // move.
     card.classList.remove("price-intel-hero");
-    const anchor = document.getElementById("mobileQuickFilters") || workspace;
+    // 2026-08-20: anchored to the round-trip toggle (not mobileQuickFilters)
+    // so the card renders ABOVE the toggle - user-requested order is
+    // banner, then Departure/Return toggle, then the sort/filter row.
+    const anchor = document.getElementById("mobileRoundTripTabs") || document.getElementById("mobileQuickFilters") || workspace;
     proResults.insertBefore(card, anchor);
     proResults.insertBefore(sentinel, anchor);
     ensureMobilePriceIntelFrozenBanner();
@@ -6438,6 +6454,10 @@ function updateMobileRoundTripTabs() {
   const retPanel = document.getElementById("returnResultsPanel");
 
   document.body.classList.toggle("mobile-rt-tabs-on", ready);
+  // Keeps the sort chips matching whichever leg is active on every call,
+  // not just when the toggle itself is showing - one-way search (ready
+  // is false here) still has a sort row acting on outSort.
+  syncMobileSortChips();
 
   if (!ready) {
     outPanel?.classList.remove("mobile-tab-hidden");

@@ -5371,6 +5371,16 @@ body {
     min-height: 44px !important;
   }
 
+  /* The Cost/Departure/Arrival chips below now do this job for both legs
+     at once (2026-08-20) - the old per-column dropdown is redundant on
+     mobile specifically, since only one leg is ever visible at a time
+     here. Desktop's side-by-side two-column view keeps it untouched -
+     both columns are visible simultaneously there. */
+  #outboundResultsPanel .sort,
+  #returnResultsPanel .sort {
+    display: none !important;
+  }
+
   /* Quick filters: MMT-inspired chip row */
   .mobile-quick-filters {
     display: flex;
@@ -5402,14 +5412,6 @@ body {
     font-weight: 850;
     line-height: 1.05;
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
-  }
-
-  .mobile-chip b {
-    font-size: var(--fs-md);
-  }
-
-  .mobile-chip-sort {
-    border-color: var(--info);
   }
 
   .mobile-chip-filter {
@@ -9580,16 +9582,6 @@ body #selectedTripPanel .sky-trip-clear-btn {
   #mobileQuickFilters .mobile-chip-filter {
     padding-left: 8px !important;
     padding-right: 8px !important;
-  }
-
-  /* The sort chip's "Sorted by<br><b>Cheapest</b>" content needs a
-     column flex direction - a flex row (the default above) puts the
-     <br>-separated text and the bold label side by side instead of
-     stacked, which is what caused them to visually overlap. */
-  .mobile-quick-filters .mobile-chip-sort,
-  #mobileQuickFilters .mobile-chip-sort {
-    flex-direction: column !important;
-    gap: 1px !important;
   }
 
   /* After removing the top Compare button, let price area breathe */
