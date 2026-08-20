@@ -7521,7 +7521,9 @@ function renderSelectedTripPanel() {
                 ? "Select one departure and one return flight."
                 : selectedTripCompareLoading
                   ? "Checking your best price…"
-                  : "Best price calculated for the flights you selected."
+                  : selectedTripComparisonError
+                    ? "Couldn't check your best price."
+                    : "Best price calculated for the flights you selected."
             }
           </div>
         </div>
@@ -7545,18 +7547,24 @@ function renderSelectedTripPanel() {
         ${
           ready
             ? `
-              <button
-                type="button"
-                id="bookSelectedTripBtn"
-                class="btn-primary sky-trip-book-btn"
-                ${selectedTripCompareLoading ? "disabled" : ""}
-              >
-                ${
-                  selectedTripCompareLoading
-                    ? "Checking..."
-                    : `Book with ${bestTripPortalInfo?.portal || "portal"}`
-                }
-              </button>
+              ${
+                selectedTripCompareLoading || bestTripPortalInfo
+                  ? `
+                    <button
+                      type="button"
+                      id="bookSelectedTripBtn"
+                      class="btn-primary sky-trip-book-btn"
+                      ${selectedTripCompareLoading ? "disabled" : ""}
+                    >
+                      ${
+                        selectedTripCompareLoading
+                          ? "Checking..."
+                          : `Book with ${bestTripPortalInfo.portal}`
+                      }
+                    </button>
+                  `
+                  : ""
+              }
 
               <button
                 type="button"
@@ -7564,7 +7572,7 @@ function renderSelectedTripPanel() {
                 class="sky-trip-compare-btn"
                 ${selectedTripCompareLoading ? "disabled" : ""}
               >
-                Compare all portals
+                ${selectedTripComparisonError ? "Try again" : "Compare all portals"}
               </button>
             `
             : ""
@@ -7616,7 +7624,17 @@ function renderSelectedTripPanel() {
   });
 
   panel.querySelector("#compareSelectedTripBtn")?.addEventListener("click", () => {
-    compareSelectedRoundTrip();
+    // When the auto-comparison failed (button reads "Try again"), retry
+    // THAT - refreshSelectedTripComparison() - rather than
+    // compareSelectedRoundTrip(), which is a different action (opens the
+    // full all-portals modal) that never touches selectedTripComparison/
+    // selectedTripComparisonError, so it wouldn't actually clear the
+    // error or restore the Book button on success.
+    if (selectedTripComparisonError) {
+      refreshSelectedTripComparison();
+    } else {
+      compareSelectedRoundTrip();
+    }
   });
 
   updateSelectedTripFade();
