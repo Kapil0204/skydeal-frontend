@@ -5371,13 +5371,20 @@ body {
     min-height: 44px !important;
   }
 
-  /* The Cost/Departure/Arrival chips below now do this job for both legs
-     at once (2026-08-20) - the old per-column dropdown is redundant on
-     mobile specifically, since only one leg is ever visible at a time
-     here. Desktop's side-by-side two-column view keeps it untouched -
-     both columns are visible simultaneously there. */
-  #outboundResultsPanel .sort,
-  #returnResultsPanel .sort {
+  /* The whole heading block above each card list - "Your final price
+     options" / "Based on your selected payment methods" / the
+     route+date label - is redundant on mobile specifically (2026-08-20,
+     Kapil feedback): the route+date sticky bar plus the Departure/Return
+     toggle right below it already convey the same information (which
+     route, which dates, which leg you're looking at), and cutting it
+     lets a flight card actually appear above the fold on first load.
+     The Cost/Departure/Arrival chips replace .sort's job for both legs
+     at once, so that's covered too. Desktop's side-by-side two-column
+     view keeps this untouched - both columns are visible simultaneously
+     there, and the heading isn't fighting for the same limited height a
+     phone screen has. */
+  #outboundResultsPanel .col-head,
+  #returnResultsPanel .col-head {
     display: none !important;
   }
 
