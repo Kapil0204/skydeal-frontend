@@ -1602,14 +1602,34 @@ select:focus{
 }
 
 .filter-journey-title{
-  font-size:var(--fs-md);
-  font-weight:950;
+  font-size:var(--fs-lg);
+  font-weight:900;
   color:var(--gray-900);
   margin-bottom:12px;
 }
 
-.filter-subgroup + .filter-subgroup{
-  margin-top:14px;
+/* Onward/Return Journey Airport groups only - side-by-side Departure/
+   Arrival columns (2026-08-20), matching MMT's layout. The sidebar is a
+   fixed ~220px regardless of viewport (confirmed live), too narrow for
+   two columns of full airport names, so these lists show IATA codes
+   only (.filter-option's title attribute carries the full name as a
+   native hover tooltip) rather than wrapping "Chhatrapati Shivaji
+   Maharaj International Airport" across 2 columns x 4-5 lines each. */
+.filter-journey-columns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.airline-filter-list-compact .filter-option{
+  gap:6px;
+  margin:6px 0;
+}
+
+.airline-filter-list-compact .filter-option span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .filter-option{
@@ -1619,8 +1639,8 @@ select:focus{
   justify-content:flex-start;
   gap:10px;
   color:var(--gray-700);
-  font-size:var(--fs-md);
-  font-weight:650;
+  font-size:var(--fs-sm);
+  font-weight:600;
   margin:10px 0;
 }
 

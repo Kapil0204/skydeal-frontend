@@ -1720,7 +1720,14 @@ function renderAirlineFilters() {
 // renderAirportFilters() below. Returns whether the group ended up
 // visible, so a round-trip journey's outer wrapper can hide itself when
 // neither of its two sub-groups has anything to show.
-function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterState, pool }) {
+//
+// compact (2026-08-20) shows the bare IATA code instead of the full
+// airport name, with the full name as a native title-attribute tooltip -
+// used for the round-trip journey groups, which sit two-to-a-row in a
+// sidebar that's a fixed ~220px wide regardless of viewport (confirmed
+// live), nowhere near enough room for two columns of full names like
+// "Chhatrapati Shivaji Maharaj International Airport".
+function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterState, pool, compact }) {
   const host = document.getElementById(hostId);
   const section = document.getElementById(sectionId);
   if (!host || !section) return false;
@@ -1736,14 +1743,17 @@ function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterS
   }
 
   section.style.display = "";
-  host.innerHTML = codes.map((code) => `
-    <label class="filter-option">
+  host.innerHTML = codes.map((code) => {
+    const fullName = airportNameForCode(code);
+    return `
+    <label class="filter-option" ${compact ? `title="${safeText(fullName)}"` : ""}>
       <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
         state[activeKey].includes(code) ? "checked" : ""
       } />
-      <span>${safeText(airportNameForCode(code))}</span>
+      <span>${compact ? safeText(code) : safeText(fullName)}</span>
     </label>
-  `).join("");
+  `;
+  }).join("");
 
   host.querySelectorAll(`.${hostId}-option`).forEach((cb) => {
     cb.addEventListener("change", () => {
@@ -1795,7 +1805,8 @@ function renderAirportFilters() {
       field: "departureAirportCode",
       activeKey: "departureAirports",
       filterState: activeFilters.out,
-      pool: outboundAll
+      pool: outboundAll,
+      compact: true
     }),
     renderAirportFilterGroup({
       hostId: "outArrivalAirportFilters",
@@ -1803,7 +1814,8 @@ function renderAirportFilters() {
       field: "arrivalAirportCode",
       activeKey: "arrivalAirports",
       filterState: activeFilters.out,
-      pool: outboundAll
+      pool: outboundAll,
+      compact: true
     })
   ].some(Boolean);
 
@@ -1814,7 +1826,8 @@ function renderAirportFilters() {
       field: "departureAirportCode",
       activeKey: "departureAirports",
       filterState: activeFilters.ret,
-      pool: returnAll
+      pool: returnAll,
+      compact: true
     }),
     renderAirportFilterGroup({
       hostId: "retArrivalAirportFilters",
@@ -1822,7 +1835,8 @@ function renderAirportFilters() {
       field: "arrivalAirportCode",
       activeKey: "arrivalAirports",
       filterState: activeFilters.ret,
-      pool: returnAll
+      pool: returnAll,
+      compact: true
     })
   ].some(Boolean);
 
