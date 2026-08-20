@@ -618,6 +618,13 @@
                 <option value="departure-asc">Departure (Early → Late)</option>
                 <option value="arrival-asc">Arrival (Early → Late)</option>
                 <option value="savings-desc">Savings (High → Low)</option>
+                <!-- Not shown in the desktop dropdown (hidden) - only reachable
+                     by tapping an already-active mobile sort chip a second
+                     time, which flips its direction. See syncMobileSortChips
+                     in script.js. -->
+                <option value="price-desc" hidden>Cost (High → Low)</option>
+                <option value="departure-desc" hidden>Departure (Late → Early)</option>
+                <option value="arrival-desc" hidden>Arrival (Late → Early)</option>
               </select>
             </div>
           </div>
@@ -659,6 +666,13 @@
                 <option value="departure-asc">Departure (Early → Late)</option>
                 <option value="arrival-asc">Arrival (Early → Late)</option>
                 <option value="savings-desc">Savings (High → Low)</option>
+                <!-- Not shown in the desktop dropdown (hidden) - only reachable
+                     by tapping an already-active mobile sort chip a second
+                     time, which flips its direction. See syncMobileSortChips
+                     in script.js. -->
+                <option value="price-desc" hidden>Cost (High → Low)</option>
+                <option value="departure-desc" hidden>Departure (Late → Early)</option>
+                <option value="arrival-desc" hidden>Arrival (Late → Early)</option>
               </select>
             </div>
           </div>

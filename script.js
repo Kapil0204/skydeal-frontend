@@ -1573,26 +1573,36 @@ function getSortValue(selectEl) {
 
   if (!raw) return "price-asc";
 
+  // Exact matches first (real usage always sets .value to one of these
+  // literally, including the "-desc" variants only reachable by tapping
+  // an already-active mobile sort chip a second time - see
+  // ensureMobileQuickFilters) - the fuzzy substring checks below only
+  // exist as a defensive fallback for a selectedText-only path with no
+  // matching value attribute, and would otherwise misfire on these:
+  // e.g. "price-desc" contains "price" and would wrongly resolve to the
+  // ascending sort if that check ran first.
+  const exactValues = [
+    "price-asc", "price-desc",
+    "departure-asc", "departure-desc",
+    "arrival-asc", "arrival-desc",
+    "savings-desc"
+  ];
+  if (exactValues.includes(raw)) return raw;
+
   if (
-    raw === "price-asc" ||
     raw.includes("cost") ||
     raw.includes("price") ||
     raw.includes("low")
   ) return "price-asc";
 
-  if (
-    raw === "arrival-asc" ||
-    raw.includes("arrival")
-  ) return "arrival-asc";
+  if (raw.includes("arrival")) return "arrival-asc";
 
   if (
-    raw === "departure-asc" ||
     raw.includes("departure") ||
     raw.includes("early")
   ) return "departure-asc";
 
   if (
-    raw === "savings-desc" ||
     raw.includes("saving") ||
     raw.includes("save")
   ) return "savings-desc";
@@ -1985,12 +1995,24 @@ function sortFlightsForDisplay(items, sortValue) {
     return arr.sort((a, b) => Number(a?.bestDeal?.finalPrice ?? a?.price ?? 0) - Number(b?.bestDeal?.finalPrice ?? b?.price ?? 0));
   }
 
+  if (sortValue === "price-desc") {
+    return arr.sort((a, b) => Number(b?.bestDeal?.finalPrice ?? b?.price ?? 0) - Number(a?.bestDeal?.finalPrice ?? a?.price ?? 0));
+  }
+
   if (sortValue === "departure-asc") {
     return arr.sort((a, b) => String(a?.departureTime || "").localeCompare(String(b?.departureTime || "")));
   }
 
+  if (sortValue === "departure-desc") {
+    return arr.sort((a, b) => String(b?.departureTime || "").localeCompare(String(a?.departureTime || "")));
+  }
+
   if (sortValue === "arrival-asc") {
     return arr.sort((a, b) => String(a?.arrivalTime || "").localeCompare(String(b?.arrivalTime || "")));
+  }
+
+  if (sortValue === "arrival-desc") {
+    return arr.sort((a, b) => String(b?.arrivalTime || "").localeCompare(String(a?.arrivalTime || "")));
   }
 
   if (sortValue === "savings-desc") {
@@ -5888,16 +5910,31 @@ function activeMobileSortSelect() {
   return leg === "ret" ? retSortSelect : outSortSelect;
 }
 
-// Mirrors the active leg's <select> value onto the 3 sort chips'
-// .is-active state - called from updateMobileRoundTripTabs() so it stays
-// in sync both on tab switch and on every render.
+// "price-asc" -> "price", "arrival-desc" -> "arrival" - data-mobile-sort
+// always names the criterion via its -asc form (see ensureMobileQuickFilters);
+// this strips either suffix to get the bare criterion for comparison.
+function mobileSortCriterion(value) {
+  return String(value || "").replace(/-asc$|-desc$/, "");
+}
+
+// Mirrors the active leg's <select> value onto the 3 sort chips' active
+// state and direction arrow (▲ ascending/lowest/earliest-first, ▼
+// descending/highest/latest-first) - called from updateMobileRoundTripTabs()
+// so it stays in sync both on tab switch and on every render.
 function syncMobileSortChips() {
   const bar = document.getElementById("mobileQuickFilters");
   if (!bar) return;
 
   const value = activeMobileSortSelect()?.value || "price-asc";
+  const activeCriterion = mobileSortCriterion(value);
+  const isDesc = value.endsWith("-desc");
+
   bar.querySelectorAll("[data-mobile-sort]").forEach((btn) => {
-    btn.classList.toggle("is-active", btn.getAttribute("data-mobile-sort") === value);
+    const criterion = mobileSortCriterion(btn.getAttribute("data-mobile-sort"));
+    const isActive = criterion === activeCriterion;
+    btn.classList.toggle("is-active", isActive);
+    const arrow = btn.querySelector(".mobile-chip-arrow");
+    if (arrow) arrow.textContent = isActive ? (isDesc ? "▼" : "▲") : "";
   });
 }
 
@@ -5915,9 +5952,9 @@ function ensureMobileQuickFilters() {
   bar.className = "mobile-quick-filters";
 
   bar.innerHTML = `
-    <button type="button" class="mobile-chip" data-mobile-sort="price-asc">Cost</button>
-    <button type="button" class="mobile-chip" data-mobile-sort="departure-asc">Departure</button>
-    <button type="button" class="mobile-chip" data-mobile-sort="arrival-asc">Arrival</button>
+    <button type="button" class="mobile-chip" data-mobile-sort="price-asc">Cost<span class="mobile-chip-arrow"></span></button>
+    <button type="button" class="mobile-chip" data-mobile-sort="departure-asc">Departure<span class="mobile-chip-arrow"></span></button>
+    <button type="button" class="mobile-chip" data-mobile-sort="arrival-asc">Arrival<span class="mobile-chip-arrow"></span></button>
     <button type="button" class="mobile-chip mobile-chip-filter">Filter</button>
   `;
 
@@ -5927,7 +5964,16 @@ function ensureMobileQuickFilters() {
     btn.addEventListener("click", () => {
       const select = activeMobileSortSelect();
       if (!select) return;
-      select.value = btn.getAttribute("data-mobile-sort");
+
+      const criterion = mobileSortCriterion(btn.getAttribute("data-mobile-sort"));
+      const alreadyActive = mobileSortCriterion(select.value) === criterion;
+      // Tapping the already-active criterion flips its direction; tapping
+      // a different one always starts at its default (ascending -
+      // lowest cost / earliest departure / earliest arrival first), same
+      // as picking a fresh option from the old desktop-only dropdown.
+      select.value = alreadyActive && !select.value.endsWith("-desc")
+        ? `${criterion}-desc`
+        : `${criterion}-asc`;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       syncMobileSortChips();
     });

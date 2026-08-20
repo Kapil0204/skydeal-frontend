@@ -5425,6 +5425,14 @@ body {
     color: var(--brand-900);
   }
 
+  /* Direction arrow for the active sort chip only - text content
+     (▲/▼) is set in syncMobileSortChips(), empty otherwise so inactive
+     chips reserve no visible space for it. */
+  .mobile-chip-arrow {
+    margin-left: 3px;
+    font-size: 0.75em;
+  }
+
   /* Filter drawer only when user taps Filter chip */
   .filter-panel,
   .filter-card {
