@@ -1737,6 +1737,15 @@ select:focus{
   border-bottom:1px solid var(--info-light);
 }
 
+/* Redundant with the sticky top route/date bar + (on mobile) the
+   Departure/Return toggle - cut 2026-08-20 so a flight card can appear
+   sooner instead of behind a repeated heading. Unconditional (not just
+   mobile): desktop's .col-head stays visible, just without this text,
+   now that .sort holds real sort buttons instead of a label. */
+.col-head-text{
+  display:none;
+}
+
 .section-subtitle{
   margin-top:4px;
   font-size:var(--fs-base);
@@ -1757,6 +1766,43 @@ h3{
 .sort select{
   background:var(--white);
   color:var(--gray-900);
+}
+
+/* The real <select> is state-backing only now, everywhere (2026-08-20) -
+   .col-sort-buttons/mobile's chip row are the actual UI. !important is
+   deliberate: "sort select" already has competing fossil-duplicated
+   definitions elsewhere in this file that set real visible box styling
+   (background/color), and this needs to win regardless of source order. */
+.sort-select-hidden{
+  display:none !important;
+}
+
+.col-sort-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.col-sort-btn{
+  border:1px solid var(--gray-200);
+  background:var(--white);
+  color:var(--gray-900);
+  border-radius:var(--radius-md);
+  padding:8px 14px;
+  font-size:var(--fs-sm);
+  font-weight:800;
+  cursor:pointer;
+}
+
+.col-sort-btn.is-active{
+  border-color:rgba(168,85,247,0.65);
+  background:rgba(168,85,247,0.10);
+  color:var(--brand-900);
+}
+
+.col-sort-arrow{
+  margin-left:4px;
+  font-size:0.75em;
 }
 
 .cards{

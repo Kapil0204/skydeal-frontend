@@ -606,22 +606,27 @@
       <section class="flights-workspace">
         <div class="col" id="outboundResultsPanel">
           <div class="col-head">
-            <div>
+            <div class="col-head-text">
               <h3>Departure flights</h3>
               <div class="section-subtitle">Sorted by your best final payable estimate</div>
               <div class="route-date-label" id="outRouteDateLabel"></div>
             </div>
             <div class="sort">
-              <label>Sort by</label>
-              <select id="outSort">
+              <div class="col-sort-buttons" data-select-id="outSort">
+                <button type="button" class="col-sort-btn" data-sort="price-asc">Cost<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="departure-asc">Departure<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="arrival-asc">Arrival<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="savings-desc">Savings</button>
+              </div>
+              <select id="outSort" class="sort-select-hidden">
                 <option value="price-asc">Cost (Low → High)</option>
                 <option value="departure-asc">Departure (Early → Late)</option>
                 <option value="arrival-asc">Arrival (Early → Late)</option>
                 <option value="savings-desc">Savings (High → Low)</option>
-                <!-- Not shown in the desktop dropdown (hidden) - only reachable
-                     by tapping an already-active mobile sort chip a second
-                     time, which flips its direction. See syncMobileSortChips
-                     in script.js. -->
+                <!-- Reachable only by tapping an already-active sort chip/button
+                     a second time (mobile chips or desktop .col-sort-btn), which
+                     flips its direction. See syncMobileSortChips/
+                     syncDesktopSortButtons in script.js. -->
                 <option value="price-desc" hidden>Cost (High → Low)</option>
                 <option value="departure-desc" hidden>Departure (Late → Early)</option>
                 <option value="arrival-desc" hidden>Arrival (Late → Early)</option>
@@ -654,22 +659,27 @@
 
         <div class="col return-panel is-hidden" id="returnResultsPanel">
           <div class="col-head">
-            <div>
+            <div class="col-head-text">
               <h3>Return flights</h3>
               <div class="section-subtitle">Shown only for round trips</div>
               <div class="route-date-label" id="retRouteDateLabel"></div>
             </div>
             <div class="sort">
-              <label>Sort by</label>
-              <select id="retSort">
+              <div class="col-sort-buttons" data-select-id="retSort">
+                <button type="button" class="col-sort-btn" data-sort="price-asc">Cost<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="departure-asc">Departure<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="arrival-asc">Arrival<span class="col-sort-arrow"></span></button>
+                <button type="button" class="col-sort-btn" data-sort="savings-desc">Savings</button>
+              </div>
+              <select id="retSort" class="sort-select-hidden">
                 <option value="price-asc">Cost (Low → High)</option>
                 <option value="departure-asc">Departure (Early → Late)</option>
                 <option value="arrival-asc">Arrival (Early → Late)</option>
                 <option value="savings-desc">Savings (High → Low)</option>
-                <!-- Not shown in the desktop dropdown (hidden) - only reachable
-                     by tapping an already-active mobile sort chip a second
-                     time, which flips its direction. See syncMobileSortChips
-                     in script.js. -->
+                <!-- Reachable only by tapping an already-active sort chip/button
+                     a second time (mobile chips or desktop .col-sort-btn), which
+                     flips its direction. See syncMobileSortChips/
+                     syncDesktopSortButtons in script.js. -->
                 <option value="price-desc" hidden>Cost (High → Low)</option>
                 <option value="departure-desc" hidden>Departure (Late → Early)</option>
                 <option value="arrival-desc" hidden>Arrival (Late → Early)</option>

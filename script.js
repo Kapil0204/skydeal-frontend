@@ -5910,11 +5910,24 @@ function activeMobileSortSelect() {
   return leg === "ret" ? retSortSelect : outSortSelect;
 }
 
-// "price-asc" -> "price", "arrival-desc" -> "arrival" - data-mobile-sort
-// always names the criterion via its -asc form (see ensureMobileQuickFilters);
-// this strips either suffix to get the bare criterion for comparison.
+// "price-asc" -> "price", "arrival-desc" -> "arrival" - data-mobile-sort/
+// data-sort always name the criterion via its -asc form (see
+// ensureMobileQuickFilters, wireDesktopSortButtons); this strips either
+// suffix to get the bare criterion for comparison.
 function mobileSortCriterion(value) {
   return String(value || "").replace(/-asc$|-desc$/, "");
+}
+
+// Shared by the mobile sort chips and desktop's per-column sort buttons -
+// tapping the already-active criterion flips its direction; tapping a
+// different one always starts at its default (ascending - lowest cost /
+// earliest departure / earliest arrival first), same as picking a fresh
+// option from the old dropdown used to.
+function nextSortValue(currentValue, criterion) {
+  const alreadyActive = mobileSortCriterion(currentValue) === criterion;
+  return alreadyActive && !String(currentValue || "").endsWith("-desc")
+    ? `${criterion}-desc`
+    : `${criterion}-asc`;
 }
 
 // Mirrors the active leg's <select> value onto the 3 sort chips' active
@@ -5966,14 +5979,7 @@ function ensureMobileQuickFilters() {
       if (!select) return;
 
       const criterion = mobileSortCriterion(btn.getAttribute("data-mobile-sort"));
-      const alreadyActive = mobileSortCriterion(select.value) === criterion;
-      // Tapping the already-active criterion flips its direction; tapping
-      // a different one always starts at its default (ascending -
-      // lowest cost / earliest departure / earliest arrival first), same
-      // as picking a fresh option from the old desktop-only dropdown.
-      select.value = alreadyActive && !select.value.endsWith("-desc")
-        ? `${criterion}-desc`
-        : `${criterion}-asc`;
+      select.value = nextSortValue(select.value, criterion);
       select.dispatchEvent(new Event("change", { bubbles: true }));
       syncMobileSortChips();
     });
@@ -5989,6 +5995,47 @@ function ensureMobileQuickFilters() {
 
 function renderMobileQuickFilters() {
   ensureMobileQuickFilters();
+}
+
+// Desktop's per-column sort buttons (2026-08-20) - unlike mobile's single
+// shared chip row (one active leg at a time via the Departure/Return
+// toggle), desktop shows both columns simultaneously with no leg concept,
+// so each .col-sort-buttons bar operates independently on its own
+// #outSort/#retSort. Mirrors syncMobileSortChips()'s active/arrow logic;
+// Savings has no arrow since it's single-direction (no savings-asc exists
+// anywhere - matches the old dropdown's own behavior exactly).
+function syncDesktopSortButtons(bar, select) {
+  if (!bar || !select) return;
+
+  const value = select.value || "price-asc";
+  const activeCriterion = mobileSortCriterion(value);
+  const isDesc = value.endsWith("-desc");
+
+  bar.querySelectorAll("[data-sort]").forEach((btn) => {
+    const criterion = mobileSortCriterion(btn.getAttribute("data-sort"));
+    const isActive = criterion === activeCriterion;
+    btn.classList.toggle("is-active", isActive);
+    const arrow = btn.querySelector(".col-sort-arrow");
+    if (arrow) arrow.textContent = isActive ? (isDesc ? "▼" : "▲") : "";
+  });
+}
+
+function wireDesktopSortButtons() {
+  document.querySelectorAll(".col-sort-buttons").forEach((bar) => {
+    const select = document.getElementById(bar.getAttribute("data-select-id"));
+    if (!select) return;
+
+    bar.querySelectorAll("[data-sort]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const criterion = mobileSortCriterion(btn.getAttribute("data-sort"));
+        select.value = criterion === "savings" ? "savings-desc" : nextSortValue(select.value, criterion);
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        syncDesktopSortButtons(bar, select);
+      });
+    });
+
+    syncDesktopSortButtons(bar, select);
+  });
 }
 
 // Mirrors whichever headline renderPaymentGuideCard() is currently
@@ -8197,6 +8244,7 @@ function renderOutbound() {
   renderSelectedTripPanel();
   renderPager("out");
   updateMobileRoundTripTabs();
+  syncDesktopSortButtons(document.querySelector('.col-sort-buttons[data-select-id="outSort"]'), outSortSelect);
   // updateFlightSectionHeadings() above (via ensureMobilePriceIntelPlacement)
   // already calls updateStickyFilterCard() once, but that runs BEFORE
   // renderList() just above has actually replaced the loading placeholder
@@ -8240,6 +8288,7 @@ function renderReturn() {
   renderSelectedTripPanel();
   renderPager("ret");
   updateMobileRoundTripTabs();
+  syncDesktopSortButtons(document.querySelector('.col-sort-buttons[data-select-id="retSort"]'), retSortSelect);
   // Same reasoning as the end of renderOutbound() - recompute against the
   // now-final DOM instead of whatever was measured before this leg's real
   // list replaced its loading placeholder.
@@ -8776,6 +8825,7 @@ retSortSelect?.addEventListener("change", () => {
 });
    wireFilters();
   wireAirportToggles();
+  wireDesktopSortButtons();
   renderAirlineFilters();
   renderAirportFilters();
 
