@@ -1760,17 +1760,20 @@ function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterS
   const counts = showCount ? getAirportCodeCounts(field, pool) : null;
 
   section.style.display = "";
-  host.innerHTML = codes.map((code) => `
+  host.innerHTML = codes.map((code) => {
+    const fullName = airportNameForCode(code);
+    return `
     <label class="filter-option${showCount ? " filter-option-airport" : ""}">
-      <span class="filter-option-label">
+      <span class="filter-option-label" ${showCount ? `title="${safeText(fullName)}"` : ""}>
         <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
           state[activeKey].includes(code) ? "checked" : ""
         } />
-        <span>${safeText(airportNameForCode(code))}</span>
+        <span>${safeText(fullName)}</span>
       </span>
       ${counts ? `<span class="filter-airport-count">${counts[code] || 0}</span>` : ""}
     </label>
-  `).join("");
+  `;
+  }).join("");
 
   host.querySelectorAll(`.${hostId}-option`).forEach((cb) => {
     cb.addEventListener("change", () => {
