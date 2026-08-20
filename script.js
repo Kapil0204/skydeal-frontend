@@ -887,8 +887,10 @@ let activeFilters = {
   bestOffer: false,
   timeSlots: [],
   airlines: [],
-  departureAirports: [],
-  arrivalAirports: []
+  departureAirports: [], // one-way mode only
+  arrivalAirports: [], // one-way mode only
+  out: { departureAirports: [], arrivalAirports: [] }, // round-trip onward leg
+  ret: { departureAirports: [], arrivalAirports: [] } // round-trip return leg
 };
 
 const PAGE_SIZE = 40;
@@ -1610,8 +1612,14 @@ function flightMatchesTimeSlots(flight, slots) {
   });
 }
 
-function applyFlightFilters(items) {
+function applyFlightFilters(items, leg) {
   const list = Array.isArray(items) ? [...items] : [];
+  // Airports are the only per-leg filter (see activeFilters.out/.ret) - a
+  // round-trip's return leg "departure" is the outbound's destination
+  // city, so it needs its own airport values rather than sharing the
+  // outbound leg's. Every other filter (nonStop, bestOffer, airlines,
+  // timeSlots) intentionally stays shared across both legs.
+  const airportFilters = leg ? activeFilters[leg] : activeFilters;
 
   return list.filter((flight) => {
     if (activeFilters.nonStop && Number(flight?.stops || 0) !== 0) return false;
@@ -1627,17 +1635,17 @@ function applyFlightFilters(items) {
     }
 
     if (
-      Array.isArray(activeFilters.departureAirports) &&
-      activeFilters.departureAirports.length > 0 &&
-      !activeFilters.departureAirports.includes(String(flight?.departureAirportCode || ""))
+      Array.isArray(airportFilters.departureAirports) &&
+      airportFilters.departureAirports.length > 0 &&
+      !airportFilters.departureAirports.includes(String(flight?.departureAirportCode || ""))
     ) {
       return false;
     }
 
     if (
-      Array.isArray(activeFilters.arrivalAirports) &&
-      activeFilters.arrivalAirports.length > 0 &&
-      !activeFilters.arrivalAirports.includes(String(flight?.arrivalAirportCode || ""))
+      Array.isArray(airportFilters.arrivalAirports) &&
+      airportFilters.arrivalAirports.length > 0 &&
+      !airportFilters.arrivalAirports.includes(String(flight?.arrivalAirportCode || ""))
     ) {
       return false;
     }
@@ -1659,8 +1667,8 @@ function getAvailableAirlines() {
 // backend index.js) - e.g. Mumbai searches can return flights tagged
 // BOM or NMI. A normal single-airport route yields exactly one code here,
 // and the caller hides the filter section entirely in that case.
-function getAvailableAirportCodes(field) {
-  const all = [...(outboundAll || []), ...(returnAll || [])];
+function getAvailableAirportCodes(field, pool) {
+  const all = Array.isArray(pool) ? pool : [...(outboundAll || []), ...(returnAll || [])];
   return [...new Set(all.map((f) => String(f?.[field] || "").trim()).filter(Boolean))]
     .sort((a, b) => airportNameForCode(a).localeCompare(airportNameForCode(b)));
 }
@@ -1704,25 +1712,34 @@ function renderAirlineFilters() {
 // to filter and showing a lone always-checked-by-default option would
 // just be clutter. Mirrors renderAirlineFilters()'s dynamic-from-results
 // pattern exactly.
-function renderAirportFilterGroup({ hostId, sectionId, field, activeKey }) {
+//
+// filterState/pool (2026-08-20) let the same group renderer serve both
+// one-way mode (defaults: reads/writes activeFilters directly, pools both
+// legs' flights together) and round-trip mode (each leg passes its own
+// activeFilters.out/.ret and its own outboundAll/returnAll) - see
+// renderAirportFilters() below. Returns whether the group ended up
+// visible, so a round-trip journey's outer wrapper can hide itself when
+// neither of its two sub-groups has anything to show.
+function renderAirportFilterGroup({ hostId, sectionId, field, activeKey, filterState, pool }) {
   const host = document.getElementById(hostId);
   const section = document.getElementById(sectionId);
-  if (!host || !section) return;
+  if (!host || !section) return false;
 
-  const codes = getAvailableAirportCodes(field);
+  const state = filterState || activeFilters;
+  const codes = getAvailableAirportCodes(field, pool);
 
   if (codes.length < 2) {
     section.style.display = "none";
-    activeFilters[activeKey] = [];
+    state[activeKey] = [];
     host.innerHTML = "";
-    return;
+    return false;
   }
 
   section.style.display = "";
   host.innerHTML = codes.map((code) => `
     <label class="filter-option">
       <input type="checkbox" class="${hostId}-option" value="${safeText(code)}" ${
-        activeFilters[activeKey].includes(code) ? "checked" : ""
+        state[activeKey].includes(code) ? "checked" : ""
       } />
       <span>${safeText(airportNameForCode(code))}</span>
     </label>
@@ -1730,7 +1747,7 @@ function renderAirportFilterGroup({ hostId, sectionId, field, activeKey }) {
 
   host.querySelectorAll(`.${hostId}-option`).forEach((cb) => {
     cb.addEventListener("change", () => {
-      activeFilters[activeKey] = [...host.querySelectorAll(`.${hostId}-option:checked`)]
+      state[activeKey] = [...host.querySelectorAll(`.${hostId}-option:checked`)]
         .map((x) => x.value);
 
       outPageIdx = 1;
@@ -1739,21 +1756,78 @@ function renderAirportFilterGroup({ hostId, sectionId, field, activeKey }) {
       renderReturn();
     });
   });
+
+  return true;
 }
 
 function renderAirportFilters() {
-  renderAirportFilterGroup({
-    hostId: "departureAirportFilters",
-    sectionId: "departureAirportFilterGroup",
-    field: "departureAirportCode",
-    activeKey: "departureAirports"
-  });
-  renderAirportFilterGroup({
-    hostId: "arrivalAirportFilters",
-    sectionId: "arrivalAirportFilterGroup",
-    field: "arrivalAirportCode",
-    activeKey: "arrivalAirports"
-  });
+  const outGroup = document.getElementById("outAirportFilterGroup");
+  const retGroup = document.getElementById("retAirportFilterGroup");
+
+  if (!isRoundTripModeActive()) {
+    if (outGroup) outGroup.style.display = "none";
+    if (retGroup) retGroup.style.display = "none";
+
+    renderAirportFilterGroup({
+      hostId: "departureAirportFilters",
+      sectionId: "departureAirportFilterGroup",
+      field: "departureAirportCode",
+      activeKey: "departureAirports"
+    });
+    renderAirportFilterGroup({
+      hostId: "arrivalAirportFilters",
+      sectionId: "arrivalAirportFilterGroup",
+      field: "arrivalAirportCode",
+      activeKey: "arrivalAirports"
+    });
+    return;
+  }
+
+  const flatOut = document.getElementById("departureAirportFilterGroup");
+  const flatRet = document.getElementById("arrivalAirportFilterGroup");
+  if (flatOut) flatOut.style.display = "none";
+  if (flatRet) flatRet.style.display = "none";
+
+  const outVisible = [
+    renderAirportFilterGroup({
+      hostId: "outDepartureAirportFilters",
+      sectionId: "outDepartureAirportFilterGroup",
+      field: "departureAirportCode",
+      activeKey: "departureAirports",
+      filterState: activeFilters.out,
+      pool: outboundAll
+    }),
+    renderAirportFilterGroup({
+      hostId: "outArrivalAirportFilters",
+      sectionId: "outArrivalAirportFilterGroup",
+      field: "arrivalAirportCode",
+      activeKey: "arrivalAirports",
+      filterState: activeFilters.out,
+      pool: outboundAll
+    })
+  ].some(Boolean);
+
+  const retVisible = [
+    renderAirportFilterGroup({
+      hostId: "retDepartureAirportFilters",
+      sectionId: "retDepartureAirportFilterGroup",
+      field: "departureAirportCode",
+      activeKey: "departureAirports",
+      filterState: activeFilters.ret,
+      pool: returnAll
+    }),
+    renderAirportFilterGroup({
+      hostId: "retArrivalAirportFilters",
+      sectionId: "retArrivalAirportFilterGroup",
+      field: "arrivalAirportCode",
+      activeKey: "arrivalAirports",
+      filterState: activeFilters.ret,
+      pool: returnAll
+    })
+  ].some(Boolean);
+
+  if (outGroup) outGroup.style.display = outVisible ? "" : "none";
+  if (retGroup) retGroup.style.display = retVisible ? "" : "none";
 }
 
 function wireFilters() {
@@ -1796,7 +1870,9 @@ function wireFilters() {
       timeSlots: [],
       airlines: [],
       departureAirports: [],
-      arrivalAirports: []
+      arrivalAirports: [],
+      out: { departureAirports: [], arrivalAirports: [] },
+      ret: { departureAirports: [], arrivalAirports: [] }
     };
 
     document.querySelectorAll(".filter-panel input[type='checkbox']").forEach((cb) => {
@@ -4669,13 +4745,13 @@ function renderPager(which) {
     // totalPages must reflect what's actually being shown (post-filter),
     // not the raw fetched count - otherwise "Next" can stay enabled past
     // the point where the filtered results actually run out.
-    const tp = totalPages(applyFlightFilters(outboundAll));
+    const tp = totalPages(applyFlightFilters(outboundAll, isRoundTripModeActive() ? "out" : undefined));
     if (outPage) outPage.textContent = String(outPageIdx);
     if (outPagesEl) outPagesEl.textContent = String(tp);
     if (outPrev) outPrev.disabled = outPageIdx <= 1;
     if (outNext) outNext.disabled = outPageIdx >= tp;
   } else {
-    const tp = totalPages(applyFlightFilters(returnAll));
+    const tp = totalPages(applyFlightFilters(returnAll, "ret"));
     if (retPage) retPage.textContent = String(retPageIdx);
     if (retPagesEl) retPagesEl.textContent = String(tp);
     if (retPrev) retPrev.disabled = retPageIdx <= 1;
@@ -7957,7 +8033,7 @@ function updateFlightSectionHeadings() {
 function renderOutbound() {
   document.body.classList.remove("search-error-mode");
   updateFlightSectionHeadings();
-  const filtered = applyFlightFilters(outboundAll);
+  const filtered = applyFlightFilters(outboundAll, isRoundTripModeActive() ? "out" : undefined);
   const sorted = sortFlightsForDisplay(filtered, getSortValue(outSortSelect));
   const pageItems = slicePage(sorted, outPageIdx);
   renderList(outboundList, pageItems, "out");
@@ -8000,7 +8076,7 @@ function renderReturn() {
   returnPanel?.classList.remove("is-hidden");
   flightsWorkspace?.classList.remove("one-way");
 
-  const filtered = applyFlightFilters(returnAll);
+  const filtered = applyFlightFilters(returnAll, "ret");
   const sorted = sortFlightsForDisplay(filtered, getSortValue(retSortSelect));
   const pageItems = slicePage(sorted, retPageIdx);
   renderList(returnList, pageItems, "ret");
@@ -8442,7 +8518,7 @@ toggleReturn();
     renderOutbound();
   });
   outNext?.addEventListener("click", () => {
-    outPageIdx = Math.min(totalPages(applyFlightFilters(outboundAll)), outPageIdx + 1);
+    outPageIdx = Math.min(totalPages(applyFlightFilters(outboundAll, isRoundTripModeActive() ? "out" : undefined)), outPageIdx + 1);
     renderOutbound();
   });
 
@@ -8451,7 +8527,7 @@ toggleReturn();
     renderReturn();
   });
   retNext?.addEventListener("click", () => {
-    retPageIdx = Math.min(totalPages(applyFlightFilters(returnAll)), retPageIdx + 1);
+    retPageIdx = Math.min(totalPages(applyFlightFilters(returnAll, "ret")), retPageIdx + 1);
     renderReturn();
   });
 

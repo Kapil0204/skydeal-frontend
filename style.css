@@ -1601,6 +1601,17 @@ select:focus{
   margin-bottom:10px;
 }
 
+.filter-journey-title{
+  font-size:var(--fs-md);
+  font-weight:950;
+  color:var(--gray-900);
+  margin-bottom:12px;
+}
+
+.filter-subgroup + .filter-subgroup{
+  margin-top:14px;
+}
+
 .filter-option{
   display:flex;
   flex-direction:row;

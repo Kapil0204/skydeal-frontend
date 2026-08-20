@@ -546,9 +546,13 @@
               </div>
             </div>
 
-            <!-- Hidden until a search actually spans more than one airport
-                 for the same city (e.g. Mumbai = BOM + Navi Mumbai) - see
-                 renderAirportFilterGroup in script.js. -->
+            <!-- One-way mode only. Hidden until a search actually spans
+                 more than one airport for the same city (e.g. Mumbai =
+                 BOM + Navi Mumbai) - see renderAirportFilters() in
+                 script.js. Round-trip mode uses the per-leg journey
+                 groups below instead, since a round trip's return leg
+                 "departure" is the outbound's destination city, not its
+                 origin - these two can't share one filter value. -->
             <div class="filter-group" id="departureAirportFilterGroup" style="display:none">
               <div class="filter-title">Departure Airports</div>
               <div id="departureAirportFilters" class="airline-filter-list"></div>
@@ -557,6 +561,32 @@
             <div class="filter-group" id="arrivalAirportFilterGroup" style="display:none">
               <div class="filter-title">Arrival Airports</div>
               <div id="arrivalAirportFilters" class="airline-filter-list"></div>
+            </div>
+
+            <!-- Round-trip mode only - see renderAirportFilters() in
+                 script.js. -->
+            <div class="filter-group filter-journey-group" id="outAirportFilterGroup" style="display:none">
+              <div class="filter-journey-title">Onward Journey</div>
+              <div class="filter-subgroup" id="outDepartureAirportFilterGroup" style="display:none">
+                <div class="filter-title">Departure Airports</div>
+                <div id="outDepartureAirportFilters" class="airline-filter-list"></div>
+              </div>
+              <div class="filter-subgroup" id="outArrivalAirportFilterGroup" style="display:none">
+                <div class="filter-title">Arrival Airports</div>
+                <div id="outArrivalAirportFilters" class="airline-filter-list"></div>
+              </div>
+            </div>
+
+            <div class="filter-group filter-journey-group" id="retAirportFilterGroup" style="display:none">
+              <div class="filter-journey-title">Return Journey</div>
+              <div class="filter-subgroup" id="retDepartureAirportFilterGroup" style="display:none">
+                <div class="filter-title">Departure Airports</div>
+                <div id="retDepartureAirportFilters" class="airline-filter-list"></div>
+              </div>
+              <div class="filter-subgroup" id="retArrivalAirportFilterGroup" style="display:none">
+                <div class="filter-title">Arrival Airports</div>
+                <div id="retArrivalAirportFilters" class="airline-filter-list"></div>
+              </div>
             </div>
 
           </div>
