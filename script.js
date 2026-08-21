@@ -6504,11 +6504,17 @@ function setMobileReturnFocusAfterOutbound() {
   document.body.classList.add("mobile-return-focus");
   mobileRoundTripActiveLeg = "ret";
 
-  const returnPanel = document.getElementById("returnResultsPanel");
-  if (!returnPanel) return;
+  // Used to scroll straight to the return flight cards - landed the user
+  // mid-list with no indication the Departure/Return toggle above had
+  // just flipped to Return for them (Kapil feedback 2026-08-20: "the
+  // first screen they see... starts with the first flight card"). Scroll
+  // to the toggle itself instead, so its now-active "Return" state is the
+  // first thing visible, not buried above the fold.
+  const tabs = document.getElementById("mobileRoundTripTabs");
+  if (!tabs) return;
 
   setTimeout(() => {
-    returnPanel.scrollIntoView({
+    tabs.scrollIntoView({
       behavior: "instant",
       block: "start"
     });
