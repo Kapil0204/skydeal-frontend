@@ -1934,11 +1934,22 @@ body.search-in-flight .flights-workspace{
   display:none;
 }
 
+/* Moved out of .col-head-text (2026-08-20, Kapil feedback) to sit above
+   the sort buttons instead - desktop has no mobile-style sticky route
+   bar, so with the heading text cut this was the only place on desktop
+   still showing which route/date a column's cards belong to. Empty
+   string pre-search/on error (see updateFlightSectionHeadings()), so an
+   empty margin-bottom here would be a visible gap with nothing above it
+   - :empty guards against that. */
 .route-date-label{
   font-size:var(--fs-sm);
   font-weight:750;
   color:var(--accent2);
-  margin-top:4px;
+  margin-bottom:10px;
+}
+
+.route-date-label:empty{
+  display:none;
 }
 
 /* Payment-profile card (pre-search left panel) - deliberately quiet/
@@ -5434,6 +5445,15 @@ body {
     display: none !important;
   }
 
+  /* .route-date-label moved out of .col-head on 2026-08-20 (see its own
+     dated comment in the base stylesheet) so desktop can show it above
+     the sort buttons - it's now a sibling of .col-head, not a descendant,
+     so it needs its own mobile hide instead of inheriting the one above. */
+  #outboundResultsPanel > .route-date-label,
+  #returnResultsPanel > .route-date-label {
+    display: none !important;
+  }
+
   /* Quick filters: MMT-inspired chip row */
   .mobile-quick-filters {
     display: flex;
@@ -7171,6 +7191,7 @@ body.search-error-mode .results-top-filter-row {
   }
 
   body.search-error-mode #outboundResultsPanel .col-head,
+  body.search-error-mode #outboundResultsPanel > .route-date-label,
   body.search-error-mode #outboundResultsPanel .pager {
     display: none !important;
   }
