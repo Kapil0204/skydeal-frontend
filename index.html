@@ -115,7 +115,7 @@
      after the 2-week testing window. Runs synchronously as the very first
      thing in <body> so the real page never flashes before the check runs. -->
 <script>
-  if (localStorage.getItem('sairro_beta_unlocked') !== 'true') {
+  if (sessionStorage.getItem('sairro_beta_unlocked') !== 'true') {
     document.body.classList.add('gate-locked');
   }
 </script>
@@ -134,7 +134,7 @@
     const input = document.getElementById('betaGateInput');
     const error = document.getElementById('betaGateError');
     if (input.value === '121212') {
-      localStorage.setItem('sairro_beta_unlocked', 'true');
+      sessionStorage.setItem('sairro_beta_unlocked', 'true');
       document.body.classList.remove('gate-locked');
     } else {
       error.style.display = 'block';
