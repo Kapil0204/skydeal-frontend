@@ -5931,9 +5931,11 @@ function nextSortValue(currentValue, criterion) {
 }
 
 // Mirrors the active leg's <select> value onto the 3 sort chips' active
-// state and direction arrow (▲ ascending/lowest/earliest-first, ▼
-// descending/highest/latest-first) - called from updateMobileRoundTripTabs()
-// so it stays in sync both on tab switch and on every render.
+// state and direction arrow (▼ ascending/lowest/earliest-first, ▲
+// descending/highest/latest-first - Kapil feedback 2026-08-20, flipped
+// from the more "obvious" ▲-for-ascending mapping) - called from
+// updateMobileRoundTripTabs() so it stays in sync both on tab switch and
+// on every render.
 function syncMobileSortChips() {
   const bar = document.getElementById("mobileQuickFilters");
   if (!bar) return;
@@ -5947,7 +5949,7 @@ function syncMobileSortChips() {
     const isActive = criterion === activeCriterion;
     btn.classList.toggle("is-active", isActive);
     const arrow = btn.querySelector(".mobile-chip-arrow");
-    if (arrow) arrow.textContent = isActive ? (isDesc ? "▼" : "▲") : "";
+    if (arrow) arrow.textContent = isActive ? (isDesc ? "▲" : "▼") : "";
   });
 }
 
@@ -6016,7 +6018,7 @@ function syncDesktopSortButtons(bar, select) {
     const isActive = criterion === activeCriterion;
     btn.classList.toggle("is-active", isActive);
     const arrow = btn.querySelector(".col-sort-arrow");
-    if (arrow) arrow.textContent = isActive ? (isDesc ? "▼" : "▲") : "";
+    if (arrow) arrow.textContent = isActive ? (isDesc ? "▲" : "▼") : "";
   });
 }
 
