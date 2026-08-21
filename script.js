@@ -3796,6 +3796,13 @@ async function fetchPaymentSuggestionsOnce() {
 async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
+  // Same staleness snapshot as repriceAndRenderFlights() - if a newer
+  // handleSearch() finishes and renders its own decode card before this
+  // call's response lands, applying this one afterward would overwrite
+  // the fresh, current-search suggestions with suggestions computed for
+  // a since-replaced flight list.
+  const guardGeneration = searchGeneration;
+
   paymentGuideState = "loading";
   guideLoadingPhase = loadingPhase;
   renderPaymentGuideCard();
@@ -3829,6 +3836,11 @@ async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
       console.error(`[SkyDeal] payment-suggestions attempt ${attempt}/${maxAttempts} failed`, e);
     }
   }
+
+  // A newer full search has since taken over - it already renders its
+  // own decode card / suggestions, so bail out rather than clobbering
+  // that fresher state with a response computed before it started.
+  if (searchGeneration !== guardGeneration) return;
 
   if (json) {
     paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
@@ -3946,6 +3958,17 @@ function setFlightPricesLoading(isLoading) {
 async function repriceAndRenderFlights() {
   if (!hasActiveSearchResults() || !lastSearchPayload) return;
 
+  // Snapshot so we can tell, once the request resolves, whether a fresh
+  // handleSearch() (Search button, not this reprice-only flow) has since
+  // replaced outboundAll/returnAll with a whole new flight list. Without
+  // this, applying repricedOutbound[i]/repricedReturn[i] by array INDEX
+  // onto a since-replaced outboundAll/returnAll silently pairs each new
+  // flight with some other flight's reprice data (Kapil, 2026-08-21:
+  // changing payment methods then immediately hitting Search left the
+  // results in a broken, single-column state - root cause was this race,
+  // not a CSS issue).
+  const guardGeneration = searchGeneration;
+
   setFlightPricesLoading(true);
 
   try {
@@ -3983,6 +4006,14 @@ async function repriceAndRenderFlights() {
     if (!res.ok) throw new Error(`reprice-flights failed: ${res.status}`);
 
     const json = await res.json();
+
+    // A newer full search has since taken over outboundAll/returnAll (and
+    // already owns the loading spinner / results DOM) - applying this
+    // response now would zip stale reprice data onto an unrelated flight
+    // list, purely by array position. See the comment above this
+    // function for why that's silently wrong, not just late.
+    if (searchGeneration !== guardGeneration) return;
+
     const repricedOutbound = Array.isArray(json?.outboundFlights) ? json.outboundFlights : [];
     const repricedReturn = Array.isArray(json?.returnFlights) ? json.returnFlights : [];
 
@@ -4018,6 +4049,9 @@ async function repriceAndRenderFlights() {
     flashUpdatedPrices(changedFlightKeys);
   } catch (e) {
     console.error("[SkyDeal] reprice-flights failed", e);
+    // A newer search already owns the spinner/results DOM by now - don't
+    // clear a loading state that isn't this call's to clear.
+    if (searchGeneration !== guardGeneration) return;
     // renderOutbound()/renderReturn() above (which would otherwise clear
     // the loading spinner via their full re-render) never ran on this
     // path, so the spinner needs an explicit clear back to the
