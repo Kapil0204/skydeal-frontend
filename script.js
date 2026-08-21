@@ -6518,6 +6518,35 @@ function setMobileReturnFocusAfterOutbound() {
       behavior: "instant",
       block: "start"
     });
+
+    // scrollIntoView alone still isn't enough (caught live, not from
+    // source reading - Kapil feedback: "I see the sairro decode sticky
+    // banner but not the return toggle"). #mobileSearchSummary (the
+    // route bar, position:sticky, z-index:50) and, once its sentinel
+    // crosses the trigger threshold right as this toggle nears the top,
+    // #priceIntelFrozenBanner (the condensed banner, position:fixed,
+    // z-index:55) both stack ABOVE this toggle's own z-index:40 at the
+    // exact same screen position - scrolling the toggle to y:0 just
+    // parks it directly behind them, fully hidden either way. Double rAF
+    // so this runs after both scrollIntoView's own reflow AND the OTHER
+    // scroll listener's rAF-deferred frozen-banner visibility check
+    // (schedulePriceIntelScrollCheck) have settled, then nudge further
+    // by however much of the toggle is still covered.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const summary = document.getElementById("mobileSearchSummary");
+        const frozenBanner = document.getElementById("priceIntelFrozenBanner");
+        const summaryBottom = summary ? summary.getBoundingClientRect().bottom : 0;
+        const bannerBottom = frozenBanner?.classList.contains("is-visible")
+          ? frozenBanner.getBoundingClientRect().bottom
+          : 0;
+        const coveredUntil = Math.max(summaryBottom, bannerBottom, 0);
+        const tabsTop = tabs.getBoundingClientRect().top;
+        if (tabsTop < coveredUntil) {
+          window.scrollBy(0, tabsTop - coveredUntil);
+        }
+      });
+    });
   }, 220);
 }
 
