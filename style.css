@@ -218,17 +218,21 @@ body{
 @media (max-width: 640px){
   .route-fields{
     grid-template-columns: 1fr;
-    gap:28px;
+    gap:32px;
   }
 
-  /* Stacked layout: the seam is now horizontal, between the bottom of
-     From's input and the top of To's label - center on that instead of
-     the fixed desktop offset. */
+  /* Stacked layout: From and To are now two equal-height rows (identical
+     markup: label text + 6px gap + input), so the seam between them sits
+     exactly at the container's own vertical midpoint regardless of the
+     exact label/input pixel heights - top:50% is exact here, not a guess,
+     unlike bottom:-22px (previous version), which anchored to the bottom
+     of the whole From+To block and landed the button on the NEXT row
+     (Depart/Return) instead of between From and To (Kapil, 2026-08-22,
+     live on production). */
   .swap-route-btn{
-    top:auto;
-    bottom:-22px;
+    top:50%;
     left:50%;
-    transform:translate(-50%, 0);
+    transform:translate(-50%, -50%);
   }
 
   .swap-icon-h{
