@@ -151,6 +151,95 @@ body{
   align-items:start;
 }
 
+/* From/To wrapped together (not left as two direct .grid children) so the
+   swap button below has a shared box to center itself against - spans 2 of
+   the parent .grid's 4 tracks, leaving Depart/Return exactly where they
+   already sat. */
+.route-fields{
+  position:relative;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  grid-column: span 2;
+}
+
+/* MMT-style ⇄ swap control, floated on the seam between From and To.
+   Anchored to the input row (not the "From"/"To" label text above it) via
+   the fixed top offset - label text + its 6px gap consistently puts the
+   input row's vertical center ~29px down (matches label/.pax-field's
+   gap:6px + this input's own line-height/padding). */
+.swap-route-btn{
+  position:absolute;
+  top:29px;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:32px;
+  height:32px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--muted);
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  z-index:1;
+  transition:transform 0.18s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.swap-route-btn:hover{
+  color:var(--text);
+  border-color:var(--accent, var(--line));
+}
+
+/* Desktop shows the horizontal icon, mobile (below) swaps to the vertical
+   one - two separate straight symmetric paths, not one path rotated by
+   CSS, since a diagonal glyph distorts into something illegible at 90deg. */
+.swap-icon-v{
+  display:none;
+}
+
+/* animation (not a static transform toggled by a class) so it always
+   plays forward from 0 and settles back there on its own - a plain
+   "transform:rotate(180deg) while .is-swapping" state would need the
+   class removed again afterward or every click past the first is a
+   silent no-op, stuck at 180deg forever. */
+@keyframes swap-spin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(180deg); }
+}
+
+.swap-route-btn.is-swapping svg{
+  animation:swap-spin 0.3s ease;
+}
+
+@media (max-width: 640px){
+  .route-fields{
+    grid-template-columns: 1fr;
+    gap:28px;
+  }
+
+  /* Stacked layout: the seam is now horizontal, between the bottom of
+     From's input and the top of To's label - center on that instead of
+     the fixed desktop offset. */
+  .swap-route-btn{
+    top:auto;
+    bottom:-22px;
+    left:50%;
+    transform:translate(-50%, 0);
+  }
+
+  .swap-icon-h{
+    display:none;
+  }
+
+  .swap-icon-v{
+    display:block;
+  }
+}
+
 label, .pax-field{
   display:flex;
   flex-direction:column;

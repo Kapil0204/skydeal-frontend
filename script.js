@@ -1106,6 +1106,25 @@ function wireLocationAutocomplete(inputEl, boxEl) {
   });
 }
 
+// MMT-style ⇄ button between From/To - swaps the two raw input values, same
+// as wirePopularRoutes() below does when filling them, since nothing else
+// keys off which field was typed into first (resolveLocationToCode() reads
+// the displayed text at search time regardless of origin).
+function wireRouteSwap() {
+  const btn = document.getElementById("swapRouteBtn");
+  if (!btn || !fromInput || !toInput) return;
+
+  btn.addEventListener("click", () => {
+    const temp = fromInput.value;
+    fromInput.value = toInput.value;
+    toInput.value = temp;
+
+    btn.classList.remove("is-swapping");
+    void btn.offsetWidth;
+    btn.classList.add("is-swapping");
+  });
+}
+
 // One-click "Popular routes" pills shown on the pre-search empty state -
 // fills From/To and runs the search immediately, same as MMT's "recent
 // searches" quick-pick behavior, since SkyDeal has no search history of
@@ -8930,6 +8949,7 @@ ensureMobilePriceIntelPlacement();
 wire();
 wireLocationAutocomplete(fromInput, fromSuggestions);
 wireLocationAutocomplete(toInput, toSuggestions);
+wireRouteSwap();
 wirePaxSelector();
 wirePopularRoutes();
 updatePaymentButtonLabel();

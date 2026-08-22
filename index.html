@@ -235,6 +235,7 @@
       </div>
 
       <div class="grid">
+        <div class="route-fields">
         <label class="location-field">From
   <input id="fromInput" placeholder="Search city or airport" autocomplete="off" />
   <div id="fromSuggestions" class="location-suggestions"></div>
@@ -244,6 +245,22 @@
   <input id="toInput" placeholder="Search city or airport" autocomplete="off" />
   <div id="toSuggestions" class="location-suggestions"></div>
 </label>
+        <button type="button" id="swapRouteBtn" class="swap-route-btn" aria-label="Swap origin and destination" title="Swap origin and destination">
+          <!-- Two separate icons, not one CSS-rotated path - a diagonal
+               swap glyph distorts into something unreadable at 90deg, so
+               desktop's horizontal (⇄-style) and mobile's stacked vertical
+               (⇅-style) layout each get their own straight, symmetric
+               opposing-arrows icon instead. -->
+          <svg class="swap-icon-h" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 8h15m0 0-4-4m4 4-4 4" />
+            <path d="M21 16H6m0 0 4 4m-4-4 4-4" />
+          </svg>
+          <svg class="swap-icon-v" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3v15m0 0-4-4m4 4 4-4" />
+            <path d="M16 21V6m0 0-4 4m4-4 4 4" />
+          </svg>
+        </button>
+        </div>
 
         <label>Depart
           <input id="departInput" type="date" />
