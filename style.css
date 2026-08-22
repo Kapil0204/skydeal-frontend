@@ -215,34 +215,12 @@ body{
   animation:swap-spin 0.3s ease;
 }
 
-@media (max-width: 640px){
-  .route-fields{
-    grid-template-columns: 1fr;
-    gap:32px;
-  }
-
-  /* Stacked layout: From and To are now two equal-height rows (identical
-     markup: label text + 6px gap + input), so the seam between them sits
-     exactly at the container's own vertical midpoint regardless of the
-     exact label/input pixel heights - top:50% is exact here, not a guess,
-     unlike bottom:-22px (previous version), which anchored to the bottom
-     of the whole From+To block and landed the button on the NEXT row
-     (Depart/Return) instead of between From and To (Kapil, 2026-08-22,
-     live on production). */
-  .swap-route-btn{
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%);
-  }
-
-  .swap-icon-h{
-    display:none;
-  }
-
-  .swap-icon-v{
-    display:block;
-  }
-}
+/* Kapil, 2026-08-23: keep From/To side by side on mobile too, not
+   stacked - .route-fields' base 2-column rule above already does this,
+   so nothing mobile-specific is needed for layout. Fields just get
+   narrower (~155px each on a 375px phone); the placeholder text truncates,
+   which is an acceptable tradeoff at this width and matches how compact
+   this box already reads (MMT's own mobile search bar does the same). */
 
 label, .pax-field{
   display:flex;
