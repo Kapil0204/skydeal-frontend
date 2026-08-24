@@ -4668,7 +4668,20 @@ function renderPrimaryDecodeMessageHtml(msg) {
   const parts = [];
 
   parts.push(`<span class="decode-primary-tag${tagClass}">${safeText(msg.tag || "")}</span>`);
-  parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}</div>`);
+
+  // Crisp-card asterisk: warning/tip/mirror/upsell are all supplementary
+  // caveats or bonus facts - never required to understand the heading,
+  // price, or the button right below them - so they collapse into one
+  // on-demand detail behind an asterisk on the heading instead of always-
+  // visible paragraphs. `message` stays visible unconditionally: it's
+  // often the direct lead-in to the CTA button ("Comfortable with EMI?
+  // ICICI Credit Card EMI saves 12% instead."), not decoration.
+  const detailParts = [msg.warning, msg.mirror, msg.upsell, msg.tip].filter(Boolean);
+  const infoMark = detailParts.length
+    ? `<span class="decode-info-mark" tabindex="0" role="button" aria-label="More detail">*<span class="decode-info-pop">${detailParts.map((d) => `<div>${safeText(d)}</div>`).join("")}</span></span>`
+    : "";
+
+  parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}${infoMark}</div>`);
 
   if (Number.isFinite(msg.priceNow)) {
     const wasPart = Number.isFinite(msg.priceWas) && msg.priceWas > msg.priceNow
@@ -4683,27 +4696,6 @@ function renderPrimaryDecodeMessageHtml(msg) {
   }
 
   parts.push(`<div class="decode-primary-body">${safeText(msg.message)}</div>`);
-
-  if (msg.upsell) {
-    parts.push(`<div class="decode-primary-upsell">${safeText(msg.upsell)}</div>`);
-  }
-  if (msg.mirror) {
-    parts.push(`<div class="decode-primary-mirror">${safeText(msg.mirror)}</div>`);
-  }
-
-  // Warning renders BEFORE the CTA/skip row (moved 2026-08-12, copy audit) -
-  // it qualifies the message/mirror text just above it (e.g. "Estimated
-  // only - the fare shown today may not match Monday's price" describes
-  // the future-offer estimate in the body message, not whatever CTA
-  // happens to render next). Sitting after the CTA read as a caveat on
-  // the button just clicked, which is often about a completely different,
-  // real-and-live offer (e.g. an EMI Add button) - a live screenshot
-  // caught exactly this (Kapil, 2026-08-12). Tip stays AFTER the CTA,
-  // deliberately - it's usually a direct reply to that same CTA (e.g.
-  // "Not into EMI? ...").
-  if (msg.warning) {
-    parts.push(`<div class="decode-primary-warning">${safeText(msg.warning)}</div>`);
-  }
 
   if (msg.cta) {
     // A suggestion that only REFINES an already-selected same bank+type
@@ -4754,6 +4746,19 @@ function wirePrimaryDecodeMessageButtons(host) {
   // search/re-search, so a captured reference would silently go stale
   // and the button would act on a previous search's data.
   host.addEventListener("click", (e) => {
+    // Tap-to-toggle for the crisp-card asterisk - desktop already reveals
+    // it on hover via CSS (@media (hover:hover)), so this only matters on
+    // tap devices, but runs unconditionally rather than branching on a
+    // detected "isMobile" flag (viewport width isn't the same thing as
+    // having a hover-capable pointer).
+    const mark = e.target.closest(".decode-info-mark");
+    if (mark) {
+      const wasOpen = mark.getAttribute("data-open") === "true";
+      host.querySelectorAll(".decode-info-mark").forEach((m) => m.setAttribute("data-open", "false"));
+      mark.setAttribute("data-open", wasOpen ? "false" : "true");
+      return;
+    }
+
     const btn = e.target.closest("[data-cta-kind]");
     if (!btn) return;
 
@@ -4772,6 +4777,13 @@ function wirePrimaryDecodeMessageButtons(host) {
 
     const matched = findMatchingSuggestion(lastPrimaryDecodeMessage?.cta?.paymentMethod);
     if (matched) applyPaymentSuggestion(matched);
+  });
+
+  // Closes an open info-mark when tapping/clicking anywhere else on the
+  // page - attached once (host itself is only wired once, guarded above).
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".decode-info-mark")) return;
+    host.querySelectorAll(".decode-info-mark[data-open=\"true\"]").forEach((m) => m.setAttribute("data-open", "false"));
   });
 }
 

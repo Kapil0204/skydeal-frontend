@@ -13025,6 +13025,69 @@ body {
   margin-bottom: 4px;
 }
 
+/* Crisp-card asterisk (2026-08-24): the heading + price + message stay the
+   visible "important bullet point"; warning/tip/mirror/upsell - all
+   supplementary caveats/bonuses, never required to understand the primary
+   action - collapse into one on-demand detail instead of always-visible
+   paragraphs. Desktop reveals on hover (pointer:fine); tap devices toggle
+   via one delegated click handler (wirePrimaryDecodeMessageButtons) - no
+   JS viewport/mobile detection needed either way. */
+.decode-info-mark {
+  display: inline-flex;
+  align-items: baseline;
+  position: relative;
+  font-weight: 800;
+  color: var(--accent2);
+  cursor: pointer;
+  padding: 0 2px;
+  margin-left: 1px;
+}
+
+.decode-info-mark:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.decode-info-pop {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  /* Anchored from the mark's RIGHT edge, extending leftward - the mark
+     always trails the heading text (its right side), so this stays in
+     bounds regardless of card/viewport width; anchoring from the left
+     edge instead clipped off the right side of narrow (mobile) cards
+     since the mark itself sits near the right of a long heading line. */
+  right: 0;
+  width: 260px;
+  max-width: 80vw;
+  background: var(--gray-900);
+  color: #e8eaf0;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.decode-info-pop > div + div {
+  margin-top: 6px;
+}
+
+@media (hover: hover) {
+  .decode-info-mark:hover .decode-info-pop,
+  .decode-info-mark:focus-visible .decode-info-pop {
+    display: block;
+  }
+}
+
+.decode-info-mark[data-open="true"] .decode-info-pop {
+  display: block;
+}
+
 .decode-primary-price-row {
   display: flex;
   align-items: baseline;
