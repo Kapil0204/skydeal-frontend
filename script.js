@@ -816,6 +816,14 @@ let guideLoadingPhase = "suggestions"; // "repricing" | "suggestions"
 let paymentSuggestions = [];
 const dismissedSuggestionKeys = new Set(); // cleared only on a brand-new search
 
+// "Already selected, second-best-eligible" methods (backend, 2026-08-24) -
+// e.g. the user selected both ICICI and HDFC EMI, HDFC EMI wins, but ICICI
+// still has its own real (smaller) discount. Kept separate from
+// paymentSuggestions since these aren't "add a new method" suggestions -
+// both methods are already selected - and must never be mistaken for one
+// by the backend's own tier1/tier2 decode-message hierarchy.
+let preferSelectedSuggestions = [];
+
 // Phase 3 - timing insights from the same /payment-suggestions response
 // (at most one "urgent" + one "future", see backend PAYMENT_TIMING_CONFIG).
 // Rendered as a small, separate section - never replaces the Phase 1/2
@@ -3863,6 +3871,7 @@ async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
 
   if (json) {
     paymentSuggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
+    preferSelectedSuggestions = Array.isArray(json?.preferSelectedSuggestions) ? json.preferSelectedSuggestions : [];
     paymentTimingInsights = Array.isArray(json?.timingInsights) ? json.timingInsights : [];
     lastGuideSummary = json?.summary || null;
     lastGuideCurrentBestPrice = Number.isFinite(json?.currentBestPrice) ? json.currentBestPrice : null;
@@ -3878,6 +3887,7 @@ async function fetchPaymentSuggestions(loadingPhase = "suggestions") {
     paymentGuideState = "ready";
   } else {
     paymentSuggestions = [];
+    preferSelectedSuggestions = [];
     paymentTimingInsights = [];
     lastGuideTruncated = false;
     lastPrimaryDecodeMessage = buildOfflineFallbackDecodeMessage();
@@ -4423,6 +4433,15 @@ function renderGuideSuggestionCardHtml(s, idx) {
     ? `${methodLabel} lowers the price on ${affectedFlights} flight${affectedFlights === 1 ? "" : "s"} in this search.`
     : "";
 
+  // A suggestion that only REFINES an already-selected same bank+type
+  // method (a different network/card-variant/corporate flag - see backend
+  // refinesSelected) is a "confirm this detail?" ask, not an "add a new
+  // method?" one - Yes/No reads honestly, "Add"/"Not for me" would imply
+  // the user doesn't already have this bank+type selected at all.
+  const isConfirm = s.refinesSelected === true;
+  const primaryLabel = isConfirm ? "Yes, I have it" : (s.primaryActionLabel || "Add");
+  const dismissLabel = isConfirm ? "No, thanks" : "Not for me";
+
   return `
     <div class="payment-guide-suggestion">
       <div class="payment-guide-suggestion-row">
@@ -4433,8 +4452,8 @@ function renderGuideSuggestionCardHtml(s, idx) {
           ${suggestionMessage ? `<div class="payment-guide-suggestion-message">${suggestionMessage}</div>` : ""}
         </div>
         <div class="payment-guide-suggestion-actions">
-          <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${s.primaryActionLabel || "Add"}</button>
-          <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">Not for me</button>
+          <button type="button" class="payment-guide-add-btn" data-suggestion-idx="${idx}">${primaryLabel}</button>
+          <button type="button" class="payment-guide-dismiss-btn" data-suggestion-idx="${idx}">${dismissLabel}</button>
         </div>
       </div>
     </div>
@@ -4626,6 +4645,24 @@ function decodePrimaryTagClass(msg) {
   return "";
 }
 
+// Re-finds the FULL suggestion object (refinesSelected/additionalSaving/
+// etc.) for a {type, name, tenureMonths} pointer like msg.cta.paymentMethod
+// - the primary decode message's cta only ever carries the pointer, not
+// the full suggestion, so both the renderer (to pick Yes/No vs Add/Not-
+// for-me copy) and the click wiring (to call applyPaymentSuggestion) need
+// to look it up the same way.
+function findMatchingSuggestion(pm) {
+  if (!pm) return null;
+  return (
+    paymentSuggestions.find(
+      (s) =>
+        String(s.paymentMethod?.type || "").toLowerCase() === String(pm.type || "").toLowerCase() &&
+        String(s.paymentMethod?.name || "").toLowerCase() === String(pm.name || "").toLowerCase() &&
+        (s.paymentMethod?.tenureMonths ?? null) === (pm.tenureMonths ?? null)
+    ) || null
+  );
+}
+
 function renderPrimaryDecodeMessageHtml(msg) {
   const tagClass = decodePrimaryTagClass(msg);
   const parts = [];
@@ -4669,10 +4706,22 @@ function renderPrimaryDecodeMessageHtml(msg) {
   }
 
   if (msg.cta) {
+    // A suggestion that only REFINES an already-selected same bank+type
+    // method (a different network/card-variant/corporate flag) is a
+    // "confirm this detail?" ask, not an "add a new method?" one -
+    // Yes/No as two equal-weight buttons reads honestly, since the user
+    // already has this bank+type selected; "Add X"/a subtle skip link
+    // would wrongly imply they don't. See backend refinesSelected field.
+    const matched = findMatchingSuggestion(msg.cta.paymentMethod);
+    const isConfirm = matched?.refinesSelected === true;
+    const primaryLabel = isConfirm ? "Yes, I have it" : msg.cta.label;
+    const secondaryLabel = isConfirm ? "No, thanks" : msg.skip;
+    const secondaryClass = isConfirm ? "decode-primary-confirm-no" : "decode-primary-skip";
+
     parts.push(`
       <div class="decode-primary-actions">
-        <button type="button" class="payment-guide-add-btn" data-cta-kind="method">${safeText(msg.cta.label)}</button>
-        ${msg.skip ? `<button type="button" class="decode-primary-skip" data-cta-kind="skip">${safeText(msg.skip)}</button>` : ""}
+        <button type="button" class="payment-guide-add-btn" data-cta-kind="method">${safeText(primaryLabel)}</button>
+        ${secondaryLabel ? `<button type="button" class="${secondaryClass}" data-cta-kind="skip">${safeText(secondaryLabel)}</button>` : ""}
       </div>
     `);
   } else if (msg.ctaGeneric) {
@@ -4690,9 +4739,9 @@ function renderPrimaryDecodeMessageHtml(msg) {
   return parts.join("\n");
 }
 
-// Tier 2's cta only carries {label, paymentMethod} - re-finds the FULL
-// suggestion object (additionalSaving/newBestPrice/affectedFlights etc.)
-// from the same-request paymentSuggestions array so it can reuse
+// Tier 2's cta only carries {label, paymentMethod} - findMatchingSuggestion
+// re-finds the FULL suggestion object (additionalSaving/newBestPrice/
+// affectedFlights/refinesSelected etc.) so this can reuse
 // applyPaymentSuggestion() exactly as the old suggestion cards did,
 // rather than duplicating that accept-suggestion logic here.
 function wirePrimaryDecodeMessageButtons(host) {
@@ -4721,17 +4770,80 @@ function wirePrimaryDecodeMessageButtons(host) {
       return;
     }
 
-    const pm = lastPrimaryDecodeMessage?.cta?.paymentMethod;
-    if (!pm) return;
-
-    const matched = paymentSuggestions.find(
-      (s) =>
-        String(s.paymentMethod?.type || "").toLowerCase() === String(pm.type || "").toLowerCase() &&
-        String(s.paymentMethod?.name || "").toLowerCase() === String(pm.name || "").toLowerCase() &&
-        (s.paymentMethod?.tenureMonths ?? null) === (pm.tenureMonths ?? null)
-    );
-
+    const matched = findMatchingSuggestion(lastPrimaryDecodeMessage?.cta?.paymentMethod);
     if (matched) applyPaymentSuggestion(matched);
+  });
+}
+
+// preferSelectedSuggestions (backend, 2026-08-24) - methods the user ALREADY
+// selected that have their own real (smaller) discount, just not the one
+// currently winning. Rendered as an ADDITIONAL "+1 more way" block below
+// whichever primary message/suggestion card already rendered, never instead
+// of it - reuses the exact same collapsed pattern the "add a method"
+// suggestions use, so it never looks like a new UI concept.
+function renderPreferSelectedBlockHtml() {
+  if (!Array.isArray(preferSelectedSuggestions) || preferSelectedSuggestions.length === 0) return "";
+
+  return preferSelectedSuggestions
+    .map((s, idx) => {
+      const amount = Number.isFinite(s.additionalSaving) ? money(s.additionalSaving) : "";
+      return `
+        <details class="payment-guide-more-details">
+          <summary class="payment-guide-more-toggle">+1 more way to save${amount ? ` ${amount}` : ""}</summary>
+          <div class="payment-guide-suggestion">
+            <div class="payment-guide-suggestion-row">
+              <div class="payment-guide-suggestion-text">
+                <div class="payment-guide-suggestion-heading">${safeText(s.heading)}</div>
+                ${s.message ? `<div class="payment-guide-suggestion-message">${safeText(s.message)}</div>` : ""}
+              </div>
+              <div class="payment-guide-suggestion-actions">
+                <button type="button" class="payment-guide-add-btn" data-prefer-idx="${idx}">${safeText(s.primaryActionLabel || "Use instead")}</button>
+              </div>
+            </div>
+          </div>
+        </details>
+      `;
+    })
+    .join("");
+}
+
+// "Use X instead" - both methods are already genuinely selected (this
+// isn't an "add a new method" action), so it swaps which one pricing
+// actually uses by removing every OTHER selected method and keeping only
+// this one - reuses the same toggleSelected/syncPaymentMethodsPostSearch
+// primitives the payment picker itself uses, no new mutation path. An
+// EMI-typed suggestion maps back onto the real Credit-Card-plus-toggle
+// selection model (selectedPaymentMethods never stores a bare "EMI"
+// entry on its own - see buildSearchPaymentMethods) instead of pushing an
+// entry the rest of the UI wouldn't recognize.
+function usePreferredMethodInstead(pm) {
+  if (!pm?.name) return;
+  const targetType = pm.type === "EMI" ? "Credit Card" : pm.type;
+
+  for (const other of [...selectedPaymentMethods]) {
+    const isTarget =
+      String(other.type || "").toLowerCase() === String(targetType || "").toLowerCase() &&
+      String(other.name || "").toLowerCase().trim() === String(pm.name || "").toLowerCase().trim();
+    if (isTarget) continue;
+    toggleSelected(other.type, other.name, false);
+  }
+
+  if (!isSelected(targetType, pm.name)) toggleSelected(targetType, pm.name, true);
+  if (pm.type === "EMI") includeEmiOffers = true;
+
+  syncPaymentMethodsPostSearch();
+}
+
+function wirePreferSelectedButtons(host) {
+  if (!host) return;
+  host.querySelectorAll("[data-prefer-idx]").forEach((btn) => {
+    if (btn.dataset.wired) return;
+    btn.dataset.wired = "1";
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.preferIdx);
+      const s = preferSelectedSuggestions[idx];
+      if (s?.paymentMethod) usePreferredMethodInstead(s.paymentMethod);
+    });
   });
 }
 
@@ -4778,8 +4890,12 @@ function renderPaymentGuideCardInner() {
   if (paymentGuideState === "ready") {
     if (lastPrimaryDecodeMessage) {
       container.classList.add("guide-replacing");
-      setGuideDynamicHtml(dynamicHost, renderPrimaryDecodeMessageHtml(lastPrimaryDecodeMessage));
+      setGuideDynamicHtml(
+        dynamicHost,
+        renderPrimaryDecodeMessageHtml(lastPrimaryDecodeMessage) + renderPreferSelectedBlockHtml()
+      );
       wirePrimaryDecodeMessageButtons(dynamicHost);
+      wirePreferSelectedButtons(dynamicHost);
       return;
     }
 
@@ -4787,17 +4903,19 @@ function renderPaymentGuideCardInner() {
 
     if (visible.length === 0) {
       container.classList.add("guide-replacing");
-      setGuideDynamicHtml(dynamicHost, renderGuideOptimisedHtml());
+      setGuideDynamicHtml(dynamicHost, renderGuideOptimisedHtml() + renderPreferSelectedBlockHtml());
       // Exactly one of these finds its button and wires it - which one
       // depends on lastGuideTruncated (see renderGuideOptimisedHtml).
       wireGuideCheckMoreButton(dynamicHost);
       wireGuideAddMethodButton(dynamicHost);
+      wirePreferSelectedButtons(dynamicHost);
       return;
     }
 
     container.classList.add("guide-replacing");
-    setGuideDynamicHtml(dynamicHost, renderGuideSuggestionsHtml(visible));
+    setGuideDynamicHtml(dynamicHost, renderGuideSuggestionsHtml(visible) + renderPreferSelectedBlockHtml());
     wireGuideSuggestionButtons(dynamicHost, visible);
+    wirePreferSelectedButtons(dynamicHost);
     return;
   }
 

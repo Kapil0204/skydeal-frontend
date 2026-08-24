@@ -13087,6 +13087,27 @@ body {
   cursor: pointer;
 }
 
+/* A "confirm this detail?" ask (refinesSelected) reads as two equal real
+   choices, not a primary action next to a subtle escape link - reuses the
+   same button shape as .payment-guide-add-btn, just outlined/neutral. */
+.decode-primary-confirm-no {
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 750;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.decode-primary-confirm-no:hover {
+  background: var(--gray-200);
+}
+
 .decode-primary-warning {
   font-size: var(--fs-sm);
   color: var(--danger);
@@ -13145,6 +13166,16 @@ body {
 
 .price-intel-hero .decode-primary-skip {
   color: rgba(255, 255, 255, 0.65);
+}
+
+.price-intel-hero .decode-primary-confirm-no {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.price-intel-hero .decode-primary-confirm-no:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .price-intel-hero .decode-primary-warning {
