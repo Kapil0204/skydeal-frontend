@@ -4678,7 +4678,7 @@ function renderPrimaryDecodeMessageHtml(msg) {
   // ICICI Credit Card EMI saves 12% instead."), not decoration.
   const detailParts = [msg.warning, msg.mirror, msg.upsell, msg.tip].filter(Boolean);
   const infoMark = detailParts.length
-    ? `<span class="decode-info-mark" tabindex="0" role="button" aria-label="More detail">*<span class="decode-info-pop">${detailParts.map((d) => `<div>${safeText(d)}</div>`).join("")}</span></span>`
+    ? `<span class="decode-info-mark" tabindex="0" role="button" aria-label="More detail">i<span class="decode-info-pop">${detailParts.map((d) => `<div>${safeText(d)}</div>`).join("")}</span></span>`
     : "";
 
   parts.push(`<div class="decode-primary-heading">${safeText(msg.heading)}${infoMark}</div>`);
@@ -4736,9 +4736,97 @@ function renderPrimaryDecodeMessageHtml(msg) {
 // affectedFlights/refinesSelected etc.) so this can reuse
 // applyPaymentSuggestion() exactly as the old suggestion cards did,
 // rather than duplicating that accept-suggestion logic here.
+
+// Single shared dark backdrop for the info-pop's "bottom sheet" mode
+// (narrow viewports) - created once and reused, not per-render.
+let _infoBackdropEl = null;
+function getInfoBackdrop() {
+  if (_infoBackdropEl) return _infoBackdropEl;
+  const el = document.createElement("div");
+  el.className = "decode-info-backdrop";
+  document.body.appendChild(el);
+  el.addEventListener("click", () => closeInfoPop());
+  _infoBackdropEl = el;
+  return el;
+}
+
+let _openInfoMark = null;
+
+// Computed placement, not a fixed CSS rule - real feedback was that the
+// popover overlapped the price/message text right below the heading.
+// Floats BESIDE the marker (reusing real unused space) when the viewport
+// actually has room there; otherwise becomes a bottom sheet (mobile) so
+// it always floats clear of the page instead of guessing at free space
+// that isn't there.
+function positionInfoPop(mark) {
+  const pop = mark.querySelector(".decode-info-pop");
+  if (!pop) return;
+
+  const backdrop = getInfoBackdrop();
+  const rect = mark.getBoundingClientRect();
+  const popWidth = 260;
+  const margin = 16;
+  const spaceRight = window.innerWidth - rect.right;
+
+  pop.classList.add("is-open");
+
+  // Raw horizontal space alone isn't enough: on a narrow single-column
+  // mobile layout the marker can wrap onto its own short line, leaving
+  // plenty of pixels to its right on paper - but that's not real unused
+  // space, it's the same column other text already occupies above and
+  // below. Gating on the app's own mobile breakpoint (matches
+  // .decode-avatar's) avoids "beside" placement ever landing on top of
+  // stacked content in that layout.
+  if (window.innerWidth > 760 && spaceRight >= popWidth + margin * 2) {
+    pop.classList.remove("is-sheet");
+    backdrop.classList.remove("is-open");
+    const popHeight = pop.offsetHeight;
+    let top = rect.top - 6;
+    top = Math.max(margin, Math.min(top, window.innerHeight - popHeight - margin));
+    pop.style.top = `${top}px`;
+    pop.style.left = `${rect.right + 12}px`;
+    pop.style.right = "auto";
+  } else {
+    pop.classList.add("is-sheet");
+    backdrop.classList.add("is-open");
+    pop.style.top = "auto";
+    pop.style.left = "16px";
+  }
+}
+
+function closeInfoPop() {
+  if (_openInfoMark) {
+    _openInfoMark.setAttribute("data-open", "false");
+    _openInfoMark.querySelector(".decode-info-pop")?.classList.remove("is-open", "is-sheet");
+  }
+  getInfoBackdrop().classList.remove("is-open");
+  _openInfoMark = null;
+}
+
+function openInfoPop(mark) {
+  if (_openInfoMark && _openInfoMark !== mark) closeInfoPop();
+  mark.setAttribute("data-open", "true");
+  _openInfoMark = mark;
+  positionInfoPop(mark);
+}
+
 function wirePrimaryDecodeMessageButtons(host) {
   if (!host || host.dataset.wired) return;
   host.dataset.wired = "1";
+
+  // Desktop hover - opens/closes via real mouseenter/mouseleave (not CSS
+  // :hover) since correct placement needs the marker's live screen
+  // position, which only JS can measure. mouseover/mouseout bubble (unlike
+  // mouseenter/mouseleave), so this is delegated on the host and filters
+  // by relatedTarget to detect genuine enter/exit of the marker itself.
+  host.addEventListener("mouseover", (e) => {
+    const mark = e.target.closest(".decode-info-mark");
+    if (mark && !mark.contains(e.relatedTarget)) openInfoPop(mark);
+  });
+  host.addEventListener("mouseout", (e) => {
+    const mark = e.target.closest(".decode-info-mark");
+    if (mark && !mark.contains(e.relatedTarget)) closeInfoPop();
+  });
 
   // Reads lastPrimaryDecodeMessage fresh on every click rather than
   // capturing it in this closure - the host div persists and is only
@@ -4746,16 +4834,11 @@ function wirePrimaryDecodeMessageButtons(host) {
   // search/re-search, so a captured reference would silently go stale
   // and the button would act on a previous search's data.
   host.addEventListener("click", (e) => {
-    // Tap-to-toggle for the crisp-card asterisk - desktop already reveals
-    // it on hover via CSS (@media (hover:hover)), so this only matters on
-    // tap devices, but runs unconditionally rather than branching on a
-    // detected "isMobile" flag (viewport width isn't the same thing as
-    // having a hover-capable pointer).
+    // Tap-to-toggle for touch devices, where there's no hover event at all.
     const mark = e.target.closest(".decode-info-mark");
     if (mark) {
-      const wasOpen = mark.getAttribute("data-open") === "true";
-      host.querySelectorAll(".decode-info-mark").forEach((m) => m.setAttribute("data-open", "false"));
-      mark.setAttribute("data-open", wasOpen ? "false" : "true");
+      if (_openInfoMark === mark) closeInfoPop();
+      else openInfoPop(mark);
       return;
     }
 
@@ -4783,8 +4866,21 @@ function wirePrimaryDecodeMessageButtons(host) {
   // page - attached once (host itself is only wired once, guarded above).
   document.addEventListener("click", (e) => {
     if (e.target.closest(".decode-info-mark")) return;
-    host.querySelectorAll(".decode-info-mark[data-open=\"true\"]").forEach((m) => m.setAttribute("data-open", "false"));
+    closeInfoPop();
   });
+
+  // A fresh render replaces #paymentGuideDynamic's innerHTML wholesale
+  // (see setGuideDynamicHtml), which would silently detach whatever
+  // .decode-info-mark _openInfoMark still points at - drop the stale
+  // reference (and hide the shared backdrop) so a leftover reference
+  // from the PREVIOUS render can't be reused against new content.
+  const observer = new MutationObserver(() => {
+    if (_openInfoMark && !host.contains(_openInfoMark)) {
+      _openInfoMark = null;
+      getInfoBackdrop().classList.remove("is-open");
+    }
+  });
+  observer.observe(host, { childList: true });
 }
 
 // preferSelectedSuggestions (backend, 2026-08-24) - methods the user ALREADY

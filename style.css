@@ -13032,56 +13032,94 @@ body {
    paragraphs. Desktop reveals on hover (pointer:fine); tap devices toggle
    via one delegated click handler (wirePrimaryDecodeMessageButtons) - no
    JS viewport/mobile detection needed either way. */
+/* A round "i" badge reads as a tappable/hoverable info affordance far
+   more clearly than a bare asterisk (real feedback: "isn't visible due
+   to its color and doesn't feel intuitive for hover"). */
 .decode-info-mark {
   display: inline-flex;
-  align-items: baseline;
-  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  color: var(--gray-700);
+  font-size: 10px;
   font-weight: 800;
-  color: var(--accent2);
+  font-style: normal;
+  line-height: 1;
   cursor: pointer;
-  padding: 0 2px;
-  margin-left: 1px;
+  margin-left: 5px;
+  vertical-align: middle;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.decode-info-mark:hover,
+.decode-info-mark[data-open="true"] {
+  background: var(--accent2);
+  color: #fff;
 }
 
 .decode-info-mark:focus-visible {
   outline: 2px solid var(--accent2);
   outline-offset: 2px;
-  border-radius: 3px;
 }
 
+/* Positioned via JS (positionInfoPop in script.js), not CSS top/left -
+   "beside the card" (reusing real unused space on a wide screen) vs "a
+   bottom sheet" (narrow/mobile, where there's no side space to use) need
+   fundamentally different placement, computed from the marker's actual
+   on-screen position and the viewport's actual width - a fixed CSS rule
+   can't know either of those. Always position:fixed so it floats above
+   content instead of pushing/overlapping it either way. */
 .decode-info-pop {
   display: none;
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 8px);
-  /* Anchored from the mark's RIGHT edge, extending leftward - the mark
-     always trails the heading text (its right side), so this stays in
-     bounds regardless of card/viewport width; anchoring from the left
-     edge instead clipped off the right side of narrow (mobile) cards
-     since the mark itself sits near the right of a long heading line. */
-  right: 0;
+  position: fixed;
+  z-index: 200;
   width: 260px;
-  max-width: 80vw;
+  max-width: calc(100vw - 32px);
   background: var(--gray-900);
   color: #e8eaf0;
   font-size: var(--fs-sm);
   font-weight: 500;
   line-height: 1.45;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   text-align: left;
+}
+
+.decode-info-pop.is-open {
+  display: block;
+}
+
+/* Bottom-sheet variant (narrow viewports): full-width, anchored to the
+   bottom edge, rounded only on top - reads as "a sheet slid up", not a
+   floating box guessing at free space that isn't there. */
+.decode-info-pop.is-sheet {
+  left: 16px !important;
+  right: 16px;
+  width: auto;
+  max-width: none;
+  bottom: 16px;
+  top: auto !important;
+  border-radius: var(--radius-md) var(--radius-md) var(--radius-sm) var(--radius-sm);
 }
 
 .decode-info-pop > div + div {
   margin-top: 6px;
 }
 
-@media (hover: hover) {
-  .decode-info-mark:hover .decode-info-pop,
-  .decode-info-mark:focus-visible .decode-info-pop {
-    display: block;
-  }
+.decode-info-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.decode-info-backdrop.is-open {
+  display: block;
 }
 
 .decode-info-mark[data-open="true"] .decode-info-pop {
@@ -13239,6 +13277,16 @@ body {
 
 .price-intel-hero .decode-primary-confirm-no:hover {
   background: rgba(255, 255, 255, 0.14);
+}
+
+.price-intel-hero .decode-info-mark {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.price-intel-hero .decode-info-mark:hover,
+.price-intel-hero .decode-info-mark[data-open="true"] {
+  background: var(--brand-500);
 }
 
 .price-intel-hero .decode-primary-warning {
