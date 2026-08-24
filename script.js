@@ -3071,7 +3071,21 @@ function openBookingHandoffModal({ portal, url, code, legs }) {
   const modal = document.getElementById("bookingHandoffModal");
   const body = document.getElementById("bookingHandoffBody");
   if (!modal || !body) {
-    window.open(url, "_blank", "noopener,noreferrer");
+    // "noopener" only, not "noreferrer" too - Kapil reported Yatra links
+    // sometimes redirecting to its bare homepage with no search performed.
+    // Reproduced Yatra's own Akamai bot-challenge on a cookie-less first
+    // visit (resolves in a few seconds in normal testing, but a stricter
+    // real browser could plausibly fail it and fall back to the homepage).
+    // "noreferrer" was stripping the Referer header entirely, so every
+    // booking click arrived looking like anonymous direct traffic - the
+    // exact profile bot-detection is built to be suspicious of. Dropping
+    // just "noreferrer" restores a normal cross-site Referer (the visible
+    // origin only, per browsers' default referrer-policy - no path/query
+    // leaks), which is what an ordinary affiliate/comparison-site click
+    // actually looks like. "noopener" stays either way - unrelated to
+    // referrer, it's what stops the opened tab from reaching back into
+    // window.opener.
+    window.open(url, "_blank", "noopener");
     return;
   }
 
@@ -3110,7 +3124,21 @@ function openBookingHandoffModal({ portal, url, code, legs }) {
   `;
 
   body.querySelector(".booking-handoff-continue").addEventListener("click", () => {
-    window.open(url, "_blank", "noopener,noreferrer");
+    // "noopener" only, not "noreferrer" too - Kapil reported Yatra links
+    // sometimes redirecting to its bare homepage with no search performed.
+    // Reproduced Yatra's own Akamai bot-challenge on a cookie-less first
+    // visit (resolves in a few seconds in normal testing, but a stricter
+    // real browser could plausibly fail it and fall back to the homepage).
+    // "noreferrer" was stripping the Referer header entirely, so every
+    // booking click arrived looking like anonymous direct traffic - the
+    // exact profile bot-detection is built to be suspicious of. Dropping
+    // just "noreferrer" restores a normal cross-site Referer (the visible
+    // origin only, per browsers' default referrer-policy - no path/query
+    // leaks), which is what an ordinary affiliate/comparison-site click
+    // actually looks like. "noopener" stays either way - unrelated to
+    // referrer, it's what stops the opened tab from reaching back into
+    // window.opener.
+    window.open(url, "_blank", "noopener");
     closeBookingHandoffModal();
   });
 
