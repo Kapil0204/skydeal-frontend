@@ -2256,6 +2256,19 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = "https://www.goibibo.com/flights/";
     }
   } else if (portal.includes("yatra")) {
+    // Yatra has two separate front-end routes for the exact same search -
+    // "dom2" (desktop) and "pwadom_flight" (their own mobile/PWA site) -
+    // every query param is otherwise identical (confirmed 2026-08-24 by
+    // comparing our generated URL against a real one Kapil copied from
+    // his phone's address bar after a live Yatra mobile search). Always
+    // sending "dom2" regardless of device is exactly the mismatch that
+    // was making mobile visits redirect to Yatra's bare homepage instead
+    // of showing results - a mobile browser hitting the desktop-only
+    // route reads as suspicious to their bot-protection. isSkyDealMobileView()
+    // is the same viewport check (max-width:760px) already used
+    // throughout the app for mobile-specific behavior.
+    const yatraRoute = isSkyDealMobileView() ? "pwadom_flight" : "dom2";
+
     if (hasRoundTrip) {
       const params = new URLSearchParams({
         flex: "0",
@@ -2275,7 +2288,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         arrivalDate: retDmy
       });
 
-      url = `https://flight.yatra.com/air-search-ui/dom2/trigger?${params.toString()}`;
+      url = `https://flight.yatra.com/air-search-ui/${yatraRoute}/trigger?${params.toString()}`;
     } else if (hasOneWay) {
       const params = new URLSearchParams({
         flex: "0",
@@ -2294,7 +2307,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         flight_depart_date: departDmy
       });
 
-      url = `https://flight.yatra.com/air-search-ui/dom2/trigger?${params.toString()}`;
+      url = `https://flight.yatra.com/air-search-ui/${yatraRoute}/trigger?${params.toString()}`;
     } else {
       url = "https://www.yatra.com/flights";
     }
