@@ -2182,7 +2182,17 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     ? (payload?.returnDate || payload?.retDate || lastSearchPayload?.returnDate || returnInput?.value || "")
     : "";
 
-  const adults = Number(payload?.passengers || payload?.adults || lastSearchPayload?.passengers || 1) || 1;
+  // adults/children/infants, not payload.passengers (adults+children
+  // combined - see handleSearch()'s payload build) - every portal branch
+  // below used to read passengers straight into its adult-count param and
+  // hardcode children/infants to 0, so a search WITH children silently
+  // folded them into the adult count and charged/booked them as adults on
+  // every portal (Kapil, 2026-08-24). payload?.passengers stays only as
+  // the last-resort fallback for adults, for any caller that somehow
+  // lacks the split fields lastSearchPayload always carries.
+  const adults = Number(payload?.adults ?? lastSearchPayload?.adults ?? payload?.passengers ?? lastSearchPayload?.passengers ?? 1) || 1;
+  const children = Number(payload?.children ?? lastSearchPayload?.children ?? 0) || 0;
+  const infants = Number(payload?.infants ?? lastSearchPayload?.infants ?? 0) || 0;
 
   const departDmy = formatDateForMmtUrl(depart);
   const retDmy = formatDateForMmtUrl(ret);
@@ -2203,9 +2213,9 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
 
   if (portal.includes("makemytrip")) {
     if (hasRoundTrip) {
-      url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${returnFrom}-${returnTo}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+      url = `https://www.makemytrip.com/flight/search?tripType=R&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}_${returnFrom}-${returnTo}-${retDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-${children}_I-${infants}`)}&cabinClass=E`;
     } else if (hasOneWay) {
-      url = `https://www.makemytrip.com/flight/search?tripType=O&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-0_I-0`)}&cabinClass=E`;
+      url = `https://www.makemytrip.com/flight/search?tripType=O&itinerary=${encodeURIComponent(`${from}-${to}-${departDmy}`)}&paxType=${encodeURIComponent(`A-${adults}_C-${children}_I-${infants}`)}&cabinClass=E`;
     } else {
       url = "https://www.makemytrip.com/flights/";
     }
@@ -2224,7 +2234,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       const params = new URLSearchParams({
         tripType: "R",
         itinerary: `${from}-${to}-${departDmy}_${returnFrom}-${returnTo}-${retDmy}`,
-        paxType: `A-${adults}_C-0_I-0`,
+        paxType: `A-${adults}_C-${children}_I-${infants}`,
         cabinClass: "E",
         intl: "false",
         ccde: "IN",
@@ -2235,7 +2245,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       const params = new URLSearchParams({
         tripType: "O",
         itinerary: `${from}-${to}-${departDmy}`,
-        paxType: `A-${adults}_C-0_I-0`,
+        paxType: `A-${adults}_C-${children}_I-${infants}`,
         cabinClass: "E",
         intl: "false",
         ccde: "IN",
@@ -2254,8 +2264,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         type: "R",
         class: "Economy",
         ADT: String(adults),
-        CHD: "0",
-        INF: "0",
+        CHD: String(children),
+        INF: String(infants),
         noOfSegments: "2",
         origin: from,
         originCountry: "IN",
@@ -2274,8 +2284,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         type: "O",
         class: "Economy",
         ADT: String(adults),
-        CHD: "0",
-        INF: "0",
+        CHD: String(children),
+        INF: String(infants),
         noOfSegments: "1",
         origin: from,
         originCountry: "IN",
@@ -2292,7 +2302,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     if (hasRoundTrip) {
       const params = new URLSearchParams({
         srch: `${from}-${fromMeta.emt}|${to}-${toMeta.emt}|${departDmy}-${retDmy}`,
-        px: `${adults}-0-0`,
+        px: `${adults}-${children}-${infants}`,
         cbn: "0",
         ar: "undefined",
         isow: "false",
@@ -2308,7 +2318,7 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     } else if (hasOneWay) {
       const params = new URLSearchParams({
         srch: `${from}-${fromMeta.emt}|${to}-${toMeta.emt}|${departDmy}`,
-        px: `${adults}-0-0`,
+        px: `${adults}-${children}-${infants}`,
         cbn: "0",
         ar: "undefined",
         isow: "true",
@@ -2328,8 +2338,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     if (hasRoundTrip) {
       const params = new URLSearchParams({
         adults: String(adults),
-        childs: "0",
-        infants: "0",
+        childs: String(children),
+        infants: String(infants),
         class: "Economy",
         depart_date: departDmy,
         from,
@@ -2352,8 +2362,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     } else if (hasOneWay) {
       const params = new URLSearchParams({
         adults: String(adults),
-        childs: "0",
-        infants: "0",
+        childs: String(children),
+        infants: String(infants),
         class: "Economy",
         depart_date: departDmy,
         from,
@@ -2393,8 +2403,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         date: departDdmmyyyy,
         returnDate: retDdmmyyyy,
         adults: String(adults),
-        children: "0",
-        infants: "0",
+        children: String(children),
+        infants: String(infants),
         class: "e",
         source: "Search Form",
         utm_source: "seo"
@@ -2406,8 +2416,8 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
         to,
         date: departDdmmyyyy,
         adults: String(adults),
-        children: "0",
-        infants: "0",
+        children: String(children),
+        infants: String(infants),
         class: "e",
         source: "Search Form",
         utm_source: "seo"
