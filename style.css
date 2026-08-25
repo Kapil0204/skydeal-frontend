@@ -12104,17 +12104,26 @@ body {
   /* .pm-holder (this card's actual parent) is a column-flex with
      align-items:flex-start, built for the old shrink-to-fit button -
      grid-column has no effect here since this isn't a direct grid item,
-     so width:100% is what actually makes the card fill the row. */
+     so width:100% is what actually makes the card fill the row.
+     Column layout (2026-08-25) - .payment-prompt-top holds the original
+     row (button/title/count), .payment-privacy-line sits below it as a
+     second row in the SAME card/border, not a separate floating box. */
   width: 100%;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 4px;
   padding: 14px 18px;
   border: 1px solid var(--brand-200);
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--brand-50), #fbf7ff);
   cursor: pointer;
+}
+
+.payment-prompt-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .payment-prompt-btn {
@@ -12171,8 +12180,10 @@ body {
 
 @media (max-width: 760px) {
   .payment-prompt-card {
-    flex-wrap: wrap;
     padding: 12px 14px;
+  }
+  .payment-prompt-top {
+    flex-wrap: wrap;
   }
   .payment-prompt-body {
     order: 3;
@@ -12184,21 +12195,19 @@ body {
 }
 
 /* =====================================================
-   Payment privacy reassurance line (2026-08-25) - sits directly below the
-   payment-prompt-card, at the exact point people hesitate about handing
-   over card details. Deliberately its own quiet strip, not folded into
-   the prompt card's copy, so it reads as a standing reassurance rather
-   than one more thing competing with the main CTA.
+   Payment privacy reassurance line (2026-08-25, restyled to nest inside
+   the card - founder feedback: as a separate bordered box below the
+   card it read as a disconnected element, not part of "payment methods").
+   Now a second row INSIDE payment-prompt-card (see .payment-prompt-card's
+   column layout above), separated only by a thin top divider that
+   matches the card's own border color, so it reads as one contained box.
 ===================================================== */
 .payment-privacy-line {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--success-light, #bbf7d0);
-  background: var(--success-bg, #f0fdf4);
-  border-radius: var(--radius-md);
+  padding-top: 10px;
+  border-top: 1px solid var(--brand-200);
   font-size: var(--fs-sm);
   color: var(--success-text, #15803d);
   line-height: 1.45;
@@ -12249,10 +12258,16 @@ body {
   letter-spacing: -0.01em;
 }
 .skip-payment-sub {
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   font-size: var(--fs-sm);
   color: var(--gray-500);
   line-height: 1.5;
+}
+.skip-payment-privacy-note {
+  margin: 0 0 20px;
+  font-size: var(--fs-2xs);
+  color: var(--success-text, #15803d);
+  font-weight: 600;
 }
 .skip-payment-add-btn {
   width: 100%;
@@ -12298,6 +12313,11 @@ body {
   font-size: var(--fs-sm);
   color: var(--gray-700);
   line-height: 1.45;
+}
+.payment-tour-tip .payment-tour-privacy-note {
+  font-size: var(--fs-2xs);
+  color: var(--success-text, #15803d);
+  font-weight: 600;
 }
 .payment-tour-tip .payment-tour-dismiss {
   background: var(--brand-500);

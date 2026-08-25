@@ -3249,6 +3249,7 @@ function maybeShowPaymentTour() {
   tip.innerHTML = `
     <div class="kicker">Here's the secret</div>
     <p>Same flight, different price for everyone. Add your card or UPI app to see your real price.</p>
+    <p class="payment-tour-privacy-note">🔒 Just the bank/card name — never your card number, CVV or OTP.</p>
     <button type="button" class="payment-tour-dismiss">Got it</button>
     <div style="clear:both"></div>
   `;
@@ -3262,12 +3263,12 @@ function maybeShowPaymentTour() {
   // viewport/scroll state), so this is computed from the real element.
   const tipWidth = Math.min(280, window.innerWidth * 0.84);
   const spaceBelow = window.innerHeight - rect.bottom;
-  const showBelow = spaceBelow > 140;
+  const showBelow = spaceBelow > 165;
   tip.style.position = "absolute";
   tip.style.width = `${tipWidth}px`;
   tip.style.top = showBelow
     ? `${rect.bottom + window.scrollY + 10}px`
-    : `${rect.top + window.scrollY - 132}px`;
+    : `${rect.top + window.scrollY - 160}px`;
   tip.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - tipWidth - 12))}px`;
 
   function dismissTour() {

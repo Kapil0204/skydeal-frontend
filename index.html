@@ -247,19 +247,21 @@
                ensurePaymentEducationNudge() nudge entirely, since a
                permanent core entry point isn't something to dismiss. -->
           <div id="paymentPromptCard" class="payment-prompt-card">
-            <button id="paymentBtn" class="payment-prompt-btn" type="button">
-              <svg class="payment-prompt-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-              <span id="paymentPromptBtnLabel">Add how you pay</span>
-            </button>
-            <div class="payment-prompt-body">
-              <div id="paymentPromptTitle" class="payment-prompt-title">Your final price depends on how you pay</div>
-              <div id="paymentPromptSub" class="payment-prompt-sub">Add your cards, UPI apps or wallets to see your real price</div>
+            <div class="payment-prompt-top">
+              <button id="paymentBtn" class="payment-prompt-btn" type="button">
+                <svg class="payment-prompt-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <span id="paymentPromptBtnLabel">Add how you pay</span>
+              </button>
+              <div class="payment-prompt-body">
+                <div id="paymentPromptTitle" class="payment-prompt-title">Your final price depends on how you pay</div>
+                <div id="paymentPromptSub" class="payment-prompt-sub">Add your cards, UPI apps or wallets to see your real price</div>
+              </div>
+              <span id="paymentPromptCount" class="payment-prompt-count"></span>
             </div>
-            <span id="paymentPromptCount" class="payment-prompt-count"></span>
-          </div>
-          <div class="payment-privacy-line">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-            <span>We only need your bank or card <strong>name</strong> — never your card number, CVV or OTP.</span>
+            <div class="payment-privacy-line">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              <span>We only need your bank or card <strong>name</strong> — never your card number, CVV or OTP.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -727,6 +729,7 @@
       <div class="skip-payment-icon">💳</div>
       <h2 id="skipPaymentTitle">Add a payment method to unlock discounts</h2>
       <p class="skip-payment-sub">We'll instantly check your cards, UPI apps and wallets for live discounts — often ₹500+ off.</p>
+      <p class="skip-payment-privacy-note">🔒 Just the bank/card name — never your card number, CVV or OTP.</p>
       <button id="skipPaymentAddBtn" type="button" class="btn-primary skip-payment-add-btn">Add payment method</button>
       <button id="skipPaymentSkipBtn" type="button" class="skip-payment-skip-btn">Skip for now</button>
     </div>
