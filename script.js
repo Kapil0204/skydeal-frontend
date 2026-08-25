@@ -1493,6 +1493,22 @@ function getPortalCtaLabel(portal) {
   return `Book with ${safeText(portal)}`;
 }
 
+// Real app-icon-style marks (not full wordmark logos) for the
+// portal-compare modal - matches the compact "icon + name" pattern
+// Google Flights uses for its own "Book with X" list (founder reference,
+// 2026-08-25), rather than a bare logo with no label.
+function getPortalLogoUrl(portal) {
+  const n = String(portal || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (!n) return "";
+  if (n.includes("makemytrip")) return "assets/portals/favicons/makemytrip.png";
+  if (n.includes("goibibo")) return "assets/portals/favicons/goibibo.png";
+  if (n.includes("easemytrip")) return "assets/portals/favicons/easemytrip.png";
+  if (n.includes("yatra")) return "assets/portals/favicons/yatra.png";
+  if (n.includes("ixigo")) return "assets/portals/favicons/ixigo.png";
+  if (n.includes("cleartrip")) return "assets/portals/favicons/cleartrip.png";
+  return "";
+}
+
 function getOtherOffersButtonLabel(portal, count = 0) {
   return count > 0 ? `${count} more offer${count === 1 ? "" : "s"}` : "More offers";
 }
@@ -5483,6 +5499,7 @@ data-hide-label="${getOtherOffersHideLabel(p.portal, p.infoOffers.length)}"
                 <div class="portalHeader">
   <div class="portalHeaderMain">
     <div class="portalHeaderLeft">
+      ${getPortalLogoUrl(p.portal) ? `<img class="portalLogo" src="${getPortalLogoUrl(p.portal)}" alt="" aria-hidden="true" />` : ""}
       <div class="portalName">${safeText(p.portal)}</div>
      ${isBest ? `<span class="badge bestPriceBadge">Best price</span>` : ""}
     </div>

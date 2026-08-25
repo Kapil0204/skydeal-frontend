@@ -4190,25 +4190,28 @@ body{
    Fix portal hover + date picker visibility
    ========================= */
 
-/* Keep portal comparison rows readable on hover */
+/* Keep portal comparison rows readable on hover - light-row redesign
+   (2026-08-25): this used to lighten row text toward near-white for
+   legibility against the old dark row background. Rows are light now
+   (see the "dark header, light rows" block further down), so hover must
+   keep text DARK - the old near-white values would go invisible here. */
 .portalRow:hover{
-  background:rgba(168,85,247,0.10) !important;
-  border-color:rgba(168,85,247,0.45) !important;
-  color:var(--gray-50) !important;
+  background:var(--brand-100) !important;
+  border-color:var(--brand-400) !important;
+  color:var(--gray-900) !important;
 }
 
 .portalRow:hover .portalName,
 .portalRow:hover .portalPrice,
 .portalRow:hover .mainOffer,
 .portalRow:hover .offerMeta{
-  color:var(--gray-50) !important;
+  color:var(--gray-900) !important;
 }
 
-.portalRow:hover .portalLinkBelowPrice,
 .portalRow:hover .otherOffersInlineBtn{
-  background:rgba(255,255,255,0.08) !important;
-  color:var(--gray-50) !important;
-  border-color:rgba(168,85,247,0.45) !important;
+  background:var(--white) !important;
+  color:var(--brand-700) !important;
+  border-color:var(--brand-400) !important;
 }
 
 /* Make date calendar icon visible on dark search card */
@@ -9026,7 +9029,12 @@ body #selectedTripPanel .sky-trip-clear-btn {
 }
 
 .portalCompareBodyV2 {
+  /* Dark header, light body (2026-08-25, founder-approved) - the modal
+     shell (.portalModalCardV2) keeps its dark gradient behind everything,
+     so this needs its own opaque background to actually read as a
+     separate light zone rather than a translucent overlay on dark. */
   padding: 18px 20px 22px;
+  background: var(--white) !important;
 }
 
 .portalCompareFlightHeadV2 {
@@ -9037,15 +9045,15 @@ body #selectedTripPanel .sky-trip-clear-btn {
   margin-bottom: 14px !important;
   padding: 11px 13px !important;
   border-radius: var(--radius-lg) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  color: rgba(255, 255, 255, 0.78) !important;
+  background: var(--brand-50) !important;
+  border: 1px solid var(--brand-200) !important;
+  color: var(--brand-700) !important;
   font-size: var(--fs-base) !important;
   font-weight: 800 !important;
 }
 
 .portalCompareFlightHeadV2 strong {
-  color: var(--white);
+  color: var(--gray-900);
   font-weight: 950;
 }
 
@@ -9185,8 +9193,8 @@ body #selectedTripPanel .sky-trip-clear-btn {
 .portalModalEmpty {
   padding: 18px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.74);
+  background: var(--brand-50);
+  color: var(--gray-500);
   font-size: var(--fs-md);
   font-weight: 800;
 }
@@ -11198,16 +11206,16 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .portalRow {
   border-radius: var(--radius-lg) !important;
   padding: 12px 14px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  background: var(--brand-50) !important;
+  border: 1px solid var(--brand-100) !important;
   box-shadow: none !important;
 }
 
 .portalRow.best {
   display: block !important;
   background:
-    linear-gradient(135deg, rgba(16, 185, 129, 0.13), rgba(168, 85, 247, 0.10)) !important;
-  border: 1px solid rgba(52, 211, 153, 0.32) !important;
+    linear-gradient(135deg, #ecfdf5, var(--brand-50)) !important;
+  border: 1.5px solid #6ee7b7 !important;
 }
 
 .portalHeader {
@@ -11233,9 +11241,9 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  flex: 0 0 168px !important;
-  width: 168px !important;
-  min-width: 168px !important;
+  flex: 0 0 188px !important;
+  width: 188px !important;
+  min-width: 188px !important;
   overflow: hidden !important;
 }
 
@@ -11245,8 +11253,19 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   white-space: nowrap !important;
 }
 
+.portalLogo {
+  flex: none !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  object-fit: contain !important;
+  padding: 2px !important;
+  background: var(--white) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
 .portalName {
-  color: var(--white) !important;
+  color: var(--gray-900) !important;
   font-size: var(--fs-md) !important;
   font-weight: 800 !important;
   letter-spacing: -0.01em !important;
@@ -11256,9 +11275,9 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   display: inline-flex !important;
   width: fit-content !important;
   margin-top: 0 !important;
-  border: 1px solid rgba(52, 211, 153, 0.30) !important;
-  background: rgba(16, 185, 129, 0.16) !important;
-  color: var(--success-light) !important;
+  border: 1px solid #6ee7b7 !important;
+  background: #ecfdf5 !important;
+  color: #178a4c !important;
   border-radius: var(--radius-pill) !important;
   padding: 3px 8px !important;
   font-size: var(--fs-2xs) !important;
@@ -11273,7 +11292,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 }
 
 .portalPrice > div:first-child {
-  color: var(--white) !important;
+  color: var(--gray-900) !important;
   font-size: var(--fs-xl) !important;
   line-height: 1 !important;
   letter-spacing: -0.03em !important;
@@ -11282,13 +11301,14 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 
 .portalPriceOld {
   font-size: var(--fs-2xs) !important;
-  opacity: 0.65 !important;
+  color: var(--gray-500) !important;
+  opacity: 1 !important;
   text-decoration: line-through !important;
 }
 
 .portalPriceSave {
   font-size: var(--fs-2xs) !important;
-  color: #86efac !important;
+  color: #178a4c !important;
   font-weight: 800 !important;
 }
 
@@ -11299,7 +11319,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   flex: 0 0 auto !important;
   border-radius: var(--radius-pill) !important;
   padding: 7px 12px !important;
-  background: rgba(168, 85, 247, 0.92) !important;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700)) !important;
   color: var(--white) !important;
   font-size: var(--fs-sm) !important;
   font-weight: 900 !important;
@@ -11316,7 +11336,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   gap: 8px !important;
   margin-top: 10px !important;
   padding-top: 10px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-top: 1px solid var(--brand-100) !important;
 }
 
 .portalOfferLine {
@@ -11324,7 +11344,7 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 6px !important;
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--gray-500) !important;
   font-size: var(--fs-sm) !important;
   font-weight: 650 !important;
 }
@@ -11345,9 +11365,9 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
 .otherOffersInlineBtn {
   border-radius: var(--radius-pill) !important;
   padding: 5px 10px !important;
-  background: rgba(255, 255, 255, 0.07) !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  color: rgba(255, 255, 255, 0.8) !important;
+  background: var(--white) !important;
+  border: 1px solid var(--brand-200) !important;
+  color: var(--brand-700) !important;
   font-size: var(--fs-2xs) !important;
   font-weight: 850 !important;
   white-space: nowrap !important;
@@ -11357,14 +11377,40 @@ body.sky-return-date-active #returnInput::-webkit-calendar-picker-indicator,
   margin-top: 10px !important;
   flex-basis: 100% !important;
   border-radius: var(--radius-lg) !important;
-  background: rgba(15, 23, 42, 0.42) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--white) !important;
+  border: 1px solid var(--brand-100) !important;
 }
 
 .otherOffersTitle {
-  color: var(--white) !important;
+  color: var(--gray-900) !important;
   font-size: var(--fs-sm) !important;
   font-weight: 950 !important;
+}
+
+/* otherOffersDrawer nests the shared .otherOfferItem/.tncBtn/.copyCouponBtn
+   components, all originally styled white-text-on-dark for elsewhere in
+   the app - scoped overrides here rather than touching those shared base
+   rules, so this fix stays local to the now-light compare modal. */
+.otherOffersDrawer .otherOfferItem {
+  background: var(--brand-50) !important;
+  border: 1px solid var(--brand-100) !important;
+}
+.otherOffersDrawer .otherOfferItem b {
+  color: var(--gray-900) !important;
+}
+.otherOffersDrawer .otherOfferHint,
+.otherOffersDrawer .otherOfferDiscount {
+  color: var(--gray-500) !important;
+}
+.otherOffersDrawer .tncBtn {
+  background: var(--white) !important;
+  border: 1px solid var(--brand-200) !important;
+  color: var(--brand-700) !important;
+}
+.otherOffersDrawer .copyCouponBtn {
+  background: var(--brand-100) !important;
+  border: 1px solid var(--brand-200) !important;
+  color: var(--brand-700) !important;
 }
 
 .tncBtn {
