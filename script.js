@@ -34,6 +34,18 @@ const INDIAN_IATA_CODES = new Set([
   "AJL","IXK","ISK","NMI"
 ]);
 
+// Session-scoped (not localStorage) - the skip-payment-methods interstitial
+// should reappear on a fresh tab/visit but never nag twice within one
+// browsing session once the founder-approved "shown once per session" rule
+// has been satisfied. See openSkipPaymentModal().
+const SKIP_PAYMENT_SEEN_KEY = "skyDealSkipPaymentInterstitialSeen";
+
+// First-time product tour (2026-08-25): shown once ever per browser, not
+// per session - it's onboarding for a brand-new visitor, not a recurring
+// reminder (that job belongs to the skip-payment interstitial above, which
+// re-fires every session). localStorage, not sessionStorage, is deliberate.
+const PAYMENT_TOUR_SEEN_KEY = "skyDealPaymentTourSeen";
+
 // A few popular Indian cities shown by default when a From/To box is
 // clicked/focused with nothing typed yet - matches MMT's "recent
 // searches" panel, except SkyDeal has no search history to draw on, so
@@ -3178,6 +3190,112 @@ function closeBookingHandoffModal() {
   modal.style.display = "none";
 }
 
+// Holds the payload of the search that triggered the interstitial, so
+// "Skip for now" can resume exactly that search rather than re-reading
+// form state that may have changed while the modal was open.
+let pendingSkipPaymentPayload = null;
+
+function openSkipPaymentModal(payload) {
+  pendingSkipPaymentPayload = payload;
+  trackEvent("skip_payment_interstitial_shown", {});
+
+  const modal = document.getElementById("skipPaymentModal");
+  if (!modal) {
+    // No modal in the DOM for some reason - never block a real search
+    // behind a UI element that isn't there.
+    runSearch(payload);
+    return;
+  }
+
+  modal.classList.add("open");
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeSkipPaymentModal() {
+  const modal = document.getElementById("skipPaymentModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.display = "none";
+}
+
+// First-time product tour (2026-08-25): a single one-time popup pointing
+// at the payment-prompt-card, shown once EVER per browser (localStorage,
+// not sessionStorage - deliberately different from the skip-payment
+// interstitial above, which re-fires every session). Reasoning: this is
+// onboarding for a brand-new visitor, not a recurring reminder - repeat
+// visits are already covered by the interstitial, so repeating the tour
+// too would just be redundant nagging. Skipped entirely for a returning
+// user who already has saved payment methods, since they've clearly
+// already learned the mechanic.
+function maybeShowPaymentTour() {
+  if (localStorage.getItem(PAYMENT_TOUR_SEEN_KEY)) return;
+  if (Array.isArray(selectedPaymentMethods) && selectedPaymentMethods.length > 0) return;
+  if (document.querySelector(".modal.open")) return;
+  if (document.body.classList.contains("mobile-results-mode") || document.body.classList.contains("desktop-results-mode")) return;
+
+  const card = document.getElementById("paymentPromptCard");
+  if (!card) return;
+  const rect = card.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+
+  const dim = document.createElement("div");
+  dim.id = "paymentTourDim";
+  dim.style.cssText = "position:fixed;inset:0;background:rgba(7,4,17,.55);z-index:58;";
+
+  const tip = document.createElement("div");
+  tip.className = "payment-tour-tip";
+  tip.innerHTML = `
+    <div class="kicker">Here's the secret</div>
+    <p>Same flight, different price for everyone. Add your card or UPI app to see your real price.</p>
+    <button type="button" class="payment-tour-dismiss">Got it</button>
+    <div style="clear:both"></div>
+  `;
+
+  document.body.appendChild(dim);
+  document.body.appendChild(tip);
+  card.classList.add("payment-tour-highlight");
+
+  // Positioned below the card if there's room, otherwise above it -
+  // tip isn't in a fixed spot in the layout (card position varies by
+  // viewport/scroll state), so this is computed from the real element.
+  const tipWidth = Math.min(280, window.innerWidth * 0.84);
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const showBelow = spaceBelow > 140;
+  tip.style.position = "absolute";
+  tip.style.width = `${tipWidth}px`;
+  tip.style.top = showBelow
+    ? `${rect.bottom + window.scrollY + 10}px`
+    : `${rect.top + window.scrollY - 132}px`;
+  tip.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - tipWidth - 12))}px`;
+
+  function dismissTour() {
+    localStorage.setItem(PAYMENT_TOUR_SEEN_KEY, "1");
+    dim.remove();
+    tip.remove();
+    card.classList.remove("payment-tour-highlight");
+  }
+
+  tip.querySelector(".payment-tour-dismiss").addEventListener("click", dismissTour);
+  dim.addEventListener("click", dismissTour);
+}
+
+// "Skip for now", a backdrop click, and Escape all mean the same thing -
+// the user chose not to add a payment method right now - so all three
+// mark the interstitial seen for this tab session and resume the exact
+// search that was paused, rather than leaving it hanging.
+function resumeSkippedSearch() {
+  sessionStorage.setItem(SKIP_PAYMENT_SEEN_KEY, "1");
+  closeSkipPaymentModal();
+  trackEvent("skip_payment_interstitial_skipped", {});
+  if (pendingSkipPaymentPayload) {
+    const payload = pendingSkipPaymentPayload;
+    pendingSkipPaymentPayload = null;
+    runSearch(payload);
+  }
+}
+
 // No modal in the app closed on Escape - the X button, a backdrop click,
 // and (payment modal only) Done/Clear were the only ways out (QA,
 // 2026-08-12: confirmed live, Escape left the payment modal open).
@@ -3216,6 +3334,12 @@ document.addEventListener("keydown", (e) => {
   const bookingHandoffModal = document.getElementById("bookingHandoffModal");
   if (bookingHandoffModal && bookingHandoffModal.classList.contains("open")) {
     closeBookingHandoffModal();
+    return;
+  }
+
+  const skipPaymentModal = document.getElementById("skipPaymentModal");
+  if (skipPaymentModal && skipPaymentModal.classList.contains("open")) {
+    resumeSkippedSearch();
     return;
   }
 
@@ -8910,6 +9034,24 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
     return;
   }
 
+  // Soft interstitial (founder QC feedback, 2026-08-25): searching with
+  // zero payment methods selected silently produces base-price-only
+  // results with no visual sign anything was left out. This is the exact
+  // moment of real intent (they just hit Search), so it's the one place
+  // worth pausing instead of letting it through silently - never blocks,
+  // "Skip for now" always continues the search in one tap. Shown once per
+  // tab session only (SKIP_PAYMENT_SEEN_KEY) so it doesn't nag on every
+  // subsequent search once they've already seen it.
+  const hasPaymentMethods = (payload.paymentMethods || []).length > 0;
+  if (!hasPaymentMethods && !sessionStorage.getItem(SKIP_PAYMENT_SEEN_KEY)) {
+    openSkipPaymentModal(payload);
+    return;
+  }
+
+  runSearch(payload);
+}
+
+async function runSearch(payload) {
   trackEvent("search_submitted", {
     trip_type: payload.tripType,
     from: payload.from,
@@ -9236,6 +9378,22 @@ toggleReturn();
     if (e.target === bookingHandoffModal) closeBookingHandoffModal();
   });
 
+  const skipPaymentModal = document.getElementById("skipPaymentModal");
+  document.getElementById("skipPaymentSkipBtn")?.addEventListener("click", resumeSkippedSearch);
+  skipPaymentModal?.addEventListener("click", (e) => {
+    if (e.target === skipPaymentModal) resumeSkippedSearch();
+  });
+  document.getElementById("skipPaymentAddBtn")?.addEventListener("click", () => {
+    trackEvent("skip_payment_interstitial_add_clicked", {});
+    // Leave pendingSkipPaymentPayload set - if they add a method and hit
+    // Search again, buildSearchPaymentMethods() will be non-empty and this
+    // whole gate is skipped naturally. If they close the payment modal
+    // without adding anything and never search again, nothing is lost -
+    // the payload just goes stale, which is harmless.
+    closeSkipPaymentModal();
+    openPaymentModal();
+  });
+
   pmClear?.addEventListener("click", () => {
     selectedPaymentMethods = [];
     updatePaymentButtonLabel();
@@ -9313,3 +9471,4 @@ updatePaymentButtonLabel();
 
 
 setTimeout(renderPaymentPromptCard, 0);
+setTimeout(maybeShowPaymentTour, 400);

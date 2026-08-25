@@ -257,6 +257,10 @@
             </div>
             <span id="paymentPromptCount" class="payment-prompt-count"></span>
           </div>
+          <div class="payment-privacy-line">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <span>We only need your bank or card <strong>name</strong> — never your card number, CVV or OTP.</span>
+          </div>
         </div>
       </div>
 
@@ -712,6 +716,19 @@
         <button id="bookingHandoffClose" class="x" aria-label="Close">&times;</button>
       </div>
       <div id="bookingHandoffBody" class="booking-handoff-body"></div>
+    </div>
+  </div>
+
+  <!-- Soft interstitial (2026-08-25): shown when Search is tapped with zero
+       payment methods selected. Gain-framed on purpose - "unlock discounts"
+       not "you'll miss out" - and always has a one-tap, non-shaming way out. -->
+  <div id="skipPaymentModal" class="modal" aria-hidden="true">
+    <div class="modal-content narrow skip-payment-modal-content" role="dialog" aria-modal="true" aria-labelledby="skipPaymentTitle">
+      <div class="skip-payment-icon">💳</div>
+      <h2 id="skipPaymentTitle">Add a payment method to unlock discounts</h2>
+      <p class="skip-payment-sub">We'll instantly check your cards, UPI apps and wallets for live discounts — often ₹500+ off.</p>
+      <button id="skipPaymentAddBtn" type="button" class="btn-primary skip-payment-add-btn">Add payment method</button>
+      <button id="skipPaymentSkipBtn" type="button" class="skip-payment-skip-btn">Skip for now</button>
     </div>
   </div>
 
