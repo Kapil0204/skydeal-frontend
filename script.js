@@ -7562,6 +7562,72 @@ function renderSearchErrorState(errorMessage = "We couldn’t load live flights.
   renderPager("ret");
 }
 
+// SkyDeal's offer/pricing logic is built and verified for domestic
+// (India-to-India) routes only - international pricing isn't ready yet.
+// Reuses the exact same standalone-error-card CSS as renderSearchErrorState
+// (search-error-mode class, .sky-standalone-error-wrap) so it needs no new
+// styling, but with its own copy and only one action (no "Try again" -
+// retrying the same international route would just show this again).
+function renderInternationalNotSupportedState() {
+  stopSkyLoadingTextRotation();
+  document.body.classList.add("search-error-mode");
+
+  const outHost =
+    (typeof outboundList !== "undefined" && outboundList) ||
+    document.getElementById("outboundCards") ||
+    document.getElementById("outCards");
+  const retHost =
+    (typeof returnList !== "undefined" && returnList) ||
+    document.getElementById("returnCards") ||
+    document.getElementById("retCards");
+
+  if (outHost) outHost.innerHTML = "";
+  if (retHost) retHost.innerHTML = "";
+
+  const proResults = document.querySelector(".pro-results");
+  if (proResults) proResults.style.display = "none";
+
+  const html = `
+    <div class="sky-search-state-card sky-search-error-card">
+      <div class="sky-error-icon" aria-hidden="true">✈️</div>
+      <div class="sky-search-state-title">We're optimized for domestic flights right now</div>
+      <div class="sky-search-state-subtitle">
+        SkyDeal currently compares live prices and payment offers for flights within India only.
+        International routes are coming soon - please search a domestic route for now.
+      </div>
+      <div class="sky-search-state-actions">
+        <button type="button" class="sky-state-primary-btn" id="editSearchFromIntlBtn">Edit search</button>
+      </div>
+    </div>
+  `;
+
+  let standalone = document.getElementById("skySearchStandaloneError");
+  if (!standalone) {
+    standalone = document.createElement("section");
+    standalone.id = "skySearchStandaloneError";
+    standalone.className = "sky-standalone-error-wrap";
+
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard && searchCard.parentNode) {
+      searchCard.insertAdjacentElement("afterend", standalone);
+    } else {
+      document.body.appendChild(standalone);
+    }
+  }
+
+  standalone.innerHTML = html;
+
+  standalone.querySelector("#editSearchFromIntlBtn")?.addEventListener("click", () => {
+    document.body.classList.remove("mobile-results-mode");
+    document.body.classList.remove("desktop-results-mode");
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) searchCard.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+
+  renderPager("out");
+  renderPager("ret");
+}
+
 function setSearchButtonLoading(isLoading) {
   const btn = document.getElementById("searchBtn");
   if (!btn) return;
@@ -8807,6 +8873,17 @@ to: resolveLocationToCode(safeText(toInput?.value, "").trim()),
 
   if (payload.from === payload.to) {
     alert("Departure and destination airports cannot be the same.");
+    return;
+  }
+
+  // International routes aren't supported yet - SkyDeal's offer/pricing
+  // logic is only built and verified for domestic (India-to-India) trips.
+  // Blocked here, before the loading state/backend call, so we never spend
+  // a FlightAPI search or a payment-offers computation on a trip we can't
+  // price correctly (founder QC feedback, 2026-08-25).
+  if (!INDIAN_IATA_CODES.has(payload.from) || !INDIAN_IATA_CODES.has(payload.to)) {
+    trackEvent("search_blocked_international", { from: payload.from, to: payload.to });
+    renderInternationalNotSupportedState();
     return;
   }
 
