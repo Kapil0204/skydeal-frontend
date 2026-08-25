@@ -4542,11 +4542,19 @@ function renderGuideOptimisedRestingHtml() {
   // below, so that information isn't lost, just no longer baked into the
   // sentence itself.
   if (selectedCount === 0) {
+    // Redrafted 2026-08-25 (founder QC) to do two things the old copy
+    // didn't: (1) match the wording already used in the other payment
+    // nudges (interstitial/tour), so someone who skipped those sees a
+    // consistent ask here too, not a differently-worded fourth message;
+    // (2) make clear this price ALREADY reflects any site-wide/portal
+    // discount (e.g. a generic checkout coupon like FLYSALE) even with
+    // zero payment methods selected - the ask is "there might be an even
+    // bigger saving," never "you currently have nothing."
     return `
       <div class="payment-guide-success-row">
         <div class="payment-guide-success-text">
-          <div class="payment-guide-success-heading">Want to unlock more savings?</div>
-          <div class="payment-guide-success-message payment-guide-resting-message">Add your cards, UPI apps or wallets and sairro will check if they can lower your price.</div>
+          <div class="payment-guide-success-heading">Add a payment method for an even better price</div>
+          <div class="payment-guide-success-message payment-guide-resting-message">This price already includes any site-wide discounts. Add your cards, UPI apps or wallets to see if your bank unlocks a bigger saving.</div>
           ${ownSummaryLine}
         </div>
         <button type="button" class="payment-guide-check-more-btn payment-guide-add-method-btn" data-guide-action="add-method">Add more ways to pay</button>
@@ -6505,7 +6513,7 @@ function getPriceIntelHeroLine() {
   if (!hasActiveSearchResults()) {
     const n = Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0;
     return n === 0
-      ? "Add your payment options to unlock better prices"
+      ? "Add a payment method to unlock discounts"
       : "Checking your payment options for hidden savings";
   }
 
@@ -6522,6 +6530,19 @@ function getPriceIntelHeroLine() {
   }
 
   if (paymentGuideState === "ready") {
+    // Real results exist but zero payment methods are selected - checked
+    // BEFORE lastPrimaryDecodeMessage/visiblePaymentSuggestions below,
+    // both of which are always empty in this state (the backend's
+    // resolvePrimaryDecodeMessage explicitly returns null with 0 selected
+    // methods, deferring to this exact prompt - see its comment). Without
+    // this branch the banner silently fell through to the generic "We've
+    // checked your options" fallback, losing the payment nudge entirely
+    // right when it matters most (founder QC catch, 2026-08-25) - matches
+    // the full decode card's own Case-1 heading (renderGuideOptimisedRestingHtml).
+    if ((Array.isArray(selectedPaymentMethods) ? selectedPaymentMethods.length : 0) === 0) {
+      return "Add a payment method for an even better price";
+    }
+
     // lastPrimaryDecodeMessage.sticky is the decode hierarchy's own
     // condensed one-liner (built for exactly this - see resolvePrimaryDecodeMessage
     // in the backend), sized for a single line the way this frozen banner
