@@ -9205,6 +9205,22 @@ body #selectedTripPanel .sky-trip-clear-btn {
     max-height: 86vh !important;
     overflow-y: auto !important;
     border-radius: var(--radius-xl) !important;
+    /* Founder-reported (2026-08-25): scroll inside this modal sometimes
+       didn't work at all on a phone, but only in the Google app's
+       embedded in-app browser - never in real Safari/Chrome. Nothing
+       locks background page scroll while any modal is open (true
+       app-wide, not just here), so a touch-drag that starts on this
+       fixed-position modal can occasionally get claimed by the page
+       underneath instead - a known class of bug in embedded WebViews,
+       which tend to be stricter about un-declared touch-scroll targets
+       than full Safari/Chrome. touch-action tells the browser this
+       element owns vertical panning; overscroll-behavior stops scroll
+       chaining to the page once this reaches its own scroll boundary;
+       -webkit-overflow-scrolling restores momentum scroll on older
+       WebKit. None of these existed on this element before. */
+    touch-action: pan-y !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .portalModalTop {
