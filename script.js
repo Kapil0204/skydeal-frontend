@@ -1506,6 +1506,7 @@ function getPortalLogoUrl(portal) {
   if (n.includes("yatra")) return "assets/portals/favicons/yatra.png";
   if (n.includes("ixigo")) return "assets/portals/favicons/ixigo.png";
   if (n.includes("cleartrip")) return "assets/portals/favicons/cleartrip.png";
+  if (n.includes("adanione") || n.includes("adani")) return "assets/portals/favicons/adanione.png";
   return "";
 }
 
@@ -2468,6 +2469,27 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = `https://www.ixigo.com/cheap-flights/${fromMeta.ixigo}-${toMeta.ixigo}-${from.toLowerCase()}-${to.toLowerCase()}`;
     } else {
       url = "https://www.ixigo.com/flights";
+    }
+  } else if (portal.includes("adani")) {
+    // Real results endpoint, confirmed live 2026-09-13 (one-way, round-trip,
+    // and multi-passenger all tested directly on adanione.com):
+    // /flight/bookingV2/srp/ADLONE/D/{O|R}/ECO/{adults}_{children}_{infants}/
+    // {FROM}-{TO}-{DDMMYYYY}[-{returnDDMMYYYY}]/REGF - raw IATA codes, no
+    // city-slug lookup needed (unlike Ixigo/EaseMyTrip/Cleartrip). "D" is
+    // domestic; the international variant was not confirmed live, so an
+    // international search falls back to the plain homepage below rather
+    // than guessing at an unverified "I" segment.
+    const departDdmmyyyy = departDmy.replace(/\//g, "");
+    const retDdmmyyyy = retDmy.replace(/\//g, "");
+    const paxSegment = `${adults}_${children}_${infants}`;
+    const isDomesticRoute = INDIAN_IATA_CODES.has(from) && INDIAN_IATA_CODES.has(to);
+
+    if (isDomesticRoute && hasRoundTrip) {
+      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/D/R/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}-${retDdmmyyyy}/REGF`;
+    } else if (isDomesticRoute && hasOneWay) {
+      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/D/O/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}/REGF`;
+    } else {
+      url = "https://www.adanione.com/flight-booking";
     }
   }
 
