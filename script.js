@@ -1507,6 +1507,7 @@ function getPortalLogoUrl(portal) {
   if (n.includes("ixigo")) return "assets/portals/favicons/ixigo.png";
   if (n.includes("cleartrip")) return "assets/portals/favicons/cleartrip.png";
   if (n.includes("adanione") || n.includes("adani")) return "assets/portals/favicons/adanione.png";
+  if (n.includes("airindia")) return "assets/portals/favicons/airindia.png";
   return "";
 }
 
@@ -2476,9 +2477,12 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     // /flight/bookingV2/srp/ADLONE/D/{O|R}/ECO/{adults}_{children}_{infants}/
     // {FROM}-{TO}-{DDMMYYYY}[-{returnDDMMYYYY}]/REGF - raw IATA codes, no
     // city-slug lookup needed (unlike Ixigo/EaseMyTrip/Cleartrip). "D" is
-    // domestic; the international variant was not confirmed live, so an
-    // international search falls back to the plain homepage below rather
-    // than guessing at an unverified "I" segment.
+    // domestic. The "I" (international) segment was ALSO separately
+    // confirmed live 2026-09-13 (a real DEL-DXB search rendered correctly),
+    // but this code still deliberately only builds the domestic "D" URL --
+    // keeping the international case routed to the plain homepage fallback
+    // below until the "I" pattern is wired in and tested end-to-end here,
+    // not just confirmed reachable in isolation.
     const departDdmmyyyy = departDmy.replace(/\//g, "");
     const retDdmmyyyy = retDmy.replace(/\//g, "");
     const paxSegment = `${adults}_${children}_${infants}`;
@@ -2491,6 +2495,15 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     } else {
       url = "https://www.adanione.com/flight-booking";
     }
+  } else if (portal.includes("airindia") || portal.includes("air india")) {
+    // Air India's own search results are rendered by a stateful AEM
+    // booking-widget component, not a plain parameterized URL -- multiple
+    // live attempts to confirm a real deep-link pattern (2026-09-13/14)
+    // hit repeated browser-tooling instability on that widget specifically
+    // (unrelated to whether such a URL exists), so this deliberately falls
+    // back to the plain homepage rather than guessing at an unconfirmed
+    // pattern. Revisit if a real results-page URL is ever confirmed live.
+    url = "https://www.airindia.com/";
   }
 
   console.log("[SkyDeal portal URL]", {
