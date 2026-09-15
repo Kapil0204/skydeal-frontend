@@ -2494,13 +2494,15 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
       url = "https://www.adanione.com/flight-booking";
     }
   } else if (portal.includes("airindia") || portal.includes("air india")) {
-    // Air India's own search results are rendered by a stateful AEM
-    // booking-widget component, not a plain parameterized URL -- multiple
-    // live attempts to confirm a real deep-link pattern (2026-09-13/14)
-    // hit repeated browser-tooling instability on that widget specifically
-    // (unrelated to whether such a URL exists), so this deliberately falls
-    // back to the plain homepage rather than guessing at an unconfirmed
-    // pattern. Revisit if a real results-page URL is ever confirmed live.
+    // Confirmed definitively (2026-09-15), not just unconfirmed: Air
+    // India's results page URL is a bare hash route with zero search
+    // params (`/in/en/ibe/booking.html#/availability/departure`) -- the
+    // actual route/date/pax comes from the `AT-recent-flight-searches`
+    // localStorage key, not the URL. Proved by clearing that key and
+    // reloading the exact same URL: results vanished entirely (blank
+    // "_ _ _ _" fields, no flights). There is no parameterized deep link
+    // to construct here, ever -- this isn't a gap to revisit, it's the
+    // final answer for this portal's architecture.
     url = "https://www.airindia.com/";
   }
 
