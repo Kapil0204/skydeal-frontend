@@ -2477,21 +2477,19 @@ function buildSkyDealPortalRoundTripUrl(portalName, payload = {}) {
     // /flight/bookingV2/srp/ADLONE/D/{O|R}/ECO/{adults}_{children}_{infants}/
     // {FROM}-{TO}-{DDMMYYYY}[-{returnDDMMYYYY}]/REGF - raw IATA codes, no
     // city-slug lookup needed (unlike Ixigo/EaseMyTrip/Cleartrip). "D" is
-    // domestic. The "I" (international) segment was ALSO separately
-    // confirmed live 2026-09-13 (a real DEL-DXB search rendered correctly),
-    // but this code still deliberately only builds the domestic "D" URL --
-    // keeping the international case routed to the plain homepage fallback
-    // below until the "I" pattern is wired in and tested end-to-end here,
-    // not just confirmed reachable in isolation.
+    // domestic, "I" is international - both segments confirmed live
+    // (domestic 2026-09-13; international re-verified 2026-09-15 via a
+    // real DEL-DXB one-way search rendering correctly at the "I" URL).
     const departDdmmyyyy = departDmy.replace(/\//g, "");
     const retDdmmyyyy = retDmy.replace(/\//g, "");
     const paxSegment = `${adults}_${children}_${infants}`;
     const isDomesticRoute = INDIAN_IATA_CODES.has(from) && INDIAN_IATA_CODES.has(to);
+    const domIntlSegment = isDomesticRoute ? "D" : "I";
 
-    if (isDomesticRoute && hasRoundTrip) {
-      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/D/R/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}-${retDdmmyyyy}/REGF`;
-    } else if (isDomesticRoute && hasOneWay) {
-      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/D/O/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}/REGF`;
+    if (hasRoundTrip) {
+      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/${domIntlSegment}/R/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}-${retDdmmyyyy}/REGF`;
+    } else if (hasOneWay) {
+      url = `https://www.adanione.com/flight/bookingV2/srp/ADLONE/${domIntlSegment}/O/ECO/${paxSegment}/${from}-${to}-${departDdmmyyyy}/REGF`;
     } else {
       url = "https://www.adanione.com/flight-booking";
     }
